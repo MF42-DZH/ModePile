@@ -8,6 +8,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _2048_ - A 2048 clone.
 * _Accelerator_ - A marathon mode where playing fast is rewarded.
 * _Colour Power_ - A marathon mode where clearing lines using pieces of different colours nets you different power-ups.
+* _Express Shipping_ - A clone of the space-filling game Puzzle Express by HipSoft.
 * _EX Reborn_ (incomplete) - A clone of Tetris-EX.
 * _Firework Challenge_ - An inaccurate version of Tetris the Grand Master 3's Easy mode.
 * _Gem Swap_ (incomplete) - A generic match-3 game.
