@@ -475,7 +475,7 @@ public class TwoThousandAndFortyEight extends DummyMode {
 				if(mainGrid.getMaxSquare() >= 256) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
 				if(mainGrid.getMaxSquare() >= 1024) engine.meterColor = GameEngine.METER_COLOR_GREEN;
 
-				if (engine.stat == GameEngine.STAT_CUSTOM) {
+				if (engine.stat != GameEngine.STAT_RESULT) {
 					for (int y = 0; y < FIELD_DIMENSION; y++) {
 						for (int x = 0; x < FIELD_DIMENSION; x++) {
 							int value = mainGrid.getCell(x, y).getValue();
