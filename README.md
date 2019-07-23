@@ -1,7 +1,7 @@
 # ModePile
 A set of mods for https://github.com/nullpomino/nullpomino
 
-Requires the above to compile and run.
+Requires the above to compile and run. The "res" directory in the "required files" needs to be merged with the one in the NullpoMino folder.
 
 ## Modes Available:
 
