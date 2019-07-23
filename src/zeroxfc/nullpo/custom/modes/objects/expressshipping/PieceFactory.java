@@ -24,7 +24,13 @@ public class PieceFactory {
 
 	public static final int PIECE_COUNT = 19;
 
-	// TODO: Make piece creation algorithm here.
+	/**
+	 * Creates a piece.
+	 * @param id Piece ID. Use one of the static IDs in this class.
+	 * @param x Pixel X-coordinate.
+	 * @param y Pixel Y-coordinate.
+	 * @return The piece, whose top-left located at (x, y) in the pixel grid.
+	 */
 	public static GamePiece getPiece(int id, int x, int y) {
 		switch (id) {
 			case PIECE_I1:
@@ -37,6 +43,14 @@ public class PieceFactory {
 				return new L3(x, y);
 			case PIECE_I4:
 				return new I4(x, y);
+			case PIECE_L4:
+				return new L4(x, y);
+			case PIECE_J4:
+				return new J4(x, y);
+			case PIECE_S4:
+				return new S4(x, y);
+			case PIECE_Z4:
+				return new Z4(x, y);
 			case PIECE_O4:
 				return new O4(x, y);
 			case PIECE_T4:
