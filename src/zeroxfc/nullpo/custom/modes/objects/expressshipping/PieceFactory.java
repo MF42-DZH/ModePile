@@ -25,7 +25,24 @@ public class PieceFactory {
 	public static final int PIECE_COUNT = 19;
 
 	// TODO: Make piece creation algorithm here.
-	public static GamePiece getPiece(int id) {
-		return null;
+	public static GamePiece getPiece(int id, int x, int y) {
+		switch (id) {
+			case PIECE_I1:
+				return new I1(x, y);
+			case PIECE_I2:
+				return new I2(x, y);
+			case PIECE_I3:
+				return new I3(x, y);
+			case PIECE_L3:
+				return new L3(x, y);
+			case PIECE_I4:
+				return new I4(x, y);
+			case PIECE_O4:
+				return new O4(x, y);
+			case PIECE_T4:
+				return new T4(x, y);
+			default:
+				return null;
+		}
 	}
 }

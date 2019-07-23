@@ -8,7 +8,10 @@ public interface GamePiece {
 	int getY();
 	int[] getLocation();
 	int[][] getContents();
+	int[] getCursorOffset();
+	double getConveyorYOffset();
 	int getState();
+	int getColour();
 
 	void rotate();
 	void setLocation(int x, int y);

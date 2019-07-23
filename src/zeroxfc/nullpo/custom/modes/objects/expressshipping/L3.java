@@ -2,34 +2,47 @@ package zeroxfc.nullpo.custom.modes.objects.expressshipping;
 
 import mu.nu.nullpo.game.component.Block;
 
-public class I1 implements GamePiece {
+public class L3 implements GamePiece {
 	private static int[][][] contents = {
 			new int[][] {
-					new int[] { 1 }
-			}
+					new int[] { 1, 0 },
+					new int[] { 1, 1 }
+			},
+			new int[][] {
+					new int[] { 1, 1 },
+					new int[] { 1, 0 }
+			},
+			new int[][] {
+					new int[] { 1, 1 },
+					new int[] { 0, 1 }
+			},
+			new int[][] {
+					new int[] { 0, 1 },
+					new int[] { 1, 1 }
+			},
 	};
 
 	private int[] location;
 	private int state;
 
-	public I1(int x, int y) {
+	public L3(int x, int y) {
 		location = new int[] { x, y };
 		state = 0;
 	}
 
 	@Override
 	public int getScore() {
-		return 25;
+		return 75;
 	}
 
 	@Override
 	public int getWidth() {
-		return 1;
+		return 2;
 	}
 
 	@Override
 	public int getHeight() {
-		return 1;
+		return 2;
 	}
 
 	@Override
@@ -59,7 +72,7 @@ public class I1 implements GamePiece {
 
 	@Override
 	public double getConveyorYOffset() {
-		return 0.0;
+		return 0.5;
 	}
 
 	@Override
@@ -69,12 +82,12 @@ public class I1 implements GamePiece {
 
 	@Override
 	public int getColour() {
-		return Block.BLOCK_COLOR_RED;
+		return Block.BLOCK_COLOR_GRAY;
 	}
 
 	@Override
 	public void rotate() {
-		// DO NOTHING.
+		state = (state + 1) % 4;
 	}
 
 	@Override

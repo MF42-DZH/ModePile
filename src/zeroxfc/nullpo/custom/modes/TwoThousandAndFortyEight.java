@@ -167,7 +167,7 @@ public class TwoThousandAndFortyEight extends DummyMode {
 			engine.fieldHiddenHeight = engine.ruleopt.fieldHiddenHeight;
 			engine.field = new Field(engine.fieldWidth, engine.fieldHeight, engine.fieldHiddenHeight, true);
 
-			lastScoreTime = 0;
+			lastScoreTime = 120;
 			lastScore = 0;
 
 			if(!engine.readyDone) {
