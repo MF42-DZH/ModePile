@@ -1,4 +1,4 @@
-![ModePile Banner](https://cdn.discordapp.com/attachments/546348083202621470/603327344714842162/GitHub_ModePile_Banner-Final.png)
+![ModePile Banner](https://cdn.discordapp.com/attachments/546348083202621470/603329315714760708/GitHub_ModePile_Banner-Final.png)
 
 # ModePile
 A set of mods for https://github.com/nullpomino/nullpomino
