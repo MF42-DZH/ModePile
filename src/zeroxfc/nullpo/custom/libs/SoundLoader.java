@@ -70,4 +70,14 @@ public class SoundLoader {
 			ResourceHolderSDL.soundManager.load(soundName, skindir + "/se/zeroxfc/" + soundName + ".wav");
 		}
 	}
+
+	public static void importSound(String filePath, String soundName) {
+		if (ResourceHolderSwing.soundManager != null) {
+			ResourceHolderSwing.soundManager.load(soundName, filePath);
+		} else if (ResourceHolder.soundManager != null) {
+			ResourceHolder.soundManager.load(soundName, filePath);
+		} else if (ResourceHolderSDL.soundManager != null) {
+			ResourceHolderSDL.soundManager.load(soundName, filePath);
+		}
+	}
 }

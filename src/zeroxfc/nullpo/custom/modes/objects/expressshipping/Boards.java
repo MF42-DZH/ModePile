@@ -355,7 +355,7 @@ public class Boards {
 			// endregion JumboHorizontalFields
 	};
 
-	public static Field getBoard(int index) {
+	public static Field getBoard(int index, int skin) {
 		int dimY = Boards[index].length;
 		int dimX = Boards[index][0].length;
 
@@ -363,7 +363,7 @@ public class Boards {
 
 		for (int y = 0; y < dimY; y++) {
 			for (int x = 0; x < dimX; x++) {
-				localField.getBlock(x, y).copy(new Block(Boards[index][y][x]));
+				localField.getBlock(x, y).copy(new Block(Boards[index][y][x], skin));
 			}
 		}
 
