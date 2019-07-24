@@ -21,6 +21,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 	@Override
 	public void playerInit(GameEngine engine, int playerID) {
-		// FILL THIS
+		owner = engine.owner;
+		receiver = engine.owner.receiver;
 	}
 }
