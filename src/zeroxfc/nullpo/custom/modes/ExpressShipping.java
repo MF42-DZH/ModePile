@@ -216,8 +216,8 @@ public class ExpressShipping extends PuzzleGameEngine {
 			receiver.drawMenuFont(engine, playerID, 10, 21, "TIME", EventReceiver.COLOR_PINK);
 			receiver.drawMenuFont(engine, playerID, 10, 22, GeneralUtil.getTime(engine.statistics.time));
 
-			receiver.drawMenuFont(engine, playerID, 19, 21, "LEVEL", EventReceiver.COLOR_PINK);
-			receiver.drawMenuFont(engine, playerID, 19, 22, String.valueOf(engine.statistics.level + 1));
+			receiver.drawMenuFont(engine, playerID, 20, 21, "LEVEL", EventReceiver.COLOR_PINK);
+			receiver.drawMenuFont(engine, playerID, 20, 22, String.valueOf(engine.statistics.level + 1));
 
 			drawConveyorBelt(engine);
 		}
