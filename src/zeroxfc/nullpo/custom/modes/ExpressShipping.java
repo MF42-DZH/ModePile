@@ -40,6 +40,25 @@ public class ExpressShipping extends PuzzleGameEngine {
 			{ 0, 16, 18, 18, 22, 16, 16, 14, 14, 20, 18, 12, 12, 8, 6, 10, 10, 6, 6 },
 	};
 
+	// Monomino start counters.
+	private static final int[] MONOMINO_START_AMOUNTS = {
+			10, 7, 7, 6, 6, 5, 5, 4, 4, 3
+	};
+
+	// Field quota per level
+	private static final int[] LEVEL_FIELD_QUOTA = {
+			1, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10
+	};
+
+	// Level bonuses
+	// Calculation: Fields Filled * Monominoes * Bonus. Minimum Base.
+	private static final int[] LEVEL_END_BASE_BONUS = {
+			3000, 3500, 4000, 5000, 6000, 7500, 9000, 11000, 13000, 15000, 17500, 20000, 23000, 26000, 29500, 33000, 37000, 41000, 45500,
+			50000
+	};
+
+	private static final int NEW_MONOMINO_SCORE = 3000;
+
 	private GameManager owner;
 	private EventReceiver receiver;
 	private MouseParser mouseControl;
@@ -48,6 +67,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private WeightedRandomiser pieceRandomiser;
 	private GamePiece[] conveyorBelt;
 	private GamePiece selectedPiece;
+	private int monominoesLeft;
 	private int localState;
 	private int engineTick;
 	private int conveyorFrame;
@@ -72,6 +92,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 		conveyorFrame = 0;
 		bgm = 0;
 		cargoReturnCooldown = 0;
+		monominoesLeft = 0;
 
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
 		customHolder.loadImage("res/graphics/conveyor.png", "conveyor");
@@ -81,8 +102,10 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 	@Override
 	public boolean onSetting(GameEngine engine, int playerID) {
+		owner.backgroundStatus.bg = 0;
+
 		// Menu
-		if(engine.owner.replayMode == false) {
+		if(!engine.owner.replayMode) {
 			// Configuration changes
 			int change = updateCursor(engine, 0, playerID);
 
@@ -118,7 +141,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 			engine.statc[3]++;
 			engine.statc[2] = -1;
 
-			if(engine.statc[3] >= 60) {
+			if (engine.statc[3] >= 60) {
 				return false;
 			}
 		}
@@ -146,6 +169,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 			engineTick = 0;
 			conveyorFrame = 0;
 			cargoReturnCooldown = 0;
+			monominoesLeft = 10;
 
 			engine.field = Boards.getBoard(boardRandomiser.nextInt(Boards.Boards.length), engine.getSkin());
 
@@ -196,6 +220,67 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 		engine.statc[0]++;
 
+		return true;
+	}
+
+	private void generateNewField(GameEngine engine) {
+		engine.field = Boards.getBoard(boardRandomiser.nextInt(Boards.Boards.length), engine.getSkin());
+
+		engine.ruleopt.nextDisplay = 0;
+		engine.ruleopt.holdEnable = false;
+
+		engine.ruleopt.fieldWidth = engine.field.getWidth();
+		engine.ruleopt.fieldHeight = engine.field.getHeight();
+		engine.ruleopt.fieldHiddenHeight = 0;
+		engine.fieldWidth = engine.field.getWidth();
+		engine.fieldHeight = engine.field.getHeight();
+		engine.fieldHiddenHeight = 0;
+	}
+
+	private void levelUp(GameEngine engine) {
+		engineTick = 0;
+		cargoReturnCooldown = 0;
+		engine.statistics.level++;
+
+		int effectiveLevel = engine.statistics.level;
+		if (effectiveLevel >= PIECE_WEIGHTS.length) effectiveLevel = PIECE_WEIGHTS.length - 1;
+
+		pieceRandomiser.setWeights(PIECE_WEIGHTS[effectiveLevel]);
+		owner.backgroundStatus.bg = (engine.statistics.level / 2) % 20;
+		generateNewField(engine);
+	}
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		boolean updateTime = false;
+
+		switch (localState) {
+			case CUSTOMSTATE_INGAME:
+				updateTime = statIngame(engine, playerID);
+				break;
+			case CUSTOMSTATE_RESULTS:
+				updateTime = statResults(engine, playerID);
+				break;
+		}
+
+		if (updateTime) engine.statc[0]++;
+
+		return true;
+	}
+
+	/*
+	 * CARGO RETURN REGION:
+	 * (49, 304) to (134, 350).
+	 *
+	 * FIELD STUFF:
+	 * Standard field location parsing. Use getWidth() and getHeight().
+	 */
+
+	private boolean statIngame(GameEngine engine, int playerID) {
+		return false;
+	}
+
+	private boolean statResults(GameEngine engine, int playerID) {
 		return true;
 	}
 
