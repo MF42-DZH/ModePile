@@ -14,6 +14,8 @@ import java.util.Random;
 public class ExpressShipping extends PuzzleGameEngine {
 	// This is literally Puzzle Express.
 
+	// TODO: add field border colour randomiser.
+
 	/** Local states for onCustom */
 	private static final int CUSTOMSTATE_IDLE = 0,
 	                         CUSTOMSTATE_INGAME = 1,
@@ -50,6 +52,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private int engineTick;
 	private int conveyorFrame;
 	private int bgm;
+	private int cargoReturnCooldown;
 
 	@Override
 	public String getName() {
@@ -68,9 +71,12 @@ public class ExpressShipping extends PuzzleGameEngine {
 		engineTick = 0;
 		conveyorFrame = 0;
 		bgm = 0;
+		cargoReturnCooldown = 0;
 
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
 		customHolder.loadImage("res/graphics/conveyor.png", "conveyor");
+		customHolder.loadImage("res/graphics/conveyorreverse.png", "conveyorreverse");
+		customHolder.loadImage("res/graphics/cargoreturn.png", "cargoreturn");
 	}
 
 	@Override
@@ -139,6 +145,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 			pieceRandomiser = new WeightedRandomiser(PIECE_WEIGHTS[0], engine.randSeed);
 			engineTick = 0;
 			conveyorFrame = 0;
+			cargoReturnCooldown = 0;
 
 			engine.field = Boards.getBoard(boardRandomiser.nextInt(Boards.Boards.length), engine.getSkin());
 
@@ -196,17 +203,21 @@ public class ExpressShipping extends PuzzleGameEngine {
 	public void renderLast(GameEngine engine, int playerID) {
 		if(owner.menuOnly) return;
 
-		receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_PINK);
-
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false)) ) {
+			receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_PINK);
 			if (!owner.replayMode) {
 				// DO NOTHING.
 			}
 		} else {
-			receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_PINK);
+			receiver.drawMenuFont(engine, playerID, 0, 19, getName(), EventReceiver.COLOR_PINK);
+			receiver.drawMenuFont(engine, playerID, 0, 21, "SCORE", EventReceiver.COLOR_PINK);
+			receiver.drawMenuFont(engine, playerID, 0, 22, String.valueOf(engine.statistics.score));
 
-			receiver.drawScoreFont(engine, playerID, 0, 6, "TIME", EventReceiver.COLOR_PINK);
-			receiver.drawScoreFont(engine, playerID, 0, 7, GeneralUtil.getTime(engine.statistics.time));
+			receiver.drawMenuFont(engine, playerID, 10, 21, "TIME", EventReceiver.COLOR_PINK);
+			receiver.drawMenuFont(engine, playerID, 10, 22, GeneralUtil.getTime(engine.statistics.time));
+
+			receiver.drawMenuFont(engine, playerID, 19, 21, "LEVEL", EventReceiver.COLOR_PINK);
+			receiver.drawMenuFont(engine, playerID, 19, 22, String.valueOf(engine.statistics.level + 1));
 
 			drawConveyorBelt(engine);
 		}
@@ -214,10 +225,18 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 	private void drawConveyorBelt(GameEngine engine) {
 		if (!engine.lagStop) {
+			// TODO: Move this to onCustom.
 			conveyorFrame = (conveyorFrame + 1) % CONVEYOR_ANIMATION_FRAMES;
 		}
 
 		int offset;
+		int cOffset;
+
+		if (cargoReturnCooldown > 0) {
+			cOffset = 104;
+		} else {
+			cOffset = 0;
+		}
 
 		if (conveyorFrame < 3) {
 			offset = 8 * conveyorFrame;
@@ -225,8 +244,14 @@ public class ExpressShipping extends PuzzleGameEngine {
 			offset = 24;
 		}
 
-		for (int i = 0; i <= ((640 - 120) / 8) + 1; i++) {
-			customHolder.drawImage(engine,"conveyor", 160 + (8 * i), 416, offset,0, 8,56,255, 255, 255, 255, 1f);
+		customHolder.drawImage(engine, "cargoreturn", 40,288, cOffset,0, 104,72, 255, 255, 255, 255, 1f);
+
+		for (int i = 0; i <= (32 / 8) + 1; i++) {
+			customHolder.drawImage(engine,"conveyorreverse", 32 - (8 * i), 304, offset,0, 8,56,255, 255, 255, 255, 1f);
+		}
+
+		for (int i = 0; i <= ((640 - 144) / 8) + 1; i++) {
+			customHolder.drawImage(engine,"conveyor", 144 + (8 * i), 304, offset,0, 8,56,255, 255, 255, 255, 1f);
 		}
 	}
 
