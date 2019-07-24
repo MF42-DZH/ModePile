@@ -75,7 +75,7 @@ public class I3 implements GamePiece {
 
 	@Override
 	public int getColour() {
-		return Block.BLOCK_COLOR_YELLOW;
+		return Block.BLOCK_COLOR_GRAY;
 	}
 
 	@Override

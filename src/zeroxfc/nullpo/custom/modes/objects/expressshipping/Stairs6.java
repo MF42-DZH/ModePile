@@ -2,43 +2,51 @@ package zeroxfc.nullpo.custom.modes.objects.expressshipping;
 
 import mu.nu.nullpo.game.component.Block;
 
-public class I4 implements GamePiece {
+public class Stairs6 implements GamePiece {
 	private static int[][][] contents = {
 			new int[][] {
-					new int[] { 0, 0, 0, 0 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 0, 0, 0, 0 },
-					new int[] { 0, 0, 0, 0 }
+					new int[] { 1, 0, 0 },
+					new int[] { 1, 1, 0 },
+					new int[] { 1, 1, 1 }
 			},
 			new int[][] {
-					new int[] { 0, 0, 1, 0 },
-					new int[] { 0, 0, 1, 0 },
-					new int[] { 0, 0, 1, 0 },
-					new int[] { 0, 0, 1, 0 }
-			}
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 0 },
+					new int[] { 1, 0, 0 },
+			},
+			new int[][] {
+					new int[] { 1, 1, 1 },
+					new int[] { 0, 1, 1 },
+					new int[] { 0, 0, 1 }
+			},
+			new int[][] {
+					new int[] { 0, 0, 1 },
+					new int[] { 0, 1, 1 },
+					new int[] { 1, 1, 1 },
+			},
 	};
 
 	private int[] location;
 	private int state;
 
-	public I4(int x, int y) {
+	public Stairs6(int x, int y) {
 		location = new int[] { x, y };
 		state = 0;
 	}
 
 	@Override
 	public int getScore() {
-		return 125;
+		return 450;
 	}
 
 	@Override
 	public int getWidth() {
-		return state == 0 ? 4 : 1;
+		return 3;
 	}
 
 	@Override
 	public int getHeight() {
-		return state == 0 ? 1 : 4;
+		return 3;
 	}
 
 	@Override
@@ -63,14 +71,13 @@ public class I4 implements GamePiece {
 
 	@Override
 	public int[] getCursorOffset() {
-		return new int[] { 2, 1 };
+		return new int[] { 1, 1 };
 	}
 
 	@Override
 	public double getConveyorYOffset() {
 		return 1.0;
 	}
-
 	@Override
 	public int getState() {
 		return state;
@@ -78,12 +85,12 @@ public class I4 implements GamePiece {
 
 	@Override
 	public int getColour() {
-		return Block.BLOCK_COLOR_BLUE;
+		return Block.BLOCK_COLOR_CYAN;
 	}
 
 	@Override
 	public void rotate() {
-		state = (state + 1) % 2;
+		state = (state + 1) % 4;
 	}
 
 	@Override

@@ -55,6 +55,22 @@ public class PieceFactory {
 				return new O4(x, y);
 			case PIECE_T4:
 				return new T4(x, y);
+			case PIECE_P5:
+				return new P5(x, y);
+			case PIECE_Q5:
+				return new Q5(x, y);
+			case PIECE_U5:
+				return new U5(x, y);
+			case PIECE_X5:
+				return new X5(x, y);
+			case PIECE_S5:
+				return new S5(x, y);
+			case PIECE_Z5:
+				return new Z5(x, y);
+			case PIECE_Stairs6:
+				return new Stairs6(x, y);
+			case PIECE_Cross6:
+				return new Cross6(x, y);
 			default:
 				return null;
 		}
