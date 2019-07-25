@@ -12,6 +12,8 @@ public interface GamePiece {
 	double getConveyorYOffset();
 	int getState();
 	int getColour();
+	int[][] getConveyorBoundingBox();
+	int[][][] getCursorBoundingBox();
 
 	void rotate();
 	void setLocation(int x, int y);

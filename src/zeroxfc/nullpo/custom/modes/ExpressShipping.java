@@ -9,6 +9,7 @@ import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.*;
 import zeroxfc.nullpo.custom.modes.objects.expressshipping.*;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class ExpressShipping extends PuzzleGameEngine {
@@ -65,14 +66,17 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private Random boardRandomiser;
 	private ResourceHolderCustomAssetExtension customHolder;
 	private WeightedRandomiser pieceRandomiser;
-	private GamePiece[] conveyorBelt;
+	private ArrayList<GamePiece> conveyorBelt;
 	private GamePiece selectedPiece;
 	private int monominoesLeft;
+	private int fieldsLeft;
 	private int localState;
 	private int engineTick;
 	private int conveyorFrame;
 	private int bgm;
 	private int cargoReturnCooldown;
+	private int endBonus;
+	private int[] mouseCoords;
 
 	@Override
 	public String getName() {
@@ -86,7 +90,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 		mouseControl = new MouseParser();
 
 		localState = CUSTOMSTATE_IDLE;
-		conveyorBelt = new GamePiece[48];
+		conveyorBelt = new ArrayList<>();
 		selectedPiece = null;
 		engineTick = 0;
 		conveyorFrame = 0;
@@ -169,7 +173,8 @@ public class ExpressShipping extends PuzzleGameEngine {
 			engineTick = 0;
 			conveyorFrame = 0;
 			cargoReturnCooldown = 0;
-			monominoesLeft = 10;
+			monominoesLeft = MONOMINO_START_AMOUNTS[0];
+			fieldsLeft = LEVEL_FIELD_QUOTA[0];
 
 			engine.field = Boards.getBoard(boardRandomiser.nextInt(Boards.Boards.length), engine.getSkin());
 
@@ -240,12 +245,21 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private void levelUp(GameEngine engine) {
 		engineTick = 0;
 		cargoReturnCooldown = 0;
+		conveyorBelt.clear();
 		engine.statistics.level++;
 
 		int effectiveLevel = engine.statistics.level;
 		if (effectiveLevel >= PIECE_WEIGHTS.length) effectiveLevel = PIECE_WEIGHTS.length - 1;
-
 		pieceRandomiser.setWeights(PIECE_WEIGHTS[effectiveLevel]);
+
+		effectiveLevel = engine.statistics.level;
+		if (effectiveLevel >= MONOMINO_START_AMOUNTS.length) effectiveLevel = MONOMINO_START_AMOUNTS.length - 1;
+		monominoesLeft = MONOMINO_START_AMOUNTS[effectiveLevel];
+
+		effectiveLevel = engine.statistics.level;
+		if (effectiveLevel >= LEVEL_FIELD_QUOTA.length) effectiveLevel = LEVEL_FIELD_QUOTA.length - 1;
+		fieldsLeft = LEVEL_FIELD_QUOTA[effectiveLevel];
+
 		owner.backgroundStatus.bg = (engine.statistics.level / 2) % 20;
 		generateNewField(engine);
 	}
@@ -254,12 +268,17 @@ public class ExpressShipping extends PuzzleGameEngine {
 	public boolean onCustom(GameEngine engine, int playerID) {
 		boolean updateTime = false;
 
+		mouseControl.update();
+		mouseCoords = mouseControl.getMouseCoordinates();
+
 		switch (localState) {
 			case CUSTOMSTATE_INGAME:
 				updateTime = statIngame(engine, playerID);
 				break;
 			case CUSTOMSTATE_RESULTS:
 				updateTime = statResults(engine, playerID);
+				break;
+			default:
 				break;
 		}
 
@@ -277,10 +296,39 @@ public class ExpressShipping extends PuzzleGameEngine {
 	 */
 
 	private boolean statIngame(GameEngine engine, int playerID) {
+		if (!engine.timerActive) engine.timerActive = true;
+		if (endBonus != 0) endBonus = 0;
+
 		return false;
 	}
 
 	private boolean statResults(GameEngine engine, int playerID) {
+		if (engine.timerActive) engine.timerActive = false;
+
+		if (engine.statc[0] == 0) {
+			int effectiveLevel = engine.statistics.level;
+			if (effectiveLevel >= LEVEL_FIELD_QUOTA.length) effectiveLevel = LEVEL_FIELD_QUOTA.length - 1;
+			int fieldsFilled = LEVEL_FIELD_QUOTA[effectiveLevel];
+
+			effectiveLevel = engine.statistics.level;
+			if (effectiveLevel >= LEVEL_END_BASE_BONUS.length) effectiveLevel = LEVEL_END_BASE_BONUS.length - 1;
+			int baseBonus = LEVEL_END_BASE_BONUS[effectiveLevel];
+
+			endBonus = fieldsFilled * monominoesLeft * baseBonus;
+			if (endBonus <= 0) endBonus = baseBonus;
+
+			engine.statistics.score += endBonus;
+		} else if (engine.statc[0] == 300) {
+			localState = CUSTOMSTATE_INGAME;
+			engine.playSE("go");
+			levelUp(engine);
+
+			engine.resetStatc();
+			return false;
+		} else if (engine.statc[0] == 240) {
+			engine.playSE("ready");
+		}
+
 		return true;
 	}
 
