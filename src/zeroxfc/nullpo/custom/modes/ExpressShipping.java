@@ -1,5 +1,7 @@
 package zeroxfc.nullpo.custom.modes;
 
+import mu.nu.nullpo.game.component.BGMStatus;
+import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
 import mu.nu.nullpo.game.component.Field;
 import mu.nu.nullpo.game.event.EventReceiver;
@@ -15,8 +17,6 @@ import java.util.Random;
 public class ExpressShipping extends PuzzleGameEngine {
 	// This is literally Puzzle Express.
 
-	// TODO: add field border colour randomiser.
-
 	/** Local states for onCustom */
 	private static final int CUSTOMSTATE_IDLE = 0,
 	                         CUSTOMSTATE_INGAME = 1,
@@ -25,7 +25,9 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private static final int CONVEYOR_SPEED = 1;
 	private static final int CONVEYOR_TICK = 2;
 	private static final int CONVEYOR_ANIMATION_FRAMES = 6;
-	private static final int BOUNDING_BOX_PADDING = 4;
+	private static final int BOUNDING_BOX_PADDING = 2;
+	private static final int SPAWN_TICK = 60;
+	private static final double SPAWN_CHANCE = (2.0 / 3.0);
 
 	// Piece weight table.
 	private static final int[][] PIECE_WEIGHTS = {
@@ -68,14 +70,17 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private WeightedRandomiser pieceRandomiser;
 	private ArrayList<GamePiece> conveyorBelt;
 	private GamePiece selectedPiece;
+	private GamePiece monominoConveyorBelt;
 	private int monominoesLeft;
 	private int fieldsLeft;
 	private int localState;
 	private int engineTick;
 	private int conveyorFrame;
 	private int bgm;
+	private int bg;
 	private int cargoReturnCooldown;
 	private int endBonus;
+	private int spawnTime;
 	private int[] mouseCoords;
 
 	@Override
@@ -92,9 +97,12 @@ public class ExpressShipping extends PuzzleGameEngine {
 		localState = CUSTOMSTATE_IDLE;
 		conveyorBelt = new ArrayList<>();
 		selectedPiece = null;
+		monominoConveyorBelt = null;
 		engineTick = 0;
 		conveyorFrame = 0;
+		bg = 0;
 		bgm = 0;
+		spawnTime = 0;
 		cargoReturnCooldown = 0;
 		monominoesLeft = 0;
 
@@ -106,18 +114,23 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 	@Override
 	public boolean onSetting(GameEngine engine, int playerID) {
-		owner.backgroundStatus.bg = 0;
+		owner.backgroundStatus.bg = (bg == -1) ? 0 : bg;
 
 		// Menu
 		if(!engine.owner.replayMode) {
 			// Configuration changes
-			int change = updateCursor(engine, 0, playerID);
+			int change = updateCursor(engine, 1, playerID);
 
 			if(change != 0) {
 				engine.playSE("change");
 
 				switch(engine.statc[2]) {
 					case 0:
+						bg += change;
+						if (bg > 19) bg = -1;
+						if (bg < -1) bg = 19;
+						break;
+					case 1:
 						bgm += change;
 						if (bgm > 15) bgm = -1;
 						if (bgm < -1) bgm = 15;
@@ -156,6 +169,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 	@Override
 	public void renderSetting(GameEngine engine, int playerID) {
 		drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE, 0,
+				"BG", (bg >= 0) ? String.valueOf(bg) : "AUTO",
 				"BGM", (bgm >= 0) ? String.valueOf(bgm) : "DISABLED");
 	}
 
@@ -173,10 +187,12 @@ public class ExpressShipping extends PuzzleGameEngine {
 			engineTick = 0;
 			conveyorFrame = 0;
 			cargoReturnCooldown = 0;
+			spawnTime = 0;
 			monominoesLeft = MONOMINO_START_AMOUNTS[0];
 			fieldsLeft = LEVEL_FIELD_QUOTA[0];
 
 			engine.field = Boards.getBoard(boardRandomiser.nextInt(Boards.Boards.length), engine.getSkin());
+			engine.framecolor = boardRandomiser.nextInt(8);
 
 			engine.ruleopt.nextDisplay = 0;
 			engine.ruleopt.holdEnable = false;
@@ -228,8 +244,98 @@ public class ExpressShipping extends PuzzleGameEngine {
 		return true;
 	}
 
+	@Override
+	public boolean onGameOver(GameEngine engine, int playerID) {
+		if(engine.lives <= 0) {
+			// もう復活できないとき
+			if(engine.statc[0] == 0) {
+				engine.gameEnded();
+				engine.blockShowOutlineOnly = false;
+				if(owner.getPlayers() < 2) owner.bgmStatus.bgm = BGMStatus.BGM_NOTHING;
+
+				if(engine.field.isEmpty()) {
+					engine.statc[0] = engine.field.getHeight() + 1;
+				} else {
+					engine.resetFieldVisible();
+				}
+			}
+
+			if(engine.statc[0] < engine.field.getHeight() + 1) {
+				for(int i = 0; i < engine.field.getWidth(); i++) {
+					if(engine.field.getBlockColor(i, engine.field.getHeight() - engine.statc[0]) != Block.BLOCK_COLOR_NONE) {
+						Block blk = engine.field.getBlock(i, engine.field.getHeight() - engine.statc[0]);
+
+						if(blk != null) {
+							if (blk.color > Block.BLOCK_COLOR_NONE) {
+								if(!blk.getAttribute(Block.BLOCK_ATTRIBUTE_GARBAGE)) {
+									blk.color = Block.BLOCK_COLOR_GRAY;
+									blk.setAttribute(Block.BLOCK_ATTRIBUTE_GARBAGE, true);
+								}
+								blk.darkness = 0.3f;
+								blk.elapsedFrames = -1;
+							}
+						}
+					}
+				}
+				engine.statc[0]++;
+			} else if(engine.statc[0] == engine.field.getHeight() + 1) {
+				engine.playSE("gameover");
+				engine.statc[0]++;
+			} else if(engine.statc[0] < engine.field.getHeight() + 1 + 180) {
+				if((engine.statc[0] >= engine.field.getHeight() + 1 + 60) && (engine.ctrl.isPush(Controller.BUTTON_A))) {
+					engine.statc[0] = engine.field.getHeight() + 1 + 180;
+				}
+
+				engine.statc[0]++;
+			} else {
+				// XXX: DO NOT SAVE REPLAY; MOUSE INCOMPATIBLE.
+				// if(!owner.replayMode || owner.replayRerecord) owner.saveReplay();
+
+				for(int i = 0; i < owner.getPlayers(); i++) {
+					if((i == playerID) || (engine.gameoverAll)) {
+						if(owner.engine[i].field != null) {
+							owner.engine[i].field.reset();
+						}
+						owner.engine[i].resetStatc();
+						owner.engine[i].stat = GameEngine.STAT_RESULT;
+					}
+				}
+			}
+		} else {
+			// 復活できるとき
+			if(engine.statc[0] == 0) {
+				engine.blockShowOutlineOnly = false;
+				engine.playSE("died");
+
+				engine.resetFieldVisible();
+
+				for(int i = (engine.field.getHiddenHeight() * -1); i < engine.field.getHeight(); i++) {
+					for(int j = 0; j < engine.field.getWidth(); j++) {
+						if(engine.field.getBlockColor(j, i) != Block.BLOCK_COLOR_NONE) {
+							engine.field.setBlockColor(j, i, Block.BLOCK_COLOR_GRAY);
+						}
+					}
+				}
+
+				engine.statc[0] = 1;
+			}
+
+			if(!engine.field.isEmpty()) {
+				engine.field.pushDown();
+			} else if(engine.statc[1] < engine.getARE()) {
+				engine.statc[1]++;
+			} else {
+				engine.lives--;
+				engine.resetStatc();
+				engine.stat = GameEngine.STAT_CUSTOM;
+			}
+		}
+		return true;
+	}
+
 	private void generateNewField(GameEngine engine) {
 		engine.field = Boards.getBoard(boardRandomiser.nextInt(Boards.Boards.length), engine.getSkin());
+		engine.framecolor = boardRandomiser.nextInt(8);
 
 		engine.ruleopt.nextDisplay = 0;
 		engine.ruleopt.holdEnable = false;
@@ -244,7 +350,12 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 	private void levelUp(GameEngine engine) {
 		engineTick = 0;
+		spawnTime = 0;
 		cargoReturnCooldown = 0;
+
+		selectedPiece = null;
+		monominoConveyorBelt = null;
+
 		conveyorBelt.clear();
 		engine.statistics.level++;
 
@@ -260,7 +371,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 		if (effectiveLevel >= LEVEL_FIELD_QUOTA.length) effectiveLevel = LEVEL_FIELD_QUOTA.length - 1;
 		fieldsLeft = LEVEL_FIELD_QUOTA[effectiveLevel];
 
-		owner.backgroundStatus.bg = (engine.statistics.level / 2) % 20;
+		if (bg == -1) owner.backgroundStatus.bg = (engine.statistics.level / 2) % 20;
 		generateNewField(engine);
 	}
 
@@ -295,17 +406,144 @@ public class ExpressShipping extends PuzzleGameEngine {
 	 * Standard field location parsing. Use getWidth() and getHeight().
 	 */
 
+	/*
+	 * Now how to check conveyor collisions?
+	 * Maybe use the bounding box in GamePiece.
+	 * Hm...
+	 *
+	 * IDEA 1: make array of bounding boxes.
+	 */
+
 	private boolean statIngame(GameEngine engine, int playerID) {
 		if (!engine.timerActive) engine.timerActive = true;
 		if (endBonus != 0) endBonus = 0;
 
+		int[][][] boundingBoxesSpawn = new int[1][][];
+		if (conveyorBelt.size() > 0) boundingBoxesSpawn = new int[conveyorBelt.size()][][];
+
+		spawnTime++;
+		if (spawnTime >= SPAWN_TICK) {
+			spawnTime = 0;
+
+			if (conveyorBelt.size() > 0) {
+				int i = 0;
+				for (GamePiece piece : conveyorBelt) {
+					boundingBoxesSpawn[i] = piece.getConveyorBoundingBox();
+					i++;
+				}
+
+				// TODO: Move this to the movement code.
+				boolean lose = false;
+				for (int[][] bbox : boundingBoxesSpawn) {
+					int minX = bbox[0][0] - BOUNDING_BOX_PADDING;
+					int maxX = bbox[1][0] + BOUNDING_BOX_PADDING;
+					if (minX < 700 && 700 < maxX) {
+						lose = true;
+						break;
+					}
+				}
+
+				if (lose) {
+					localState = CUSTOMSTATE_IDLE;
+					engine.stat = GameEngine.STAT_GAMEOVER;
+
+					engine.gameEnded();
+					engine.resetStatc();
+					return false;
+				} else {
+					conveyorBelt.add(PieceFactory.getPiece(pieceRandomiser.nextInt(), -1, -1));
+					conveyorBelt.get(conveyorBelt.size() - 1).setLocation(700, 324 - (int)(conveyorBelt.get(conveyorBelt.size() - 1).getConveyorYOffset() * 16));
+				}
+
+			} else {
+				conveyorBelt.add(PieceFactory.getPiece(pieceRandomiser.nextInt(), -1, -1));
+				conveyorBelt.get(conveyorBelt.size() - 1).setLocation(700, 324 - (int)(conveyorBelt.get(conveyorBelt.size() - 1).getConveyorYOffset() * 16));
+			}
+		}
+
+		engineTick++;
+		if (engineTick >= CONVEYOR_TICK) {
+			engineTick = 0;
+			if (conveyorBelt.size() > 0) {
+				for (int i = 0; i < conveyorBelt.size(); i++) {
+					int[][][] boundingBoxesMove = new int[conveyorBelt.size()][][];
+
+					int i2 = 0;
+					for (GamePiece piece : conveyorBelt) {
+						if (i2 != i) boundingBoxesMove[i] = piece.getConveyorBoundingBox();
+						i2++;
+					}
+
+					int pieceX = conveyorBelt.get(i).getLocation()[0];
+					int pieceY = conveyorBelt.get(i).getLocation()[1];
+
+					boolean canMove = false;
+					for (int[][] bbox : boundingBoxesMove) {
+						int minX = bbox[0][0] - BOUNDING_BOX_PADDING;
+						int maxX = bbox[1][0] + BOUNDING_BOX_PADDING;
+						if (minX < pieceX - CONVEYOR_SPEED ) {
+							canMove = true;
+							break;
+						}
+					}
+				}
+			}
+		}
+
 		return false;
+	}
+
+	private boolean checkPieceFit(GameEngine engine, GamePiece piece, int x, int y) {
+		int width = engine.field.getWidth();
+		int height = engine.field.getHeight();
+
+		for (int y2 = 0; y2 < piece.getContents().length; y2++) {
+			for (int x2 = 0; x2 < piece.getContents()[0].length; x2++) {
+				int tX = x + x2;
+				int tY = y + y2;
+
+				if (piece.getContents()[y2][x2] != 0) {
+					if (tX < 0 || tX >= width) {
+						return false;
+					}
+					if (tY < 0 || tX >= height) {
+						return false;
+					}
+
+					Block blk = engine.field.getBlock(tX, tY);
+					if (blk.color != Block.BLOCK_COLOR_NONE) {
+						return false;
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	private void insertPiece(GameEngine engine, GamePiece piece, int x, int y) {
+		for (int y2 = 0; y2 < piece.getContents().length; y2++) {
+			for (int x2 = 0; x2 < piece.getContents()[0].length; x2++) {
+				int tX = x + x2;
+				int tY = y + y2;
+
+				if (piece.getContents()[y2][x2] != 0) {
+					Block blk = new Block(piece.getColour(), engine.getSkin());
+					blk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+					blk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+
+					engine.field.getBlock(tX, tY).copy(blk);
+				}
+			}
+		}
 	}
 
 	private boolean statResults(GameEngine engine, int playerID) {
 		if (engine.timerActive) engine.timerActive = false;
 
 		if (engine.statc[0] == 0) {
+			engine.playSE("stageclear");
+
 			int effectiveLevel = engine.statistics.level;
 			if (effectiveLevel >= LEVEL_FIELD_QUOTA.length) effectiveLevel = LEVEL_FIELD_QUOTA.length - 1;
 			int fieldsFilled = LEVEL_FIELD_QUOTA[effectiveLevel];
@@ -336,13 +574,14 @@ public class ExpressShipping extends PuzzleGameEngine {
 	public void renderLast(GameEngine engine, int playerID) {
 		if(owner.menuOnly) return;
 
-		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false)) ) {
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
 			receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_PINK);
 			if (!owner.replayMode) {
 				// DO NOTHING.
 			}
 		} else {
 			receiver.drawMenuFont(engine, playerID, 0, 19, getName(), EventReceiver.COLOR_PINK);
+
 			receiver.drawMenuFont(engine, playerID, 0, 21, "SCORE", EventReceiver.COLOR_PINK);
 			receiver.drawMenuFont(engine, playerID, 0, 22, String.valueOf(engine.statistics.score));
 
@@ -351,6 +590,9 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 			receiver.drawMenuFont(engine, playerID, 20, 21, "LEVEL", EventReceiver.COLOR_PINK);
 			receiver.drawMenuFont(engine, playerID, 20, 22, String.valueOf(engine.statistics.level + 1));
+
+			receiver.drawMenuFont(engine, playerID, 27, 21, "QUOTA", EventReceiver.COLOR_PINK);
+			receiver.drawMenuFont(engine, playerID, 28, 22, String.valueOf(fieldsLeft));
 
 			drawConveyorBelt(engine);
 		}

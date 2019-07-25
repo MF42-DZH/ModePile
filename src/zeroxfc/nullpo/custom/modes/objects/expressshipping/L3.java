@@ -113,11 +113,11 @@ public class L3 implements GamePiece {
 		int[] tlc, brc;
 		tlc = new int[]{
 				location[0] + (minX * 16),
-				location[1] + (minY * 16) - (int)(getConveyorYOffset() * 16)
+				location[1] + (minY * 16)
 		};
 		brc = new int[]{
 				location[0] + (maxX * 16),
-				location[1] + (maxY * 16) - (int)(getConveyorYOffset() * 16)
+				location[1] + (maxY * 16)
 		};
 
 		return new int[][] { tlc, brc };
@@ -134,11 +134,11 @@ public class L3 implements GamePiece {
 							new int[][] {
 									new int[] {
 											location[0] + (x * 16),
-											location[1] + (y * 16) - (int)(getConveyorYOffset() * 16)
+											location[1] + (y * 16)
 									},
 									new int[] {
 											location[0] + ((x + 1) * 16),
-											location[1] + ((y + 1) * 16) - (int)(getConveyorYOffset() * 16)
+											location[1] + ((y + 1) * 16)
 									}
 							}
 					);
