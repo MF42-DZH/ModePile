@@ -364,6 +364,7 @@ public class Boards {
 		for (int y = 0; y < dimY; y++) {
 			for (int x = 0; x < dimX; x++) {
 				localField.getBlock(x, y).copy(new Block(Boards[index][y][x], skin));
+				localField.getBlock(x, y).setAttribute(Block.BLOCK_ATTRIBUTE_BONE, true);
 			}
 		}
 

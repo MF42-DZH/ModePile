@@ -7,14 +7,14 @@ import java.util.ArrayList;
 public class I3 implements GamePiece {
 	private static int[][][] contents = {
 			new int[][] {
-					new int[] { 0, 1, 0 },
-					new int[] { 0, 1, 0 },
-					new int[] { 0, 1, 0 }
-			},
-			new int[][] {
 					new int[] { 0, 0, 0 },
 					new int[] { 1, 1, 1 },
-					new int[] { 0, 0, 0 },
+					new int[] { 0, 0, 0 }
+			},
+			new int[][] {
+					new int[] { 0, 1, 0 },
+					new int[] { 0, 1, 0 },
+					new int[] { 0, 1, 0 },
 			}
 	};
 
@@ -33,12 +33,12 @@ public class I3 implements GamePiece {
 
 	@Override
 	public int getWidth() {
-		return state == 0 ? 1 : 3;
+		return state == 0 ? 3 : 1;
 	}
 
 	@Override
 	public int getHeight() {
-		return state == 0 ? 3 : 1;
+		return state == 0 ? 1 : 3;
 	}
 
 	@Override
@@ -77,20 +77,20 @@ public class I3 implements GamePiece {
 
 	@Override
 	public int getColour() {
-		return Block.BLOCK_COLOR_GRAY;
+		return Block.BLOCK_COLOR_RED;
 	}
 
 	@Override
 	public int[][] getConveyorBoundingBox() {
 		int minX, minY, maxX, maxY;
 
-		minX = getWidth();
-		minY = getHeight();
+		minX = contents[0][0].length - 1;
+		minY = contents[0].length - 1;
 		maxX = 0;
 		maxY = 0;
 
-		for (int y = 0; y < getHeight(); y++) {
-			for (int x = 0; x < getWidth(); x++) {
+		for (int y = 0; y < contents[0].length; y++) {
+			for (int x = 0; x < contents[0][0].length; x++)  {
 				if (contents[state][y][x] != 0) {
 					if (x < minX) minX = x;
 					if (y < minY) minY = y;
@@ -120,8 +120,8 @@ public class I3 implements GamePiece {
 	public int[][][] getCursorBoundingBox() {
 		ArrayList<int[][]> boxes = new ArrayList<>();
 
-		for (int y = 0; y < getHeight(); y++) {
-			for (int x = 0; x < getWidth(); x++) {
+		for (int y = 0; y < contents[state].length; y++) {
+			for (int x = 0; x < contents[state][0].length; x++) {
 				if (contents[state][y][x] != 0) {
 					boxes.add(
 							new int[][] {

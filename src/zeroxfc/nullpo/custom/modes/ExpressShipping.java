@@ -3,13 +3,15 @@ package zeroxfc.nullpo.custom.modes;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
-import mu.nu.nullpo.game.component.Field;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.util.GeneralUtil;
+import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.*;
 import zeroxfc.nullpo.custom.modes.objects.expressshipping.*;
+import zeroxfc.nullpo.custom.modes.objects.gemswap.Effect;
+import zeroxfc.nullpo.custom.modes.objects.gemswap.ScorePopup;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -17,16 +19,17 @@ import java.util.Random;
 public class ExpressShipping extends PuzzleGameEngine {
 	// This is literally Puzzle Express.
 
+	private static Logger log = Logger.getLogger(ExpressShipping.class);
+
 	/** Local states for onCustom */
 	private static final int CUSTOMSTATE_IDLE = 0,
 	                         CUSTOMSTATE_INGAME = 1,
 	                         CUSTOMSTATE_RESULTS = 2;
 
 	private static final int CONVEYOR_SPEED = 1;
-	private static final int CONVEYOR_TICK = 2;
 	private static final int CONVEYOR_ANIMATION_FRAMES = 6;
-	private static final int BOUNDING_BOX_PADDING = 2;
-	private static final int SPAWN_TICK = 60;
+	private static final int BOUNDING_BOX_PADDING = 4;
+	private static final int SPAWN_TICK = 90;
 	private static final double SPAWN_CHANCE = (2.0 / 3.0);
 
 	// Piece weight table.
@@ -66,11 +69,14 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private EventReceiver receiver;
 	private MouseParser mouseControl;
 	private Random boardRandomiser;
+	private Random miscRandomiser;
 	private ResourceHolderCustomAssetExtension customHolder;
 	private WeightedRandomiser pieceRandomiser;
 	private ArrayList<GamePiece> conveyorBelt;
+	private ArrayList<Integer> history;
 	private GamePiece selectedPiece;
 	private GamePiece monominoConveyorBelt;
+	private Effect[] scorePopups;
 	private int monominoesLeft;
 	private int fieldsLeft;
 	private int localState;
@@ -82,6 +88,8 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private int endBonus;
 	private int spawnTime;
 	private int[] mouseCoords;
+	private int spawnTries;
+	private int scoreTowardsNewMonomino;
 
 	@Override
 	public String getName() {
@@ -96,6 +104,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 		localState = CUSTOMSTATE_IDLE;
 		conveyorBelt = new ArrayList<>();
+		history = new ArrayList<>();
 		selectedPiece = null;
 		monominoConveyorBelt = null;
 		engineTick = 0;
@@ -105,11 +114,28 @@ public class ExpressShipping extends PuzzleGameEngine {
 		spawnTime = 0;
 		cargoReturnCooldown = 0;
 		monominoesLeft = 0;
+		spawnTries = 0;
+		scoreTowardsNewMonomino = 0;
+		scorePopups = new Effect[32];
 
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
 		customHolder.loadImage("res/graphics/conveyor.png", "conveyor");
 		customHolder.loadImage("res/graphics/conveyorreverse.png", "conveyorreverse");
 		customHolder.loadImage("res/graphics/cargoreturn.png", "cargoreturn");
+	}
+
+	private void resetHistory() {
+		history.clear();
+
+		history.add(-1);
+		history.add(-1);
+		history.add(-1);
+		history.add(-1);
+	}
+
+	private void appendHistory(int e) {
+		history.remove(0);
+		history.add(e);
 	}
 
 	@Override
@@ -182,14 +208,20 @@ public class ExpressShipping extends PuzzleGameEngine {
 		// Initialization
 		if(engine.statc[0] == 0) {
 			// fieldInitialization
+			scorePopups = new Effect[32];
 			boardRandomiser = new Random(engine.randSeed);
+			miscRandomiser = new Random(engine.randSeed);
 			pieceRandomiser = new WeightedRandomiser(PIECE_WEIGHTS[0], engine.randSeed);
 			engineTick = 0;
 			conveyorFrame = 0;
 			cargoReturnCooldown = 0;
 			spawnTime = 0;
+			spawnTries = 0;
 			monominoesLeft = MONOMINO_START_AMOUNTS[0];
 			fieldsLeft = LEVEL_FIELD_QUOTA[0];
+			scoreTowardsNewMonomino = 0;
+			conveyorBelt.clear();
+			resetHistory();
 
 			engine.field = Boards.getBoard(boardRandomiser.nextInt(Boards.Boards.length), engine.getSkin());
 			engine.framecolor = boardRandomiser.nextInt(8);
@@ -352,11 +384,13 @@ public class ExpressShipping extends PuzzleGameEngine {
 		engineTick = 0;
 		spawnTime = 0;
 		cargoReturnCooldown = 0;
+		scoreTowardsNewMonomino = 0;
 
 		selectedPiece = null;
 		monominoConveyorBelt = null;
 
 		conveyorBelt.clear();
+		resetHistory();
 		engine.statistics.level++;
 
 		int effectiveLevel = engine.statistics.level;
@@ -412,80 +446,205 @@ public class ExpressShipping extends PuzzleGameEngine {
 	 * Hm...
 	 *
 	 * IDEA 1: make array of bounding boxes.
+	 *
+	 * !! THIS IS WORKING NOW !!
 	 */
 
 	private boolean statIngame(GameEngine engine, int playerID) {
 		if (!engine.timerActive) engine.timerActive = true;
 		if (endBonus != 0) endBonus = 0;
 
-		int[][][] boundingBoxesSpawn = new int[1][][];
-		if (conveyorBelt.size() > 0) boundingBoxesSpawn = new int[conveyorBelt.size()][][];
-
+		// region SPAWNCODE
 		spawnTime++;
 		if (spawnTime >= SPAWN_TICK) {
 			spawnTime = 0;
 
-			if (conveyorBelt.size() > 0) {
-				int i = 0;
-				for (GamePiece piece : conveyorBelt) {
-					boundingBoxesSpawn[i] = piece.getConveyorBoundingBox();
-					i++;
-				}
+			double coeff = miscRandomiser.nextDouble();
 
-				// TODO: Move this to the movement code.
-				boolean lose = false;
-				for (int[][] bbox : boundingBoxesSpawn) {
-					int minX = bbox[0][0] - BOUNDING_BOX_PADDING;
-					int maxX = bbox[1][0] + BOUNDING_BOX_PADDING;
-					if (minX < 700 && 700 < maxX) {
-						lose = true;
-						break;
+			if (coeff < SPAWN_CHANCE) {
+				if (!isPieceExistAtX(700)) {
+					int v = -1;
+					int rolls = 0;
+
+					do {
+						v = pieceRandomiser.nextInt();
+						rolls++;
+					} while (history.contains(v) && rolls < 4);
+
+					appendHistory(v);
+
+					conveyorBelt.add(PieceFactory.getPiece(v, -1, -1));
+					conveyorBelt.get(conveyorBelt.size() - 1).setLocation(700, 324 - (int)(conveyorBelt.get(conveyorBelt.size() - 1).getConveyorYOffset() * 16));
+					spawnTries = 0;
+				} else {
+					if (spawnTries < 3) {
+						spawnTries++;
+					} else {
+						localState = CUSTOMSTATE_IDLE;
+						engine.stat = GameEngine.STAT_GAMEOVER;
+						engine.resetStatc();
+						engine.gameEnded();
+
+						selectedPiece = null;
+
+						return false;
 					}
 				}
+			}
+		}
+		// endregion SPAWNCODE
 
-				if (lose) {
-					localState = CUSTOMSTATE_IDLE;
-					engine.stat = GameEngine.STAT_GAMEOVER;
+		// region MOVECODE
+		if (!conveyorBelt.isEmpty()) {
+			for (int i = 0; i < conveyorBelt.size(); i++) {
+				int tX = conveyorBelt.get(i).getConveyorBoundingBox()[0][0] - CONVEYOR_SPEED;  // Min X of piece.
+				int x = conveyorBelt.get(i).getX();
+				int y = conveyorBelt.get(i).getY();
 
-					engine.gameEnded();
-					engine.resetStatc();
-					return false;
-				} else {
-					conveyorBelt.add(PieceFactory.getPiece(pieceRandomiser.nextInt(), -1, -1));
-					conveyorBelt.get(conveyorBelt.size() - 1).setLocation(700, 324 - (int)(conveyorBelt.get(conveyorBelt.size() - 1).getConveyorYOffset() * 16));
+				if (!isPieceExistAtX(tX, i) && tX >= 144 + BOUNDING_BOX_PADDING) {
+					conveyorBelt.get(i).setLocation(x - CONVEYOR_SPEED, y);
 				}
-
-			} else {
-				conveyorBelt.add(PieceFactory.getPiece(pieceRandomiser.nextInt(), -1, -1));
-				conveyorBelt.get(conveyorBelt.size() - 1).setLocation(700, 324 - (int)(conveyorBelt.get(conveyorBelt.size() - 1).getConveyorYOffset() * 16));
 			}
 		}
 
-		engineTick++;
-		if (engineTick >= CONVEYOR_TICK) {
-			engineTick = 0;
-			if (conveyorBelt.size() > 0) {
-				for (int i = 0; i < conveyorBelt.size(); i++) {
-					int[][][] boundingBoxesMove = new int[conveyorBelt.size()][][];
+		// endregion MOVECODE
 
-					int i2 = 0;
-					for (GamePiece piece : conveyorBelt) {
-						if (i2 != i) boundingBoxesMove[i] = piece.getConveyorBoundingBox();
-						i2++;
+		// !!IMPORTANT: Move monominoes to x=12.
+
+		// region MONOMINO SPAWNCODE
+		if (monominoConveyorBelt == null && monominoesLeft > 0) {
+			monominoConveyorBelt = PieceFactory.getPiece(0, -64, 324);
+		}
+		// endregion MONOMINO SPAWNCODE
+
+		// region MONOMINO MOVECODE
+		if (monominoConveyorBelt != null) {
+			int x = monominoConveyorBelt.getX();
+			int y = monominoConveyorBelt.getY();
+
+			if (x + CONVEYOR_SPEED < 12) {
+				monominoConveyorBelt.setLocation(x + CONVEYOR_SPEED, y);
+			}
+		}
+		// endregion MONOMINO MOVECODE
+
+		// region CLICK CODE
+		if (selectedPiece == null) {
+			if (mouseControl.getMouseClick(MouseParser.BUTTON_LEFT)) {
+				if (monominoConveyorBelt != null && monominoesLeft > 0) {
+					int[][][] cbbox = monominoConveyorBelt.getCursorBoundingBox();
+
+					if (
+							mouseCoords[0] >= cbbox[0][0][0] && mouseCoords[1] >= cbbox[0][0][1] && mouseCoords[0] < cbbox[0][1][0] && mouseCoords[1] < cbbox[0][1][1]
+					) {
+						selectedPiece = monominoConveyorBelt;
+						monominoConveyorBelt = null;
+						monominoesLeft--;
 					}
+				}
 
-					int pieceX = conveyorBelt.get(i).getLocation()[0];
-					int pieceY = conveyorBelt.get(i).getLocation()[1];
+				if (selectedPiece == null) {
+					for (int i = 0; i < conveyorBelt.size(); i++) {
+						int[][][] cbboxes = conveyorBelt.get(i).getCursorBoundingBox();
+						for (int[][] bbox : cbboxes) {
+							int minX, minY, maxX, maxY;
+							minX = bbox[0][0];
+							minY = bbox[0][1];
+							maxX = bbox[1][0];
+							maxY = bbox[1][1];
 
-					boolean canMove = false;
-					for (int[][] bbox : boundingBoxesMove) {
-						int minX = bbox[0][0] - BOUNDING_BOX_PADDING;
-						int maxX = bbox[1][0] + BOUNDING_BOX_PADDING;
-						if (minX < pieceX - CONVEYOR_SPEED ) {
-							canMove = true;
+							if (mouseCoords[0] >= minX && mouseCoords[1] >= minY && mouseCoords[0] <= maxX && mouseCoords[1] <= maxY) {
+								selectedPiece = conveyorBelt.get(i);
+								conveyorBelt.remove(i);
+								break;
+							}
+						}
+
+						if (selectedPiece != null) {
 							break;
 						}
 					}
+				}
+			} else if (mouseControl.getMouseClick(MouseParser.BUTTON_RIGHT)) {
+				if (monominoConveyorBelt != null) {
+					int[] offset = monominoConveyorBelt.getCursorOffset();
+					int fX = ((mouseCoords[0] - 4 - receiver.getFieldDisplayPositionX(engine, playerID)) / 16) - offset[0];
+					int fY = ((mouseCoords[1] - 52 - receiver.getFieldDisplayPositionY(engine, playerID)) / 16) - offset[1];
+
+					if (checkPieceFit(engine, monominoConveyorBelt, fX, fY)) {
+						insertPiece(engine, monominoConveyorBelt, fX, fY);
+						engine.statistics.score += monominoConveyorBelt.getScore();
+						monominoConveyorBelt = null;
+						monominoesLeft--;
+					}
+				}
+			}
+		} else {
+			if (mouseControl.getMouseClick(MouseParser.BUTTON_RIGHT)) {
+				selectedPiece.rotate();
+			}
+			if (mouseControl.getMouseClick(MouseParser.BUTTON_LEFT)) {
+				int[] offset = selectedPiece.getCursorOffset();
+				int fX = ((mouseCoords[0] - 4 - receiver.getFieldDisplayPositionX(engine, playerID)) / 16) - offset[0];
+				int fY = ((mouseCoords[1] - 52 - receiver.getFieldDisplayPositionY(engine, playerID)) / 16) - offset[1];
+
+				if (checkPieceFit(engine, selectedPiece, fX, fY)) {
+					int lines = getFieldLines(engine);
+
+					insertPiece(engine, selectedPiece, fX, fY);
+
+					int lineDiff = getFieldLines(engine) - lines;
+					if (lineDiff == 0) lineDiff = 1;
+
+					engine.statistics.score += lineDiff * selectedPiece.getScore();
+
+					selectedPiece = null;
+				}
+			}
+		}
+		// endregion CLICK CODE
+		return false;
+	}
+
+	private boolean isPieceExistAtX(int x) {
+		if (!conveyorBelt.isEmpty()) {
+			int[][][] boundingBoxes = new int[conveyorBelt.size()][][];
+
+			int i = 0;
+			for (GamePiece piece : conveyorBelt) {
+				boundingBoxes[i] = piece.getConveyorBoundingBox();
+				i++;
+			}
+
+			for (int[][] bbox : boundingBoxes) {
+				int minX = bbox[0][0] - BOUNDING_BOX_PADDING;
+				int maxX = bbox[1][0] + BOUNDING_BOX_PADDING;
+
+				if (minX <= x && x <= maxX) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	private boolean isPieceExistAtX(int x, int indexExclusion) {
+		if (conveyorBelt.size() > 1) {
+			ArrayList<int[][]> boundingBoxes = new ArrayList<>();
+
+			int i = 0;
+			for (GamePiece piece : conveyorBelt) {
+				if (i != indexExclusion) boundingBoxes.add(piece.getConveyorBoundingBox());
+				i++;
+			}
+
+			for (int[][] bbox : boundingBoxes) {
+				int minX = bbox[0][0] - BOUNDING_BOX_PADDING;
+				int maxX = bbox[1][0] + BOUNDING_BOX_PADDING;
+
+				if (minX <= x && x <= maxX) {
+					return true;
 				}
 			}
 		}
@@ -506,7 +665,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 					if (tX < 0 || tX >= width) {
 						return false;
 					}
-					if (tY < 0 || tX >= height) {
+					if (tY < 0 || tY >= height) {
 						return false;
 					}
 
@@ -536,6 +695,31 @@ public class ExpressShipping extends PuzzleGameEngine {
 				}
 			}
 		}
+	}
+
+	private int getFieldLines(GameEngine engine) {
+		int lines = 0;
+
+		for (int y = 0; y < engine.field.getHeight(); y++) {
+			boolean line = true;
+
+			for (int x = 0; x < engine.field.getWidth(); x++) {
+				Block blk = engine.field.getBlock(x, y);
+				if (blk.color == Block.BLOCK_COLOR_NONE) {
+					line = false;
+					break;
+				}
+			}
+
+			if (line) lines++;
+		}
+
+		return lines;
+	}
+
+	private boolean isFieldFull(GameEngine engine) {
+		// TODO: this. just this, level clear logic, SFX and a few more.
+		return false;
 	}
 
 	private boolean statResults(GameEngine engine, int playerID) {
@@ -592,9 +776,28 @@ public class ExpressShipping extends PuzzleGameEngine {
 			receiver.drawMenuFont(engine, playerID, 20, 22, String.valueOf(engine.statistics.level + 1));
 
 			receiver.drawMenuFont(engine, playerID, 27, 21, "QUOTA", EventReceiver.COLOR_PINK);
-			receiver.drawMenuFont(engine, playerID, 28, 22, String.valueOf(fieldsLeft));
+			receiver.drawMenuFont(engine, playerID, 27, 22, String.valueOf(fieldsLeft));
+
+			int length = String.valueOf(monominoesLeft).length();
+			int offset = 0;
+			if (length == 1) offset = 8;
+			receiver.drawDirectFont(engine, playerID, 4 + offset, 286, String.valueOf(monominoesLeft));
+
+			receiver.drawDirectFont(engine, playerID, 10, 362, scoreTowardsNewMonomino + " /", EventReceiver.COLOR_WHITE, 0.5f);
+			receiver.drawDirectFont(engine, playerID, 10, 370, "3000", EventReceiver.COLOR_WHITE, 0.5f);
 
 			drawConveyorBelt(engine);
+			if (conveyorBelt != null && !conveyorBelt.isEmpty()) {
+				for (GamePiece piece : conveyorBelt) {
+					drawPiece(engine, playerID, piece);
+				}
+			}
+			if (monominoConveyorBelt != null) {
+				drawPiece(engine, playerID, monominoConveyorBelt);
+			}
+			if (selectedPiece != null) {
+				drawMousePiece(engine, playerID);
+			}
 		}
 	}
 
@@ -630,15 +833,32 @@ public class ExpressShipping extends PuzzleGameEngine {
 		}
 	}
 
-	private void moveAllPiecesInBelt() {
-		engineTick++;
+	private void drawPiece(GameEngine engine, int playerID, GamePiece piece) {
+		int[][] contents = piece.getContents();
+		int x = piece.getX();
+		int y = piece.getY();
+		int colour = piece.getColour();
 
-		if (engineTick >= CONVEYOR_TICK) {
-			engineTick = 0;
-			for (GamePiece piece : conveyorBelt) {
-				if (piece != null) {
-					// Sort this out when UI design is done.
-					// piece.setLocation(piece.getX() + CONVEYOR_SPEED, piece.getY());
+		for (int y2 = 0; y2 < contents.length; y2++) {
+			for (int x2 = 0; x2 < contents[y2].length; x2++) {
+				if (contents[y2][x2] != 0) {
+					receiver.drawSingleBlock(engine, playerID, x + (x2 * 16), y + (y2 * 16), colour, engine.getSkin(), false, 0f, 1f, 1f);
+				}
+			}
+		}
+	}
+
+	private void drawMousePiece(GameEngine engine, int playerID) {
+		int[][] contents = selectedPiece.getContents();
+		int[] offset = selectedPiece.getCursorOffset();
+		int x = mouseCoords[0] - (16 * offset[0]);
+		int y = mouseCoords[1] - (16 * offset[1]);
+		int colour = selectedPiece.getColour();
+
+		for (int y2 = 0; y2 < contents.length; y2++) {
+			for (int x2 = 0; x2 < contents[y2].length; x2++) {
+				if (contents[y2][x2] != 0) {
+					receiver.drawSingleBlock(engine, playerID, x + (x2 * 16) - 8, y + (y2 * 16) - 8, colour, engine.getSkin(), false, 0f, 1f, 1f);
 				}
 			}
 		}
