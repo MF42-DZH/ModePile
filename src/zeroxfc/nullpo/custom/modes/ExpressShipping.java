@@ -29,7 +29,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private static final int CONVEYOR_SPEED = 1;
 	private static final int CONVEYOR_ANIMATION_FRAMES = 6;
 	private static final int BOUNDING_BOX_PADDING = 4;
-	private static final int SPAWN_TICK = 120;
+	private static final int SPAWN_TICK = 150;
 	private static final double SPAWN_CHANCE = (2.0 / 3.0);
 
 	// Piece weight table.
@@ -481,16 +481,14 @@ public class ExpressShipping extends PuzzleGameEngine {
 		if (isFieldFull(engine)) {
 			fieldsLeft--;
 			if (fieldsLeft <= 0) {
-				engine.playSE("stageclear");
 				localState = CUSTOMSTATE_RESULTS;
 				engine.resetStatc();
+				return false;
 			} else {
 				engine.playSE("go");
 				generateNewField(engine);
 			}
-		}
-
-		if (isFieldSingleHolesOnly(engine) && monominoesLeft <= 0 && selectedPiece == null) {
+		} else if (isFieldSingleHolesOnly(engine) && monominoesLeft <= 0 && selectedPiece == null) {
 			if (engine.statistics.level >= LEVEL_FIELD_QUOTA.length - 1) {
 				engine.stat = GameEngine.STAT_EXCELLENT;
 				engine.ending = 1;
@@ -636,12 +634,13 @@ public class ExpressShipping extends PuzzleGameEngine {
 					int fY = ((mouseCoords[1] - 52 - receiver.getFieldDisplayPositionY(engine, playerID)) / 16) - offset[1];
 
 					if (checkPieceFit(engine, monominoConveyorBelt, fX, fY)) {
+						int lines = getFieldLines(engine, playerID);
 						insertPiece(engine, monominoConveyorBelt, fX, fY);
 						engine.playSE("lock");
 						engine.statistics.score += monominoConveyorBelt.getScore();
 						addEffectToArray(new ScorePopup(monominoConveyorBelt.getScore(), mouseCoords, EventReceiver.COLOR_WHITE, (2f/3f)));
 						scoreTowardsNewMonomino += monominoConveyorBelt.getScore();
-						getFieldLines(engine, playerID);
+						if (getFieldLines(engine, playerID) - lines > 0) engine.playSE("erase" + (getFieldLines(engine, playerID) - lines));
 						monominoConveyorBelt = null;
 						monominoesLeft--;
 					} else {

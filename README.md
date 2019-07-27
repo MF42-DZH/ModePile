@@ -49,3 +49,4 @@ Requires the above to compile and run. The "res" directory in the "required file
 ## Resource Credits
 
 * Deltarune Assets (*Jevil image, The World Revolving*) - Toby Fox
+* Super Collapse II Assets (_SFX_) - Super Collapse II, released by GameHouse
