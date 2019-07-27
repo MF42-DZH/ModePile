@@ -722,7 +722,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 				engine.playSE("rotate");
 			}
 			if (mouseControl.getMouseClick(MouseParser.BUTTON_LEFT)) {
-				if (mouseCoords[0] >= 49 && mouseCoords[1] >= 304 && mouseCoords[0] <= 134 && mouseCoords[1] <= 350) {
+				if (mouseCoords[0] >= 49 && mouseCoords[1] >= 304 && mouseCoords[0] <= 134 && mouseCoords[1] <= 350 && cargoReturnCooldown == 0) {
 					engine.playSE("garbage");
 
 					if (monominoConveyorBelt != null) {
@@ -823,7 +823,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 						engine.playSE("holdfail");
 					}
 				}
-			} else if (engine.ctrl.isPush(Controller.BUTTON_D)) {
+			} else if (engine.ctrl.isPush(Controller.BUTTON_D) && cargoReturnCooldown == 0) {
 				engine.playSE("garbage");
 
 				if (monominoConveyorBelt != null) {
@@ -1205,7 +1205,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 			default:
 				break;
 		}
-		if (col != -1) receiver.drawDirectFont(engine, playerID, x + (piece.getCursorOffset()[0] * 16), y + (piece.getCursorOffset()[1] * 16) + 8, str, col);
+		if (col != -1) receiver.drawDirectFont(engine, playerID, x + (piece.getCursorOffset()[0] * 16) - 8, y + (piece.getCursorOffset()[1] * 16), str, col);
 		// endregion POWER ACTIVE
 	}
 
@@ -1272,7 +1272,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 			default:
 				break;
 		}
-		if (col != -1) receiver.drawDirectFont(engine, playerID, x + (offset[0] * 16) - 8, y + (offset[1] * 16), str, col);
+		if (col != -1) receiver.drawDirectFont(engine, playerID, x + (offset[0] * 16), y + (offset[1] * 16) - 8, str, col);
 		// endregion POWER ACTIVE
 	}
 
