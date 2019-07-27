@@ -9,7 +9,7 @@ public class ScorePopup implements Effect {
     private static final int MAX_LIFETIME = 120;
     private static final int TIME_SIZE_STABLE = 60;
     private static final double THREEpiOVERtwo = Math.PI * (3.0 / 2.0);
-    private static final double piOVERfour = Math.PI * (1.0 / 4.0);
+    private static final double piOVERtwo = Math.PI * (1.0 / 2.0);
 
     private String value;
     private int lifeTime;
@@ -50,7 +50,7 @@ public class ScorePopup implements Effect {
             offsets = new int[] { (int)((baseDim * value.length() * baseSize) / 2), (int)((baseSize * baseDim) / 2) };
             size = baseSize;
         } else {
-            size = baseSize * (float)( Math.abs( Math.cos( piOVERfour * ( (double)(lifeTime - MAX_TIME_FULL_SIZE) / (MAX_LIFETIME - MAX_TIME_FULL_SIZE) ) ) ) );
+            size = baseSize * (float)( Math.abs( Math.cos( piOVERtwo * ( (double)(lifeTime - MAX_TIME_FULL_SIZE) / (MAX_LIFETIME - MAX_TIME_FULL_SIZE) ) ) ) );
 
             float baseLength = baseDim * value.length();
             int offsetX = (int)(((baseLength * size)) / 2);
