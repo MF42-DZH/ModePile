@@ -579,7 +579,9 @@ public class ExpressShipping extends PuzzleGameEngine {
 					conveyorBelt.get(conveyorBelt.size() - 1).setLocation(664, 324 - (int)(conveyorBelt.get(conveyorBelt.size() - 1).getConveyorYOffset() * 16));
 
 					double powerCoeff = powerupRandomiser.nextDouble();
-					if (powerCoeff < (powerupChance * Math.pow(powerExponent, engine.statistics.level))) {
+					double chance = powerupChance * Math.pow(powerExponent, engine.statistics.level);
+					if (chance > 0.025) chance = 0.025;
+					if (powerCoeff < chance) {
 						int pwr = powerupRandomiser.nextInt(POWERUP_COUNT) + 1;
 						conveyorBelt.get(conveyorBelt.size() - 1).setPowerup(pwr);
 					}
