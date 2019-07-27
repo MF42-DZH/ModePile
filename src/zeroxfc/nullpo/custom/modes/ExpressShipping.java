@@ -45,7 +45,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 	                         POWERUP_FILLROW = 10;
 
 	private static final int POWERUP_COUNT = 10;
-	private static final double powerupChance = (1.0 / 100.0);
+	private static final double powerupChance = (1.0 / 80.0);
 	private static final double powerExponent = 1.05;
 
 	// Piece weight table.
@@ -1272,7 +1272,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 			default:
 				break;
 		}
-		if (col != -1) receiver.drawDirectFont(engine, playerID, x + (offset[0] * 16), y + (offset[1] * 16) - 8, str, col);
+		if (col != -1) receiver.drawDirectFont(engine, playerID, x + (offset[0] * 16) - 16, y + (offset[1] * 16) - 8, str, col);
 		// endregion POWER ACTIVE
 	}
 
