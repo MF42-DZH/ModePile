@@ -5,8 +5,8 @@ import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 import mu.nu.nullpo.game.event.EventReceiver;
 
 public class ScorePopup implements Effect {
-    private static final int MAX_TIME_FULL_SIZE = 120;
-    private static final int MAX_LIFETIME = 240;
+    private static final int MAX_TIME_FULL_SIZE = 90;
+    private static final int MAX_LIFETIME = 120;
     private static final int TIME_SIZE_STABLE = 60;
     private static final double THREEpiOVERtwo = Math.PI * (3.0 / 2.0);
     private static final double piOVERfour = Math.PI * (1.0 / 4.0);
@@ -44,11 +44,13 @@ public class ScorePopup implements Effect {
             int offsetY = (int)(((baseDim * size)) / 2);
 
             offsets = new int[] { offsetX, offsetY };
+
+            if (lifeTime % 2 == 0) location[1] -= 1;
         } else if (lifeTime <= MAX_TIME_FULL_SIZE) {
-            offsets = new int[] { (int)((baseDim * value.length()) / 2), (int)(baseDim / 2) };
-            size = 1f;
+            offsets = new int[] { (int)((baseDim * value.length() * baseSize) / 2), (int)((baseSize * baseDim) / 2) };
+            size = baseSize;
         } else {
-            size = baseSize * (float)( Math.abs( Math.cos( piOVERfour * ( (double)(lifeTime - MAX_TIME_FULL_SIZE) / MAX_TIME_FULL_SIZE ) ) ) );
+            size = baseSize * (float)( Math.abs( Math.cos( piOVERfour * ( (double)(lifeTime - MAX_TIME_FULL_SIZE) / (MAX_LIFETIME - MAX_TIME_FULL_SIZE) ) ) ) );
 
             float baseLength = baseDim * value.length();
             int offsetX = (int)(((baseLength * size)) / 2);

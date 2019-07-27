@@ -38,7 +38,7 @@ public class T4 implements GamePiece {
 
 	@Override
 	public int getScore() {
-		return 75;
+		return 200;
 	}
 
 	@Override
