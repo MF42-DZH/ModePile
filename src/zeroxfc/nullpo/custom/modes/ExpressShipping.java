@@ -289,7 +289,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 		// 開始
 		if(engine.statc[0] >= engine.goEnd) {
-			if(!engine.readyDone) engine.owner.bgmStatus.bgm = bgm;
+			if(!engine.readyDone) engine.owner.bgmStatus.bgm = -1;
 			if(engine.owner.mode != null) engine.owner.mode.startGame(engine, playerID);
 			engine.owner.receiver.startGame(engine, playerID);
 			engine.stat = GameEngine.STAT_CUSTOM;
@@ -307,6 +307,11 @@ public class ExpressShipping extends PuzzleGameEngine {
 		engine.statc[0]++;
 
 		return true;
+	}
+
+	@Override
+	public void startGame(GameEngine engine, int playerID) {
+		engine.owner.bgmStatus.bgm = bgm;
 	}
 
 	@Override
