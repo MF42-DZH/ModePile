@@ -564,7 +564,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 			double coeff = miscRandomiser.nextDouble();
 
 			if (coeff < SPAWN_CHANCE) {
-				if (!isPieceExistAtX(700)) {
+				if (!isPieceExistAtX(664)) {
 					int v = -1;
 					int rolls = 0;
 
@@ -576,7 +576,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 					appendHistory(v);
 
 					conveyorBelt.add(PieceFactory.getPiece(v, -1, -1));
-					conveyorBelt.get(conveyorBelt.size() - 1).setLocation(700, 324 - (int)(conveyorBelt.get(conveyorBelt.size() - 1).getConveyorYOffset() * 16));
+					conveyorBelt.get(conveyorBelt.size() - 1).setLocation(664, 324 - (int)(conveyorBelt.get(conveyorBelt.size() - 1).getConveyorYOffset() * 16));
 
 					double powerCoeff = powerupRandomiser.nextDouble();
 					if (powerCoeff < (powerupChance * Math.pow(powerExponent, engine.statistics.level))) {
@@ -703,6 +703,18 @@ public class ExpressShipping extends PuzzleGameEngine {
 						engine.playSE("holdfail");
 					}
 				}
+			} else if (engine.ctrl.isPush(Controller.BUTTON_B)) {
+				if (conveyorBelt.size() > 0) {
+					selectedPiece = conveyorBelt.get(0);
+					engine.playSE("move");
+					conveyorBelt.remove(0);
+				}
+			} else if (engine.ctrl.isPush(Controller.BUTTON_A)) {
+				if (conveyorBelt.size() > 0) {
+					selectedPiece = conveyorBelt.get(conveyorBelt.size() - 1);
+					engine.playSE("move");
+					conveyorBelt.remove(conveyorBelt.size() - 1);
+				}
 			}
 		} else {
 			if (mouseControl.getMouseClick(MouseParser.BUTTON_RIGHT)) {
@@ -811,6 +823,17 @@ public class ExpressShipping extends PuzzleGameEngine {
 						engine.playSE("holdfail");
 					}
 				}
+			} else if (engine.ctrl.isPush(Controller.BUTTON_D)) {
+				engine.playSE("garbage");
+
+				if (monominoConveyorBelt != null) {
+					monominoConveyorBelt = null;
+					monominoesLeft--;
+					scoreTowardsNewMonomino = 0;
+				}
+
+				selectedPiece = null;
+				cargoReturnCooldown = 120;
 			}
 		}
 
