@@ -509,6 +509,18 @@ public class ExpressShipping extends PuzzleGameEngine {
 		if (cargoReturnCooldown > 0) cargoReturnCooldown--;
 
 		// region CHECK CODE
+		int effectiveLevel = engine.statistics.level;
+		if (effectiveLevel >= LEVEL_FIELD_QUOTA.length) effectiveLevel = LEVEL_FIELD_QUOTA.length - 1;
+		int fieldsFilled = LEVEL_FIELD_QUOTA[effectiveLevel];
+
+		double proportion = (double)fieldsLeft / fieldsFilled;
+		engine.meterValue = (int)(proportion * receiver.getMeterMax(engine));
+		engine.meterColor = GameEngine.METER_COLOR_GREEN;
+		if(proportion >= 0.25) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
+		if(proportion >= 0.5) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
+		if(proportion >= 0.75) engine.meterColor = GameEngine.METER_COLOR_RED;
+
+
 		if (isFieldFull(engine)) {
 			fieldsLeft--;
 			if (fieldsLeft <= 0) {
@@ -1112,7 +1124,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 		for (int y2 = 0; y2 < contents.length; y2++) {
 			for (int x2 = 0; x2 < contents[y2].length; x2++) {
 				if (contents[y2][x2] != 0) {
-					receiver.drawSingleBlock(engine, playerID, x + (x2 * 16) + 8, y + (y2 * 16) + 8, colour, engine.getSkin(), false, 0f, 1f, 1f);
+					receiver.drawSingleBlock(engine, playerID, x + (x2 * 16), y + (y2 * 16), colour, engine.getSkin(), false, 0f, 1f, 1f);
 				}
 			}
 		}
@@ -1164,7 +1176,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 			default:
 				break;
 		}
-		if (col != -1) receiver.drawDirectFont(engine, playerID, x + (piece.getCursorOffset()[0] * 16) - 8, y + (piece.getCursorOffset()[1] * 16), str, col);
+		if (col != -1) receiver.drawDirectFont(engine, playerID, x + (piece.getCursorOffset()[0] * 16), y + (piece.getCursorOffset()[1] * 16) + 8, str, col);
 		// endregion POWER ACTIVE
 	}
 
