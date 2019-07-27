@@ -46,6 +46,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 	private static final int POWERUP_COUNT = 10;
 	private static final double powerupChance = (1.0 / 100.0);
+	private static final double powerExponent = 1.05;
 
 	// Piece weight table.
 	private static final int[][] PIECE_WEIGHTS = {
@@ -573,7 +574,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 					conveyorBelt.get(conveyorBelt.size() - 1).setLocation(700, 324 - (int)(conveyorBelt.get(conveyorBelt.size() - 1).getConveyorYOffset() * 16));
 
 					double powerCoeff = powerupRandomiser.nextDouble();
-					if (powerCoeff < powerupChance) {
+					if (powerCoeff < (powerupChance * Math.pow(powerExponent, engine.statistics.level))) {
 						int pwr = powerupRandomiser.nextInt(POWERUP_COUNT) + 1;
 						conveyorBelt.get(conveyorBelt.size() - 1).setPowerup(pwr);
 					}
