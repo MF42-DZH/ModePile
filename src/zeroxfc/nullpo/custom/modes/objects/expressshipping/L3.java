@@ -26,10 +26,22 @@ public class L3 implements GamePiece {
 
 	private int[] location;
 	private int state;
+	private int powerup;
 
 	public L3(int x, int y) {
 		location = new int[] { x, y };
 		state = 0;
+		powerup = 0;
+	}
+
+	@Override
+	public int getPowerup() {
+		return powerup;
+	}
+
+	@Override
+	public void setPowerup(int powerup) {
+		this.powerup = powerup;
 	}
 
 	@Override

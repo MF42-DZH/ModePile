@@ -14,7 +14,9 @@ public interface GamePiece {
 	int getColour();
 	int[][] getConveyorBoundingBox();
 	int[][][] getCursorBoundingBox();
+	int getPowerup();
 
 	void rotate();
 	void setLocation(int x, int y);
+	void setPowerup(int powerup);
 }

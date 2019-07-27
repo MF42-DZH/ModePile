@@ -75,4 +75,11 @@ public class PieceFactory {
 				return null;
 		}
 	}
+
+	public static GamePiece getPiece(int id, int x, int y, int powerUp) {
+		GamePiece piece = getPiece(id, x, y);
+		piece.setPowerup(powerUp);
+
+		return piece;
+	}
 }

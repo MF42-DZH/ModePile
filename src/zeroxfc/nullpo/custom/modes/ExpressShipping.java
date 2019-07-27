@@ -32,6 +32,21 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private static final int SPAWN_TICK = 150;
 	private static final double SPAWN_CHANCE = (2.0 / 3.0);
 
+	private static final int POWERUP_NONE = 0,
+	                         POWERUP_DESTROY_ONE = 1,
+	                         POWERUP_DESTROY_TWO = 2,
+	                         POWERUP_DESTROY_THREE = 3,
+	                         POWERUP_ADD_ONE_MONO = 4,
+	                         POWERUP_ADD_TWO_MONO = 5,
+	                         POWERUP_ADD_THREE_MONO = 6,
+	                         POWERUP_MULTIPLIER_TWO = 7,
+	                         POWERUP_MULTIPLIER_THREE = 8,
+	                         POWERUP_MULTIPLIER_FOUR = 9,
+	                         POWERUP_FILLROW = 10;
+
+	private static final int POWERUP_COUNT = 10;
+	private static final double powerupChance = (1.0 / 100.0);
+
 	// Piece weight table.
 	private static final int[][] PIECE_WEIGHTS = {
 			{ 0, 3, 3, 3, 6, 0, 0, 0, 0, 4, 4 },
@@ -65,11 +80,14 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 	private static final int NEW_MONOMINO_SCORE = 3000;
 
+	private static final int RANKING_MAX = 10;
+
 	private GameManager owner;
 	private EventReceiver receiver;
 	private MouseParser mouseControl;
 	private Random boardRandomiser;
 	private Random miscRandomiser;
+	private Random powerupRandomiser;
 	private ResourceHolderCustomAssetExtension customHolder;
 	private WeightedRandomiser pieceRandomiser;
 	private ArrayList<GamePiece> conveyorBelt;
@@ -90,6 +108,8 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private int[] mouseCoords;
 	private int spawnTries;
 	private int scoreTowardsNewMonomino;
+	private int[] rankingScore, rankingLevel;
+	private int rankingRank;
 
 	@Override
 	public String getName() {
@@ -117,6 +137,9 @@ public class ExpressShipping extends PuzzleGameEngine {
 		spawnTries = 0;
 		scoreTowardsNewMonomino = 0;
 		scorePopups = new Effect[32];
+		rankingRank = -1;
+		rankingLevel = new int[RANKING_MAX];
+		rankingScore = new int[RANKING_MAX];
 
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
 		customHolder.loadImage("res/graphics/conveyor.png", "conveyor");
@@ -124,6 +147,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 		customHolder.loadImage("res/graphics/cargoreturn.png", "cargoreturn");
 
 		loadSetting(owner.modeConfig);
+		loadRanking(owner.modeConfig);
 	}
 
 	private void resetHistory() {
@@ -212,8 +236,9 @@ public class ExpressShipping extends PuzzleGameEngine {
 			// fieldInitialization
 			scorePopups = new Effect[32];
 			boardRandomiser = new Random(engine.randSeed);
-			miscRandomiser = new Random(engine.randSeed);
-			pieceRandomiser = new WeightedRandomiser(PIECE_WEIGHTS[0], engine.randSeed);
+			miscRandomiser = new Random(engine.randSeed + 1);
+			pieceRandomiser = new WeightedRandomiser(PIECE_WEIGHTS[0], engine.randSeed + 2);
+			powerupRandomiser = new Random(engine.randSeed + 3);
 			engineTick = 0;
 			conveyorFrame = 0;
 			cargoReturnCooldown = 0;
@@ -449,6 +474,12 @@ public class ExpressShipping extends PuzzleGameEngine {
 				break;
 		}
 
+		if (engine.stat == GameEngine.STAT_GAMEOVER) {
+			updateRanking(engine.statistics.score, engine.statistics.level);
+			if (rankingRank != -1) saveRanking(owner.modeConfig);
+			if (rankingRank != -1) receiver.saveModeConfig(owner.modeConfig);
+		}
+
 		if (updateTime) engine.statc[0]++;
 
 		return true;
@@ -528,6 +559,13 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 					conveyorBelt.add(PieceFactory.getPiece(v, -1, -1));
 					conveyorBelt.get(conveyorBelt.size() - 1).setLocation(700, 324 - (int)(conveyorBelt.get(conveyorBelt.size() - 1).getConveyorYOffset() * 16));
+
+					double powerCoeff = powerupRandomiser.nextDouble();
+					if (powerCoeff < powerupChance) {
+						int pwr = powerupRandomiser.nextInt(POWERUP_COUNT) + 1;
+						conveyorBelt.get(conveyorBelt.size() - 1).setPowerup(pwr);
+					}
+
 					spawnTries = 0;
 				} else {
 					if (spawnTries < 3) {
@@ -679,11 +717,76 @@ public class ExpressShipping extends PuzzleGameEngine {
 						int lineDiff = getFieldLines(engine, playerID) - lines;
 						if (lineDiff == 0) lineDiff = 1;
 
+						int score = lineDiff * selectedPiece.getScore();
+
+						// region POWER ACTIVE
+						int powerup = selectedPiece.getPowerup();
+						switch (powerup) {
+							case POWERUP_DESTROY_ONE:
+								for (int i = 0; i < 1; i++) {
+									if (conveyorBelt.size() > 0) conveyorBelt.remove(0);
+								}
+								engine.playSE("garbage");
+								break;
+							case POWERUP_DESTROY_TWO:
+								for (int i = 0; i < 2; i++) {
+									if (conveyorBelt.size() > 0) conveyorBelt.remove(0);
+								}
+								engine.playSE("garbage");
+								break;
+							case POWERUP_DESTROY_THREE:
+								for (int i = 0; i < 3; i++) {
+									if (conveyorBelt.size() > 0) conveyorBelt.remove(0);
+								}
+								engine.playSE("garbage");
+								break;
+							case POWERUP_ADD_ONE_MONO:
+								monominoesLeft += 1;
+								engine.playSE("square_g");
+								break;
+							case POWERUP_ADD_TWO_MONO:
+								monominoesLeft += 2;
+								engine.playSE("square_g");
+								break;
+							case POWERUP_ADD_THREE_MONO:
+								monominoesLeft += 3;
+								engine.playSE("square_g");
+								break;
+							case POWERUP_MULTIPLIER_TWO:
+								score *= 2;
+								engine.playSE("tspin0");
+								break;
+							case POWERUP_MULTIPLIER_THREE:
+								score *= 3;
+								engine.playSE("tspin0");
+								break;
+							case POWERUP_MULTIPLIER_FOUR:
+								score *= 4;
+								engine.playSE("tspin0");
+								break;
+							case POWERUP_FILLROW:
+								int y = fY + (selectedPiece.getContents().length / 2);
+								if (y < engine.field.getHeight()) {
+									for (int x = 0; x < engine.field.getWidth(); x++) {
+										Block blk = engine.field.getBlock(x, y);
+										if (blk.color == Block.BLOCK_COLOR_NONE) {
+											blk.color = Block.BLOCK_COLOR_GRAY;
+										}
+									}
+								}
+								score /= lineDiff;
+								engine.playSE("linefall");
+								break;
+							default:
+								break;
+						}
+						// endregion POWER ACTIVE
+
 						if (getFieldLines(engine, playerID) - lines > 0) engine.playSE("erase" + (getFieldLines(engine, playerID) - lines));
 
-						engine.statistics.score += lineDiff * selectedPiece.getScore();
-						addEffectToArray(new ScorePopup(lineDiff * selectedPiece.getScore(), mouseCoords, (lineDiff == 1) ? EventReceiver.COLOR_WHITE : EventReceiver.COLOR_BLUE, (lineDiff == 1) ? (2f/3f) : 1));
-						scoreTowardsNewMonomino += lineDiff * selectedPiece.getScore();
+						engine.statistics.score += score;
+						addEffectToArray(new ScorePopup(score, mouseCoords, (lineDiff == 1) ? EventReceiver.COLOR_WHITE : EventReceiver.COLOR_BLUE, (lineDiff == 1) ? (2f/3f) : 1));
+						scoreTowardsNewMonomino += score;
 
 						selectedPiece = null;
 					} else {
@@ -907,7 +1010,15 @@ public class ExpressShipping extends PuzzleGameEngine {
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
 			receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_PINK);
 			if (!owner.replayMode) {
-				// DO NOTHING.
+				float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
+				int topY = (receiver.getNextDisplayType() == 2) ? 5 : 3;
+				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE   LEVEL", EventReceiver.COLOR_BLUE, scale);
+
+				for(int i = 0; i < RANKING_MAX; i++) {
+					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+					receiver.drawScoreFont(engine, playerID, 3, topY+i, String.valueOf(rankingScore[i]), (i == rankingRank), scale);
+					receiver.drawScoreFont(engine, playerID, 11, topY+i, String.valueOf(rankingLevel[i]), (i == rankingRank), scale);
+				}
 			}
 		} else {
 			receiver.drawMenuFont(engine, playerID, 0, 19, getName(), EventReceiver.COLOR_PINK);
@@ -927,10 +1038,10 @@ public class ExpressShipping extends PuzzleGameEngine {
 			int length = String.valueOf(monominoesLeft).length();
 			int offset = 0;
 			if (length == 1) offset = 8;
-			receiver.drawDirectFont(engine, playerID, 4 + offset, 286, String.valueOf(monominoesLeft));
+			receiver.drawDirectFont(engine, playerID, 3 + offset, 286, String.valueOf(monominoesLeft));
 
-			receiver.drawDirectFont(engine, playerID, 4, 362, scoreTowardsNewMonomino + " /", EventReceiver.COLOR_WHITE, 0.5f);
-			receiver.drawDirectFont(engine, playerID, 4, 370, "3000", EventReceiver.COLOR_WHITE, 0.5f);
+			receiver.drawDirectFont(engine, playerID, 3, 362, scoreTowardsNewMonomino + " /", EventReceiver.COLOR_WHITE, 0.5f);
+			receiver.drawDirectFont(engine, playerID, 3, 370, "3000", EventReceiver.COLOR_WHITE, 0.5f);
 
 			drawConveyorBelt(engine);
 			if (conveyorBelt != null && !conveyorBelt.isEmpty()) {
@@ -996,14 +1107,65 @@ public class ExpressShipping extends PuzzleGameEngine {
 		int x = piece.getX();
 		int y = piece.getY();
 		int colour = piece.getColour();
+		int pwr = piece.getPowerup();
 
 		for (int y2 = 0; y2 < contents.length; y2++) {
 			for (int x2 = 0; x2 < contents[y2].length; x2++) {
 				if (contents[y2][x2] != 0) {
-					receiver.drawSingleBlock(engine, playerID, x + (x2 * 16), y + (y2 * 16), colour, engine.getSkin(), false, 0f, 1f, 1f);
+					receiver.drawSingleBlock(engine, playerID, x + (x2 * 16) + 8, y + (y2 * 16) + 8, colour, engine.getSkin(), false, 0f, 1f, 1f);
 				}
 			}
 		}
+
+		// region POWER ACTIVE
+		String str = "";
+		int col = -1;
+		switch (pwr) {
+			case POWERUP_DESTROY_ONE:
+				str = "D1";
+				col = EventReceiver.COLOR_WHITE;
+				break;
+			case POWERUP_DESTROY_TWO:
+				str = "D2";
+				col = EventReceiver.COLOR_WHITE;
+				break;
+			case POWERUP_DESTROY_THREE:
+				str = "D3";
+				col = EventReceiver.COLOR_WHITE;
+				break;
+			case POWERUP_ADD_ONE_MONO:
+				str = "+1";
+				col = EventReceiver.COLOR_GREEN;
+				break;
+			case POWERUP_ADD_TWO_MONO:
+				str = "+2";
+				col = EventReceiver.COLOR_GREEN;
+				break;
+			case POWERUP_ADD_THREE_MONO:
+				str = "+3";
+				col = EventReceiver.COLOR_GREEN;
+				break;
+			case POWERUP_MULTIPLIER_TWO:
+				str = "X2";
+				col = EventReceiver.COLOR_CYAN;
+				break;
+			case POWERUP_MULTIPLIER_THREE:
+				str = "X3";
+				col = EventReceiver.COLOR_CYAN;
+				break;
+			case POWERUP_MULTIPLIER_FOUR:
+				str = "X4";
+				col = EventReceiver.COLOR_CYAN;
+				break;
+			case POWERUP_FILLROW:
+				str = "FL";
+				col = EventReceiver.COLOR_ORANGE;
+				break;
+			default:
+				break;
+		}
+		if (col != -1) receiver.drawDirectFont(engine, playerID, x + (piece.getCursorOffset()[0] * 16) - 8, y + (piece.getCursorOffset()[1] * 16), str, col);
+		// endregion POWER ACTIVE
 	}
 
 	private void drawMousePiece(GameEngine engine, int playerID) {
@@ -1012,6 +1174,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 		int x = mouseCoords[0] - (16 * offset[0]);
 		int y = mouseCoords[1] - (16 * offset[1]);
 		int colour = selectedPiece.getColour();
+		int pwr = selectedPiece.getPowerup();
 
 		for (int y2 = 0; y2 < contents.length; y2++) {
 			for (int x2 = 0; x2 < contents[y2].length; x2++) {
@@ -1020,6 +1183,56 @@ public class ExpressShipping extends PuzzleGameEngine {
 				}
 			}
 		}
+
+		// region POWER ACTIVE
+		String str = "";
+		int col = -1;
+		switch (pwr) {
+			case POWERUP_DESTROY_ONE:
+				str = "D1";
+				col = EventReceiver.COLOR_WHITE;
+				break;
+			case POWERUP_DESTROY_TWO:
+				str = "D2";
+				col = EventReceiver.COLOR_WHITE;
+				break;
+			case POWERUP_DESTROY_THREE:
+				str = "D3";
+				col = EventReceiver.COLOR_WHITE;
+				break;
+			case POWERUP_ADD_ONE_MONO:
+				str = "+1";
+				col = EventReceiver.COLOR_GREEN;
+				break;
+			case POWERUP_ADD_TWO_MONO:
+				str = "+2";
+				col = EventReceiver.COLOR_GREEN;
+				break;
+			case POWERUP_ADD_THREE_MONO:
+				str = "+3";
+				col = EventReceiver.COLOR_GREEN;
+				break;
+			case POWERUP_MULTIPLIER_TWO:
+				str = "X2";
+				col = EventReceiver.COLOR_CYAN;
+				break;
+			case POWERUP_MULTIPLIER_THREE:
+				str = "X3";
+				col = EventReceiver.COLOR_CYAN;
+				break;
+			case POWERUP_MULTIPLIER_FOUR:
+				str = "X4";
+				col = EventReceiver.COLOR_CYAN;
+				break;
+			case POWERUP_FILLROW:
+				str = "FL";
+				col = EventReceiver.COLOR_ORANGE;
+				break;
+			default:
+				break;
+		}
+		if (col != -1) receiver.drawDirectFont(engine, playerID, x + (offset[0] * 16) - 8, y + (offset[1] * 16), str, col);
+		// endregion POWER ACTIVE
 	}
 
 	private void addEffectToArray(Effect effect) {
@@ -1047,5 +1260,66 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private void saveSetting(CustomProperties prop) {
 		prop.setProperty("expressshipping.bg", bg);
 		prop.setProperty("expressshipping.bgm", bgm);
+	}
+
+	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 */
+	protected void loadRanking(CustomProperties prop) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			rankingScore[i] = prop.getProperty("expressshipping.ranking" + ".score." + i, 0);
+			rankingLevel[i] = prop.getProperty("expressshipping.ranking" + ".level." + i, 0);
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 */
+	private void saveRanking(CustomProperties prop) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			prop.setProperty("expressshipping.ranking" + ".score." + i, rankingScore[i]);
+			prop.setProperty("expressshipping.ranking" + ".level." + i, rankingLevel[i]);
+		}
+	}
+
+	/**
+	 * Update rankings
+	 * @param sc Score
+	 * @param lv Level
+	 */
+	private void updateRanking(int sc, int lv) {
+		rankingRank = checkRanking(sc, lv);
+
+		if(rankingRank != -1) {
+			// Shift down ranking entries
+			for(int i = RANKING_MAX - 1; i > rankingRank; i--) {
+				rankingScore[i] = rankingScore[i - 1];
+				rankingLevel[i] = rankingLevel[i - 1];
+			}
+
+			// Add new data
+			rankingScore[rankingRank] = sc;
+			rankingLevel[rankingRank] = lv;
+		}
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param lv Level
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRanking(int sc, int lv) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScore[i]) {
+				return i;
+			} else if (rankingScore[i] == sc && lv < rankingScore[i]) {
+				return i;
+			}
+		}
+
+		return -1;
 	}
 }
