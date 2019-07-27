@@ -70,7 +70,9 @@ public class TwoThousandAndFortyEight extends DummyMode {
 		engine.framecolor = GameEngine.FRAME_COLOR_YELLOW;
 		engine.blockOutlineType = GameEngine.BLOCK_OUTLINE_NONE;
 
-		loadSetting(owner.modeConfig);
+		if (!owner.replayMode) loadSetting(owner.modeConfig);
+		else loadSetting(owner.replayProp);
+
 		if (!owner.replayMode) loadRanking(owner.modeConfig);
 
 		engine.owner.backgroundStatus.bg = bg;
@@ -167,7 +169,7 @@ public class TwoThousandAndFortyEight extends DummyMode {
 			engine.fieldHiddenHeight = engine.ruleopt.fieldHiddenHeight;
 			engine.field = new Field(engine.fieldWidth, engine.fieldHeight, engine.fieldHiddenHeight, true);
 
-			lastScoreTime = 0;
+			lastScoreTime = 120;
 			lastScore = 0;
 
 			if(!engine.readyDone) {
