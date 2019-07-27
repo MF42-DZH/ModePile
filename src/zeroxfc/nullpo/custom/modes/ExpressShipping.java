@@ -1030,7 +1030,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 			if (!owner.replayMode) {
 				float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
 				int topY = (receiver.getNextDisplayType() == 2) ? 5 : 3;
-				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE   LEVEL", EventReceiver.COLOR_BLUE, scale);
+				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE   LEVEL", EventReceiver.COLOR_PINK, scale);
 
 				for(int i = 0; i < RANKING_MAX; i++) {
 					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
