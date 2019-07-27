@@ -80,7 +80,7 @@ public class S4 implements GamePiece {
 
 	@Override
 	public double getConveyorYOffset() {
-		return 0.5;
+		return 1.5;
 	}
 	@Override
 	public int getState() {
