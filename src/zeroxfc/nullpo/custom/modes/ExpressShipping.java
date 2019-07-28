@@ -111,6 +111,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private int scoreTowardsNewMonomino;
 	private int[] rankingScore, rankingLevel;
 	private int rankingRank;
+	private int lastScore, scGetTime;
 
 	@Override
 	public String getName() {
@@ -141,6 +142,8 @@ public class ExpressShipping extends PuzzleGameEngine {
 		rankingRank = -1;
 		rankingLevel = new int[RANKING_MAX];
 		rankingScore = new int[RANKING_MAX];
+		lastScore = 0;
+		scGetTime = 0;
 
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
 		customHolder.loadImage("res/graphics/conveyor.png", "conveyor");
@@ -248,6 +251,8 @@ public class ExpressShipping extends PuzzleGameEngine {
 			monominoesLeft = MONOMINO_START_AMOUNTS[0];
 			fieldsLeft = LEVEL_FIELD_QUOTA[0];
 			scoreTowardsNewMonomino = 0;
+			lastScore = 0;
+			scGetTime = 0;
 			conveyorBelt.clear();
 			resetHistory();
 
@@ -458,16 +463,6 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 		mouseControl.update();
 		mouseCoords = mouseControl.getMouseCoordinates();
-		for (int i = 0; i < scorePopups.length; i++) {
-			if (scorePopups[i] != null) {
-				if (scorePopups[i].shouldNull()){
-					scorePopups[i] = null;
-					continue;
-				}
-
-				scorePopups[i].update();
-			}
-		}
 
 		switch (localState) {
 			case CUSTOMSTATE_INGAME:
@@ -631,7 +626,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 		// region MONOMINO SPAWNCODE
 		if (monominoConveyorBelt == null && monominoesLeft > 0) {
-			monominoConveyorBelt = PieceFactory.getPiece(0, -64, 324);
+			monominoConveyorBelt = PieceFactory.getPiece(0, -24, 324);
 		}
 		// endregion MONOMINO SPAWNCODE
 
@@ -695,6 +690,8 @@ public class ExpressShipping extends PuzzleGameEngine {
 						int lines = getFieldLines(engine, playerID);
 						insertPiece(engine, monominoConveyorBelt, fX, fY);
 						engine.playSE("lock");
+						lastScore = engine.statistics.score;
+						scGetTime = 0;
 						engine.statistics.score += monominoConveyorBelt.getScore();
 						addEffectToArray(new ScorePopup(monominoConveyorBelt.getScore(), mouseCoords, EventReceiver.COLOR_WHITE, (2f/3f)));
 						scoreTowardsNewMonomino += monominoConveyorBelt.getScore();
@@ -816,6 +813,8 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 						if (getFieldLines(engine, playerID) - lines > 0) engine.playSE("erase" + (getFieldLines(engine, playerID) - lines));
 
+						lastScore = engine.statistics.score;
+						scGetTime = 0;
 						engine.statistics.score += score;
 						addEffectToArray(new ScorePopup(score, mouseCoords, (lineDiff == 1) ? EventReceiver.COLOR_WHITE : EventReceiver.COLOR_BLUE, (lineDiff == 1) ? (2f/3f) : 1));
 						scoreTowardsNewMonomino += score;
@@ -1047,6 +1046,22 @@ public class ExpressShipping extends PuzzleGameEngine {
 	}
 
 	@Override
+	public void onLast(GameEngine engine, int playerID) {
+		for (int i = 0; i < scorePopups.length; i++) {
+			if (scorePopups[i] != null) {
+				if (scorePopups[i].shouldNull()){
+					scorePopups[i] = null;
+					continue;
+				}
+
+				scorePopups[i].update();
+			}
+		}
+
+		if (scGetTime < 60) scGetTime++;
+	}
+
+	@Override
 	public void renderLast(GameEngine engine, int playerID) {
 		if(owner.menuOnly) return;
 
@@ -1067,7 +1082,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 			receiver.drawMenuFont(engine, playerID, 0, 19, getName(), EventReceiver.COLOR_PINK);
 
 			receiver.drawMenuFont(engine, playerID, 0, 21, "SCORE", EventReceiver.COLOR_PINK);
-			receiver.drawMenuFont(engine, playerID, 0, 22, String.valueOf(engine.statistics.score));
+			receiver.drawMenuFont(engine, playerID, 0, 22, String.valueOf(Interpolation.lerp(lastScore, engine.statistics.score, (double)scGetTime/60.0)));
 
 			receiver.drawMenuFont(engine, playerID, 10, 21, "TIME", EventReceiver.COLOR_PINK);
 			receiver.drawMenuFont(engine, playerID, 10, 22, GeneralUtil.getTime(engine.statistics.time));
@@ -1111,6 +1126,18 @@ public class ExpressShipping extends PuzzleGameEngine {
 				receiver.drawMenuFont(engine, playerID, 6, 2, String.valueOf(endBonus));
 			}
 		}
+	}
+
+	@Override
+	public void renderResult(GameEngine engine, int playerID) {
+		receiver.drawMenuFont(engine, playerID, 0, 0, "SCORE", EventReceiver.COLOR_BLUE);
+		receiver.drawMenuFont(engine, playerID, 0, 1, String.format("%12s", String.valueOf(engine.statistics.score)));
+
+		receiver.drawMenuFont(engine, playerID, 0, 2, "LEVEL", EventReceiver.COLOR_BLUE);
+		receiver.drawMenuFont(engine, playerID, 0, 3, String.format("%12s", String.valueOf(engine.statistics.level + 1)));
+
+		receiver.drawMenuFont(engine, playerID, 0, 4, "TIME", EventReceiver.COLOR_BLUE);
+		receiver.drawMenuFont(engine, playerID, 0, 5, String.format("%12s", GeneralUtil.getTime(engine.statistics.time)));
 	}
 
 	private void drawConveyorBelt(GameEngine engine) {
