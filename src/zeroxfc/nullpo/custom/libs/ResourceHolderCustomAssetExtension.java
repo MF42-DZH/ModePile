@@ -126,6 +126,83 @@ public class ResourceHolderCustomAssetExtension {
 			break;
 		}
 	}
+
+	/**
+	 * Draws whole image to game with no tint.
+	 * @param engine GameEngine to draw with.
+	 * @param name Identifier of image.
+	 * @param x X position
+	 * @param y Y position
+	 */
+	public void drawImage(GameEngine engine, String name, int x, int y) {
+		switch (holderType) {
+			case HOLDER_SLICK:
+				org.newdawn.slick.Image toDraw = slickImages.get(name);
+
+				int fx = toDraw.getWidth();
+				int fy = toDraw.getHeight();
+
+				drawImage(engine, name, x, y, 0, 0, fx, fy, 255, 255, 255, 255, 1f);
+				break;
+			case HOLDER_SWING:
+				localSwingGraphics = getGraphicsSwing((RendererSwing)engine.owner.receiver);
+				java.awt.Image toDrawSwing = swingImages.get(name);
+
+				int fxSw = toDrawSwing.getWidth(null) ;
+				int fySw = toDrawSwing.getHeight(null);
+
+				drawImage(engine, name, x, y, 0, 0, fxSw, fySw, 255, 255, 255, 255, 1f);
+				break;
+			case HOLDER_SDL:
+				localSDLGraphics = getGraphicsSDL((RendererSDL)engine.owner.receiver);
+				sdljava.video.SDLSurface toDrawSDL = sdlImages.get(name);
+
+				int dx = toDrawSDL.getWidth();
+				int dy = toDrawSDL.getHeight();
+
+				drawImage(engine, name, x, y, 0, 0, dx, dy, 255, 255, 255, 255, 1f);
+				break;
+		}
+	}
+
+	/**
+	 * Draws image to game with string colour definition.
+	 * 8 character RRGGBBAA hex code or 6 character RRGGBB hex code.
+	 * @param engine GameEngine to draw with.
+	 * @param name Identifier of image.
+	 * @param x X position
+	 * @param y Y position
+	 * @param srcX Source X position
+	 * @param srcY Source Y position
+	 * @param srcSizeX Source X size
+	 * @param srcSizeY Source Y size
+	 * @param color Hex. code string of colour.
+	 * @param scale Image scale
+	 */
+	public void drawImage(GameEngine engine, String name, int x, int y, int srcX, int srcY, int srcSizeX, int srcSizeY, String color, float scale) {
+		String lc;
+		lc = color.replace("#", "");
+		lc = lc.toLowerCase();
+
+		String red, green, blue, alpha = "FF";
+
+		if (lc.length() != 8 && lc.length() != 6) {
+			return;
+		}
+
+		red = lc.substring(0, 2);
+		green = lc.substring(2, 4);
+		blue = lc.substring(4, 6);
+		if (lc.length() == 8) alpha = lc.substring(6, 8);
+
+		int r, g, b, a;
+		r = Integer.parseInt(red, 16);
+		g = Integer.parseInt(green, 16);
+		b = Integer.parseInt(blue, 16);
+		a = Integer.parseInt(alpha, 16);
+
+		drawImage(engine, name, x, y, srcX, srcY, srcSizeX, srcSizeY, r, g, b, a, scale);
+	}
 	
 	/**
 	 * Appends a new BGM number into the BGM array. On Swing, this has no effect.
