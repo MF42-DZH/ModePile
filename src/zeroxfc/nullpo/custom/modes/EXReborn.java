@@ -977,6 +977,7 @@ public class EXReborn extends DummyMode {
 				engine.statistics.level = maxLevel;
 				if (lvbefore < maxLevel) {
 					engine.resetStatc();
+					engine.playSE("endingstart");
 					engine.statc[0] = -1;
 					engine.stat = GameEngine.STAT_CUSTOM;
 				}
@@ -994,6 +995,7 @@ public class EXReborn extends DummyMode {
 
 				if (engine.statistics.level >= 1000 && engine.statistics.level < 1004) {
 					engine.resetStatc();
+					engine.playSE("endingstart");
 					engine.statc[0] = -1;
 					engine.stat = GameEngine.STAT_CUSTOM;
 				} else {
@@ -1023,7 +1025,7 @@ public class EXReborn extends DummyMode {
 			engine.initialRotate();
 			engine.playSE("go");
 
-			engine.big = (engine.statistics.level >= maxLevel);
+			if (!big) engine.big = (engine.statistics.level >= maxLevel);
 			engine.timerActive = true;
 
 			if (bgmlv < 4) {
@@ -1059,8 +1061,6 @@ public class EXReborn extends DummyMode {
 					}
 				}
 			}
-		} else if (engine.statc[0] == 1) {
-			engine.playSE("endingstart");
 		}
 
 		engine.timerActive = false;
