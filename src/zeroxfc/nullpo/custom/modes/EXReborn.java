@@ -1,12 +1,13 @@
 package zeroxfc.nullpo.custom.modes;
 
-import mu.nu.nullpo.game.component.Block;
-import mu.nu.nullpo.game.component.Controller;
-import mu.nu.nullpo.game.component.Piece;
-import mu.nu.nullpo.game.component.RuleOptions;
-import mu.nu.nullpo.game.component.WallkickResult;
+import mu.nu.nullpo.game.component.*;
+import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
+import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.game.subsystem.mode.DummyMode;
+import mu.nu.nullpo.util.CustomProperties;
+import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.Interpolation;
 
 public class EXReborn extends DummyMode {
 	private static final int[] tableARE = {
@@ -32,12 +33,39 @@ public class EXReborn extends DummyMode {
 	private static final int[] tableDAS = {
         12, 12, 12, 12, 12, 10, 10, 10, 10, 10, 8, 8, 8, 8, 8, 6, 6, 6, 5, 5, 5
     };
+
+	private static final int[] tableBGMFadeout = {
+			490, 990, 1490, 1990
+	};
+
+	private static final int[] tableBGMChange = {
+			500, 1000, 1500, 2000
+	};
     
 	private static final int gravityDenominator = 120;
     
 	private static final int maxLevel = 2000;
 	
 	private static final int maxSection = 20;
+
+	private static final int RANKING_MAX = 10;
+
+	/** Rankings' scores */
+	private int[] rankingScore;
+
+	/** Rankings' level */
+	private int[] rankingLevel;
+
+	/** Rankings' times */
+	private int[] rankingTime;
+
+	private GameManager owner;
+	private EventReceiver receiver;
+	private int rankingRank;
+	private int comboValue;
+	private boolean lvstopse, big, lvupflag, alwaysghost;
+	private int lastscore, previousscore, scgettime, bgmlv;
+	private int nextseclv;
 	
 	/** Mode name */
 	@Override
@@ -47,14 +75,157 @@ public class EXReborn extends DummyMode {
 	
 	@Override
 	public void playerInit(GameEngine engine, int playerID) {
-		// TODO Auto-generated method stub
+		owner = engine.owner;
+		receiver = engine.owner.receiver;
+
+		rankingScore = new int[RANKING_MAX];
+		rankingLevel = new int[RANKING_MAX];
+		rankingTime = new int[RANKING_MAX];
+
 		engine.speed.denominator = gravityDenominator;
 		engine.speed.gravity = 2;
+		rankingRank = -1;
+		lvstopse = true;
+		big = false;
+		lvupflag = false;
+		nextseclv = 0;
+		comboValue = 1;
+		bgmlv = 0;
+
+		engine.bighalf = true;
+		engine.bigmove = true;
+
+		if(!owner.replayMode) {
+			loadSetting(owner.modeConfig);
+			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+		} else {
+			loadSetting(owner.replayProp);
+		}
 	}
-	
-	// TODO: Modify wallkick - oh no.
+
+	/*
+	 * Called at settings screen
+	 */
+	@Override
+	public boolean onSetting(GameEngine engine, int playerID) {
+		engine.framecolor = GameEngine.FRAME_COLOR_GRAY;
+		// Menu
+		if(engine.owner.replayMode == false) {
+			// Configuration changes
+			int change = updateCursor(engine, 2, playerID);
+
+			if(change != 0) {
+				engine.playSE("change");
+
+				switch(engine.statc[2]) {
+					case 0:
+						lvstopse = !lvstopse;
+						break;
+					case 1:
+						alwaysghost = !alwaysghost;
+						break;
+					case 2:
+						big = !big;
+						break;
+				}
+			}
+
+			// Confirm
+			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
+				engine.playSE("decide");
+				saveSetting(owner.modeConfig);
+				receiver.saveModeConfig(owner.modeConfig);
+
+				return false;
+			}
+
+			// Cancel
+			if(engine.ctrl.isPush(Controller.BUTTON_B)) {
+				engine.quitflag = true;
+			}
+
+			engine.statc[3]++;
+		}
+		// Replay
+		else {
+			engine.statc[3]++;
+			engine.statc[2] = -1;
+
+			if(engine.statc[3] >= 60) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/*
+	 * Render the settings screen
+	 */
+	@Override
+	public void renderSetting(GameEngine engine, int playerID) {
+		drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE, 0,
+				"LVSTOPSE", GeneralUtil.getONorOFF(lvstopse),
+				"FULL GHOST",  GeneralUtil.getONorOFF(alwaysghost),
+				"BIG", GeneralUtil.getONorOFF(big));
+	}
+
+	/*
+	 * Called at game start
+	 */
+	@Override
+	public void startGame(GameEngine engine, int playerID) {
+		nextseclv = engine.statistics.level + 100;
+
+		owner.backgroundStatus.bg = engine.statistics.level / 100;
+
+		bgmlv = 0;
+
+		engine.big = big;
+
+		setSpeed(engine);
+		owner.bgmStatus.bgm = bgmlv;
+	}
+
+	/**
+	 * Set the gravity rate
+	 * @param engine GameEngine
+	 */
+	public void setSpeed(GameEngine engine) {
+		int lv = engine.statistics.level / 100;
+
+		if(lv < 0) lv = 0;
+		if(lv > maxSection) lv = maxSection;
+
+		engine.speed.gravity = tableGravity[lv];
+		engine.speed.are = tableARE[lv];
+		engine.speed.areLine = tableLineARE[lv];
+		engine.speed.das = tableDAS[lv];
+		engine.speed.lockDelay = tableLockDelay[lv];
+		engine.speed.lineDelay = tableLineDelay[lv];
+	}
+
+	// Wallkick algorithm is modifed such that if the rulename contains "T-EX", it enables Tetris-EX's special movement-based wallkick.
+	// !! IMPORTANT: Make sure rule contains T-EX in its name.
+	/*
+	 * Rule names:
+	 *
+	 * T-EX-CLASSIC
+	 * T-EX-MODERN
+	 */
 	@Override
 	public boolean onMove(GameEngine engine, int playerID) {
+		if((engine.ending == 0) && (engine.statc[0] == 0) && (engine.holdDisable == false) && (!lvupflag)) {
+			if(engine.statistics.level < nextseclv - 1) {
+				engine.statistics.level++;
+				if((engine.statistics.level == nextseclv - 1) && (lvstopse == true)) engine.playSE("levelstop");
+			}
+			levelUp(engine);
+		}
+		if( (engine.ending == 0) && (engine.statc[0] > 0) && ((engine.holdDisable == false)) ) {
+			lvupflag = false;
+		}
+
 		// 横溜めInitialization
 		int moveDirection = engine.getMoveDirection();
 
@@ -247,7 +418,7 @@ public class EXReborn extends DummyMode {
 				int rt = engine.getRotateDirection(move);
 
 				// rotationできるか判定
-				if(!engine.ruleopt.strRuleName.contains("T-EX") && engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY, rt, engine.field) == false)
+				if((!engine.ruleopt.strRuleName.contains("T-EX") || engine.initialRotateDirection != 0) && engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY, rt, engine.field) == false)
 				{
 					// Wallkickなしでrotationできるとき
 					rotated = true;
@@ -343,7 +514,12 @@ public class EXReborn extends DummyMode {
 				if(engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY, engine.field) == true) {
 					engine.nowPieceObject.placeToField(engine.nowPieceX, engine.nowPieceY, engine.field);
 					engine.nowPieceObject = null;
-					engine.stat = GameEngine.STAT_GAMEOVER;
+
+					if (engine.statistics.level >= 2000) {
+						engine.stat = GameEngine.STAT_EXCELLENT;
+					} else {
+						engine.stat = GameEngine.STAT_GAMEOVER;
+					}
 					if((engine.ending == 2) && (engine.staffrollNoDeath)) engine.stat = GameEngine.STAT_NOTHING;
 					engine.resetStatc();
 					return true;
@@ -741,7 +917,377 @@ public class EXReborn extends DummyMode {
 		engine.statc[0]++;
 		return true;
 	}
-	
+
+	/**
+	 *  levelが上がったときの共通処理
+	 */
+	private void levelUp(GameEngine engine) {
+		// 速度変更
+		setSpeed(engine);
+
+		// LV100到達でghost を消す
+		if((engine.statistics.level >= 500) && (!alwaysghost)) engine.ghost = false;
+
+		// BGM fadeout
+		if (bgmlv < 4) {
+			if(engine.statistics.level >= tableBGMFadeout[bgmlv]) {
+				owner.bgmStatus.fadesw  = true;
+			}
+		}
+	}
+
+	/*
+	 * Calculate score
+	 */
+	@Override
+	public void calcScore(GameEngine engine, int playerID, int lines) {
+		if(engine.ending != 0) return;
+
+		// Combo
+		if(lines == 0) {
+			comboValue = 1;
+		} else {
+			comboValue = comboValue + (2 * lines) - 2;
+			if(comboValue < 1) comboValue = 1;
+		}
+
+		if(lines >= 1) {
+			// Calculate score
+			int manuallock = 0;
+			if(engine.manualLock) manuallock = 1;
+
+			int bravo = 1;
+			if(engine.field.isEmpty()) {
+				bravo = 4;
+				engine.playSE("bravo");
+			}
+
+			previousscore = engine.statistics.score;
+			lastscore = ( ((engine.statistics.level + lines) / 4) + engine.softdropFall + engine.harddropFall + manuallock ) * lines * comboValue * bravo;
+			engine.statistics.score += lastscore;
+			scgettime = 120;
+
+			int lvbefore = engine.statistics.level;
+			// Level up
+			engine.statistics.level += lines;
+			levelUp(engine);
+
+			if(engine.statistics.level >= maxLevel) {
+				// Ending
+				engine.statistics.level = maxLevel;
+				if (lvbefore < maxLevel) {
+					engine.resetStatc();
+					engine.stat = GameEngine.STAT_CUSTOM;
+				}
+			} else if(engine.statistics.level >= nextseclv) {
+				// Next Section
+				owner.backgroundStatus.bg = engine.statistics.level / 100;
+				engine.playSE("levelup");
+
+				owner.backgroundStatus.fadesw = true;
+				owner.backgroundStatus.fadecount = 0;
+				owner.backgroundStatus.fadebg = nextseclv / 100;
+
+				nextseclv += 100;
+				if(nextseclv > maxLevel) nextseclv = maxLevel;
+
+				if (engine.statistics.level >= 1000 && engine.statistics.level < 1004) {
+					engine.resetStatc();
+					engine.stat = GameEngine.STAT_CUSTOM;
+				} else {
+					if (bgmlv < 4) {
+						if(engine.statistics.level >= tableBGMChange[bgmlv]) {
+							bgmlv++;
+							owner.bgmStatus.fadesw = false;
+							owner.bgmStatus.bgm = bgmlv;
+						}
+					}
+				}
+
+				if (engine.statistics.level >= 1500) {
+					engine.bone = true;
+				}
+			} else if((engine.statistics.level == nextseclv - 1) && (lvstopse)) {
+				engine.playSE("levelstop");
+			}
+		}
+	}
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		if (engine.statc[0] > (180 + (engine.field.getHiddenHeight() + engine.field.getHeight()) * 3)) {
+			engine.resetStatc();
+			engine.stat = GameEngine.STAT_MOVE;
+			engine.initialRotate();
+			engine.playSE("go");
+
+			engine.big = (engine.statistics.level >= maxLevel);
+
+			if (bgmlv < 4) {
+				if(engine.statistics.level >= tableBGMChange[bgmlv]) {
+					bgmlv++;
+					owner.bgmStatus.fadesw = false;
+					owner.bgmStatus.bgm = bgmlv;
+				}
+			}
+			return true;
+		} else if (engine.statc[0] == (120 + engine.field.getHeight() * 3)) {
+			if (engine.framecolor == GameEngine.FRAME_COLOR_RED) engine.framecolor = GameEngine.FRAME_COLOR_BLUE;
+			if (engine.framecolor == GameEngine.FRAME_COLOR_GRAY) engine.framecolor = GameEngine.FRAME_COLOR_RED;
+		} else if (engine.statc[0] > 0) {
+			int f = engine.statc[0] - 60;
+
+			if (f % 3 == 0 && f >= 0 && ((engine.field.getHeight() - 1) - (f / 3)) >= (-1 * engine.field.getHiddenHeight())) {
+				for (int x = 0; x < engine.field.getWidth(); x++) {
+					int y = engine.field.getHeight() - 1 - (f / 3);
+					Block blk = engine.field.getBlock(x, y);
+
+					Block nblk = new Block(Block.BLOCK_COLOR_NONE);
+					nblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+					nblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+					nblk.setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, false);
+
+					if (blk != null) {
+						if (blk.color > Block.BLOCK_COLOR_NONE) {
+							receiver.blockBreak(engine, playerID, x, y, blk);
+							engine.field.getBlock(x, y).copy(nblk);
+						}
+					}
+				}
+			}
+
+			if (engine.statc[0] == (120 + engine.field.getHeight() * 3)) engine.playSE("ready");
+		} else if (engine.statc[0] == 1) {
+			engine.playSE("endingstart");
+		}
+
+		engine.statc[0]++;
+
+		return true;
+	}
+
+	/*
+	 * 各 frame の終わりの処理
+	 */
+	@Override
+	public void onLast(GameEngine engine, int playerID) {
+		// 獲得Render score
+		if(scgettime > 0) scgettime--;
+
+		double proportion = ((double)(engine.getLockDelay() - engine.lockDelayNow) / engine.getLockDelay());
+		// Meter
+		engine.meterValue = (int)(proportion * receiver.getMeterMax(engine));
+		engine.meterColor = GameEngine.METER_COLOR_GREEN;
+		if(proportion <= 0.75) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
+		if(proportion <= 0.5) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
+		if(proportion <= 0.25) engine.meterColor = GameEngine.METER_COLOR_RED;
+	}
+
+	/*
+	 * Render score
+	 */
+	@Override
+	public void renderLast(GameEngine engine, int playerID) {
+		if(owner.menuOnly) return;
+
+		receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_BLUE);
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false)) ) {
+			if((owner.replayMode == false) && (big == false) && (engine.ai == null)) {
+				float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
+				int topY = (receiver.getNextDisplayType() == 2) ? 4 : 3;
+				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LEVEL TIME", EventReceiver.COLOR_BLUE, scale);
+
+				for(int i = 0; i < RANKING_MAX; i++) {
+					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+					receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[i]), (i == rankingRank), scale);
+					receiver.drawScoreFont(engine, playerID, 10, topY+i, getLevelName(rankingLevel[i]), (i == rankingRank), scale);
+					receiver.drawScoreFont(engine, playerID, 16, topY+i, GeneralUtil.getTime(rankingTime[i]), (i == rankingRank), scale);
+				}
+			}
+		} else {
+			receiver.drawScoreFont(engine, playerID, 0, 2, "SCORE", EventReceiver.COLOR_BLUE);
+			String strScore;
+			int sc = Interpolation.lerp(previousscore, engine.statistics.score, (double)(120 - scgettime) / 120.0);
+			if((lastscore == 0) || (scgettime <= 0)) {
+				strScore = String.valueOf(sc);
+			} else {
+				strScore = sc + "(+" + lastscore + ")";
+			}
+			receiver.drawScoreFont(engine, playerID, 0, 3, strScore);
+
+			receiver.drawScoreFont(engine, playerID, 0, 5, "LEVEL", EventReceiver.COLOR_BLUE);
+			receiver.drawScoreFont(engine, playerID, 0, 6, getLevelName(engine));
+
+			receiver.drawScoreFont(engine, playerID, 0, 8, "TIME", EventReceiver.COLOR_BLUE);
+			receiver.drawScoreFont(engine, playerID, 0, 9, GeneralUtil.getTime(engine.statistics.time));
+		}
+	}
+
+	/*
+	 * Soft drop
+	 */
+	@Override
+	public void afterSoftDropFall(GameEngine engine, int playerID, int fall) {
+		engine.statistics.scoreFromSoftDrop += fall;
+		engine.statistics.score += fall;
+	}
+
+	/*
+	 * Hard drop
+	 */
+	@Override
+	public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
+		engine.statistics.scoreFromHardDrop += fall * 2;
+		engine.statistics.score += fall * 2;
+	}
+
+	/*
+	 * 結果画面の処理
+	 */
+	@Override
+	public boolean onResult(GameEngine engine, int playerID) {
+		// ページ切り替え
+		if(engine.ctrl.isMenuRepeatKey(Controller.BUTTON_UP)) {
+			engine.statc[1]--;
+			if(engine.statc[1] < 0) engine.statc[1] = 1;
+			engine.playSE("change");
+		}
+		if(engine.ctrl.isMenuRepeatKey(Controller.BUTTON_DOWN)) {
+			engine.statc[1]++;
+			if(engine.statc[1] > 1) engine.statc[1] = 0;
+			engine.playSE("change");
+		}
+
+		return false;
+	}
+
+	/*
+	 * 結果画面
+	 */
+	@Override
+	public void renderResult(GameEngine engine, int playerID) {
+		receiver.drawMenuFont(engine, playerID, 0, 0, "kn PAGE" + (engine.statc[1] + 1) + "/2", EventReceiver.COLOR_RED);
+
+		if(engine.statc[1] == 0) {
+			drawResultStats(engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE,
+					STAT_SCORE, STAT_LINES, STAT_LEVEL_MANIA, STAT_TIME);
+			drawResultRank(engine, playerID, receiver, 10, EventReceiver.COLOR_BLUE, rankingRank);
+		} else if(engine.statc[1] == 1) {
+			drawResultStats(engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE,
+					STAT_LPM, STAT_SPM, STAT_PIECE, STAT_PPS);
+		}
+	}
+
+	/*
+	 * Called when saving replay
+	 */
+	@Override
+	public void saveReplay(GameEngine engine, int playerID, CustomProperties prop) {
+		saveSetting(prop);
+
+		// Update rankings
+		if((!owner.replayMode) && (!big) && (engine.ai == null)) {
+			updateRanking(engine.statistics.score, engine.statistics.level, engine.statistics.time);
+
+			if(rankingRank != -1) {
+				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+				receiver.saveModeConfig(owner.modeConfig);
+			}
+		}
+	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSetting(CustomProperties prop) {
+		lvstopse = prop.getProperty("exreborn.lvstopse", true);
+		big = prop.getProperty("exreborn.big", false);
+		alwaysghost = prop.getProperty("exreborn.alwaysghost", false);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSetting(CustomProperties prop) {
+		prop.setProperty("exreborn.lvstopse", lvstopse);
+		prop.setProperty("exreborn.big", big);
+		prop.setProperty("exreborn.alwaysghost", alwaysghost);
+	}
+
+	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	protected void loadRanking(CustomProperties prop, String ruleName) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			rankingScore[i] = prop.getProperty("exreborn.ranking." + ruleName + ".score." + i, 0);
+			rankingLevel[i] = prop.getProperty("exreborn.ranking." + ruleName + ".lines." + i, 0);
+			rankingTime[i] = prop.getProperty("exreborn.ranking." + ruleName + ".time." + i, 0);
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRanking(CustomProperties prop, String ruleName) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			prop.setProperty("exreborn.ranking." + ruleName + ".score." + i, rankingScore[i]);
+			prop.setProperty("exreborn.ranking." + ruleName + ".lines." + i, rankingLevel[i]);
+			prop.setProperty("exreborn.ranking." + ruleName + ".time." + i, rankingTime[i]);
+		}
+	}
+
+	/**
+	 * Update rankings
+	 * @param sc Score
+	 * @param lv Level
+	 * @param time Time
+	 */
+	private void updateRanking(int sc, int lv, int time) {
+		rankingRank = checkRanking(sc, lv, time);
+
+		if(rankingRank != -1) {
+			// Shift down ranking entries
+			for(int i = RANKING_MAX - 1; i > rankingRank; i--) {
+				rankingScore[i] = rankingScore[i - 1];
+				rankingLevel[i] = rankingLevel[i - 1];
+				rankingTime[i] = rankingTime[i - 1];
+			}
+
+			// Add new data
+			rankingScore[rankingRank] = sc;
+			rankingLevel[rankingRank] = lv;
+			rankingTime[rankingRank] = time;
+		}
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param lv Level
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRanking(int sc, int lv, int time) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScore[i]) {
+				return i;
+			} else if((sc == rankingScore[i]) && (lv > rankingLevel[i])) {
+				return i;
+			} else if((sc == rankingScore[i]) && (lv == rankingLevel[i]) && (time < rankingTime[i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
 	/**
 	 * Gets the level string.
 	 * @param engine Current GameEngine.
@@ -761,6 +1307,22 @@ public class EXReborn extends DummyMode {
 			str += "WTF";
 		}
 		
+		return str;
+	}
+
+	private String getLevelName(int lvRaw) {
+		int lv100 = lvRaw / 100;
+		int lvUnit = lvRaw % 100;
+		String str = "";
+
+		if (lv100 < 10) {
+			str += "H" + lv100 + "-" + lvUnit;
+		} else if (lv100 < 20) {
+			str += "M" + (lv100 - 10) + "-" + lvUnit;
+		} else {
+			str += "WTF";
+		}
+
 		return str;
 	}
 }
