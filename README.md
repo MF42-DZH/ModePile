@@ -11,7 +11,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Accelerator_ - A marathon mode where playing fast is rewarded.
 * _Colour Power_ - A marathon mode where clearing lines using pieces of different colours nets you different power-ups.
 * _Express Shipping_ - A clone of the space-filling game Puzzle Express by HipSoft.
-* _EX Reborn_ (incomplete) - A clone of Tetris-EX.
+* _EX Reborn_ - A clone of Tetris-EX.
 * _Firework Challenge_ - An inaccurate version of Tetris the Grand Master 3's Easy mode.
 * _Gem Swap_ (incomplete) - A generic match-3 game.
 * _Idiot% Mode_ - A mode inspired by [this video](https://www.youtube.com/watch?v=omaDz_w4cgg) where it emulates the TGM style of play, but normal line clears are next-to-worthless but spin line clears are boosted to be better than normal.
@@ -20,6 +20,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Mission Mode_ - Play a marathon mode, but it asks you to clear Puyo-Puyo-styled missions.
 * _Scanline_ - Inspired by Scanner mode on [Tetris for the PSP Mini](https://harddrop.com/wiki/Tetris_(PSP_Mini)) and [Tetris Pop](https://harddrop.com/wiki/Tetris_Pop).
 * _Score Trial_ - An approximation of the SCORE ATTACK modes in DTET.
+* _Single Death Marathon_ - Marathon, but the pieces queue up to become big.
 
 ## Libraries Available:
 
