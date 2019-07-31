@@ -1175,7 +1175,9 @@ public class EXReborn extends DummyMode {
 
 		if(engine.statc[1] == 0) {
 			drawResultStats(engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE,
-					STAT_SCORE, STAT_LINES, STAT_LEVEL_MANIA, STAT_TIME);
+					STAT_SCORE, STAT_LINES, STAT_TIME);
+			receiver.drawMenuFont(engine, playerID, 0, 8, "LEVEL", EventReceiver.COLOR_BLUE);
+			receiver.drawMenuFont(engine, playerID, 0, 9, String.format("%10s", getLevelName(engine)));
 			drawResultRank(engine, playerID, receiver, 10, EventReceiver.COLOR_BLUE, rankingRank);
 		} else if(engine.statc[1] == 1) {
 			drawResultStats(engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE,
