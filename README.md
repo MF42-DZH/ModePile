@@ -1,7 +1,7 @@
 ![ModePile Banner](https://github.com/Shots243/ModePile/blob/master/GitHub%20ModePile%20Banner-Final.png)
 
 # ModePile
-A set of mods for https://github.com/nullpomino/nullpomino
+A set of gameplay mods for [NullpoMino](https://github.com/nullpomino/nullpomino).
 
 Requires the above to compile and run. The "res" directory in the "required files" needs to be merged with the one in the NullpoMino folder.
 
@@ -46,6 +46,19 @@ Requires the above to compile and run. The "res" directory in the "required file
 3. Import the ***whole*** NullpoMino directory as a project. Make sure all the classpaths are set up.
 4. Merge the src directory from this repository and the one in the NullpoMino directory together.
 5. Compilation should be working.
+
+## Installation Notes
+
+### If a *bin* folder exists in the *NullpoMino* install folder
+
+1. Follow the instructions in the release's *README.txt* as stated.
+
+### In the case that a *bin* folder is non-existent in the *NullpoMino* install folder
+
+1. Open *NullpoMino.jar*.
+2. Create a folder in the root install directory for your copy of *NullpoMino* called *bin*.
+3. Extract the folders in *NullpoMino.jar* to the newly-created *bin* folder.
+4. Follow the instructions as given in the *README.txt* in the release.
 
 ## Resource Credits
 

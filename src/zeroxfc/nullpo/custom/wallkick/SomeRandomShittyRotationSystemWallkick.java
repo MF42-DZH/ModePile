@@ -8,7 +8,7 @@ import mu.nu.nullpo.game.subsystem.wallkick.Wallkick;
 
 public class SomeRandomShittyRotationSystemWallkick implements Wallkick {
 	// So basically, it's a symmetric spiral checker.
-	// The further from the edges you are, the more checks it performs.
+	// The bigger the field width, the more checks it performs.
 	
 	@Override
 	public WallkickResult executeWallkick(int x, int y, int rtDir, int rtOld, int rtNew, boolean allowUpward,
@@ -16,7 +16,7 @@ public class SomeRandomShittyRotationSystemWallkick implements Wallkick {
 		int x2 = 0;
 		int y2 = 0;
 		int offsetRadius = field.getWidth() + 1;
-		if (piece.big) offsetRadius /= 2;
+		if (piece.big) offsetRadius = (field.getWidth() / 2) + 1;
 		int dx = 1;
 		int dy = 1;
 		int m = 1;  // not sure what this is for...
