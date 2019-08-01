@@ -16,6 +16,7 @@ public class SomeRandomShittyRotationSystemWallkick implements Wallkick {
 		int x2 = 0;
 		int y2 = 0;
 		int offsetRadius = field.getWidth() + 1;
+		if (piece.big) offsetRadius /= 2;
 		int dx = 1;
 		int dy = 1;
 		int m = 1;  // not sure what this is for...
@@ -34,7 +35,7 @@ public class SomeRandomShittyRotationSystemWallkick implements Wallkick {
 					x3 *= 2; y2 *= 2;
 				}
 				
-				if ((piece.checkCollision(x + x3, y + y2, rtNew, field) == false)) {
+				if ((!piece.checkCollision(x + x3, y + y2, rtNew, field))) {
 					if (!(x3 == 0 && y2 == 0)) {
 						return new WallkickResult(x3, y2, rtNew);
 					}
@@ -55,7 +56,7 @@ public class SomeRandomShittyRotationSystemWallkick implements Wallkick {
 					x3 *= 2; y2 *= 2;
 				}
 				
-				if ((piece.checkCollision(x + x3, y + y2, rtNew, field) == false)) {
+				if ((!piece.checkCollision(x + x3, y + y2, rtNew, field))) {
 					if (!(x3 == 0 && y2 == 0)) {
 						return new WallkickResult(x3, y2, rtNew);
 					}
