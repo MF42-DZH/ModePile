@@ -55,7 +55,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 
 ### In the case that a *bin* folder is non-existent in the *NullpoMino* install folder
 
-1. Open *NullpoMino.jar*.
+1. Open *NullpoMino.jar* with an archiving program.
 2. Create a folder in the root install directory for your copy of *NullpoMino* called *bin*.
 3. Extract the folders in *NullpoMino.jar* to the newly-created *bin* folder.
 4. Follow the instructions as given in the *README.txt* in the release.
