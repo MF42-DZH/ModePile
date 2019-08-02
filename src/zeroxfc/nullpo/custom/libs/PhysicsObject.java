@@ -1,5 +1,15 @@
 package zeroxfc.nullpo.custom.libs;
 
+import mu.nu.nullpo.game.event.EventReceiver;
+import mu.nu.nullpo.game.play.GameEngine;
+
+/**
+ * PhysicsObject
+ *
+ * Gravity-less square physics objects.
+ * Has settable anchor points for more convenient location handling.
+ * Has a bounding box collision system.
+ */
 public class PhysicsObject {
 	/**
 	 * Anchor points for position.
@@ -104,9 +114,63 @@ public class PhysicsObject {
 	}
 
 	/**
+	 * Get x-coordinate of top-left corner of bounding box.
+	 * @return x-coordinate
+	 */
+	public double getMinX() {
+		return getBoundingBox()[0][0];
+	}
+
+	/**
+	 * Get y-coordinate of top-left corner of bounding box.
+	 * @return y-coordinate
+	 */
+	public double getMinY() {
+		return getBoundingBox()[0][1];
+	}
+
+	/**
+	 * Get x-coordinate of bottom-right corner of bounding box.
+	 * @return x-coordinate
+	 */
+	public double getMaxX() {
+		return getBoundingBox()[1][0];
+	}
+
+	/**
+	 * Get y-coordinate of bottom-right corner of bounding box.
+	 * @return y-coordinate
+	 */
+	public double getMaxY() {
+		return getBoundingBox()[1][1];
+	}
+
+	/**
+	 * Draw instance blocks to engine.
+	 * @param receiver Block renderer.
+	 * @param engine Current GameEngine.
+	 * @param playerID Current player ID.
+	 */
+	public void draw(EventReceiver receiver, GameEngine engine, int playerID) {
+		int size = 16;
+		for (int y = 0; y < blockSizeY; y++) {
+			for (int x = 0; x < blockSizeX; x++) {
+				receiver.drawSingleBlock(engine, playerID, (int)getMinX() + (x * size), (int)getMinY() + (y * size), colour, engine.getSkin(), false, 0f,1f,1f);
+			}
+		}
+	}
+
+	/**
 	 * Do one movement tick.
 	 */
 	public void move() {
+		if (!PROPERTY_Static) position = DoubleVector.add(position, velocity);
+	}
+
+	/**
+	 * Do one movement tick with a custom velocity.
+	 */
+	public void move(DoubleVector velocity) {
 		if (!PROPERTY_Static) position = DoubleVector.add(position, velocity);
 	}
 
@@ -135,11 +199,39 @@ public class PhysicsObject {
 
 		boolean intersection = false;
 
-		if ( (aMaxX <= bMinX) || (bMaxX <= aMinX) || (aMaxY <= bMinY) || (bMaxY <= aMinY) || (aMinX <= bMaxX) || (bMinX <= aMaxX) || (aMinY <= bMaxY) || (bMinY <= aMaxY) ) {
+		if (aMaxX >= bMinX && aMaxX <= bMaxX) {
+			intersection = true;
+		} else if (aMinX >= bMinX && aMinX <= bMaxX) {
+			intersection = true;
+		} else if (bMaxX >= aMinX && bMaxX <= aMaxX) {
+			intersection = true;
+		} else if (bMinX >= aMinX && bMinX <= aMaxX) {
+			intersection = true;
+		} else if (aMaxY >= bMinY && aMaxY <= bMaxY) {
+			intersection = true;
+		} else if (aMinY >= bMinY && aMinY <= bMaxY) {
+			intersection = true;
+		} else if (bMaxY >= aMinY && bMaxY <= aMaxY) {
+			intersection = true;
+		} else if (bMinY >= aMinY && bMinY <= aMaxY) {
 			intersection = true;
 		}
 
+
 		return intersection;
+	}
+
+	/**
+	 * Conducts a flat-surface reflection.
+	 * @param vector Velocity vector to modify.
+	 * @param vertical <code>true</code> if using a vertical mirror line. <code>false</code> if using a horizontal mirror line.
+	 */
+	public static void reflectVelocity(DoubleVector vector, boolean vertical) {
+		if (vertical) {
+			vector.setY(vector.getY() * -1);
+		} else {
+			vector.setX(vector.getX() * -1);
+		}
 	}
 
 	/**
