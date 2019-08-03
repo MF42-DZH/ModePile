@@ -2,6 +2,7 @@ package zeroxfc.nullpo.custom.libs;
 
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
+import org.apache.log4j.Logger;
 
 /**
  * PhysicsObject
@@ -10,7 +11,9 @@ import mu.nu.nullpo.game.play.GameEngine;
  * Has settable anchor points for more convenient location handling.
  * Has a bounding box collision system.
  */
-public class PhysicsObject {
+public class PhysicsObject implements Cloneable {
+	private static Logger log = Logger.getLogger(PhysicsObject.class);
+
 	/**
 	 * Anchor points for position.
 	 *
@@ -74,7 +77,7 @@ public class PhysicsObject {
 	 * @return Collision bounding box.
 	 */
 	public double[][] getBoundingBox() {
-		int baseSize = 16;
+		final int baseSize = 16;
 
 		int sizeX = blockSizeX * baseSize;
 		int sizeY = blockSizeY * baseSize;
@@ -199,24 +202,15 @@ public class PhysicsObject {
 
 		boolean intersection = false;
 
-		if (aMaxX >= bMinX && aMaxX <= bMaxX) {
+		if (aMaxX >= bMinX && aMaxX <= bMaxX && aMaxY >= bMinY && aMaxY <= bMaxY) {
 			intersection = true;
-		} else if (aMinX >= bMinX && aMinX <= bMaxX) {
+		} else if (aMinX >= bMinX && aMinX <= bMaxX && aMinY >= bMinY && aMinY <= bMaxY) {
 			intersection = true;
-		} else if (bMaxX >= aMinX && bMaxX <= aMaxX) {
+		} else if (bMaxX >= aMinX && bMaxX <= aMaxX && bMaxY >= aMinY && bMaxY <= aMaxY) {
 			intersection = true;
-		} else if (bMinX >= aMinX && bMinX <= aMaxX) {
-			intersection = true;
-		} else if (aMaxY >= bMinY && aMaxY <= bMaxY) {
-			intersection = true;
-		} else if (aMinY >= bMinY && aMinY <= bMaxY) {
-			intersection = true;
-		} else if (bMaxY >= aMinY && bMaxY <= aMaxY) {
-			intersection = true;
-		} else if (bMinY >= aMinY && bMinY <= aMaxY) {
+		} else if (bMinX >= aMinX && bMinX <= aMaxX && bMinY >= aMinY && bMinY <= aMaxY) {
 			intersection = true;
 		}
-
 
 		return intersection;
 	}
@@ -237,24 +231,30 @@ public class PhysicsObject {
 	/**
 	 * Clones the current PhysicsObject instance.
 	 * @return A complete clone of the current PhysicsObject instance.
-	 * @throws CloneNotSupportedException If clone is not suported.
 	 */
-	public PhysicsObject clone() throws CloneNotSupportedException {
-		PhysicsObject clone = (PhysicsObject) super.clone();
+	public PhysicsObject clone() {
+		PhysicsObject clone;
+		try {
+			clone = (PhysicsObject) super.clone();
 
-		clone.position = position;
-		clone.velocity = velocity;
-		clone.collisionsToDestroy = collisionsToDestroy;
-		clone.blockSizeX = blockSizeX;
-		clone.blockSizeY = blockSizeY;
-		clone.anchorPoint = anchorPoint;
-		clone.colour = colour;
+			clone.position = position;
+			clone.velocity = velocity;
+			clone.collisionsToDestroy = collisionsToDestroy;
+			clone.blockSizeX = blockSizeX;
+			clone.blockSizeY = blockSizeY;
+			clone.anchorPoint = anchorPoint;
+			clone.colour = colour;
 
-		clone.PROPERTY_Static = PROPERTY_Static;
-		clone.PROPERTY_Destructible = PROPERTY_Destructible;
-		clone.PROPERTY_Collision = PROPERTY_Collision;
+			clone.PROPERTY_Static = PROPERTY_Static;
+			clone.PROPERTY_Destructible = PROPERTY_Destructible;
+			clone.PROPERTY_Collision = PROPERTY_Collision;
 
-		return clone;
+			return clone;
+		} catch (Exception e) {
+			// Do nothing, but log error.
+			log.error(e.getMessage());
+			return null;
+		}
 	}
 
 	/**
