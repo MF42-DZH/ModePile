@@ -10,11 +10,10 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.util.CustomProperties;
-import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.*;
 
 public class Pong extends PuzzleGameEngine {
-	private static Logger log = Logger.getLogger(Pong.class);
+	// private static Logger log = Logger.getLogger(Pong.class);
 
 	private static final int LOCALSTATE_IDLE = 0,
 	                         LOCALSTATE_SPAWNING = 1,
@@ -27,7 +26,7 @@ public class Pong extends PuzzleGameEngine {
 	                         COLLISION_PADDLE_COMPUTER = 4;
 
 	private static final int FIELD_WIDTH = 20,
-	                         FIELD_HEIGHT = 12;
+	                         FIELD_HEIGHT = 15;
 
 	private static final int DIFFICULTY_EASY = 0,
 	                         DIFFICULTY_MEDIUM = 1,
@@ -44,19 +43,16 @@ public class Pong extends PuzzleGameEngine {
 	private static final double PLAYER_PADDLE_VELOCITY = 8.0;
 
 	private static final double[] COMPUTER_PADDLE_VELOCITY = {
-			4.0, 6.0, 8.0
+			2.25, 3.5, 6.0
 	};
 
 	private static final double[] COMPUTER_POWER_HIT_CHANCE = {
-			0.05, 0.1, 0.15
+			0.05, 0.1, 0.2
 	};
 
 	private static final double INITIAL_SPEED = 4.0;
-	private static final double MAXIMUM_SPEED = 12.0;
-	private static final double SPEED_MULTIPLIER = 1.1;
-
-	private static final double UP = Math.PI / 2;
-	private static final double DOWN = UP * 3;
+	private static final double MAXIMUM_SPEED = 16.0;
+	private static final double SPEED_MULTIPLIER = 1.25;
 
 	private GameManager owner;
 	private EventReceiver receiver;
@@ -64,8 +60,9 @@ public class Pong extends PuzzleGameEngine {
 	private Random initialDirectionRandomiser, computerActionRandomiser;
 	private int fieldBoxMinX, fieldBoxMinY, fieldBoxMaxX, fieldBoxMaxY;  // FIELD COLLISION BOUNDS.
 	private int bg, bgm, difficulty;
-	private int recentCollision;
+	private int recentCollision, lastCollision;
 	private int playerScore, computerScore;
+	private double computerRange;
 
 	@Override
 	public String getName() {
@@ -82,10 +79,17 @@ public class Pong extends PuzzleGameEngine {
 		difficulty = 0;
 		localState = LOCALSTATE_IDLE;
 		recentCollision = 0;
+		lastCollision = 0;
 		playerScore = 0;
 		computerScore = 0;
+		computerRange = 0;
 
-		loadSetting(owner.modeConfig);
+		if (owner.replayMode) {
+			loadSetting(owner.replayProp);
+		} else {
+			loadSetting(owner.modeConfig);
+		}
+
 		owner.backgroundStatus.bg = bg;
 		owner.bgmStatus.bgm = -1;
 		engine.framecolor = GameEngine.FRAME_COLOR_PINK;
@@ -99,18 +103,23 @@ public class Pong extends PuzzleGameEngine {
 		// Menu
 		if(!engine.owner.replayMode) {
 			// Configuration changes
-			int change = updateCursor(engine, 1, playerID);
+			int change = updateCursor(engine, 2, playerID);
 
 			if(change != 0) {
 				engine.playSE("change");
 
 				switch(engine.statc[2]) {
 					case 0:
+						difficulty += change;
+						if (difficulty >= DIFFICULTY_COUNT) difficulty = 0;
+						if (difficulty < 0) difficulty = DIFFICULTY_COUNT - 1;
+						break;
+					case 1:
 						bg += change;
 						if (bg > 19) bg = 0;
 						if (bg < 0) bg = 19;
 						break;
-					case 1:
+					case 2:
 						bgm += change;
 						if (bgm > 15) bgm = -1;
 						if (bgm < -1) bgm = 15;
@@ -149,7 +158,8 @@ public class Pong extends PuzzleGameEngine {
 	@Override
 	public void renderSetting(GameEngine engine, int playerID) {
 		drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE, 0,
-				"BG", (bg >= 0) ? String.valueOf(bg) : "AUTO",
+				"DIFFICULTY", DIFFICULTY_NAMES[difficulty],
+				"BG", String.valueOf(bg),
 				"BGM", (bgm >= 0) ? String.valueOf(bgm) : "DISABLED");
 	}
 
@@ -232,17 +242,21 @@ public class Pong extends PuzzleGameEngine {
 		DoubleVector position = new DoubleVector((fieldBoxMinX + fieldBoxMaxX) / 2,(fieldBoxMinY + fieldBoxMaxY) / 2, false);
 		ball = new PhysicsObject(position, DoubleVector.zero(), -1, 1, 1, PhysicsObject.ANCHOR_POINT_MM, Block.BLOCK_COLOR_GREEN);
 		ball.PROPERTY_Static = false;
+
 		recentCollision = 0;
+		lastCollision = 0;
 
 		if (resetPaddles) {
 			DoubleVector playerPosition = new DoubleVector(fieldBoxMinX,(fieldBoxMinY + fieldBoxMaxY) / 2, false);
 			DoubleVector computerPosition = new DoubleVector(fieldBoxMaxX,(fieldBoxMinY + fieldBoxMaxY) / 2, false);
 
-			paddlePlayer = new PhysicsObject(playerPosition, DoubleVector.zero(), -1, 1, 4, PhysicsObject.ANCHOR_POINT_ML, Block.BLOCK_COLOR_CYAN);
-			paddleComputer = new PhysicsObject(computerPosition, DoubleVector.zero(), -1, 1, 4, PhysicsObject.ANCHOR_POINT_MR, Block.BLOCK_COLOR_RED);
+			paddlePlayer = new PhysicsObject(playerPosition, DoubleVector.zero(), -1, 2, 4, PhysicsObject.ANCHOR_POINT_ML, Block.BLOCK_COLOR_CYAN);
+			paddleComputer = new PhysicsObject(computerPosition, DoubleVector.zero(), -1, 2, 4, PhysicsObject.ANCHOR_POINT_MR, Block.BLOCK_COLOR_RED);
 
 			paddlePlayer.PROPERTY_Static = false;
 			paddleComputer.PROPERTY_Static = false;
+
+			computerRange = computerActionRandomiser.nextDouble() * 32;
 		}
 	}
 
@@ -369,6 +383,36 @@ public class Pong extends PuzzleGameEngine {
 		boolean updateTimer = false;
 		// Override this.
 
+		// Player movement.
+		final DoubleVector playerVelocity = new DoubleVector(0, 0, false);
+		if (engine.ctrl.isPress(Controller.BUTTON_UP)) {
+			playerVelocity.setY(-1 * PLAYER_PADDLE_VELOCITY);
+			paddlePlayer.move(playerVelocity);
+			if (paddlePlayer.getMinY() < fieldBoxMinY) paddlePlayer.position.setY(fieldBoxMinY + 32);
+		}
+
+		if (engine.ctrl.isPress(Controller.BUTTON_DOWN)) {
+			playerVelocity.setY(PLAYER_PADDLE_VELOCITY);
+			paddlePlayer.move(playerVelocity);
+			if (paddlePlayer.getMaxY() > fieldBoxMaxY) paddlePlayer.position.setY(fieldBoxMaxY - 32);
+		}
+
+		// Computer movement.
+		// Use an approx. equal for this.
+		final DoubleVector computerVelocity = new DoubleVector(0, 0, false);
+		if (!almostEqual(ball.position.getY(), paddleComputer.position.getY(), computerRange)) {
+			if (ball.position.getY() > paddleComputer.position.getY()) {
+				computerVelocity.setY(COMPUTER_PADDLE_VELOCITY[difficulty]);
+				paddleComputer.move(computerVelocity);
+				if (paddleComputer.getMaxY() > fieldBoxMaxY) paddleComputer.position.setY(fieldBoxMaxY - 32);
+			}
+			if (ball.position.getY() < paddleComputer.position.getY()) {
+				computerVelocity.setY(-1 * COMPUTER_PADDLE_VELOCITY[difficulty]);
+				paddleComputer.move(computerVelocity);
+				if (paddleComputer.getMinY() < fieldBoxMinY) paddleComputer.position.setY(fieldBoxMinY + 32);
+			}
+		}
+
 		switch (localState) {
 			case LOCALSTATE_SPAWNING:
 				updateTimer = statSpawning(engine, playerID);
@@ -385,6 +429,9 @@ public class Pong extends PuzzleGameEngine {
 	}
 
 	private boolean statSpawning(GameEngine engine, int playerID) {
+		engine.meterValue = (int)(((double)engine.statc[0] / 60.0) * receiver.getMeterMax(engine));
+		engine.meterColor = GameEngine.METER_COLOR_GREEN;
+
 		if (engine.statc[0] == 0) {
 			resetPhysicsObjects(false);
 		} else if (engine.statc[0] == 60) {
@@ -398,8 +445,17 @@ public class Pong extends PuzzleGameEngine {
 		return true;
 	}
 
+	// Fuzzy equals.
+	private boolean almostEqual(double a, double b, double eps){
+		return Math.abs(a - b) < eps;
+	}
+
 	private boolean statIngame(GameEngine engine, int playerID) {
-		// TODO: Write player and computer input code here.
+		engine.meterValue = receiver.getMeterMax(engine);
+		engine.meterColor = GameEngine.METER_COLOR_GREEN;
+
+		boolean playerPowerhit = false;
+		boolean computerPowerhit = false;
 
 		/*
 		PhysicsObject[] testClones = new PhysicsObject[6];  // 6-step collision checker.
@@ -469,20 +525,24 @@ public class Pong extends PuzzleGameEngine {
 		}
 		*/
 		ball.move();
-		if (PhysicsObject.checkCollision(ball, paddlePlayer)) {
+		if (PhysicsObject.checkCollision(ball, paddlePlayer) && lastCollision == COLLISION_NONE) {
 			recentCollision = COLLISION_PADDLE_PLAYER;
-			log.debug("COLLISION_PLAYER");
-		} else if (PhysicsObject.checkCollision(ball, paddleComputer)) {
+			lastCollision = COLLISION_PADDLE_PLAYER;
+			playerPowerhit = engine.ctrl.isPress(Controller.BUTTON_A);
+		} else if (PhysicsObject.checkCollision(ball, paddleComputer) && lastCollision == COLLISION_NONE) {
 			recentCollision = COLLISION_PADDLE_COMPUTER;
-			log.debug("COLLISION_COM");
-		} else if (ball.getMinY() < fieldBoxMinY) {
+			lastCollision = COLLISION_PADDLE_COMPUTER;
+			computerPowerhit = computerActionRandomiser.nextDouble() < COMPUTER_POWER_HIT_CHANCE[difficulty];
+			computerRange = computerActionRandomiser.nextDouble() * 32;
+		} else if (ball.getMinY() < fieldBoxMinY && lastCollision == COLLISION_NONE) {
 			recentCollision = COLLISION_FIELD_TOP;
-			log.debug("COLLISION_FLD_TOP");
-		} else if (ball.getMaxY() > fieldBoxMaxY) {
+			lastCollision = COLLISION_FIELD_TOP;
+		} else if (ball.getMaxY() > fieldBoxMaxY && lastCollision == COLLISION_NONE) {
 			recentCollision = COLLISION_FIELD_BOTTOM;
-			log.debug("COLLISION_FLD_BOTTOM");
+			lastCollision = COLLISION_FIELD_BOTTOM;
 		} else {
 			recentCollision = COLLISION_NONE;
+			lastCollision = COLLISION_NONE;
 		}
 
 		final double pof = Math.PI / 4;
@@ -493,34 +553,63 @@ public class Pong extends PuzzleGameEngine {
 			case COLLISION_FIELD_TOP:
 			case COLLISION_FIELD_BOTTOM:
 				PhysicsObject.reflectVelocity(ball.velocity, true);
-				log.debug("WALL REFLECT");
+				if (ball.position.getY() < fieldBoxMinY + 8) ball.position.setY(fieldBoxMinY + 8);
+				if (ball.position.getY() > fieldBoxMaxY - 8) ball.position.setY(fieldBoxMaxY - 8);
+				engine.playSE("move");
 				break;
 			case COLLISION_PADDLE_PLAYER:
 				yCentreOffset = ball.position.getY() - paddlePlayer.position.getY();
 				angle = pof * (yCentreOffset / maxOffset);
 				ball.velocity.setDirection(angle);
-				log.debug("PLAYER REFLECT");
+				if (playerPowerhit) {
+					ball.velocity.setMagnitude(ball.velocity.getMagnitude() * SPEED_MULTIPLIER);
+					engine.playSE("step");
+				} else {
+					engine.playSE("move");
+				}
 
 				break;
 			case COLLISION_PADDLE_COMPUTER:
 				yCentreOffset = ball.position.getY() - paddleComputer.position.getY();
 				angle = (-1 * (pof * (yCentreOffset / maxOffset))) + Math.PI;
 				ball.velocity.setDirection(angle);
-				log.debug("COM REFLECT");
+				if (computerPowerhit){
+					ball.velocity.setMagnitude(ball.velocity.getMagnitude() * SPEED_MULTIPLIER);
+					engine.playSE("step");
+				} else {
+					engine.playSE("move");
+				}
 
 				break;
 			default:
 				break;
 		}
 
+		if (ball.velocity.getMagnitude() > MAXIMUM_SPEED) ball.velocity.setMagnitude(MAXIMUM_SPEED);
+
 		if (ball.getMinX() <= fieldBoxMinX) {
 			engine.resetStatc();
 			localState = LOCALSTATE_SPAWNING;
 			computerScore++;
+			engine.playSE("died");
 		} else if (ball.getMaxX() >= fieldBoxMaxX) {
 			engine.resetStatc();
 			localState = LOCALSTATE_SPAWNING;
 			playerScore++;
+			engine.playSE("stageclear");
+		}
+
+		if (playerScore >= 10) {
+			engine.resetStatc();
+			engine.stat = GameEngine.STAT_EXCELLENT;
+			engine.ending = 1;
+			engine.gameEnded();
+			localState = LOCALSTATE_IDLE;
+		} else if (computerScore >= 10) {
+			engine.resetStatc();
+			engine.stat = GameEngine.STAT_GAMEOVER;
+			engine.gameEnded();
+			localState = LOCALSTATE_IDLE;
 		}
 
 		return false;
@@ -548,7 +637,7 @@ public class Pong extends PuzzleGameEngine {
 					break;
 				case DIFFICULTY_HARD:
 					receiver.drawScoreFont(engine, playerID, 0, 3, "FAST COMPUTER PADDLE");
-					receiver.drawScoreFont(engine, playerID, 0, 4, "15% SPEED-HIT CHANCE");
+					receiver.drawScoreFont(engine, playerID, 0, 4, "20% SPEED-HIT CHANCE");
 					break;
 				default:
 					break;
@@ -563,9 +652,11 @@ public class Pong extends PuzzleGameEngine {
 			receiver.drawScoreFont(engine, playerID, 8, 6, "COM. PTS.", EventReceiver.COLOR_RED);
 			receiver.drawScoreFont(engine, playerID, 8, 7, String.valueOf(computerScore));
 
-			if (paddleComputer != null) paddleComputer.draw(receiver, engine, playerID);
-			if (paddlePlayer != null) paddlePlayer.draw(receiver, engine, playerID);
-			if (ball != null) ball.draw(receiver, engine, playerID);
+			if (engine.stat != GameEngine.STAT_RESULT) {
+				if (paddleComputer != null) paddleComputer.draw(receiver, engine, playerID);
+				if (paddlePlayer != null) paddlePlayer.draw(receiver, engine, playerID);
+				if (ball != null) ball.draw(receiver, engine, playerID);
+			}
 		}
 	}
 
@@ -579,6 +670,12 @@ public class Pong extends PuzzleGameEngine {
 
 		receiver.drawMenuFont(engine, playerID, 0, 2, "COM. PTS.", EventReceiver.COLOR_RED);
 		receiver.drawMenuFont(engine, playerID, 0, 3, String.format("%10s", computerScore));
+
+		if (playerScore >= 10) {
+			receiver.drawMenuFont(engine, playerID, 0, 5, "P1 WIN!");
+		} else {
+			receiver.drawMenuFont(engine, playerID, 0, 6, "COM. WIN!");
+		}
 	}
 
 

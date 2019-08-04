@@ -33,7 +33,14 @@ public class DoubleVector {
 			if (direction < 0) direction += (2.0 * Math.PI);
 		}
 	}
-	
+
+	/**
+	 * Gives a zero vector. For use in blank initialisations.
+	 */
+	public DoubleVector() {
+		this(0, 0, false);
+	}
+
 	/**
 	 * Adds two DoubleVector objects; a and b together.
 	 */
@@ -46,6 +53,20 @@ public class DoubleVector {
 	 */
 	public static DoubleVector sub(DoubleVector a, DoubleVector b) {
 		return new DoubleVector(a.getX() - b.getX(), a.getY() - b.getY(), false);
+	}
+
+	/**
+	 * Multiples the magnitude of a by b.
+	 */
+	public static DoubleVector mul(DoubleVector a, double b) {
+		return new DoubleVector(a.getMagnitude() * b, a.getDirection(), true);
+	}
+
+	/**
+	 * Divides the magnitude of a by b.
+	 */
+	public static DoubleVector div(DoubleVector a, double b) {
+		return new DoubleVector(a.getMagnitude() / b, a.getDirection(), true);
 	}
 	
 	/**

@@ -885,6 +885,8 @@ public class Collapse extends DummyMode {
 	
 	private void levelUp(GameEngine engine, int playerID, boolean beginning) {
 		if (!beginning) engine.statistics.level++;
+		owner.backgroundStatus.bg = engine.statistics.level % 20;
+
 		int effectiveLevel = engine.statistics.level;
 		
 		spawnTimer = 0;
