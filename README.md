@@ -18,6 +18,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Joker_ - A mode that approximates the JOKER mode from DTET.
 * _Minesweeper_ - It's Minesweeper. What else is there to say?
 * _Mission Mode_ - Play a marathon mode, but it asks you to clear Puyo-Puyo-styled missions.
+* _Pong_ - A single-player Pong clone.
 * _Scanline_ - Inspired by Scanner mode on [Tetris for the PSP Mini](https://harddrop.com/wiki/Tetris_(PSP_Mini)) and [Tetris Pop](https://harddrop.com/wiki/Tetris_Pop).
 * _Score Trial_ - An approximation of the SCORE ATTACK modes in DTET.
 * _Single Death Marathon_ - Marathon, but the pieces queue up to become big.
