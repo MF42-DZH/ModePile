@@ -1,54 +1,228 @@
 package zeroxfc.nullpo.custom.modes;
 
+import mu.nu.nullpo.game.component.BGMStatus;
+import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
 import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
+import mu.nu.nullpo.gui.sdl.NullpoMinoSDL;
 import mu.nu.nullpo.gui.sdl.ResourceHolderSDL;
 import mu.nu.nullpo.gui.sdl.SoundManagerSDL;
+import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
 import mu.nu.nullpo.gui.slick.ResourceHolder;
 import mu.nu.nullpo.gui.slick.SoundManager;
+import mu.nu.nullpo.gui.swing.NullpoMinoSwing;
 import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import mu.nu.nullpo.gui.swing.WaveEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+
+import org.apache.log4j.Logger;
 import org.newdawn.slick.Sound;
+
 import sdljava.mixer.MixChunk;
+
+import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.SoundLoader;
+import zeroxfc.nullpo.custom.libs.WeightedRandomiser;
 
 import javax.sound.sampled.Clip;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 import java.lang.reflect.*;
+import java.lang.StringBuilder;
 
 public class MarathonTwo extends MarathonModeBase {
-	/*
-	 * TODO list:
-	 *  - Use reflection to get the list of sound names.
-	 *  -
-	 */
+	// region Imported Fields
+	/** Current version */
+	private static final int CURRENT_VERSION = 2;
 
-	private static final int EFFECT_NONE = 0;
-	private static final int EFFECT_FAKE_HOVER = 1;
-	private static final int EFFECT_HARDEN_ALL = 2;
-	private static final int EFFECT_BLACKOUT = 3;
-	private static final int EFFECT_BONE_NEXT = 4;
-	private static final int EFFECT_SCRAMBLE_COLOUR = 5;
-	private static final int EFFECT_RANDOM_SOUND_EFFECT = 6;
-	private static final int EFFECT_GLITCH_FIELD = 7;
+	/** Fall velocity table (numerators) */
+	private static final int[] tableGravity = { 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 465, 731, 1280, 1707,  -1,  -1,  -1};
+
+	/** Fall velocity table (denominators) */
+	private static final int[] tableDenominator = {63, 50, 39, 30, 22, 16, 12,  8,  6,  4,  3,  2,  1, 256, 256,  256,  256, 256, 256, 256};
+
+	/** Line counts when BGM changes occur */
+	private static final int[] tableBGMChange = {50, 100, 150, 200, -1};
+
+	/** Line counts when game ending occurs */
+	private static final int[] tableGameClearLines = {150, 200, -1};
+
+	/** Number of entries in rankings */
+	private static final int RANKING_MAX = 10;
+
+	/** Number of ranking types */
+	private static final int RANKING_TYPE = 3;
+
+	/** Number of game types */
+	private static final int GAMETYPE_MAX = 3;
+
+	/** Most recent scoring event type constants */
+	private static final int EVENT_NONE = 0,
+			EVENT_SINGLE = 1,
+			EVENT_DOUBLE = 2,
+			EVENT_TRIPLE = 3,
+			EVENT_FOUR = 4,
+			EVENT_TSPIN_ZERO_MINI = 5,
+			EVENT_TSPIN_ZERO = 6,
+			EVENT_TSPIN_SINGLE_MINI = 7,
+			EVENT_TSPIN_SINGLE = 8,
+			EVENT_TSPIN_DOUBLE_MINI = 9,
+			EVENT_TSPIN_DOUBLE = 10,
+			EVENT_TSPIN_TRIPLE = 11,
+			EVENT_TSPIN_EZ = 12;
+
+	/** Most recent increase in score */
+	private int lastscore;
+
+	/** Time to display the most recent increase in score */
+	private int scgettime;
+
+	/** Most recent scoring event type */
+	private int lastevent;
+
+	/** True if most recent scoring event is a B2B */
+	private boolean lastb2b;
+
+	/** Combo count for most recent scoring event */
+	private int lastcombo;
+
+	/** Piece ID for most recent scoring event */
+	private int lastpiece;
+
+	/** Current BGM */
+	private int bgmlv;
+
+	/** Level at start time */
+	private int startlevel;
+
+	/** Flag for types of T-Spins allowed (0=none, 1=normal, 2=all spin) */
+	private int tspinEnableType;
+
+	/** Old flag for allowing T-Spins */
+	private boolean enableTSpin;
+
+	/** Flag for enabling wallkick T-Spins */
+	private boolean enableTSpinKick;
+
+	/** Spin check type (4Point or Immobile) */
+	private int spinCheckType;
+
+	/** Immobile EZ spin */
+	private boolean tspinEnableEZ;
+
+	/** Flag for enabling B2B */
+	private boolean enableB2B;
+
+	/** Flag for enabling combos */
+	private boolean enableCombo;
+
+	/** Game type */
+	private int goaltype;
+
+	/** Big */
+	private boolean big;
+
+	/** Version */
+	private int version;
+
+	/** Current round's ranking rank */
+	private int rankingRank;
+
+	/** Rankings' scores */
+	private int[][] rankingScore;
+
+	/** Rankings' line counts */
+	private int[][] rankingLines;
+
+	/** Rankings' times */
+	private int[][] rankingTime;
+	// endregion Imported Fields
+
+	// region Static Final Fields
+	private static Logger log = Logger.getLogger(MarathonTwo.class);
 
 	private static final int HOLDER_SLICK = 0,
-			                 HOLDER_SWING = 1,
-			                 HOLDER_SDL = 2;
+	                         HOLDER_SWING = 1,
+	                         HOLDER_SDL = 2;
 
-	private static final double FRAME_COLOUR_FLUCTUATION_CHANCE = 0.1;
+	private static final double FRAME_COLOUR_FLUCTUATION_CHANCE = (1d / 320d);
 
+	private static final String[] POSSIBLE_NAMES = {
+			"USELESS",
+			"MATRIX GLITCH",
+			"FAILURE",
+			"NOT MARATHON",
+			"BEHIND YOUR BACK",
+			"WATCH SURROUNDINGS",
+			"NIGHTMARE",
+			"IMAGINATION",
+			"DESPERATION",
+			"DESTRUCTION",
+			"SOCIETAL SANITY",
+			"ACCOMPLISHMENT-LESS",
+			"S3 PROGRAM",
+			"THE EDGE",
+			"FUTURE LOOP FOUNDATION",
+			"SHADOWS",
+			"MIND CONTROL"
+	};
+
+	private static final String[] POSSIBLE_SUBTEXT = {
+			"DANGEROUS",
+			"NEVERENDING",
+			"ABYSSAL",
+			"HOPELESS",
+			"EMPTY",
+			"BORING",
+			"TERRIBLE",
+			"IDIOTIC"
+	};
+
+	private static final double CHAR_SCRAMBLE_CHANCE = (1d / 5d);
+	private static final String characters = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopq";
+
+	private static final double BASE_EFFECT_PROC_CHANCE = (1d / 2400d);
+	private static final int SPOOKY_MAX = 200;
+
+	private static final int[] EFFECT_WEIGHTS = {
+			12, 8, 1, 12, 20, 8, 20, 12, 2, 4, 10
+	};
+
+	private static final int EFFECT_NONE = 0,
+			                 EFFECT_FAKE_HOVER_BLOCK = 1,
+			                 EFFECT_HARDEN_ALL = 2,
+			                 EFFECT_BLACKOUT = 3,
+			                 EFFECT_BONE_NEXT = 4,
+			                 EFFECT_SCRAMBLE_COLOUR = 5,
+			                 EFFECT_RANDOM_SOUND_EFFECT = 6,
+			                 EFFECT_GLITCH_FIELD = 7,
+			                 EFFECT_SHOTGUN = 8,
+			                 EFFECT_REAL_HOVER_BLOCK = 9,
+			                 EFFECT_SKIN_CHANGE = 10;
+
+	// endregion Static Final Fields
+
+	// region Private Fields
 	private GameManager owner;
 	private EventReceiver receiver;
 	private Random effectRandomiser;
 	private int spookyValue, lastEffect, holderType;
 	private ArrayList<String> soundList;
+	private int glitchTimer, blackoutTimer, currentBGM;
+	private double titleCoefficient, subtextCoefficient, frameCoefficient;
+	private String currentTitle, currentSubtext;
+	private WeightedRandomiser effectTypeRandomiser;
+	private boolean initialBGState;
+	private ArrayList<int[]> fakeHoverBlocks, gTextCoords;
+	private ArrayList<String> gTextChars;
+	private int bTextX, bTextY;
+	private int prevScore;
+	// endregion Private Fields
 
 	/** Mode Name */
 	@Override
@@ -60,7 +234,6 @@ public class MarathonTwo extends MarathonModeBase {
 	 * Initialization
 	 */
 	@Override
-	@SuppressWarnings("unchecked")  // XXX: Well, this is going to get ugly. Apologies for any eyes burnt out looking at this.
 	public void playerInit(GameEngine engine, int playerID) {
 		owner = engine.owner;
 		receiver = engine.owner.receiver;
@@ -71,14 +244,32 @@ public class MarathonTwo extends MarathonModeBase {
 		lastcombo = 0;
 		lastpiece = 0;
 		bgmlv = 0;
+		prevScore = 0;
 
 		rankingRank = -1;
 		rankingScore = new int[RANKING_TYPE][RANKING_MAX];
 		rankingLines = new int[RANKING_TYPE][RANKING_MAX];
 		rankingTime = new int[RANKING_TYPE][RANKING_MAX];
 
-		spookyValue = EFFECT_NONE;
+		spookyValue = 0;
 		lastEffect = EFFECT_NONE;
+		blackoutTimer = 0;
+		glitchTimer = 0;
+		currentBGM = -1;
+		frameCoefficient = 1;
+		titleCoefficient = 1;
+		subtextCoefficient = 1;
+		fakeHoverBlocks = new ArrayList<>();
+		gTextCoords = new ArrayList<>();
+		gTextChars = new ArrayList<>();
+
+		currentTitle = "";
+		currentSubtext = "";
+
+		SoundLoader.loadSoundset(SoundLoader.LOADTYPE_FIREWORKS);
+		SoundLoader.loadSoundset(SoundLoader.LOADTYPE_SCANNER);
+		SoundLoader.loadSoundset(SoundLoader.LOADTYPE_MINESWEEPER);
+		SoundLoader.loadSoundset(SoundLoader.LOADTYPE_COLLAPSE);
 
 		// Reflection is an unholy magic. It's powerful alright, but very unsafe.
 		// region SOUND NAME EXTRACTION
@@ -90,7 +281,7 @@ public class MarathonTwo extends MarathonModeBase {
 		soundList = new ArrayList<>();
 
 		/*
-		 * XXX: welp, i guess it's time to use reflection again... apolgies in advance for this atrocity.
+		 * XXX: welp, i guess it's time to use reflection again... apologies in advance for this atrocity.
 		 */
 		Field localField;
 		switch (holderType) {
@@ -102,8 +293,9 @@ public class MarathonTwo extends MarathonModeBase {
 					HashMap<String, Sound> slickSE = (HashMap<String, Sound>)localField.get(ResourceHolder.soundManager);
 
 					soundList.addAll(slickSE.keySet());
+					log.info("Sound name loading from Slick soundManager successful.");
 				} catch (Exception e) {
-					// NOTHING.
+					log.error("Sound name loading from Slick soundManager failed.");
 				}
 
 				break;
@@ -115,8 +307,9 @@ public class MarathonTwo extends MarathonModeBase {
 					HashMap<String, Clip> swingSE = (HashMap<String, Clip>)localField.get(ResourceHolderSwing.soundManager);
 
 					soundList.addAll(swingSE.keySet());
+					log.info("Sound name loading from Swing soundManager successful.");
 				} catch (Exception e) {
-					// NOTHING.
+					log.error("Sound name loading from Swing soundManager failed.");
 				}
 
 				break;
@@ -128,8 +321,9 @@ public class MarathonTwo extends MarathonModeBase {
 					HashMap<String, MixChunk> sdlSE = (HashMap<String, MixChunk>)localField.get(ResourceHolderSDL.soundManager);
 
 					soundList.addAll(sdlSE.keySet());
+					log.info("Sound name loading from SDL soundManager successful.");
 				} catch (Exception e) {
-					// NOTHING.
+					log.error("Sound name loading from SDL soundManager failed.");
 				}
 
 				break;
@@ -141,6 +335,7 @@ public class MarathonTwo extends MarathonModeBase {
 		if(!owner.replayMode) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+			getInitialBGState();
 			version = CURRENT_VERSION;
 		} else {
 			loadSetting(owner.replayProp);
@@ -154,17 +349,100 @@ public class MarathonTwo extends MarathonModeBase {
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
 	}
 
+	private void getInitialBGState() {
+		switch (holderType) {
+			case HOLDER_SLICK:
+				initialBGState = NullpoMinoSlick.propConfig.getProperty("option.showbg", true);
+				break;
+			case HOLDER_SWING:
+				initialBGState = NullpoMinoSwing.propConfig.getProperty("option.showbg", true);
+				break;
+			case HOLDER_SDL:
+				initialBGState = NullpoMinoSDL.propConfig.getProperty("option.showbg", true);
+				break;
+			default:
+				break;
+		}
+	}
+
+	private void setBGState(boolean bool) {
+		if (initialBGState) {
+			try {
+				Class<EventReceiver> renderer = EventReceiver.class;
+				Field localField;
+				localField = renderer.getDeclaredField("showbg");
+				localField.setAccessible(true);
+				if (localField.getBoolean(receiver) != bool) {
+					localField.setBoolean(receiver, bool);
+					log.info("showbg in current EventReceiver set successfully to " + bool);
+				}
+			} catch (Exception e) {
+				log.error("Access to showbg in current EventReceiver failed.");
+			}
+		}
+	}
+
+	/**
+	 * Gets a random sound name from the current <code>soundManager</code>.
+	 * @return A random sound name or an empty string if <code>reflection</code> fails to get the name list.
+	 */
+	private String randomSound() {
+		if (soundList.size() > 0 && effectRandomiser != null) return soundList.get(effectRandomiser.nextInt(soundList.size()));
+		else return "";
+	}
+
+	/**
+	 * Generates a scrambled string from a base string.
+	 * @param baseStringArray Array to select a base string from.
+	 * @return Scrambled string.
+	 */
+	private String randomString(String[] baseStringArray) {
+		StringBuilder sb = new StringBuilder(baseStringArray[effectRandomiser.nextInt(baseStringArray.length)]);
+
+		if (spookyValue >= (SPOOKY_MAX / 2)) {
+			for (int i = 0; i < sb.length(); i++) {
+				double coefficient = effectRandomiser.nextDouble();
+				if (coefficient < (CHAR_SCRAMBLE_CHANCE * (spookyValue / 50d))) {
+					sb.setCharAt(i, characters.charAt(effectRandomiser.nextInt(characters.length())));
+				}
+			}
+		}
+
+		return sb.toString();
+	}
+
+	/**
+	 * Set the gravity rate
+	 * @param engine GameEngine
+	 */
+	public void setSpeed(GameEngine engine) {
+		int lv = engine.statistics.level;
+
+		if(lv < 0) lv = 0;
+		if(lv >= tableGravity.length) lv = tableGravity.length - 1;
+
+		engine.speed.gravity = tableGravity[lv];
+		engine.speed.denominator = tableDenominator[lv];
+	}
+
 	/*
 	 * Called at settings screen
 	 */
 	@Override
 	public boolean onSetting(GameEngine engine, int playerID) {
+		setBGState(initialBGState);
+		effectRandomiser = null;
+		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
+		frameCoefficient = 1;
+		titleCoefficient = 1;
+		subtextCoefficient = 1;
+
 		// NET: Net Ranking
 		if(netIsNetRankingDisplayMode) {
 			netOnUpdateNetPlayRanking(engine, goaltype);
 		}
 		// Menu
-		else if(engine.owner.replayMode == false) {
+		else if(!engine.owner.replayMode) {
 			// Configuration changes
 			int change = updateCursor(engine, 8, playerID);
 
@@ -295,6 +573,99 @@ public class MarathonTwo extends MarathonModeBase {
 		}
 	}
 
+	@Override
+	public boolean onReady(GameEngine engine, int playerID) {
+		if (engine.statc[0] == 0) {
+			effectRandomiser = new Random(engine.randSeed);
+			effectTypeRandomiser = new WeightedRandomiser(EFFECT_WEIGHTS, engine.randSeed + 1);
+
+			fakeHoverBlocks.clear();
+			gTextCoords.clear();
+			gTextChars.clear();
+			prevScore = 0;
+
+			spookyValue = 0;
+			lastEffect = EFFECT_NONE;
+			blackoutTimer = 0;
+			glitchTimer = 0;
+			currentBGM = -1;
+			frameCoefficient = 1;
+			titleCoefficient = 1;
+			subtextCoefficient = 1;
+		}
+		return false;
+	}
+
+	/*
+	 * Called for initialization during "Ready" screen
+	 */
+	@Override
+	public void startGame(GameEngine engine, int playerID) {
+		engine.statistics.level = startlevel;
+		engine.statistics.levelDispAdd = 1;
+		engine.b2bEnable = enableB2B;
+		if(enableCombo) {
+			engine.comboType = GameEngine.COMBO_TYPE_NORMAL;
+		} else {
+			engine.comboType = GameEngine.COMBO_TYPE_DISABLE;
+		}
+		engine.big = big;
+
+		if(version >= 2) {
+			engine.tspinAllowKick = enableTSpinKick;
+			if(tspinEnableType == 0) {
+				engine.tspinEnable = false;
+			} else if(tspinEnableType == 1) {
+				engine.tspinEnable = true;
+			} else {
+				engine.tspinEnable = true;
+				engine.useAllSpinBonus = true;
+			}
+		} else {
+			engine.tspinEnable = enableTSpin;
+		}
+
+		engine.spinCheckType = spinCheckType;
+		engine.tspinEnableEZ = tspinEnableEZ;
+
+		setSpeed(engine);
+
+		if(netIsWatch) {
+			owner.bgmStatus.bgm = BGMStatus.BGM_NOTHING;
+		}
+	}
+
+	@Override
+	public boolean onGameOver(GameEngine engine, int playerID) {
+		if (engine.statc[0] == 0) {
+			for (int y = engine.field.getHiddenHeight() * -1; y < engine.field.getHeight(); y++) {
+				for (int x = 0; x < engine.field.getWidth(); x++) {
+					Block blk = engine.field.getBlock(x, y);
+					if (blk != null) {
+						if (blk.color > Block.BLOCK_COLOR_NONE) {
+							blk.secondaryColor = 0;
+						}
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	@Override
+	public void renderFirst(GameEngine engine, int playerID) {
+		if (blackoutTimer > 0) {
+			for (int y = 0; y < 480 / 32; y++) {
+				for (int x = 0; x < 640 / 32; x++) {
+					receiver.drawSingleBlock(engine, playerID,
+							(32 * x), (32 * y),Block.BLOCK_COLOR_GRAY,
+							0,false, 1f,1f, 2f);
+				}
+			}
+		}
+	}
+
 	/*
 	 * Render score
 	 */
@@ -302,16 +673,29 @@ public class MarathonTwo extends MarathonModeBase {
 	public void renderLast(GameEngine engine, int playerID) {
 		if(owner.menuOnly) return;
 
-		receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_GREEN);
+		if (engine.stat != GameEngine.STAT_SETTING && engine.stat != GameEngine.STAT_RESULT && spookyValue >= 50) {
+			if (titleCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) receiver.drawScoreFont(engine, playerID, 0, 0, currentTitle, EventReceiver.COLOR_RED);
+			else receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_GREEN);
 
-		if(tableGameClearLines[goaltype] == -1) {
-			receiver.drawScoreFont(engine, playerID, 0, 1, "(ENDLESS GAME)", EventReceiver.COLOR_GREEN);
+			if(tableGameClearLines[goaltype] == -1) {
+				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
+				else receiver.drawScoreFont(engine, playerID, 0, 1, "(ENDLESS GAME)", EventReceiver.COLOR_GREEN);
+			} else {
+				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
+				else receiver.drawScoreFont(engine, playerID, 0, 1, "(" + tableGameClearLines[goaltype] + " LINES GAME)", EventReceiver.COLOR_GREEN);
+			}
 		} else {
-			receiver.drawScoreFont(engine, playerID, 0, 1, "(" + tableGameClearLines[goaltype] + " LINES GAME)", EventReceiver.COLOR_GREEN);
+			receiver.drawScoreFont(engine, playerID, 0, 0, (titleCoefficient < (1d / 300d) && (engine.stat != GameEngine.STAT_SETTING && engine.stat != GameEngine.STAT_RESULT))  ? "MARATHON 2" : getName(), EventReceiver.COLOR_GREEN);
+			if(tableGameClearLines[goaltype] == -1) {
+				receiver.drawScoreFont(engine, playerID, 0, 1, "(ENDLESS GAME)", EventReceiver.COLOR_GREEN);
+			} else {
+				receiver.drawScoreFont(engine, playerID, 0, 1, "(" + tableGameClearLines[goaltype] + " LINES GAME)", EventReceiver.COLOR_GREEN);
+			}
 		}
 
-		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false)) ) {
-			if((owner.replayMode == false) && (big == false) && (engine.ai == null)) {
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
+			setBGState(initialBGState);
+			if((!owner.replayMode) && (!big) && (engine.ai == null)) {
 				float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
@@ -323,13 +707,15 @@ public class MarathonTwo extends MarathonModeBase {
 					receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[goaltype][i]), (i == rankingRank), scale);
 				}
 			}
+		} else if ( (engine.stat == GameEngine.STAT_RESULT) ) {
+			setBGState(initialBGState);
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
 			String strScore;
 			if((lastscore == 0) || (scgettime >= 120)) {
 				strScore = String.valueOf(engine.statistics.score);
 			} else {
-				strScore = String.valueOf(engine.statistics.score) + "(+" + String.valueOf(lastscore) + ")";
+				strScore = Interpolation.lerp(prevScore, engine.statistics.score, scgettime / 120d) + "(+" + lastscore + ")";
 			}
 			receiver.drawScoreFont(engine, playerID, 0, 4, strScore);
 
@@ -397,6 +783,60 @@ public class MarathonTwo extends MarathonModeBase {
 				if((lastcombo >= 2) && (lastevent != EVENT_TSPIN_ZERO_MINI) && (lastevent != EVENT_TSPIN_ZERO))
 					receiver.drawMenuFont(engine, playerID, 2, 22, (lastcombo - 1) + "COMBO", EventReceiver.COLOR_CYAN);
 			}
+
+			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+			if (fakeHoverBlocks.size() > 0) {
+				for (int[] location : fakeHoverBlocks) {
+					receiver.drawSingleBlock(engine, playerID,
+							baseX + (16 * location[0]), baseY + (16 * location[1]),Block.BLOCK_COLOR_GRAY,
+							engine.getSkin(),false, 0f,1f, 1f);
+				}
+			}
+
+			// Glitch Covering
+			if (blackoutTimer == 0 && glitchTimer > 0) {
+				int maxRow;
+				if (glitchTimer > 60) {
+					maxRow = (int)(((glitchTimer - 120) / - 60d) * (engine.field.getHeight() - 1));
+				} else {
+					maxRow = engine.field.getHeight() - 1;
+				}
+
+				for (int y = 0; y <= maxRow; y++) {
+					for (int x = 0; x < engine.field.getWidth(); x++) {
+						int mVal = ((x % 2) + ((glitchTimer / 6) % 2)) % 2;
+						if (y % 2 == mVal) receiver.drawSingleBlock(engine, playerID,
+								baseX + (16 * x), baseY + (16 * y), Block.BLOCK_COLOR_GRAY,
+								engine.getSkin(),true, 0f,1f, 1f);
+					}
+				}
+			}
+
+			// Blackout Covering
+			if (blackoutTimer > 0) {
+				for (int y = 0; y < engine.field.getHeight(); y++) {
+					for (int x = 0; x < engine.field.getWidth(); x++) {
+						receiver.drawSingleBlock(engine, playerID,
+								baseX + (16 * x), baseY + (16 * y),Block.BLOCK_COLOR_GRAY,
+								engine.getSkin(),false, 1f,1f, 1f);
+					}
+				}
+
+				if (spookyValue >= 100 && blackoutTimer % 2 == 0 && blackoutTimer <= 16) {
+					receiver.drawDirectFont(engine, playerID, bTextX, bTextY, "TURN THE COMPUTER", EventReceiver.COLOR_RED);
+					receiver.drawDirectFont(engine, playerID, bTextX, bTextY + 16, "OFF IMMEDIATELY!", EventReceiver.COLOR_RED);
+				}
+			}
+
+			// GLITCH TEXT
+			if (gTextCoords.size() > 0 && glitchTimer > 0) {
+				for (int i = 0; i < gTextCoords.size(); i++) {
+					receiver.drawDirectFont(engine, playerID, gTextCoords.get(i)[0], gTextCoords.get(i)[1], gTextChars.get(i), gTextCoords.get(i)[2]);
+				}
+			}
+
 		}
 
 		// NET: Number of spectators
@@ -410,12 +850,442 @@ public class MarathonTwo extends MarathonModeBase {
 		netDrawPlayerName(engine);
 	}
 
+	private void executeEffect(GameEngine engine, int playerID) {
+		double procRoll = effectRandomiser.nextDouble();
+		if (procRoll < BASE_EFFECT_PROC_CHANCE * (spookyValue / 50d)) {
+			int effectType;
+			do {
+				effectType = effectTypeRandomiser.nextInt();
+			} while (effectType == lastEffect);
+			lastEffect = effectType;
+
+			switch (effectType) {
+				case EFFECT_FAKE_HOVER_BLOCK:
+					int[] l;
+					do {
+						l = new int[] { effectRandomiser.nextInt(engine.field.getWidth()), effectRandomiser.nextInt(engine.field.getHeight()) };
+					} while (fakeHoverBlocks.contains(l));
+					fakeHoverBlocks.add(l);
+					engine.playSE("square_s");
+					break;
+				case EFFECT_HARDEN_ALL:
+					for (int y = engine.field.getHiddenHeight() * -1; y < engine.field.getHeight(); y++) {
+						for (int x = 0; x < engine.field.getWidth(); x++) {
+							Block blk = engine.field.getBlock(x, y);
+							if (blk != null) {
+								if (blk.color > Block.BLOCK_COLOR_NONE) {
+									receiver.blockBreak(engine, playerID, x, y, blk);
+									blk.hard = 1;
+									blk.secondaryColor = blk.color;
+									blk.color = Block.BLOCK_COLOR_GRAY;
+								}
+							}
+						}
+					}
+					engine.playSE("garbage");
+					break;
+				case EFFECT_BLACKOUT:
+					blackoutTimer = effectRandomiser.nextInt(61) + 60;
+					log.debug("BLACKOUT HAS BEEN SET TO OCCUR FOR " + blackoutTimer + " FRAMES");
+					engine.playSE("danger");
+					break;
+				case EFFECT_BONE_NEXT:
+					engine.getNextObject(engine.nextPieceCount).setAttribute(Block.BLOCK_ATTRIBUTE_BONE, true);
+					engine.playSE("garbage");
+					break;
+				case EFFECT_SCRAMBLE_COLOUR:
+					for (int y = engine.field.getHiddenHeight() * -1; y < engine.field.getHeight(); y++) {
+						for (int x = 0; x < engine.field.getWidth(); x++) {
+							Block blk = engine.field.getBlock(x, y);
+							if (blk != null) {
+								if (blk.color > Block.BLOCK_COLOR_NONE && blk.hard <= 0) {
+									blk.color = effectRandomiser.nextInt(8) + 1;
+								}
+							}
+						}
+					}
+					engine.playSE("hurryup");
+					break;
+				case EFFECT_RANDOM_SOUND_EFFECT:
+					engine.playSE(randomSound());
+					break;
+				case EFFECT_GLITCH_FIELD:
+					glitchTimer = 120;
+					engine.playSE("died");
+					break;
+				case EFFECT_SHOTGUN:
+					for (int y = engine.field.getHiddenHeight() * -1; y < engine.field.getHeight(); y++) {
+						boolean allEmpty = true;
+						ArrayList<Integer> spaces = new ArrayList<>();
+
+						for (int x = 0; x < engine.field.getWidth(); x++) {
+							Block blk = engine.field.getBlock(x, y);
+							if (blk != null) {
+								if (blk.color > Block.BLOCK_COLOR_NONE) {
+									allEmpty = false;
+									spaces.add(x);
+								}
+							}
+						}
+
+						if (!allEmpty) {
+							while (true) {
+								int x = spaces.get(effectRandomiser.nextInt(spaces.size()));
+								Block blk = engine.field.getBlock(x, y);
+								if (blk != null) {
+									if (blk.color > Block.BLOCK_COLOR_NONE) {
+										blk.color = Block.BLOCK_COLOR_NONE;
+										break;
+									}
+								}
+							}
+						}
+					}
+					engine.playSE("regret");
+					break;
+				case EFFECT_REAL_HOVER_BLOCK:
+					int x, y;
+					Block blk;
+					do {
+						do {
+							x = effectRandomiser.nextInt(engine.field.getWidth());
+							y = effectRandomiser.nextInt(engine.field.getHeight());
+							blk = engine.field.getBlock(x, y);
+						} while (blk == null);
+					} while (blk.color <= Block.BLOCK_COLOR_NONE);
+					blk.color = effectRandomiser.nextInt(8) + 1;
+
+					engine.playSE("square_g");
+					break;
+				case EFFECT_SKIN_CHANGE:
+					int skin = 0;
+					switch (holderType) {
+						case HOLDER_SLICK:
+							skin = effectRandomiser.nextInt(ResourceHolder.imgNormalBlockList.size());
+							break;
+						case HOLDER_SWING:
+							skin = effectRandomiser.nextInt(ResourceHolderSwing.imgNormalBlockList.size());
+							break;
+						case HOLDER_SDL:
+							skin = effectRandomiser.nextInt(ResourceHolderSDL.imgNormalBlockList.size());
+							break;
+						default:
+							break;
+					}
+
+					int amount = effectRandomiser.nextInt(13) + 4;
+					for (int i = 0; i < amount; i++) {
+						engine.getNextObject(engine.nextPieceCount + engine.ruleopt.nextDisplay + i).setSkin(skin);
+					}
+					engine.playSE("medal");
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
 	/*
 	 * Called after every frame
 	 */
 	@Override
 	public void onLast(GameEngine engine, int playerID) {
 		scgettime++;
+
+		if (engine.stat != GameEngine.STAT_SETTING && engine.stat != GameEngine.STAT_RESULT && effectRandomiser != null) {
+			if (glitchTimer > 0) glitchTimer--;
+			if (blackoutTimer > 0) blackoutTimer--;
+
+			if (spookyValue >= 50) {
+				boolean ct, st;
+				double ctd, std;
+
+				executeEffect(engine, playerID);
+
+				ctd = titleCoefficient;
+				std = subtextCoefficient;
+
+				frameCoefficient = effectRandomiser.nextDouble();
+				titleCoefficient = effectRandomiser.nextDouble();
+				subtextCoefficient = effectRandomiser.nextDouble();
+
+				ct = ctd < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5);
+				st = std < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5);
+
+				if (frameCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) {
+					engine.framecolor = GameEngine.FRAME_COLOR_RED;
+				} else {
+					engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
+				}
+
+				if (titleCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) {
+					if (!ct) currentTitle = randomString(POSSIBLE_NAMES);
+				}
+
+				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) {
+					if (!st) currentSubtext = randomString(POSSIBLE_SUBTEXT);
+				}
+			} else if (spookyValue >= 25) {
+				titleCoefficient = effectRandomiser.nextDouble();
+			} else {
+				frameCoefficient = 1;
+				titleCoefficient = 1;
+				subtextCoefficient = 1;
+			}
+
+			if (engine.stat == GameEngine.STAT_EXCELLENT || engine.stat == GameEngine.STAT_GAMEOVER || engine.stat == GameEngine.STAT_READY) {
+				frameCoefficient = 1;
+				titleCoefficient = 1;
+				subtextCoefficient = 1;
+
+				glitchTimer = 0;
+				blackoutTimer = 0;
+				spookyValue = 0;
+
+				gTextCoords.clear();
+				fakeHoverBlocks.clear();
+				gTextChars.clear();
+			}
+
+			// Reset previously grey hard blocks to their normal colour.
+			for (int y = engine.field.getHiddenHeight() * -1; y < engine.field.getHeight(); y++) {
+				for (int x = 0; x < engine.field.getWidth(); x++) {
+					Block blk = engine.field.getBlock(x, y);
+					if (blk != null) {
+						if (blk.hard == 0 && blk.color > Block.BLOCK_COLOR_NONE) {
+							if (blk.secondaryColor > 0) blk.color = blk.secondaryColor;
+						}
+					}
+				}
+			}
+
+			if (blackoutTimer > 0) {
+				bTextX = effectRandomiser.nextInt(640);
+				bTextY = effectRandomiser.nextInt(480);
+				setBGState(false);  // BG is black during a blackout.
+				if (owner.bgmStatus.bgm != -1 && !owner.bgmStatus.fadesw) {
+					currentBGM = owner.bgmStatus.bgm;
+					owner.bgmStatus.bgm = -1;
+				}
+			} else {
+				setBGState(true);
+				if (owner.bgmStatus.bgm == -1 && !owner.bgmStatus.fadesw) {
+					if (!(engine.stat == GameEngine.STAT_EXCELLENT || engine.stat == GameEngine.STAT_GAMEOVER || engine.stat == GameEngine.STAT_READY)) {
+						owner.bgmStatus.bgm = currentBGM;
+					}
+				}
+			}
+
+			if (glitchTimer > 0) {
+				gTextCoords.clear();
+				gTextChars.clear();
+
+				for (int i = 0; i < -2 * (glitchTimer - 120 - 1); i++) {
+					int[] b;
+					do {
+						b = new int[] { effectRandomiser.nextInt(640 / 16) * 16, effectRandomiser.nextInt(480 / 16) * 16 };
+					} while (gTextCoords.contains(b));
+
+					b = new int[] { b[0], b[1], effectRandomiser.nextInt(10) };
+
+					gTextCoords.add(b);
+					gTextChars.add(String.valueOf(characters.charAt(effectRandomiser.nextInt(characters.length()))));
+				}
+
+				if (effectRandomiser.nextDouble() < (1d / (glitchTimer * 4))) {
+					engine.playSE(randomSound());
+				}
+			}
+
+			if (effectRandomiser.nextDouble() < (1d / 3200d)) {
+				engine.playSE(randomSound());
+			}
+		}
+	}
+
+	/*
+	 * Calculate score
+	 */
+	@Override
+	public void calcScore(GameEngine engine, int playerID, int lines) {
+		// Line clear bonus
+		int pts = 0;
+
+		if(engine.tspin) {
+			// T-Spin 0 lines
+			if((lines == 0) && (!engine.tspinez)) {
+				if(engine.tspinmini) {
+					pts += 100 * (engine.statistics.level + 1);
+					lastevent = EVENT_TSPIN_ZERO_MINI;
+				} else {
+					pts += 400 * (engine.statistics.level + 1);
+					lastevent = EVENT_TSPIN_ZERO;
+				}
+			}
+			// Immobile EZ Spin
+			else if(engine.tspinez && (lines > 0)) {
+				if(engine.b2b) {
+					pts += 180 * (engine.statistics.level + 1);
+				} else {
+					pts += 120 * (engine.statistics.level + 1);
+				}
+				lastevent = EVENT_TSPIN_EZ;
+			}
+			// T-Spin 1 line
+			else if(lines == 1) {
+				if(engine.tspinmini) {
+					if(engine.b2b) {
+						pts += 300 * (engine.statistics.level + 1);
+					} else {
+						pts += 200 * (engine.statistics.level + 1);
+					}
+					lastevent = EVENT_TSPIN_SINGLE_MINI;
+				} else {
+					if(engine.b2b) {
+						pts += 1200 * (engine.statistics.level + 1);
+					} else {
+						pts += 800 * (engine.statistics.level + 1);
+					}
+					lastevent = EVENT_TSPIN_SINGLE;
+				}
+			}
+			// T-Spin 2 lines
+			else if(lines == 2) {
+				if(engine.tspinmini && engine.useAllSpinBonus) {
+					if(engine.b2b) {
+						pts += 600 * (engine.statistics.level + 1);
+					} else {
+						pts += 400 * (engine.statistics.level + 1);
+					}
+					lastevent = EVENT_TSPIN_DOUBLE_MINI;
+				} else {
+					if(engine.b2b) {
+						pts += 1800 * (engine.statistics.level + 1);
+					} else {
+						pts += 1200 * (engine.statistics.level + 1);
+					}
+					lastevent = EVENT_TSPIN_DOUBLE;
+				}
+			}
+			// T-Spin 3 lines
+			else if(lines >= 3) {
+				if(engine.b2b) {
+					pts += 2400 * (engine.statistics.level + 1);
+				} else {
+					pts += 1600 * (engine.statistics.level + 1);
+				}
+				lastevent = EVENT_TSPIN_TRIPLE;
+			}
+		} else {
+			if(lines == 1) {
+				pts += 100 * (engine.statistics.level + 1); // 1列
+				lastevent = EVENT_SINGLE;
+			} else if(lines == 2) {
+				pts += 300 * (engine.statistics.level + 1); // 2列
+				lastevent = EVENT_DOUBLE;
+			} else if(lines == 3) {
+				pts += 500 * (engine.statistics.level + 1); // 3列
+				lastevent = EVENT_TRIPLE;
+			} else if(lines >= 4) {
+				// 4 lines
+				if(engine.b2b) {
+					pts += 1200 * (engine.statistics.level + 1);
+				} else {
+					pts += 800 * (engine.statistics.level + 1);
+				}
+				lastevent = EVENT_FOUR;
+			}
+		}
+
+		lastb2b = engine.b2b;
+
+		// Combo
+		if((enableCombo) && (engine.combo >= 1) && (lines >= 1)) {
+			pts += ((engine.combo - 1) * 50) * (engine.statistics.level + 1);
+			lastcombo = engine.combo;
+		}
+
+		// All clear
+		if((lines >= 1) && (engine.field.isEmpty())) {
+			engine.playSE("bravo");
+			pts += 1800 * (engine.statistics.level + 1);
+		}
+
+		// Add to score
+		if(pts > 0) {
+			lastscore = pts;
+
+			if (blackoutTimer > 0) pts *= 2;
+			if (glitchTimer > 0) pts *= 1.5;
+
+			lastpiece = engine.nowPieceObject.id;
+			scgettime = 0;
+			if(lines >= 1) engine.statistics.scoreFromLineClear += pts;
+			else engine.statistics.scoreFromOtherBonus += pts;
+			prevScore = engine.statistics.score;
+			engine.statistics.score += pts;
+		}
+
+		spookyValue = engine.statistics.lines;
+		if (engine.statistics.lines > SPOOKY_MAX) spookyValue = SPOOKY_MAX;
+
+		// BGM fade-out effects and BGM changes
+		if(tableBGMChange[bgmlv] != -1) {
+			if(engine.statistics.lines >= tableBGMChange[bgmlv] - 5) owner.bgmStatus.fadesw = true;
+
+			if( (engine.statistics.lines >= tableBGMChange[bgmlv]) &&
+					((engine.statistics.lines < tableGameClearLines[goaltype]) || (tableGameClearLines[goaltype] < 0)) )
+			{
+				bgmlv++;
+				owner.bgmStatus.bgm = bgmlv;
+				owner.bgmStatus.fadesw = false;
+			}
+		}
+
+		// Meter
+		engine.meterValue = ((engine.statistics.lines % 10) * receiver.getMeterMax(engine)) / 9;
+		engine.meterColor = GameEngine.METER_COLOR_GREEN;
+		if(engine.statistics.lines % 10 >= 4) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
+		if(engine.statistics.lines % 10 >= 6) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
+		if(engine.statistics.lines % 10 >= 8) engine.meterColor = GameEngine.METER_COLOR_RED;
+
+		if((engine.statistics.lines >= tableGameClearLines[goaltype]) && (tableGameClearLines[goaltype] >= 0)) {
+			// Ending
+			engine.ending = 1;
+			engine.gameEnded();
+		} else if((engine.statistics.lines >= (engine.statistics.level + 1) * 10) && (engine.statistics.level < 19)) {
+			// Level up
+			engine.statistics.level++;
+
+			owner.backgroundStatus.fadesw = true;
+			owner.backgroundStatus.fadecount = 0;
+			owner.backgroundStatus.fadebg = engine.statistics.level;
+
+			setSpeed(engine);
+			engine.playSE("levelup");
+		}
+	}
+
+	/*
+	 * Render results screen
+	 */
+	@Override
+	public void renderResult(GameEngine engine, int playerID) {
+		drawResultStats(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE,
+				STAT_SCORE, STAT_LINES, STAT_LEVEL, STAT_TIME, STAT_SPL, STAT_LPM);
+		drawResultRank(engine, playerID, receiver, 12, EventReceiver.COLOR_BLUE, rankingRank);
+		drawResultNetRank(engine, playerID, receiver, 14, EventReceiver.COLOR_BLUE, netRankingRank[0]);
+		drawResultNetRankDaily(engine, playerID, receiver, 16, EventReceiver.COLOR_BLUE, netRankingRank[1]);
+
+		if(netIsPB) {
+			receiver.drawMenuFont(engine, playerID, 2, 21, "NEW PB", EventReceiver.COLOR_ORANGE);
+		}
+
+		if(netIsNetPlay && (netReplaySendStatus == 1)) {
+			receiver.drawMenuFont(engine, playerID, 0, 22, "SENDING...", EventReceiver.COLOR_PINK);
+		} else if(netIsNetPlay && !netIsWatch && (netReplaySendStatus == 2)) {
+			receiver.drawMenuFont(engine, playerID, 1, 22, "A: RETRY", EventReceiver.COLOR_RED);
+		}
 	}
 
 	/*
@@ -431,7 +1301,7 @@ public class MarathonTwo extends MarathonModeBase {
 		}
 
 		// Update rankings
-		if((owner.replayMode == false) && (big == false) && (engine.ai == null)) {
+		if((!owner.replayMode) && (!big) && (engine.ai == null)) {
 			updateRanking(engine.statistics.score, engine.statistics.lines, engine.statistics.time, goaltype);
 
 			if(rankingRank != -1) {
@@ -457,6 +1327,7 @@ public class MarathonTwo extends MarathonModeBase {
 		goaltype = prop.getProperty("marathon2.gametype", 0);
 		big = prop.getProperty("marathon2.big", false);
 		version = prop.getProperty("marathon2.version", 0);
+		initialBGState = prop.getProperty("marathon2.initBG", true);
 	}
 
 	/**
@@ -475,6 +1346,7 @@ public class MarathonTwo extends MarathonModeBase {
 		prop.setProperty("marathon2.gametype", goaltype);
 		prop.setProperty("marathon2.big", big);
 		prop.setProperty("marathon2.version", version);
+		prop.setProperty("marathon2.initBG", initialBGState);
 	}
 
 	/**

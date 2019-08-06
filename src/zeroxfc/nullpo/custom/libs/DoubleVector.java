@@ -42,6 +42,44 @@ public class DoubleVector {
 	}
 
 	/**
+	 * Adds DoubleVector e to this vector.
+	 */
+	public void add(DoubleVector e) {
+		setX(getX() + e.getX());
+		setY(getY() + e.getY());
+	}
+
+	/**
+	 * Subtracts DoubleVector e from this vector.
+	 */
+	public void sub(DoubleVector e) {
+		setX(getX() - e.getX());
+		setY(getY() - e.getY());
+	}
+
+	/**
+	 * Multiplies the magnitude of this vector by e.
+	 */
+	public void mul(double e) {
+		setMagnitude(getMagnitude() * e);
+	}
+
+	/**
+	 * Divides the magnitude of this vector by e.
+	 */
+	public void div(double e) {
+		setMagnitude(getMagnitude() / e);
+	}
+
+	/**
+	 * Rotates this vector by PI radians.
+	 */
+	public void neg(double e) {
+		setX(- getX());
+		setY(- getY());
+	}
+
+	/**
 	 * Adds two DoubleVector objects; a and b together.
 	 */
 	public static DoubleVector add(DoubleVector a, DoubleVector b) {
