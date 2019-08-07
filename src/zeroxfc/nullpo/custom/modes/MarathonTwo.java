@@ -190,7 +190,7 @@ public class MarathonTwo extends MarathonModeBase {
 	private static final int SPOOKY_MAX = 200;
 
 	private static final int[] EFFECT_WEIGHTS = {
-			12, 8, 1, 12, 20, 8, 20, 12, 2, 4, 10
+			12, 8, 1, 12, 20, 8, 20, 12, 2, 6, 10
 	};
 
 	private static final int EFFECT_NONE = 0,
@@ -791,7 +791,7 @@ public class MarathonTwo extends MarathonModeBase {
 				for (int[] location : fakeHoverBlocks) {
 					receiver.drawSingleBlock(engine, playerID,
 							baseX + (16 * location[0]), baseY + (16 * location[1]),Block.BLOCK_COLOR_GRAY,
-							engine.getSkin(),false, 0f,1f, 1f);
+							engine.getSkin(),false, 0.2f,1f, 1f);
 				}
 			}
 
@@ -861,11 +861,13 @@ public class MarathonTwo extends MarathonModeBase {
 
 			switch (effectType) {
 				case EFFECT_FAKE_HOVER_BLOCK:
-					int[] l;
-					do {
-						l = new int[] { effectRandomiser.nextInt(engine.field.getWidth()), effectRandomiser.nextInt(engine.field.getHeight()) };
-					} while (fakeHoverBlocks.contains(l));
-					fakeHoverBlocks.add(l);
+					if (fakeHoverBlocks.size() < (engine.field.getWidth() * engine.field.getHeight()) / 4) {
+						int[] l;
+						do {
+							l = new int[] { effectRandomiser.nextInt(engine.field.getWidth()), effectRandomiser.nextInt(engine.field.getHeight()) };
+						} while (fakeHoverBlocks.contains(l));
+						fakeHoverBlocks.add(l);
+					}
 					engine.playSE("square_s");
 					break;
 				case EFFECT_HARDEN_ALL:
@@ -946,14 +948,26 @@ public class MarathonTwo extends MarathonModeBase {
 				case EFFECT_REAL_HOVER_BLOCK:
 					int x, y;
 					Block blk;
-					do {
-						do {
-							x = effectRandomiser.nextInt(engine.field.getWidth());
-							y = effectRandomiser.nextInt(engine.field.getHeight());
-							blk = engine.field.getBlock(x, y);
-						} while (blk == null);
-					} while (blk.color <= Block.BLOCK_COLOR_NONE);
-					blk.color = effectRandomiser.nextInt(8) + 1;
+					ArrayList<int[]> coordList = new ArrayList<>();
+
+					for (int y2 = 0; y2 < engine.field.getHeight(); y2++) {
+						for (int x2 = 0; x2 < engine.field.getWidth(); x2++) {
+							Block blk2 = engine.field.getBlock(x2, y2);
+							if (blk2 != null) {
+								if (blk2.color <= Block.BLOCK_COLOR_NONE) {
+									coordList.add(new int[] { x2, y2 });
+								}
+							}
+						}
+					}
+
+					if (coordList.size() > 0) {
+						int[] loc = coordList.get(effectRandomiser.nextInt(coordList.size()));
+						x = loc[0];
+						y = loc[1];
+						blk = engine.field.getBlock(x, y);
+						blk.color = effectRandomiser.nextInt(8) + 1;
+					}
 
 					engine.playSE("square_g");
 					break;
@@ -973,7 +987,7 @@ public class MarathonTwo extends MarathonModeBase {
 							break;
 					}
 
-					int amount = effectRandomiser.nextInt(13) + 4;
+					int amount = effectRandomiser.nextInt(21) + 4;
 					for (int i = 0; i < amount; i++) {
 						engine.getNextObject(engine.nextPieceCount + engine.ruleopt.nextDisplay + i).setSkin(skin);
 					}
