@@ -213,7 +213,7 @@ public class MarathonTwo extends MarathonModeBase {
 	private Random effectRandomiser;
 	private int spookyValue, lastEffect, holderType;
 	private ArrayList<String> soundList;
-	private int glitchTimer, blackoutTimer, currentBGM;
+	private int glitchTimer, blackoutTimer;
 	private double titleCoefficient, subtextCoefficient, frameCoefficient;
 	private String currentTitle, currentSubtext;
 	private WeightedRandomiser effectTypeRandomiser;
@@ -255,7 +255,6 @@ public class MarathonTwo extends MarathonModeBase {
 		lastEffect = EFFECT_NONE;
 		blackoutTimer = 0;
 		glitchTimer = 0;
-		currentBGM = -1;
 		frameCoefficient = 1;
 		titleCoefficient = 1;
 		subtextCoefficient = 1;
@@ -347,6 +346,32 @@ public class MarathonTwo extends MarathonModeBase {
 
 		engine.owner.backgroundStatus.bg = startlevel;
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
+	}
+
+	private void bgmStop() {
+		switch (holderType) {
+			case HOLDER_SLICK:
+				ResourceHolder.bgmStop();
+				break;
+			case HOLDER_SDL:
+				ResourceHolderSDL.bgmStop();
+				break;
+			default:
+				break;
+		}
+	}
+
+	private void bgmResume() {
+		switch (holderType) {
+			case HOLDER_SLICK:
+				ResourceHolder.bgmResume();
+				break;
+			case HOLDER_SDL:
+				ResourceHolderSDL.bgmResume();
+				break;
+			default:
+				break;
+		}
 	}
 
 	private void getInitialBGState() {
@@ -588,7 +613,6 @@ public class MarathonTwo extends MarathonModeBase {
 			lastEffect = EFFECT_NONE;
 			blackoutTimer = 0;
 			glitchTimer = 0;
-			currentBGM = -1;
 			frameCoefficient = 1;
 			titleCoefficient = 1;
 			subtextCoefficient = 1;
@@ -644,6 +668,7 @@ public class MarathonTwo extends MarathonModeBase {
 					if (blk != null) {
 						if (blk.color > Block.BLOCK_COLOR_NONE) {
 							blk.secondaryColor = 0;
+							blk.hard = 0;
 						}
 					}
 				}
@@ -796,50 +821,52 @@ public class MarathonTwo extends MarathonModeBase {
 				}
 			}
 
-			// Hard block differentiator.
-			for (int y = 0; y < engine.field.getHeight(); y++) {
-				for (int x = 0; x < engine.field.getWidth(); x++) {
-					Block blk = engine.field.getBlock(x, y);
-					if (blk != null) {
-						if (blk.hard > 0) {
-							receiver.drawDirectFont(engine, playerID, baseX + 4 + (x * 16), baseY + 4 + (y * 16), "g", 0.5f);
+			if (engine.field != null) {
+				// Hard block differentiator.
+				for (int y = 0; y < engine.field.getHeight(); y++) {
+					for (int x = 0; x < engine.field.getWidth(); x++) {
+						Block blk = engine.field.getBlock(x, y);
+						if (blk != null) {
+							if (blk.hard > 0) {
+								receiver.drawDirectFont(engine, playerID, baseX + 4 + (x * 16), baseY + 4 + (y * 16), "g", 0.5f);
+							}
 						}
 					}
 				}
-			}
 
-			// Glitch Covering
-			if (blackoutTimer == 0 && glitchTimer > 0) {
-				int maxRow;
-				if (glitchTimer > 60) {
-					maxRow = (int)(((glitchTimer - 120) / - 60d) * (engine.field.getHeight() - 1));
-				} else {
-					maxRow = engine.field.getHeight() - 1;
-				}
-
-				for (int y = 0; y <= maxRow; y++) {
-					for (int x = 0; x < engine.field.getWidth(); x++) {
-						int mVal = ((x % 2) + ((glitchTimer / 6) % 2)) % 2;
-						if (y % 2 == mVal) receiver.drawSingleBlock(engine, playerID,
-								baseX + (16 * x), baseY + (16 * y), Block.BLOCK_COLOR_GRAY,
-								engine.getSkin(),true, 0f,1f, 1f);
+				// Glitch Covering
+				if (blackoutTimer == 0 && glitchTimer > 0) {
+					int maxRow;
+					if (glitchTimer > 60) {
+						maxRow = (int)(((glitchTimer - 120) / - 60d) * (engine.field.getHeight() - 1));
+					} else {
+						maxRow = engine.field.getHeight() - 1;
 					}
-				}
-			}
 
-			// Blackout Covering
-			if (blackoutTimer > 0) {
-				for (int y = 0; y < engine.field.getHeight(); y++) {
-					for (int x = 0; x < engine.field.getWidth(); x++) {
-						receiver.drawSingleBlock(engine, playerID,
-								baseX + (16 * x), baseY + (16 * y),Block.BLOCK_COLOR_GRAY,
-								engine.getSkin(),false, 1f,1f, 1f);
+					for (int y = 0; y <= maxRow; y++) {
+						for (int x = 0; x < engine.field.getWidth(); x++) {
+							int mVal = ((x % 2) + ((glitchTimer / 6) % 2)) % 2;
+							if (y % 2 == mVal) receiver.drawSingleBlock(engine, playerID,
+									baseX + (16 * x), baseY + (16 * y), Block.BLOCK_COLOR_GRAY,
+									engine.getSkin(),true, 0f,1f, 1f);
+						}
 					}
 				}
 
-				if (spookyValue >= 100 && blackoutTimer % 2 == 0 && blackoutTimer <= 16) {
-					receiver.drawDirectFont(engine, playerID, bTextX, bTextY, "TURN THE COMPUTER", EventReceiver.COLOR_RED);
-					receiver.drawDirectFont(engine, playerID, bTextX, bTextY + 16, "OFF IMMEDIATELY!", EventReceiver.COLOR_RED);
+				// Blackout Covering
+				if (blackoutTimer > 0) {
+					for (int y = 0; y < engine.field.getHeight(); y++) {
+						for (int x = 0; x < engine.field.getWidth(); x++) {
+							receiver.drawSingleBlock(engine, playerID,
+									baseX + (16 * x), baseY + (16 * y),Block.BLOCK_COLOR_GRAY,
+									engine.getSkin(),false, 1f,1f, 1f);
+						}
+					}
+
+					if (spookyValue >= 100 && blackoutTimer % 2 == 0 && blackoutTimer <= 16) {
+						receiver.drawDirectFont(engine, playerID, bTextX, bTextY, "TURN THE COMPUTER", EventReceiver.COLOR_RED);
+						receiver.drawDirectFont(engine, playerID, bTextX, bTextY + 16, "OFF IMMEDIATELY!", EventReceiver.COLOR_RED);
+					}
 				}
 			}
 
@@ -849,7 +876,6 @@ public class MarathonTwo extends MarathonModeBase {
 					receiver.drawDirectFont(engine, playerID, gTextCoords.get(i)[0], gTextCoords.get(i)[1], gTextChars.get(i), gTextCoords.get(i)[2]);
 				}
 			}
-
 		}
 
 		// NET: Number of spectators
@@ -1062,6 +1088,8 @@ public class MarathonTwo extends MarathonModeBase {
 			}
 
 			if (engine.stat == GameEngine.STAT_EXCELLENT || engine.stat == GameEngine.STAT_GAMEOVER || engine.stat == GameEngine.STAT_READY) {
+				engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
+
 				frameCoefficient = 1;
 				titleCoefficient = 1;
 				subtextCoefficient = 1;
@@ -1091,17 +1119,10 @@ public class MarathonTwo extends MarathonModeBase {
 				bTextX = effectRandomiser.nextInt(640);
 				bTextY = effectRandomiser.nextInt(480);
 				setBGState(false);  // BG is black during a blackout.
-				if (owner.bgmStatus.bgm != -1 && !owner.bgmStatus.fadesw) {
-					currentBGM = owner.bgmStatus.bgm;
-					owner.bgmStatus.bgm = -1;
-				}
+				bgmStop();
 			} else {
 				setBGState(true);
-				if (owner.bgmStatus.bgm == -1 && !owner.bgmStatus.fadesw) {
-					if (!(engine.stat == GameEngine.STAT_EXCELLENT || engine.stat == GameEngine.STAT_GAMEOVER || engine.stat == GameEngine.STAT_READY)) {
-						owner.bgmStatus.bgm = currentBGM;
-					}
-				}
+				bgmResume();
 			}
 
 			if (glitchTimer > 0) {
@@ -1245,11 +1266,10 @@ public class MarathonTwo extends MarathonModeBase {
 
 		// Add to score
 		if(pts > 0) {
-			lastscore = pts;
-
 			if (blackoutTimer > 0) pts *= 2;
 			if (glitchTimer > 0) pts *= 1.5;
 
+			lastscore = pts;
 			lastpiece = engine.nowPieceObject.id;
 			scgettime = 0;
 			if(lines >= 1) engine.statistics.scoreFromLineClear += pts;
