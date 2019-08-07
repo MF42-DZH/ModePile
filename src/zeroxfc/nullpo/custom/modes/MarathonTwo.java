@@ -1086,10 +1086,14 @@ public class MarathonTwo extends MarathonModeBase {
 						b = new int[] { effectRandomiser.nextInt(640 / 16) * 16, effectRandomiser.nextInt(480 / 16) * 16 };
 					} while (gTextCoords.contains(b));
 
-					b = new int[] { b[0], b[1], effectRandomiser.nextInt(10) };
-
 					gTextCoords.add(b);
 					gTextChars.add(String.valueOf(characters.charAt(effectRandomiser.nextInt(characters.length()))));
+				}
+
+				for (int i = 0; i < gTextCoords.size(); i++) {
+					int[] b = gTextCoords.get(i);
+					b = new int[] { b[0], b[1], effectRandomiser.nextInt(10) };
+					gTextCoords.set(i, b);
 				}
 
 				if (effectRandomiser.nextDouble() < (1d / (glitchTimer * 4))) {
