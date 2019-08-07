@@ -26,12 +26,14 @@ Requires the above to compile and run. The "res" directory in the "required file
 
 ## Libraries Available:
 
+* _AnimatedBackgroundHook_ (incomplete) - Allows the simple animation of backgrounds, DTET style.
 * _ArrayRandomiser_ - Generates a permutation of an array.
 * _BlockParticle_ - Animated block particle for line clear effects.
 * _BlockParticleCollection_ - Collection class for easy generation, update and drawing of block particles.
 * _DoubleVector_ - 2D vector type that uses doubles for more precision.
 * _FieldExtension_ - Adds and fixes methods for dealing with the game's _Field_ type.
 * _FlyInOutText_ - Adds text objects that can fly into the screen from the outside, linger, then return to their starting positions before disappearing.
+* _GameTextUtilities_ - Adds methods for coloured text and other random text / text obfuscation methods.
 * _Interpolation_ - Linear interpolation functions.
 * _IntWrapper_ - Class that holds a single int, designed to handle the counting of recursive function calls.
 * _MouseParser_ - Allows the use of mouse inside a mode.

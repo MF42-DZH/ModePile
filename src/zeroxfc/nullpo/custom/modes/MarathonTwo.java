@@ -564,9 +564,7 @@ public class MarathonTwo extends MarathonModeBase {
 			engine.statc[3]++;
 			engine.statc[2] = -1;
 
-			if(engine.statc[3] >= 60) {
-				return false;
-			}
+			return engine.statc[3] < 60;
 		}
 
 		return true;
@@ -706,14 +704,14 @@ public class MarathonTwo extends MarathonModeBase {
 
 		if (engine.stat != GameEngine.STAT_SETTING && engine.stat != GameEngine.STAT_RESULT && spookyValue >= 50) {
 			if (titleCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 3.5)) receiver.drawScoreFont(engine, playerID, 0, 0, currentTitle, EventReceiver.COLOR_RED);
-			else receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_GREEN);
+			else receiver.drawScoreFont(engine, playerID, 0, 0, glitchTimer > 0 ? currentTitle : getName(), EventReceiver.COLOR_GREEN);
 
 			if(tableGameClearLines[goaltype] == -1) {
 				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 3.5)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
 				else receiver.drawScoreFont(engine, playerID, 0, 1, "(ENDLESS GAME)", EventReceiver.COLOR_GREEN);
 			} else {
 				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 3.5)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
-				else receiver.drawScoreFont(engine, playerID, 0, 1, "(" + tableGameClearLines[goaltype] + " LINES GAME)", EventReceiver.COLOR_GREEN);
+				else receiver.drawScoreFont(engine, playerID, 0, 1, "(" + (glitchTimer > 0 ? currentSubtext : tableGameClearLines[goaltype]) + " LINES GAME)", EventReceiver.COLOR_GREEN);
 			}
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 0, (titleCoefficient < (1d / 160d) && (engine.stat != GameEngine.STAT_SETTING && engine.stat != GameEngine.STAT_RESULT))  ? "MARATHON 2" : getName(), EventReceiver.COLOR_GREEN);

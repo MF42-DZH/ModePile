@@ -27,6 +27,11 @@ public class GameTextUtilities {
 	/** Valid characters */
 	private static final String CHARACTERS = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopq";
 
+	/** Sequential Character Phase */
+	private static int CharacterPhase = 0;
+
+	// region String Utilities
+
 	/**
 	 * Generates a completely random string.
 	 * @param length Length of string
@@ -75,6 +80,10 @@ public class GameTextUtilities {
 		return sb.toString();
 	}
 
+	// endregion String Utilities
+
+	// region Rainbow Text
+
 	/**
 	 * Draws a rainbow string using <code>drawDirectFont</code>.
 	 * @param receiver EventReceiver used to draw
@@ -87,14 +96,7 @@ public class GameTextUtilities {
 	 * @param scale Scale of text
 	 */
 	public static void drawRainbowDirectString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale) {
-		int offset = 0;
-		for (int i = 0; i < str.length(); i++) {
-			if (str.charAt(i) == ' ') {
-				offset++;
-			} else {
-				receiver.drawDirectFont(engine, playerID, x + (int)(i * 16 * scale), y, str.substring(i, i + 1), RAINBOW_ORDER[(Arrays.asList(RAINBOW_ORDER).indexOf(startColour) + i - offset) % RAINBOW_COLOURS]);
-			}
-		}
+		drawRainbowDirectString(receiver, engine, playerID, x, y, str, startColour, scale, false);
 	}
 
 	/**
@@ -109,14 +111,7 @@ public class GameTextUtilities {
 	 * @param scale Scale of text
 	 */
 	public static void drawRainbowScoreString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale) {
-		int offset = 0;
-		for (int i = 0; i < str.length(); i++) {
-			if (str.charAt(i) == ' ') {
-				offset++;
-			} else {
-				receiver.drawScoreFont(engine, playerID, x + i, y, str.substring(i, i + 1), RAINBOW_ORDER[(Arrays.asList(RAINBOW_ORDER).indexOf(startColour) + i - offset) % RAINBOW_COLOURS]);
-			}
-		}
+		drawRainbowScoreString(receiver, engine, playerID, x, y, str, startColour, scale, false);
 	}
 
 	/**
@@ -131,12 +126,80 @@ public class GameTextUtilities {
 	 * @param scale Scale of text
 	 */
 	public static void drawRainbowMenuString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale) {
+		drawRainbowMenuString(receiver, engine, playerID, x, y, str, startColour, scale, false);
+	}
+
+	/**
+	 * Draws a rainbow string using <code>drawDirectFont</code>.
+	 * @param receiver EventReceiver used to draw
+	 * @param engine Current GameEngine
+	 * @param playerID Player ID (1P = 0)
+	 * @param x X coordinate of top-left corner of text
+	 * @param y Y coordinate of top-left corner of text
+	 * @param str String to draw
+	 * @param startColour Starting colour of text
+	 * @param scale Scale of text
+	 * @param reverse Reverse order or not
+	 */
+	public static void drawRainbowDirectString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale, boolean reverse) {
 		int offset = 0;
 		for (int i = 0; i < str.length(); i++) {
 			if (str.charAt(i) == ' ') {
 				offset++;
 			} else {
-				receiver.drawMenuFont(engine, playerID, x + i, y, str.substring(i, i + 1), RAINBOW_ORDER[(Arrays.asList(RAINBOW_ORDER).indexOf(startColour) + i - offset) % RAINBOW_COLOURS]);
+				int j = (Arrays.asList(RAINBOW_ORDER).indexOf(startColour) + (i * (reverse ? -1 : 1)) - (offset * (reverse ? -1 : 1))) % RAINBOW_COLOURS;
+				if (j < 0) j = RAINBOW_COLOURS - j;
+				receiver.drawDirectFont(engine, playerID, x + (int)(i * 16 * scale), y, str.substring(i, i + 1), RAINBOW_ORDER[j]);
+			}
+		}
+	}
+
+	/**
+	 * Draws a rainbow string using <code>drawScoreFont</code>.
+	 * @param receiver EventReceiver used to draw
+	 * @param engine Current GameEngine
+	 * @param playerID Player ID (1P = 0)
+	 * @param x X coordinate of top-left corner of text
+	 * @param y Y coordinate of top-left corner of text
+	 * @param str String to draw
+	 * @param startColour Starting colour of text
+	 * @param scale Scale of text
+	 * @param reverse Reverse order or not
+	 */
+	public static void drawRainbowScoreString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale, boolean reverse) {
+		int offset = 0;
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) == ' ') {
+				offset++;
+			} else {
+				int j = (Arrays.asList(RAINBOW_ORDER).indexOf(startColour) + (i * (reverse ? -1 : 1)) - (offset * (reverse ? -1 : 1))) % RAINBOW_COLOURS;
+				if (j < 0) j = RAINBOW_COLOURS - j;
+				receiver.drawScoreFont(engine, playerID, x + i, y, str.substring(i, i + 1), RAINBOW_ORDER[j]);
+			}
+		}
+	}
+
+	/**
+	 * Draws a rainbow string using <code>drawMenuFont</code>.
+	 * @param receiver EventReceiver used to draw
+	 * @param engine Current GameEngine
+	 * @param playerID Player ID (1P = 0)
+	 * @param x X coordinate of top-left corner of text
+	 * @param y Y coordinate of top-left corner of text
+	 * @param str String to draw
+	 * @param startColour Starting colour of text
+	 * @param scale Scale of text
+	 * @param reverse Reverse order or not
+	 */
+	public static void drawRainbowMenuString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale, boolean reverse) {
+		int offset = 0;
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) == ' ') {
+				offset++;
+			} else {
+				int j = (Arrays.asList(RAINBOW_ORDER).indexOf(startColour) + (i * (reverse ? -1 : 1)) - (offset * (reverse ? -1 : 1))) % RAINBOW_COLOURS;
+				if (j < 0) j = RAINBOW_COLOURS - j;
+				receiver.drawMenuFont(engine, playerID, x + i, y, str.substring(i, i + 1), RAINBOW_ORDER[j]);
 			}
 		}
 	}
@@ -207,6 +270,10 @@ public class GameTextUtilities {
 		}
 	}
 
+	// endregion Rainbow Text
+
+	// region Mixed Colour Text
+
 	/**
 	 * Draws a mixed-colour string to a location using <code>drawDirectFont</code>.
 	 *
@@ -219,10 +286,10 @@ public class GameTextUtilities {
 	 *
 	 * @param engine GameEngine to draw with.
 	 * @param playerID Player to draw next to (0 = 1P).
-	 * @param stringData String[] containing text and colour data.
-	 * @param colourData int[] containing text and colour data.
-	 * @param destinationX X of destination (uses drawScoreFont(...)).
-	 * @param destinationY Y of destination (uses drawScoreFont(...)).
+	 * @param stringData String[] containing text data.
+	 * @param colourData int[] containing colour data.
+	 * @param destinationX X of destination (uses drawDirectFont(...)).
+	 * @param destinationY Y of destination (uses drawDirectFont(...)).
 	 * @param scale Text scale (0.5f, 1.0f, 2.0f).
 	 */
 	public static void drawMixedColourDirectString(EventReceiver receiver, GameEngine engine, int playerID, String[] stringData, int[] colourData, int destinationX, int destinationY, float scale) {
@@ -252,8 +319,8 @@ public class GameTextUtilities {
 	 *
 	 * @param engine GameEngine to draw with.
 	 * @param playerID Player to draw next to (0 = 1P).
-	 * @param stringData String[] containing text and colour data.
-	 * @param colourData int[] containing text and colour data.
+	 * @param stringData String[] containing text data.
+	 * @param colourData int[] containing colour data.
 	 * @param destinationX X of destination (uses drawScoreFont(...)).
 	 * @param destinationY Y of destination (uses drawScoreFont(...)).
 	 * @param scale Text scale (0.5f, 1.0f, 2.0f).
@@ -285,10 +352,10 @@ public class GameTextUtilities {
 	 *
 	 * @param engine GameEngine to draw with.
 	 * @param playerID Player to draw next to (0 = 1P).
-	 * @param stringData String[] containing text and colour data.
-	 * @param colourData int[] containing text and colour data.
-	 * @param destinationX X of destination (uses drawScoreFont(...)).
-	 * @param destinationY Y of destination (uses drawScoreFont(...)).
+	 * @param stringData String[] containing text data.
+	 * @param colourData int[] containing colour data.
+	 * @param destinationX X of destination (uses drawMenuFont(...)).
+	 * @param destinationY Y of destination (uses drawMenuFont(...)).
 	 * @param scale Text scale (0.5f, 1.0f, 2.0f).
 	 */
 	public static void drawMixedColourMenuString(EventReceiver receiver, GameEngine engine, int playerID, String[] stringData, int[] colourData, int destinationX, int destinationY, float scale) {
@@ -305,4 +372,133 @@ public class GameTextUtilities {
 			}
 		}
 	}
+
+	//endregion Mixed Colour Text
+
+	// region Colour Alternator Text
+
+	/**
+	 * Draws an alternating-colour string to a location using <code>drawDirectFont</code>.
+	 * @param engine GameEngine to draw with.
+	 * @param playerID Player to draw next to (0 = 1P).
+	 * @param string Text.
+	 * @param colourData int[] containing colour data.
+	 * @param offset Start offset of colour array.
+	 * @param x X of destination (uses drawDirectFont(...)).
+	 * @param y Y of destination (uses drawDirectFont(...)).
+	 * @param scale Text scale (0.5f, 1.0f, 2.0f).
+	 */
+	public static void drawAlternatorColourDirectString(EventReceiver receiver, GameEngine engine, int playerID, String string, int[] colourData, int offset, int x, int y, float scale) {
+		if (colourData.length <= 0) return;
+
+		offset %= colourData.length;
+		if (offset < 0) offset += colourData.length;
+
+		for (int i = 0; i < string.length(); i++) {
+			receiver.drawDirectFont(engine, playerID, x + (int)(16 * i * scale), y, string.substring(i, i + 1), colourData[(offset + i) % colourData.length], scale);
+		}
+	}
+
+	/**
+	 * Draws an alternating-colour string to a location using <code>drawScoreFont</code>.
+	 * @param engine GameEngine to draw with.
+	 * @param playerID Player to draw next to (0 = 1P).
+	 * @param string Text.
+	 * @param colourData int[] containing colour data.
+	 * @param offset Start offset of colour array.
+	 * @param x X of destination (uses drawScoreFont(...)).
+	 * @param y Y of destination (uses drawScoreFont(...)).
+	 * @param scale Text scale (0.5f, 1.0f, 2.0f).
+	 */
+	public static void drawAlternatorColourScoreString(EventReceiver receiver, GameEngine engine, int playerID, String string, int[] colourData, int offset, int x, int y, float scale) {
+		if (colourData.length <= 0) return;
+
+		offset %= colourData.length;
+		if (offset < 0) offset += colourData.length;
+
+		for (int i = 0; i < string.length(); i++) {
+			receiver.drawScoreFont(engine, playerID, x, y, string.substring(i, i + 1), colourData[(offset + i) % colourData.length], scale);
+		}
+	}
+
+	/**
+	 * Draws an alternating-colour string to a location using <code>drawMenuFont</code>.
+	 * @param engine GameEngine to draw with.
+	 * @param playerID Player to draw next to (0 = 1P).
+	 * @param string Text.
+	 * @param colourData int[] containing colour data.
+	 * @param offset Start offset of colour array.
+	 * @param x X of destination (uses drawMenuFont(...)).
+	 * @param y Y of destination (uses drawMenuFont(...)).
+	 * @param scale Text scale (0.5f, 1.0f, 2.0f).
+	 */
+	public static void drawAlternatorColourMenuString(EventReceiver receiver, GameEngine engine, int playerID, String string, int[] colourData, int offset, int x, int y, float scale) {
+		if (colourData.length <= 0) return;
+
+		offset %= colourData.length;
+		if (offset < 0) offset += colourData.length;
+
+		for (int i = 0; i < string.length(); i++) {
+			receiver.drawScoreFont(engine, playerID, x, y, string.substring(i, i + 1), colourData[(offset + i) % colourData.length], scale);
+		}
+	}
+
+	// endregion Colour Alternator Text
+
+	// region Character Phase Functions
+
+	/**
+	 * Get current character in sequence.
+	 * @return Character at phase.
+	 */
+	public static char getCurrentCharacter() {
+		return CHARACTERS.charAt(CharacterPhase);
+	}
+
+	/**
+	 * Gets current character in sequence with offset.
+	 * @param offset Character offset.
+	 * @return Offset sequence character.
+	 */
+	public static char getCurrentCharacter(int offset) {
+		int i = CharacterPhase + offset;
+		i %= CharacterPhase;
+		if (i < 0) i += CharacterPhase;
+
+		return CHARACTERS.charAt(i);
+	}
+
+	/**
+	 * Increments character phase by 1.
+	 */
+	public static void updatePhase() {
+		updatePhase(1);
+	}
+
+	/**
+	 * Increments character phase by x.
+	 * @param x Amount to increment by.
+	 */
+	public static void updatePhase(int x) {
+		CharacterPhase = (CharacterPhase + x) % CHARACTERS.length();
+		if (CharacterPhase < 0) CharacterPhase = CHARACTERS.length() + CharacterPhase;
+	}
+
+	/**
+	 * Resets phase to 0.
+	 */
+	public static void resetPhase() {
+		CharacterPhase = 0;
+	}
+
+	/**
+	 * Sets the character phase.
+	 * @param x Integer to set phase to.
+	 */
+	public static void setPhase(int x) {
+		CharacterPhase = x % CHARACTERS.length();
+		if (CharacterPhase < 0) CharacterPhase = CHARACTERS.length() + CharacterPhase;
+	}
+
+	// endregion Character Phase Functions
 }
