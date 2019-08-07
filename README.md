@@ -16,7 +16,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Gem Swap_ (incomplete) - A generic match-3 game.
 * _Idiot% Mode_ - A mode inspired by [this video](https://www.youtube.com/watch?v=omaDz_w4cgg) where it emulates the TGM style of play, but normal line clears are next-to-worthless but spin line clears are boosted to be better than normal.
 * _Joker_ - A mode that approximates the JOKER mode from DTET.
-* _Marathon II_ (incomplete) - "If Marathon was so good, why isn't there a Marathon 2?"
+* _Marathon II_ - "If Marathon was so good, why isn't there a Marathon 2?"
 * _Minesweeper_ - It's Minesweeper. What else is there to say?
 * _Mission Mode_ - Play a marathon mode, but it asks you to clear Puyo-Puyo-styled missions.
 * _Pong_ - A single-player Pong clone.
