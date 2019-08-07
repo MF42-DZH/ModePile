@@ -150,7 +150,7 @@ public class MarathonTwo extends MarathonModeBase {
 	                         HOLDER_SWING = 1,
 	                         HOLDER_SDL = 2;
 
-	private static final double FRAME_COLOUR_FLUCTUATION_CHANCE = (1d / 320d);
+	private static final double FRAME_COLOUR_FLUCTUATION_CHANCE = (1d / 160d);
 
 	private static final String[] POSSIBLE_NAMES = {
 			"USELESS",
