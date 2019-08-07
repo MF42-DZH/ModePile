@@ -674,14 +674,14 @@ public class MarathonTwo extends MarathonModeBase {
 		if(owner.menuOnly) return;
 
 		if (engine.stat != GameEngine.STAT_SETTING && engine.stat != GameEngine.STAT_RESULT && spookyValue >= 50) {
-			if (titleCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) receiver.drawScoreFont(engine, playerID, 0, 0, currentTitle, EventReceiver.COLOR_RED);
+			if (titleCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 3)) receiver.drawScoreFont(engine, playerID, 0, 0, currentTitle, EventReceiver.COLOR_RED);
 			else receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_GREEN);
 
 			if(tableGameClearLines[goaltype] == -1) {
-				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
+				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 3)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
 				else receiver.drawScoreFont(engine, playerID, 0, 1, "(ENDLESS GAME)", EventReceiver.COLOR_GREEN);
 			} else {
-				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
+				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 3)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
 				else receiver.drawScoreFont(engine, playerID, 0, 1, "(" + tableGameClearLines[goaltype] + " LINES GAME)", EventReceiver.COLOR_GREEN);
 			}
 		} else {
@@ -787,11 +787,24 @@ public class MarathonTwo extends MarathonModeBase {
 			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
 			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
 
+			// Fake hover blocks.
 			if (fakeHoverBlocks.size() > 0) {
 				for (int[] location : fakeHoverBlocks) {
 					receiver.drawSingleBlock(engine, playerID,
 							baseX + (16 * location[0]), baseY + (16 * location[1]),Block.BLOCK_COLOR_GRAY,
 							engine.getSkin(),false, 0.2f,1f, 1f);
+				}
+			}
+
+			// Hard block differentiator.
+			for (int y = 0; y < engine.field.getHeight(); y++) {
+				for (int x = 0; x < engine.field.getWidth(); x++) {
+					Block blk = engine.field.getBlock(x, y);
+					if (blk != null) {
+						if (blk.hard > 0) {
+							receiver.drawDirectFont(engine, playerID, baseX + 4 + (x * 16), baseY + 4 + (y * 16), "g", 0.5f);
+						}
+					}
 				}
 			}
 
@@ -967,6 +980,7 @@ public class MarathonTwo extends MarathonModeBase {
 						y = loc[1];
 						blk = engine.field.getBlock(x, y);
 						blk.color = effectRandomiser.nextInt(8) + 1;
+						blk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
 					}
 
 					engine.playSE("square_g");
@@ -1023,20 +1037,20 @@ public class MarathonTwo extends MarathonModeBase {
 				titleCoefficient = effectRandomiser.nextDouble();
 				subtextCoefficient = effectRandomiser.nextDouble();
 
-				ct = ctd < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2);
-				st = std < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2);
+				ct = ctd < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 3);
+				st = std < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 3);
 
-				if (frameCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) {
+				if (frameCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 3)) {
 					engine.framecolor = GameEngine.FRAME_COLOR_RED;
 				} else {
 					engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
 				}
 
-				if (titleCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) {
+				if (titleCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 3)) {
 					if (!ct) currentTitle = randomString(POSSIBLE_NAMES);
 				}
 
-				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) {
+				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 3)) {
 					if (!st) currentSubtext = randomString(POSSIBLE_SUBTEXT);
 				}
 			} else if (spookyValue >= 25) {
