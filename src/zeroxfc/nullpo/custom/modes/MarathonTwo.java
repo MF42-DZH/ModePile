@@ -674,14 +674,14 @@ public class MarathonTwo extends MarathonModeBase {
 		if(owner.menuOnly) return;
 
 		if (engine.stat != GameEngine.STAT_SETTING && engine.stat != GameEngine.STAT_RESULT && spookyValue >= 50) {
-			if (titleCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) receiver.drawScoreFont(engine, playerID, 0, 0, currentTitle, EventReceiver.COLOR_RED);
+			if (titleCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) receiver.drawScoreFont(engine, playerID, 0, 0, currentTitle, EventReceiver.COLOR_RED);
 			else receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_GREEN);
 
 			if(tableGameClearLines[goaltype] == -1) {
-				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
+				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
 				else receiver.drawScoreFont(engine, playerID, 0, 1, "(ENDLESS GAME)", EventReceiver.COLOR_GREEN);
 			} else {
-				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
+				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) receiver.drawScoreFont(engine, playerID, 0, 1, "(" + currentSubtext + " GAME)", EventReceiver.COLOR_RED);
 				else receiver.drawScoreFont(engine, playerID, 0, 1, "(" + tableGameClearLines[goaltype] + " LINES GAME)", EventReceiver.COLOR_GREEN);
 			}
 		} else {
@@ -1023,20 +1023,20 @@ public class MarathonTwo extends MarathonModeBase {
 				titleCoefficient = effectRandomiser.nextDouble();
 				subtextCoefficient = effectRandomiser.nextDouble();
 
-				ct = ctd < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5);
-				st = std < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5);
+				ct = ctd < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2);
+				st = std < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2);
 
-				if (frameCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) {
+				if (frameCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) {
 					engine.framecolor = GameEngine.FRAME_COLOR_RED;
 				} else {
 					engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
 				}
 
-				if (titleCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) {
+				if (titleCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) {
 					if (!ct) currentTitle = randomString(POSSIBLE_NAMES);
 				}
 
-				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 1.5)) {
+				if (subtextCoefficient < FRAME_COLOUR_FLUCTUATION_CHANCE * Math.pow(spookyValue / 50d, 2)) {
 					if (!st) currentSubtext = randomString(POSSIBLE_SUBTEXT);
 				}
 			} else if (spookyValue >= 25) {
