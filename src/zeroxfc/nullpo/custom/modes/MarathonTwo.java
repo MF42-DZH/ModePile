@@ -24,6 +24,7 @@ import org.newdawn.slick.Sound;
 
 import sdljava.mixer.MixChunk;
 
+import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.WeightedRandomiser;
@@ -210,7 +211,7 @@ public class MarathonTwo extends MarathonModeBase {
 	// region Private Fields
 	private GameManager owner;
 	private EventReceiver receiver;
-	private Random effectRandomiser;
+	private Random effectRandomiser, renderRandomiser;
 	private int spookyValue, lastEffect, holderType;
 	private ArrayList<String> soundList;
 	private int glitchTimer, blackoutTimer;
@@ -222,6 +223,7 @@ public class MarathonTwo extends MarathonModeBase {
 	private ArrayList<String> gTextChars;
 	private int bTextX, bTextY;
 	private int prevScore;
+	private int rainbowPhase;
 	// endregion Private Fields
 
 	/** Mode Name */
@@ -261,6 +263,7 @@ public class MarathonTwo extends MarathonModeBase {
 		fakeHoverBlocks = new ArrayList<>();
 		gTextCoords = new ArrayList<>();
 		gTextChars = new ArrayList<>();
+		rainbowPhase = 0;
 
 		currentTitle = "";
 		currentSubtext = "";
@@ -348,13 +351,13 @@ public class MarathonTwo extends MarathonModeBase {
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
 	}
 
-	private void bgmStop() {
+	private void bgmPause() {
 		switch (holderType) {
 			case HOLDER_SLICK:
-				ResourceHolder.bgmStop();
+				if (ResourceHolder.bgmIsPlaying()) ResourceHolder.bgmPause();
 				break;
 			case HOLDER_SDL:
-				ResourceHolderSDL.bgmStop();
+				if (ResourceHolderSDL.bgmIsPlaying()) ResourceHolderSDL.bgmPause();
 				break;
 			default:
 				break;
@@ -364,10 +367,10 @@ public class MarathonTwo extends MarathonModeBase {
 	private void bgmResume() {
 		switch (holderType) {
 			case HOLDER_SLICK:
-				ResourceHolder.bgmResume();
+				if (!ResourceHolder.bgmIsPlaying()) ResourceHolder.bgmResume();
 				break;
 			case HOLDER_SDL:
-				ResourceHolderSDL.bgmResume();
+				if (!ResourceHolderSDL.bgmIsPlaying())ResourceHolderSDL.bgmResume();
 				break;
 			default:
 				break;
@@ -457,6 +460,7 @@ public class MarathonTwo extends MarathonModeBase {
 	public boolean onSetting(GameEngine engine, int playerID) {
 		setBGState(initialBGState);
 		effectRandomiser = null;
+		if (renderRandomiser == null) renderRandomiser = new Random(0);
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
 		frameCoefficient = 1;
 		titleCoefficient = 1;
@@ -603,6 +607,7 @@ public class MarathonTwo extends MarathonModeBase {
 		if (engine.statc[0] == 0) {
 			effectRandomiser = new Random(engine.randSeed);
 			effectTypeRandomiser = new WeightedRandomiser(EFFECT_WEIGHTS, engine.randSeed + 1);
+			renderRandomiser = new Random(engine.randSeed + 2);
 
 			fakeHoverBlocks.clear();
 			gTextCoords.clear();
@@ -616,6 +621,7 @@ public class MarathonTwo extends MarathonModeBase {
 			frameCoefficient = 1;
 			titleCoefficient = 1;
 			subtextCoefficient = 1;
+			rainbowPhase = 0;
 		}
 		return false;
 	}
@@ -710,7 +716,7 @@ public class MarathonTwo extends MarathonModeBase {
 				else receiver.drawScoreFont(engine, playerID, 0, 1, "(" + tableGameClearLines[goaltype] + " LINES GAME)", EventReceiver.COLOR_GREEN);
 			}
 		} else {
-			receiver.drawScoreFont(engine, playerID, 0, 0, (titleCoefficient < (1d / 300d) && (engine.stat != GameEngine.STAT_SETTING && engine.stat != GameEngine.STAT_RESULT))  ? "MARATHON 2" : getName(), EventReceiver.COLOR_GREEN);
+			receiver.drawScoreFont(engine, playerID, 0, 0, (titleCoefficient < (1d / 160d) && (engine.stat != GameEngine.STAT_SETTING && engine.stat != GameEngine.STAT_RESULT))  ? "MARATHON 2" : getName(), EventReceiver.COLOR_GREEN);
 			if(tableGameClearLines[goaltype] == -1) {
 				receiver.drawScoreFont(engine, playerID, 0, 1, "(ENDLESS GAME)", EventReceiver.COLOR_GREEN);
 			} else {
@@ -735,26 +741,58 @@ public class MarathonTwo extends MarathonModeBase {
 		} else if ( (engine.stat == GameEngine.STAT_RESULT) ) {
 			setBGState(initialBGState);
 		} else {
-			receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
+			if (glitchTimer > 0) GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 3, GameTextUtilities.randomString(5, renderRandomiser), renderRandomiser, 1f);
+			else receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
+
 			String strScore;
 			if((lastscore == 0) || (scgettime >= 120)) {
 				strScore = String.valueOf(engine.statistics.score);
 			} else {
 				strScore = Interpolation.lerp(prevScore, engine.statistics.score, scgettime / 120d) + "(+" + lastscore + ")";
 			}
-			receiver.drawScoreFont(engine, playerID, 0, 4, strScore);
+			if (glitchTimer > 0) {
+				GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 4, GameTextUtilities.randomString(strScore.length(), renderRandomiser), renderRandomiser, 1f);
+			} else {
+				if ((lastscore == 0) || (scgettime >= 120)) receiver.drawScoreFont(engine, playerID, 0, 4, strScore);
+				else GameTextUtilities.drawRainbowScoreString(receiver, engine, playerID, 0, 4, strScore, GameTextUtilities.RAINBOW_ORDER[rainbowPhase / 6], 1f);
+			}
 
-			receiver.drawScoreFont(engine, playerID, 0, 6, "LINE", EventReceiver.COLOR_BLUE);
-			if((engine.statistics.level >= 19) && (tableGameClearLines[goaltype] < 0))
-				receiver.drawScoreFont(engine, playerID, 0, 7, engine.statistics.lines + "");
-			else
-				receiver.drawScoreFont(engine, playerID, 0, 7, engine.statistics.lines + "/" + ((engine.statistics.level + 1) * 10));
+			if (glitchTimer > 0) GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 6, GameTextUtilities.randomString(4, renderRandomiser), renderRandomiser, 1f);
+			else receiver.drawScoreFont(engine, playerID, 0, 6, "LINE", EventReceiver.COLOR_BLUE);
 
-			receiver.drawScoreFont(engine, playerID, 0, 9, "LEVEL", EventReceiver.COLOR_BLUE);
-			receiver.drawScoreFont(engine, playerID, 0, 10, String.valueOf(engine.statistics.level + 1));
+			if (glitchTimer == 0) {
+				if((engine.statistics.level >= 19) && (tableGameClearLines[goaltype] < 0))
+					receiver.drawScoreFont(engine, playerID, 0, 7, engine.statistics.lines + "");
+				else
+					receiver.drawScoreFont(engine, playerID, 0, 7, engine.statistics.lines + "/" + ((engine.statistics.level + 1) * 10));
+			} else {
+				String sl;
+				if((engine.statistics.level >= 19) && (tableGameClearLines[goaltype] < 0)) {
+					sl = engine.statistics.lines + "";
+					GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 7, GameTextUtilities.randomString(sl.length(), renderRandomiser), renderRandomiser, 1f);
+				} else {
+					sl = engine.statistics.lines + "/" + ((engine.statistics.level + 1) * 10);
+					GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 7, GameTextUtilities.randomString(sl.length(), renderRandomiser), renderRandomiser, 1f);
+				}
 
-			receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
-			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
+			}
+
+			if (glitchTimer > 0) {
+				String slv = String.valueOf(engine.statistics.level + 1);
+				String st = GeneralUtil.getTime(engine.statistics.time);
+
+				GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 9, GameTextUtilities.randomString(5, renderRandomiser), renderRandomiser, 1f);
+				GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 10, GameTextUtilities.randomString(slv.length(), renderRandomiser), renderRandomiser, 1f);
+
+				GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 12, GameTextUtilities.randomString(4, renderRandomiser), renderRandomiser, 1f);
+				GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 13, GameTextUtilities.randomString(st.length(), renderRandomiser), renderRandomiser, 1f);
+			} else {
+				receiver.drawScoreFont(engine, playerID, 0, 9, "LEVEL", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 10, String.valueOf(engine.statistics.level + 1));
+
+				receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
+			}
 
 			if((lastevent != EVENT_NONE) && (scgettime < 120)) {
 				String strPieceName = Piece.getPieceName(lastpiece);
@@ -1006,6 +1044,7 @@ public class MarathonTwo extends MarathonModeBase {
 						y = loc[1];
 						blk = engine.field.getBlock(x, y);
 						blk.color = effectRandomiser.nextInt(8) + 1;
+						blk.skin = engine.getSkin();
 						blk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
 					}
 
@@ -1045,6 +1084,7 @@ public class MarathonTwo extends MarathonModeBase {
 	@Override
 	public void onLast(GameEngine engine, int playerID) {
 		scgettime++;
+		rainbowPhase = (rainbowPhase + 1) % (GameTextUtilities.RAINBOW_COLOURS * 6);
 
 		if (engine.stat != GameEngine.STAT_SETTING && engine.stat != GameEngine.STAT_RESULT && effectRandomiser != null) {
 			if (glitchTimer > 0) glitchTimer--;
@@ -1119,7 +1159,7 @@ public class MarathonTwo extends MarathonModeBase {
 				bTextX = effectRandomiser.nextInt(640);
 				bTextY = effectRandomiser.nextInt(480);
 				setBGState(false);  // BG is black during a blackout.
-				bgmStop();
+				bgmPause();
 			} else {
 				setBGState(true);
 				bgmResume();
