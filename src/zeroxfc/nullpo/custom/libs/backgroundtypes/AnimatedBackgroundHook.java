@@ -20,10 +20,12 @@ public abstract class AnimatedBackgroundHook {
 
 	/** Animation type ID */
 	public static final int ANIMATION_NONE = 0,
-	                        ANIMATION_PULSE_HORIZONTAL_BARS = 1,
-	                        ANIMATION_PULSE_VERTICAL_BARS = 2,
-	                        ANIMATION_CIRCULAR_PULSE_OUTWARD = 3,
-	                        ANIMATION_CIRCULAR_PULSE_INWARD = 4;
+			                ANIMATION_FRAME_ANIM = 1,
+	                        ANIMATION_PULSE_HORIZONTAL_BARS = 2,
+	                        ANIMATION_PULSE_VERTICAL_BARS = 3,
+	                        ANIMATION_CIRCULAR_PULSE = 4,
+	                        ANIMATION_DIAGONAL_RIPPLE = 5,
+	                        ANIMATION_SLIDING_TILES = 6;
 
 	/** ResourceHolder--- types */
 	public static final int HOLDER_SLICK = 0,

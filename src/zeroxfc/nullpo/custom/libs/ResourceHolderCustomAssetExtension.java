@@ -72,6 +72,35 @@ public class ResourceHolderCustomAssetExtension {
 			break;
 		}
 	}
+
+	/**
+	 * Gets the pixel dimensions of the named image.
+	 * @param name Image name in holder dictionary.
+	 * @return int[] { width, height } (both in pixels).
+	 */
+	public int[] getImageDimensions(String name) {
+		try {
+			int[] dim = new int[2];
+			switch (holderType) {
+				case HOLDER_SLICK:
+					dim[0] = slickImages.get(name).getWidth();
+					dim[1] = slickImages.get(name).getHeight();
+					return dim;
+				case HOLDER_SWING:
+					dim[0] = swingImages.get(name).getWidth(null);
+					dim[1] = swingImages.get(name).getHeight(null);
+					return dim;
+				case HOLDER_SDL:
+					dim[0] = sdlImages.get(name).getWidth();
+					dim[1] = sdlImages.get(name).getHeight();
+					return dim;
+				default:
+					return new int[] { 0, 0 };
+			}
+		} catch (Exception e) {
+			return new int[] { 0, 0 };
+		}
+	}
 	
 	/**
 	 * Draws image to game.
