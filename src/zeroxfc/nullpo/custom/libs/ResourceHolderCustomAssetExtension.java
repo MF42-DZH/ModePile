@@ -128,6 +128,114 @@ public class ResourceHolderCustomAssetExtension {
 	}
 
 	/**
+	 * Draws image to game.
+	 * @param engine GameEngine to draw with.
+	 * @param name Identifier of image.
+	 * @param x X position of top-left
+	 * @param y Y position of top-left
+	 * @param x2 X position of bottom-right
+	 * @param y2 Y position of bottom-right
+	 * @param srcX Source X position
+	 * @param srcY Source Y position
+	 * @param srcSizeX Source X size
+	 * @param srcSizeY Source Y size
+	 * @param red Red component
+	 * @param green Green component
+	 * @param blue Blue component
+	 * @param alpha Alpha component
+	 */
+	public void drawImage(GameEngine engine, String name, int x, int y, int x2, int y2, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha) {
+		if (x < x2 || y < y2) return;
+
+		switch (holderType) {
+			case HOLDER_SLICK:
+				org.newdawn.slick.Image toDraw = slickImages.get(name);
+
+				org.newdawn.slick.Color filter = new org.newdawn.slick.Color(red, green, blue, alpha);
+
+				toDraw.draw(x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
+
+				break;
+			case HOLDER_SWING:
+				localSwingGraphics = getGraphicsSwing((RendererSwing)engine.owner.receiver);
+				java.awt.Image toDrawSwing = swingImages.get(name);
+
+				localSwingGraphics.setColor(new java.awt.Color(red, green, blue, alpha));
+				localSwingGraphics.drawImage(toDrawSwing, x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
+				localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
+				break;
+			case HOLDER_SDL:
+				localSDLGraphics = getGraphicsSDL((RendererSDL)engine.owner.receiver);
+				sdljava.video.SDLSurface toDrawSDL = sdlImages.get(name);
+				int dx = x2 - x;
+				int dy = y2 - y;
+				try {
+					toDrawSDL.blitSurface(new SDLRect(srcX, srcY, srcSizeX, srcSizeY), localSDLGraphics, new SDLRect(x, y, dx, dy));
+				} catch (Exception e) {
+					// DO NOTHING AT ALL.
+				}
+				break;
+		}
+	}
+
+	/**
+	 * Draws image to game.
+	 * @param engine GameEngine to draw with.
+	 * @param name Identifier of image.
+	 * @param x X position
+	 * @param y Y position
+	 * @param sx X size
+	 * @param sy Y size
+	 * @param srcX Source X position
+	 * @param srcY Source Y position
+	 * @param srcSizeX Source X size
+	 * @param srcSizeY Source Y size
+	 * @param red Red component
+	 * @param green Green component
+	 * @param blue Blue component
+	 * @param alpha Alpha component
+	 * @param flag (silences the compiler)
+	 */
+	public void drawImage(GameEngine engine, String name, int x, int y, int sx, int sy, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha, Integer flag) {
+		if (flag == null) flag = 0;
+		if (sx <= 0 || sy <= 0) return;
+
+		switch (holderType) {
+			case HOLDER_SLICK:
+				org.newdawn.slick.Image toDraw = slickImages.get(name);
+
+				int fx = x + sx;
+				int fy = y + sy;
+
+				org.newdawn.slick.Color filter = new org.newdawn.slick.Color(red, green, blue, alpha);
+
+				toDraw.draw(x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
+
+				break;
+			case HOLDER_SWING:
+				localSwingGraphics = getGraphicsSwing((RendererSwing)engine.owner.receiver);
+				java.awt.Image toDrawSwing = swingImages.get(name);
+
+				int fxSw = x + sx;
+				int fySw = y + sy;
+
+				localSwingGraphics.setColor(new java.awt.Color(red, green, blue, alpha));
+				localSwingGraphics.drawImage(toDrawSwing, x, y, fxSw, fySw, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
+				localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
+				break;
+			case HOLDER_SDL:
+				localSDLGraphics = getGraphicsSDL((RendererSDL)engine.owner.receiver);
+				sdljava.video.SDLSurface toDrawSDL = sdlImages.get(name);
+				try {
+					toDrawSDL.blitSurface(new SDLRect(srcX, srcY, srcSizeX, srcSizeY), localSDLGraphics, new SDLRect(x, y, sx, sy));
+				} catch (Exception e) {
+					// DO NOTHING AT ALL.
+				}
+				break;
+		}
+	}
+
+	/**
 	 * Draws whole image to game with no tint.
 	 * @param engine GameEngine to draw with.
 	 * @param name Identifier of image.
