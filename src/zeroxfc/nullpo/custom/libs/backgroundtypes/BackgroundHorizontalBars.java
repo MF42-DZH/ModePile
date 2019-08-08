@@ -3,8 +3,8 @@ package zeroxfc.nullpo.custom.libs.backgroundtypes;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 
-public class BackgroundVerticalBars extends AnimatedBackgroundHook {
-	private static int AMT = 640 / 4;
+public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
+	private static int AMT = 480 / 3;
 	private static double TWO_PI = Math.PI * 2;
 	private static float BASE_SCALE = 4f;
 	private static float SCALE_VARIANCE = 3f;
@@ -17,10 +17,10 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 	private boolean reverse;
 
 	{
-		ID = AnimatedBackgroundHook.ANIMATION_PULSE_VERTICAL_BARS;
+		ID = AnimatedBackgroundHook.ANIMATION_PULSE_HORIZONTAL_BARS;
 	}
 
-	public BackgroundVerticalBars(GameEngine engine, int bgNumber, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
+	public BackgroundHorizontalBars(GameEngine engine, int bgNumber, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
 		if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
@@ -28,35 +28,35 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 
 		setup(pulseFrames, sliceSize, pulseBaseScale, pulseScaleVariance, reverse);
 
-		log.debug("Non-custom vertical bars background (" + bgNumber + ") created.");
+		log.debug("Non-custom horizontal bars background (" + bgNumber + ") created.");
 	}
 
-	public BackgroundVerticalBars(GameEngine engine, String filePath, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
+	public BackgroundHorizontalBars(GameEngine engine, String filePath, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
 		customHolder.loadImage(filePath, "localBG");
 
 		setup(pulseFrames, sliceSize, pulseBaseScale, pulseScaleVariance, reverse);
 
-		log.debug("Custom vertical bars background created (File Path: " + filePath + ").");
+		log.debug("Custom horizontal bars background created (File Path: " + filePath + ").");
 	}
 
 	@Override
 	public void setBG(int bg) {
 		customHolder.loadImage("res/graphics/back" + bg + ".png", "localBG");
-		log.debug("Non-custom vertical bars background modified (New BG: " + bg + ").");
+		log.debug("Non-custom horizontal bars background modified (New BG: " + bg + ").");
 	}
 
 	@Override
 	public void setBG(String filePath) {
 		customHolder.loadImage(filePath, "localBG");
-		log.debug("Custom vertical bars background modified (New File Path: " + filePath + ").");
+		log.debug("Custom horizontal bars background modified (New File Path: " + filePath + ").");
 	}
 
 	private void setup(int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
 		if (pulseBaseScale == null || pulseScaleVariance == null || sliceSize == null) {
 			chunks = new ImageChunk[AMT];
 			for (int i = 0; i < chunks.length; i++) {
-				chunks[i] = new ImageChunk(ImageChunk.ANCHOR_POINT_TM, new int[] { ((640 / AMT) * i) + ((640 / AMT) / 2), 0 }, new int[] { (640 / AMT) * i, 0 }, new int[] { (640 / AMT), 480 }, new float[] { BASE_SCALE, 1f } );
+				chunks[i] = new ImageChunk(ImageChunk.ANCHOR_POINT_ML, new int[] { 0, ((480 / AMT) * i) + ((480 / AMT) / 2) }, new int[] { 0, (480 / AMT) * i }, new int[] { 640, (480 / AMT) }, new float[] { 1f, BASE_SCALE } );
 			}
 
 			this.reverse = reverse;
@@ -68,7 +68,7 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 
 			chunks = new ImageChunk[AMT];
 			for (int i = 0; i < chunks.length; i++) {
-				chunks[i] = new ImageChunk(ImageChunk.ANCHOR_POINT_TM, new int[] { ((640 / sliceSize) * i) + ((640 / sliceSize) / 2), 0 }, new int[] { (640 / sliceSize) * i, 0 }, new int[] { (640 / sliceSize), 480 }, new float[] { pulseBaseScale, 1f } );
+				chunks[i] = new ImageChunk(ImageChunk.ANCHOR_POINT_ML, new int[] { 0, ((480 / sliceSize) * i) + ((480 / sliceSize) / 2) }, new int[] { 0, (480 / sliceSize) * i }, new int[] { 640, (480 / sliceSize) }, new float[] { 1f, pulseBaseScale } );
 			}
 
 			this.reverse = reverse;
@@ -107,7 +107,7 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 
 			double newScale = baseScale + (Math.sin(TWO_PI * ((double)ppu / pulsePhaseMax)) * scaleVariance);
 
-			chunks[j].setScale(new float[] { (float)newScale, 1f });
+			chunks[j].setScale(new float[] { 1f, (float)newScale });
 		}
 	}
 
@@ -133,3 +133,4 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 		return ID;
 	}
 }
+

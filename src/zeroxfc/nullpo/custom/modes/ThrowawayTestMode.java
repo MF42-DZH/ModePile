@@ -3,12 +3,11 @@ package zeroxfc.nullpo.custom.modes;
 import mu.nu.nullpo.game.component.Controller;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.BackgroundVerticalBars;
+import zeroxfc.nullpo.custom.libs.backgroundtypes.*;
 
 public class ThrowawayTestMode extends MarathonModeBase {
 	private int initialBG, initialFadeBG;
-	BackgroundVerticalBars vbars;
+	BackgroundHorizontalBars hbars;
 
 	/*
 	 * Mode name
@@ -34,7 +33,6 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 		initialBG = AnimatedBackgroundHook.getBGState(owner);
 		initialFadeBG = AnimatedBackgroundHook.getFadeBGState(owner);
-		vbars = new BackgroundVerticalBars(engine, 0, 60, null, null, null, true);
 
 		rankingRank = -1;
 		rankingScore = new int[RANKING_TYPE][RANKING_MAX];
@@ -55,6 +53,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
 		}
 
+		hbars = new BackgroundHorizontalBars(engine, startlevel, 60, null, null, null, true);
+
 		engine.owner.backgroundStatus.bg = startlevel;
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
 	}
@@ -65,7 +65,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public boolean onSetting(GameEngine engine, int playerID) {
 		AnimatedBackgroundHook.setBGState(receiver,true);
-		vbars.reset();
+		hbars.reset();
 
 		// NET: Net Ranking
 		if(netIsNetRankingDisplayMode) {
@@ -90,7 +90,6 @@ public class ThrowawayTestMode extends MarathonModeBase {
 							if(startlevel > 19) startlevel = 0;
 						}
 						engine.owner.backgroundStatus.bg = startlevel;
-						vbars.setBG(engine.statistics.level);
 						break;
 					case 1:
 						//enableTSpin = !enableTSpin;
@@ -138,6 +137,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
+				hbars.setBG(startlevel);
 				engine.playSE("decide");
 				saveSetting(owner.modeConfig);
 				receiver.saveModeConfig(owner.modeConfig);
@@ -167,11 +167,21 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			engine.statc[2] = -1;
 
 			if(engine.statc[3] >= 60) {
+				hbars.setBG(startlevel);
 				return false;
 			}
 		}
 
 		return true;
+	}
+
+	@Override
+	public boolean onReady(GameEngine engine, int playerID) {
+		if (engine.statc[0] == 0) {
+			hbars.setBG(startlevel);
+		}
+
+		return false;
 	}
 
 	@Override
@@ -183,9 +193,9 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
 			owner.backgroundStatus.bg = initialBG;
 			owner.backgroundStatus.fadebg = initialFadeBG;
-			vbars.reset();
+			hbars.reset();
 		} else {
-			vbars.modifyValues(null,null,3f * ((float)(engine.statistics.level + 1) / 20f),null);
+			hbars.modifyValues(null,null,3f * ((float)(engine.statistics.level + 1) / 20f),null);
 
 			if (engine.stat == GameEngine.STAT_RESULT) {
 				owner.backgroundStatus.bg = engine.statistics.level;
@@ -195,7 +205,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				owner.backgroundStatus.fadebg = -1;
 			}
 
-			vbars.update();
+			hbars.update();
 		}
 	}
 
@@ -337,7 +347,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		if(engine.statistics.lines % 10 >= 6) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
 		if(engine.statistics.lines % 10 >= 8) engine.meterColor = GameEngine.METER_COLOR_RED;
 
-		vbars.modifyValues(null,null, null, (engine.statistics.lines / 10) % 2 == 0);
+		hbars.modifyValues(null,null, null, (engine.statistics.lines / 10) % 2 == 0);
 
 		if((engine.statistics.lines >= tableGameClearLines[goaltype]) && (tableGameClearLines[goaltype] >= 0)) {
 			// Ending
@@ -350,7 +360,9 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			// owner.backgroundStatus.fadesw = true;
 			// owner.backgroundStatus.fadecount = 0;
 			// owner.backgroundStatus.fadebg = engine.statistics.level;
-			vbars.setBG(engine.statistics.level);
+			hbars.setBG(engine.statistics.level);
+			initialBG = engine.statistics.level;
+			initialFadeBG = engine.statistics.level;
 
 			setSpeed(engine);
 			engine.playSE("levelup");
@@ -360,7 +372,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public void renderFirst(GameEngine engine, int playerID) {
 		if( !((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false))) ) {
-			vbars.draw(engine);
+			hbars.draw(engine);
 		}
 	}
 
