@@ -9,8 +9,8 @@ import java.util.Collections;
 public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 	private static int AMT = 640 / 4;
 	private static double TWO_PI = Math.PI * 2;
-	private static float BASE_SCALE = 4f;
-	private static float SCALE_VARIANCE = 3f;
+	private static float BASE_SCALE = 1f;
+	private static float SCALE_VARIANCE = 1f;
 
 	// private ResourceHolderCustomAssetExtension customHolder;
 	private ImageChunk[] chunks;
@@ -110,6 +110,7 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 			float scaleVariance = (pulseScaleVariance == null) ? SCALE_VARIANCE : pulseScaleVariance;
 
 			double newScale = baseScale + (Math.sin(TWO_PI * ((double)ppu / pulsePhaseMax)) * scaleVariance);
+			if (newScale < 1d) newScale = 1d;
 
 			chunks[j].setScale(new float[] { (float)newScale, 1f });
 		}

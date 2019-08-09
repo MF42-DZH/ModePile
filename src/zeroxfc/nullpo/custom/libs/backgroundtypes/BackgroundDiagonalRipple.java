@@ -11,7 +11,7 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
 	private static final int DEF_FIELD_DIM = 8;
 	private static final int DEF_GRID_WIDTH = 640 / DEF_FIELD_DIM;
 	private static final int DEF_GRID_HEIGHT = 480 / DEF_FIELD_DIM;
-	private static float BASE_SCALE = 2f;
+	private static float BASE_SCALE = 1f;
 	private static float SCALE_VARIANCE = 1f;
 
 	private ImageChunk[][] chunkGrid;
@@ -117,6 +117,7 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
 				float scaleVariance = (pulseScaleVariance == null) ? SCALE_VARIANCE : pulseScaleVariance;
 
 				double newScale = baseScale + (Math.sin(TWO_PI * ((double)ppu / pulsePhaseMax)) * scaleVariance);
+				if (newScale < 1d) newScale = 1d;
 
 				chunkGrid[y][x].setScale(new float[] { (float)newScale, (float)newScale });
 			}

@@ -124,7 +124,6 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 		float baseScale = (pulseBaseScale == null) ? BASE_SCALE : pulseBaseScale;
 		float scaleVariance = (pulseScaleVariance == null) ? SCALE_VARIANCE : pulseScaleVariance;
 		float wl = (wavelength == null) ? DEF_WAVELENGTH : wavelength;
-		wl /= 2;
 		int cx = (centreX == null) ? DEF_PULSE_CENTRE_X : centreX;
 		int cy = (centreY == null) ? DEF_PULSE_CENTRE_Y : centreY;
 
@@ -142,10 +141,11 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 						double distanceX = Math.abs(cellAnchorX - cx);
 						double distanceY = Math.abs(cellAnchorY - cy);
 						double dTotal = Math.sqrt((distanceX * distanceX) + (distanceY * distanceY));
-						if (almostEqual(dTotal, cr, wl)) {
+						if (almostEqual(dTotal, cr, wl) && dTotal >= 0) {
 							double usedDistance = dTotal - cr;
 							double sinVal = Math.sin(Math.PI * (usedDistance / wl));
 							double newScale = baseScale + (sinVal * scaleVariance);
+							if (newScale < 1d) newScale = 1d;
 
 							imageChunk.setScale(new float[] { (float)newScale, (float)newScale });
 						} else if (pulseRadii.size() <= 1) {
