@@ -78,11 +78,11 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
 			this.pulseScaleVariance = pulseScaleVariance;
 
 			int w;
-			if (640 % cellWidth != 0) w = 4;
+			if (640 % cellWidth != 0) w = 8;
 			else w = 640 / cellWidth;
 
 			int h;
-			if (480 % cellHeight != 0) h = 4;
+			if (480 % cellHeight != 0) h = 8;
 			else h = 480 / cellHeight;
 
 			chunkGrid = new ImageChunk[h][w];

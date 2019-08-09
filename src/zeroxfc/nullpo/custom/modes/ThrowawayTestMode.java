@@ -7,7 +7,7 @@ import zeroxfc.nullpo.custom.libs.backgroundtypes.*;
 
 public class ThrowawayTestMode extends MarathonModeBase {
 	private int initialBG, initialFadeBG;
-	BackgroundDiagonalRipple backgroundDiagonalRipple;
+	private BackgroundCircularRipple backgroundCircularRipple;
 
 	/*
 	 * Mode name
@@ -53,7 +53,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
 		}
 
-		backgroundDiagonalRipple = new BackgroundDiagonalRipple(engine, startlevel, null, null, 60, null, null, false, false);
+		backgroundCircularRipple = new BackgroundCircularRipple(engine, startlevel,8, 8,320, 240, 40f, 8,30,2f,1f);
 
 		engine.owner.backgroundStatus.bg = startlevel;
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
@@ -65,7 +65,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public boolean onSetting(GameEngine engine, int playerID) {
 		AnimatedBackgroundHook.setBGState(receiver,true);
-		backgroundDiagonalRipple.reset();
+		backgroundCircularRipple.reset();
 
 		// NET: Net Ranking
 		if(netIsNetRankingDisplayMode) {
@@ -137,7 +137,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
-				backgroundDiagonalRipple.setBG(startlevel);
+				backgroundCircularRipple.setBG(startlevel);
 				engine.playSE("decide");
 				saveSetting(owner.modeConfig);
 				receiver.saveModeConfig(owner.modeConfig);
@@ -167,7 +167,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			engine.statc[2] = -1;
 
 			if(engine.statc[3] >= 60) {
-				backgroundDiagonalRipple.setBG(startlevel);
+				backgroundCircularRipple.setBG(startlevel);
 				return false;
 			}
 		}
@@ -178,7 +178,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public boolean onReady(GameEngine engine, int playerID) {
 		if (engine.statc[0] == 0) {
-			backgroundDiagonalRipple.setBG(startlevel);
+			backgroundCircularRipple.setBG(startlevel);
 		}
 
 		return false;
@@ -193,9 +193,9 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
 			owner.backgroundStatus.bg = initialBG;
 			owner.backgroundStatus.fadebg = initialFadeBG;
-			backgroundDiagonalRipple.reset();
+			backgroundCircularRipple.reset();
 		} else {
-			backgroundDiagonalRipple.modifyValues(null,null,1f * ((float)(engine.statistics.level + 1) / 20f),null, null);
+			// backgroundCircularRipple.modifyValues(null,null,1f * ((float)(engine.statistics.level + 1) / 20f),null, null);
 
 			if (engine.stat == GameEngine.STAT_RESULT) {
 				owner.backgroundStatus.bg = initialBG;
@@ -205,7 +205,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				owner.backgroundStatus.fadebg = -1;
 			}
 
-			backgroundDiagonalRipple.update();
+			backgroundCircularRipple.update();
 		}
 	}
 
@@ -347,7 +347,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		if(engine.statistics.lines % 10 >= 6) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
 		if(engine.statistics.lines % 10 >= 8) engine.meterColor = GameEngine.METER_COLOR_RED;
 
-		backgroundDiagonalRipple.modifyValues(null, null, null, null, null);
+		// backgroundCircularRipple.modifyValues(null, null, null, null, null);
 
 		if((engine.statistics.lines >= tableGameClearLines[goaltype]) && (tableGameClearLines[goaltype] >= 0)) {
 			// Ending
@@ -360,7 +360,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			// owner.backgroundStatus.fadesw = true;
 			// owner.backgroundStatus.fadecount = 0;
 			// owner.backgroundStatus.fadebg = engine.statistics.level;
-			backgroundDiagonalRipple.setBG(engine.statistics.level);
+			backgroundCircularRipple.setBG(engine.statistics.level);
 			initialBG = engine.statistics.level;
 			initialFadeBG = engine.statistics.level;
 
@@ -372,7 +372,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public void renderFirst(GameEngine engine, int playerID) {
 		if( !((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false))) ) {
-			backgroundDiagonalRipple.draw(engine);
+			backgroundCircularRipple.draw(engine);
 		}
 	}
 

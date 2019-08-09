@@ -63,6 +63,10 @@ public class ImageChunk {
 		calibrateDrawLocation();
 	}
 
+	public int[] getAnchorLocation() {
+		return anchorLocation;
+	}
+
 	public void setSourceDimensions(int[] sourceDimensions) {
 		this.sourceDimensions = sourceDimensions;
 		calibrateDrawLocation();
