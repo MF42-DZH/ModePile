@@ -15,7 +15,7 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 	private static final int DEF_WAVESPEED = 8;
 	private static final int MAX_RADIUS = 960;
 	private static final float DEF_WAVELENGTH = 80;
-	private static float BASE_SCALE = 2f;
+	private static float BASE_SCALE = 1f;
 	private static float SCALE_VARIANCE = 1f;
 
 	private ImageChunk[][] chunkGrid;
