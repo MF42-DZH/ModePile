@@ -53,7 +53,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
 		}
 
-		backgroundCircularRipple = new BackgroundCircularRipple(engine, startlevel,8, 8,320, 240, 40f, 8,30,1f,1f);
+		backgroundCircularRipple = new BackgroundCircularRipple(engine, startlevel,8, 8,320, 240, 40f, 12,-1,1f,0.75f);
 
 		engine.owner.backgroundStatus.bg = startlevel;
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
@@ -207,6 +207,20 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 			backgroundCircularRipple.update();
 		}
+	}
+
+	/*
+	 * Hard drop
+	 */
+	@Override
+	public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
+		engine.statistics.scoreFromHardDrop += fall * 2;
+		engine.statistics.score += fall * 2;
+
+		int x = (16 * engine.nowPieceX) + 12 + receiver.getFieldDisplayPositionX(engine, playerID) + (16 * engine.nowPieceObject.getWidth() / 2);
+		int y = (16 * engine.nowPieceY) + 60 + receiver.getFieldDisplayPositionY(engine, playerID) + (16 * engine.nowPieceObject.getHeight() / 2);;
+
+		backgroundCircularRipple.manualRipple(x, y);
 	}
 
 	/*

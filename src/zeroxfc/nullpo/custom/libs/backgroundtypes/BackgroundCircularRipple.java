@@ -21,6 +21,7 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 	private ImageChunk[][] chunkGrid;
 	private int pulseTimerMax, currentPulseTimer;
 	private ArrayList<Integer> pulseRadii;
+	private ArrayList<int[]> pulseCentres;
 	private Float pulseBaseScale, pulseScaleVariance;
 	private Float wavelength;
 	private Integer centreX, centreY;
@@ -29,6 +30,7 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 	{
 		ID = AnimatedBackgroundHook.ANIMATION_CIRCULAR_RIPPLE;
 		pulseRadii = new ArrayList<>();
+		pulseCentres = new ArrayList<>();
 		setImageName("localBG");
 	}
 
@@ -111,10 +113,11 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 
 	@Override
 	public void update() {
-		currentPulseTimer++;
-		if (currentPulseTimer >= pulseTimerMax) {
+		if (pulseTimerMax >= 0) currentPulseTimer++;
+		if (currentPulseTimer >= pulseTimerMax && pulseTimerMax >= 0) {
 			currentPulseTimer = 0;
 			pulseRadii.add(0);
+			pulseCentres.add(new int[] { (centreX == null) ? DEF_PULSE_CENTRE_X : centreX, (centreY == null) ? DEF_PULSE_CENTRE_Y : centreY });
 		}
 
 		int ws;
@@ -124,12 +127,12 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 		float baseScale = (pulseBaseScale == null) ? BASE_SCALE : pulseBaseScale;
 		float scaleVariance = (pulseScaleVariance == null) ? SCALE_VARIANCE : pulseScaleVariance;
 		float wl = (wavelength == null) ? DEF_WAVELENGTH : wavelength;
-		int cx = (centreX == null) ? DEF_PULSE_CENTRE_X : centreX;
-		int cy = (centreY == null) ? DEF_PULSE_CENTRE_Y : centreY;
 
 		if (pulseRadii.size() > 0) {
 			for (int i = 0; i < pulseRadii.size(); i++) {
 				pulseRadii.set(i, pulseRadii.get(i) + ws);
+				int cx = pulseCentres.get(i)[0];
+				int cy = pulseCentres.get(i)[1];
 
 				int cr = pulseRadii.get(i);
 				for (ImageChunk[] imageChunks : chunkGrid) {
@@ -144,7 +147,7 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 						if (almostEqual(dTotal, cr, wl) && dTotal >= 0) {
 							double usedDistance = dTotal - cr;
 							double sinVal = Math.sin(Math.PI * (usedDistance / wl));
-							double newScale = baseScale + (sinVal * scaleVariance);
+							double newScale = imageChunk.getScale()[0] + (sinVal * scaleVariance);
 							if (newScale < 1d) newScale = 1d;
 
 							imageChunk.setScale(new float[] { (float)newScale, (float)newScale });
@@ -156,12 +159,24 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 			}
 		}
 
-		pulseRadii.removeIf(integer -> (integer > MAX_RADIUS));
+		// pulseRadii.removeIf(integer -> (integer > MAX_RADIUS));
+		for (int i = pulseRadii.size() - 1; i >= 0 ; i--) {
+			if (pulseRadii.get(i) > MAX_RADIUS) {
+				pulseRadii.remove(i);
+				pulseCentres.remove(i);
+			}
+		}
+	}
+
+	public void manualRipple(int x, int y) {
+		pulseRadii.add(0);
+		pulseCentres.add(new int[] { x, y });
 	}
 
 	@Override
 	public void reset() {
 		pulseRadii = new ArrayList<>();
+		pulseCentres = new ArrayList<>();
 		currentPulseTimer = pulseTimerMax;
 		update();
 	}
