@@ -10,17 +10,18 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
 	public static final int SEQUENCE_GRID_VFTH = 3;
 
 	private ImageChunk[] chunkSequence;
-	private ResourceHolderCustomAssetExtension customHolder;
+	// private ResourceHolderCustomAssetExtension customHolder;
 	private int frameTime, currentTick, type, frameCount, currentFrame;
 	private boolean pingPong, forward;
 
 	{
 		ID = AnimatedBackgroundHook.ANIMATION_FRAME_ANIM;
+		setImageName("localBG");
 	}
 
 	public BackgroundFrameAnim(GameEngine engine, String filePath, int type, int frameTime, boolean pingPong) {
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
-		customHolder.loadImage(filePath, "localBG");
+		customHolder.loadImage(filePath, imageName);
 
 		this.type = type;
 		this.frameTime = frameTime;
@@ -38,7 +39,7 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
 
 		switch (type) {
 			case SEQUENCE_LINEAR_HORIZONTAL:
-				int[] hDim = customHolder.getImageDimensions("localBG");
+				int[] hDim = customHolder.getImageDimensions(imageName);
 				int hAmount = hDim[0] / 640;
 
 				chunkSequence = new ImageChunk[hAmount];
@@ -49,7 +50,7 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
 				frameCount = hAmount;
 				break;
 			case SEQUENCE_LINEAR_VERTICAL:
-				int[] vDim = customHolder.getImageDimensions("localBG");
+				int[] vDim = customHolder.getImageDimensions(imageName);
 				int vAmount = vDim[1] / 480;
 
 				chunkSequence = new ImageChunk[vAmount];
@@ -60,7 +61,7 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
 				frameCount = vAmount;
 				break;
 			case SEQUENCE_GRID_HFTV:
-				int[] gDim1 = customHolder.getImageDimensions("localBG");
+				int[] gDim1 = customHolder.getImageDimensions(imageName);
 				int hCells1 = gDim1[0] / 640;
 				int vCells1 = gDim1[1] / 480;
 
@@ -75,7 +76,7 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
 				frameCount = hCells1 * vCells1;
 				break;
 			case SEQUENCE_GRID_VFTH:
-				int[] gDim2 = customHolder.getImageDimensions("localBG");
+				int[] gDim2 = customHolder.getImageDimensions(imageName);
 				int hCells2 = gDim2[0] / 640;
 				int vCells2 = gDim2[1] / 480;
 
@@ -141,7 +142,7 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
 		int[] ddim = i.getDrawDimensions();
 		int[] sloc = i.getSourceLocation();
 		int[] sdim = i.getSourceDimensions();
-		customHolder.drawImage(engine, "localBG", pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], 255, 255, 255, 255, 0);
+		customHolder.drawImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], 255, 255, 255, 255, 0);
 	}
 
 	@Override
@@ -151,10 +152,15 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
 
 	@Override
 	public void setBG(String filePath) {
-		customHolder.loadImage(filePath, "localBG");
+		customHolder.loadImage(filePath, imageName);
 		setup();
 	}
 
+	/**
+	 * This last one is important. In the case that any of the child types are used, it allows identification.
+	 * The identification can be used to allow casting during operations.
+	 * @return Identification number of child class.
+	 */
 	@Override
 	public int getID() {
 		return ID;

@@ -73,6 +73,10 @@ public class ImageChunk {
 		calibrateDrawLocation();
 	}
 
+	public float[] getScale() {
+		return scale;
+	}
+
 	public int[] getSourceLocation() {
 		return sourceLocation;
 	}

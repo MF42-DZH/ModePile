@@ -3,13 +3,16 @@ package zeroxfc.nullpo.custom.libs.backgroundtypes;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 	private static int AMT = 640 / 4;
 	private static double TWO_PI = Math.PI * 2;
 	private static float BASE_SCALE = 4f;
 	private static float SCALE_VARIANCE = 3f;
 
-	private ResourceHolderCustomAssetExtension customHolder;
+	// private ResourceHolderCustomAssetExtension customHolder;
 	private ImageChunk[] chunks;
 	private int pulsePhaseMax;
 	private int currentPulsePhase;
@@ -18,13 +21,14 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 
 	{
 		ID = AnimatedBackgroundHook.ANIMATION_PULSE_VERTICAL_BARS;
+		setImageName("localBG");
 	}
 
 	public BackgroundVerticalBars(GameEngine engine, int bgNumber, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
 		if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
-		customHolder.loadImage("res/graphics/back" + bgNumber + ".png", "localBG");
+		customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
 
 		setup(pulseFrames, sliceSize, pulseBaseScale, pulseScaleVariance, reverse);
 
@@ -33,7 +37,7 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 
 	public BackgroundVerticalBars(GameEngine engine, String filePath, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
-		customHolder.loadImage(filePath, "localBG");
+		customHolder.loadImage(filePath, imageName);
 
 		setup(pulseFrames, sliceSize, pulseBaseScale, pulseScaleVariance, reverse);
 
@@ -42,13 +46,13 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 
 	@Override
 	public void setBG(int bg) {
-		customHolder.loadImage("res/graphics/back" + bg + ".png", "localBG");
+		customHolder.loadImage("res/graphics/back" + bg + ".png", imageName);
 		log.debug("Non-custom vertical bars background modified (New BG: " + bg + ").");
 	}
 
 	@Override
 	public void setBG(String filePath) {
-		customHolder.loadImage(filePath, "localBG");
+		customHolder.loadImage(filePath, imageName);
 		log.debug("Custom vertical bars background modified (New File Path: " + filePath + ").");
 	}
 
@@ -119,15 +123,24 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 
 	@Override
 	public void draw(GameEngine engine) {
-		for (ImageChunk i : chunks) {
+		ArrayList<ImageChunk> priorityList = new ArrayList<>();
+		Collections.addAll(priorityList, chunks);
+		priorityList.sort((c1, c2) -> Float.compare(c1.getScale()[0], c2.getScale()[0]));
+
+		for (ImageChunk i : priorityList) {
 			int[] pos = i.getDrawLocation();
 			int[] ddim = i.getDrawDimensions();
 			int[] sloc = i.getSourceLocation();
 			int[] sdim = i.getSourceDimensions();
-			customHolder.drawImage(engine, "localBG", pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], 255, 255, 255, 255, 0);
+			customHolder.drawImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], 255, 255, 255, 255, 0);
 		}
 	}
 
+	/**
+	 * This last one is important. In the case that any of the child types are used, it allows identification.
+	 * The identification can be used to allow casting during operations.
+	 * @return Identification number of child class.
+	 */
 	@Override
 	public int getID() {
 		return ID;

@@ -10,6 +10,7 @@ import mu.nu.nullpo.gui.slick.ResourceHolder;
 import mu.nu.nullpo.gui.swing.NullpoMinoSwing;
 import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import org.apache.log4j.Logger;
+import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 
 import java.lang.reflect.Field;
 
@@ -23,9 +24,10 @@ public abstract class AnimatedBackgroundHook {
 			                ANIMATION_FRAME_ANIM = 1,
 	                        ANIMATION_PULSE_HORIZONTAL_BARS = 2,
 	                        ANIMATION_PULSE_VERTICAL_BARS = 3,
-	                        ANIMATION_CIRCULAR_PULSE = 4,
+	                        ANIMATION_CIRCULAR_RIPPLE = 4,
 	                        ANIMATION_DIAGONAL_RIPPLE = 5,
-	                        ANIMATION_SLIDING_TILES = 6;
+	                        ANIMATION_SLIDING_TILES = 6,
+	                        ANIMATION_TGM3TI_STYLE = 7;  // NOTE: Swing and SDL will not be able to use rotations.
 
 	/** ResourceHolder--- types */
 	public static final int HOLDER_SLICK = 0,
@@ -61,6 +63,19 @@ public abstract class AnimatedBackgroundHook {
 		}
 	}
 
+	public static void disableDefaultBG(GameManager owner) {
+		getBGState(owner);
+		getFadeBGState(owner);
+
+		owner.backgroundStatus.bg = -1;
+		owner.backgroundStatus.fadebg = -1;
+	}
+
+	public static void enableDefaultBG(GameManager owner) {
+		owner.backgroundStatus.bg = LAST_BG;
+		owner.backgroundStatus.fadebg = LAST_FADE_BG;
+	}
+
 	public static boolean getInitialBGState() {
 		switch (getResourceHook()) {
 			case HOLDER_SLICK:
@@ -89,12 +104,28 @@ public abstract class AnimatedBackgroundHook {
 		}
 	}
 
+	public void setExternalHolder(ResourceHolderCustomAssetExtension holder) {
+		customHolder = holder;
+	}
+
+	public void setImageName(String imageName) {
+		this.imageName = imageName;
+	}
+
 	protected int ID;
+	protected ResourceHolderCustomAssetExtension customHolder;
+	protected String imageName;
 
 	public abstract void update();
 	public abstract void reset();
 	public abstract void draw(GameEngine engine);
 	public abstract void setBG(int bg);
 	public abstract void setBG(String filePath);
+
+	/**
+	 * This last one is important. In the case that any of the child types are used, it allows identification.
+	 * The identification can be used to allow casting during operations.
+	 * @return Identification number of child class.
+	 */
 	public abstract int getID();
 }
