@@ -104,6 +104,11 @@ public abstract class AnimatedBackgroundHook {
 		}
 	}
 
+	// Fuzzy equals.
+	protected static boolean almostEqual(double a, double b, double eps){
+		return Math.abs(a - b) < eps;
+	}
+
 	public void setExternalHolder(ResourceHolderCustomAssetExtension holder) {
 		customHolder = holder;
 	}

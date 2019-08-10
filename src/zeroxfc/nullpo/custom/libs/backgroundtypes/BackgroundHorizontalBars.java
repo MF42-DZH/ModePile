@@ -128,6 +128,11 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
 		Collections.addAll(priorityList, chunks);
 		priorityList.sort((c1, c2) -> Float.compare(c1.getScale()[1], c2.getScale()[1]));
 
+		float baseScale = (pulseBaseScale == null) ? BASE_SCALE : pulseBaseScale;
+		if (almostEqual(baseScale, 1, 0.005)) {
+			customHolder.drawImage(engine, imageName, 0, 0);
+			priorityList.removeIf(imageChunk -> almostEqual(imageChunk.getScale()[0], 1, 0.005));
+		}
 		for (ImageChunk i : priorityList) {
 			int[] pos = i.getDrawLocation();
 			int[] ddim = i.getDrawDimensions();
