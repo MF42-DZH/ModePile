@@ -38,7 +38,7 @@ public class TwoThousandAndFortyEight extends DummyMode {
 	private int[][] rankingScore;
 	private int localState;
 	private int lastMove;
-	private IntWrapper score;
+	private ValueWrapper score;
 	private int moves;
 	private int lastScoreTime;
 	private int lastScore;
@@ -385,7 +385,7 @@ public class TwoThousandAndFortyEight extends DummyMode {
 	private boolean statMove(GameEngine engine, int playerID) {
 		if (engine.statc[0] == 0) {
 			moves = 0;
-			score = new IntWrapper(0);
+			score = new ValueWrapper(0);
 
 			for (int y = 0; y < FIELD_DIMENSION; y++) {
 				for (int x = 0; x < FIELD_DIMENSION; x++) {
@@ -399,10 +399,10 @@ public class TwoThousandAndFortyEight extends DummyMode {
 			if (moved) moves++;
 
 			if (!moved) {
-				if (score.value > 0) {
+				if (score.valueInt > 0) {
 					lastScoreTime = 0;
 					lastScore = engine.statistics.score;
-					engine.statistics.score += score.value;
+					engine.statistics.score += score.valueInt;
 				}
 
 				if (moves > 0) mainGrid.createSquare();

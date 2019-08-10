@@ -36,12 +36,12 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _FlyInOutText_ - Adds text objects that can fly into the screen from the outside, linger, then return to their starting positions before disappearing.
 * _GameTextUtilities_ - Adds methods for coloured text and other random text / text obfuscation methods.
 * _Interpolation_ - Linear interpolation functions.
-* _IntWrapper_ - Class that holds a single int, designed to handle the counting of recursive function calls.
 * _MouseParser_ - Allows the use of mouse inside a mode.
 * _ResourceHolderCustomAssetExtension_ - Allows the use of custom images and BGM in a mode.
 * _ScrollingMarqueeText_ - Horizontal scrolling text.
 * _SoundLoader_ - Allows the use of custom SFX.
 * _StaticFlyInText_ - Similar to _FlyInOutText_, but the text does not fly back out.
+* _ValueWrapper_ - Class that holds a set of one of each primitive numbers.
 * _WeightedRandomiser_ - A weighted pseudorandom number generator. 
 
 ## Compilation Instructions:

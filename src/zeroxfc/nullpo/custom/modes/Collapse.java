@@ -787,17 +787,17 @@ public class Collapse extends DummyMode {
 	}
 	
 	private int getSquares(GameEngine engine, int x, int y) {
-		IntWrapper wrapper = new IntWrapper();
+		ValueWrapper wrapper = new ValueWrapper();
 		
 		flagSquares(engine, wrapper, x, y, engine.field.getBlockColor(x, y));
 		
-		return wrapper.value;
+		return wrapper.valueInt;
 	}
 	
-	private void flagSquares(GameEngine engine, IntWrapper counter, int x, int y, int color) {
+	private void flagSquares(GameEngine engine, ValueWrapper counter, int x, int y, int color) {
 		if (x >= 0 && x < 12 && y >= 0 && y < 16) {
 			if (engine.field.getBlockColor(x, y) == color || engine.field.getBlockColor(x, y) == 35 || engine.field.getBlockColor(x, y) == (7 + color)) {
-					counter.value++;
+					counter.valueInt++;
 					engine.field.getBlock(x, y).secondaryColor = engine.field.getBlock(x, y).color;
 					engine.field.getBlock(x, y).color = Block.BLOCK_COLOR_PURPLE;
 					
