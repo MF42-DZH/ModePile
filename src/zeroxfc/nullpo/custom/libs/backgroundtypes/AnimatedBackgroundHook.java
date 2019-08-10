@@ -123,7 +123,7 @@ public abstract class AnimatedBackgroundHook {
 
 	public abstract void update();
 	public abstract void reset();
-	public abstract void draw(GameEngine engine);
+	public abstract void draw(GameEngine engine, int playerID);
 	public abstract void setBG(int bg);
 	public abstract void setBG(String filePath);
 

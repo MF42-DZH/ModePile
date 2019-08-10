@@ -131,7 +131,7 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
 	}
 
 	@Override
-	public void draw(GameEngine engine) {
+	public void draw(GameEngine engine, int playerID) {
 		ArrayList<ImageChunk> priorityList = new ArrayList<>();
 		for (ImageChunk[] imageChunks : chunkGrid) {
 			Collections.addAll(priorityList, imageChunks);

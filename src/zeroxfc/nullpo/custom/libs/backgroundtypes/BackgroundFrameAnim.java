@@ -136,7 +136,7 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
 	}
 
 	@Override
-	public void draw(GameEngine engine) {
+	public void draw(GameEngine engine, int playerID) {
 		ImageChunk i = chunkSequence[currentFrame];
 		int[] pos = i.getDrawLocation();
 		int[] ddim = i.getDrawDimensions();

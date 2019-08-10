@@ -123,7 +123,7 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 	}
 
 	@Override
-	public void draw(GameEngine engine) {
+	public void draw(GameEngine engine, int playerID) {
 		ArrayList<ImageChunk> priorityList = new ArrayList<>();
 		Collections.addAll(priorityList, chunks);
 		priorityList.sort((c1, c2) -> Float.compare(c1.getScale()[0], c2.getScale()[0]));

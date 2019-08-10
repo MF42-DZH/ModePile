@@ -38,7 +38,7 @@ public class BackgroundNoAnim extends AnimatedBackgroundHook {
 	}
 
 	@Override
-	public void draw(GameEngine engine) {
+	public void draw(GameEngine engine, int playerID) {
 		customHolder.drawImage(engine,imageName, 0, 0);
 	}
 

@@ -7,7 +7,8 @@ import zeroxfc.nullpo.custom.libs.backgroundtypes.*;
 
 public class ThrowawayTestMode extends MarathonModeBase {
 	private int initialBG, initialFadeBG;
-	private BackgroundCircularRipple backgroundCircularRipple;
+	// private BackgroundCircularRipple backgroundCircularRipple;
+	private BackgroundSlidingTiles tiles;
 
 	/*
 	 * Mode name
@@ -53,7 +54,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
 		}
 
-		backgroundCircularRipple = new BackgroundCircularRipple(engine, startlevel,8, 8,320, 240, 40f, 12,-1,1f,0.75f);
+		// backgroundCircularRipple = new BackgroundCircularRipple(engine, startlevel,8, 8,320, 240, 40f, 12,-1,1f,0.75f);
+		tiles = new BackgroundSlidingTiles(engine, engine.getSkin(), System.nanoTime(), null, 1, 0.25f);
 
 		engine.owner.backgroundStatus.bg = startlevel;
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
@@ -65,7 +67,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public boolean onSetting(GameEngine engine, int playerID) {
 		AnimatedBackgroundHook.setBGState(receiver,true);
-		backgroundCircularRipple.reset();
+		tiles.reset();
 
 		// NET: Net Ranking
 		if(netIsNetRankingDisplayMode) {
@@ -137,7 +139,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
-				backgroundCircularRipple.setBG(startlevel);
+				// backgroundCircularRipple.setBG(startlevel);
 				engine.playSE("decide");
 				saveSetting(owner.modeConfig);
 				receiver.saveModeConfig(owner.modeConfig);
@@ -167,7 +169,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			engine.statc[2] = -1;
 
 			if(engine.statc[3] >= 60) {
-				backgroundCircularRipple.setBG(startlevel);
+				// backgroundCircularRipple.setBG(startlevel);
 				return false;
 			}
 		}
@@ -178,7 +180,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public boolean onReady(GameEngine engine, int playerID) {
 		if (engine.statc[0] == 0) {
-			backgroundCircularRipple.setBG(startlevel);
+			// backgroundCircularRipple.setBG(startlevel);
+			tiles.setSeed(engine.randSeed);
 		}
 
 		return false;
@@ -191,21 +194,21 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		initialFadeBG = AnimatedBackgroundHook.getFadeBGState(owner);
 
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
-			owner.backgroundStatus.bg = initialBG;
-			owner.backgroundStatus.fadebg = initialFadeBG;
-			backgroundCircularRipple.reset();
+			engine.owner.backgroundStatus.bg = initialBG;
+			engine.owner.backgroundStatus.fadebg = initialFadeBG;
+			tiles.reset();
 		} else {
 			// backgroundCircularRipple.modifyValues(null,null,1f * ((float)(engine.statistics.level + 1) / 20f),null, null);
 
 			if (engine.stat == GameEngine.STAT_RESULT) {
-				owner.backgroundStatus.bg = initialBG;
-				owner.backgroundStatus.fadebg = initialFadeBG;
+				engine.owner.backgroundStatus.bg = initialBG;
+				engine.owner.backgroundStatus.fadebg = initialFadeBG;
 			} else {
-				owner.backgroundStatus.bg = -1;
-				owner.backgroundStatus.fadebg = -1;
+				engine.owner.backgroundStatus.bg = -1;
+				engine.owner.backgroundStatus.fadebg = -1;
 			}
 
-			backgroundCircularRipple.update();
+			tiles.update();
 		}
 	}
 
@@ -217,10 +220,10 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		engine.statistics.scoreFromHardDrop += fall * 2;
 		engine.statistics.score += fall * 2;
 
-		int x = (16 * engine.nowPieceX) + 12 + receiver.getFieldDisplayPositionX(engine, playerID) + (16 * engine.nowPieceObject.getWidth() / 2);
-		int y = (16 * engine.nowPieceY) + 60 + receiver.getFieldDisplayPositionY(engine, playerID) + (16 * engine.nowPieceObject.getHeight() / 2);;
-
-		backgroundCircularRipple.manualRipple(x, y);
+//		int x = (16 * engine.nowPieceX) + 12 + receiver.getFieldDisplayPositionX(engine, playerID) + (16 * engine.nowPieceObject.getWidth() / 2);
+//		int y = (16 * engine.nowPieceY) + 60 + receiver.getFieldDisplayPositionY(engine, playerID) + (16 * engine.nowPieceObject.getHeight() / 2);;
+//
+//		backgroundCircularRipple.manualRipple(x, y);
 	}
 
 	/*
@@ -374,7 +377,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			// owner.backgroundStatus.fadesw = true;
 			// owner.backgroundStatus.fadecount = 0;
 			// owner.backgroundStatus.fadebg = engine.statistics.level;
-			backgroundCircularRipple.setBG(engine.statistics.level);
+			// backgroundCircularRipple.setBG(engine.statistics.level);
 			initialBG = engine.statistics.level;
 			initialFadeBG = engine.statistics.level;
 
@@ -386,7 +389,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public void renderFirst(GameEngine engine, int playerID) {
 		if( !((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false))) ) {
-			backgroundCircularRipple.draw(engine);
+			tiles.draw(engine, playerID);
 		}
 	}
 
