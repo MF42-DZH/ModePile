@@ -19,14 +19,17 @@ public abstract class AnimatedBackgroundHook {
 	private static int LAST_BG = -1;
 	private static int LAST_FADE_BG = -1;
 
-	/** Animation type ID */
+	/** Animation type ID
+	 *
+	 * Please add a new one for every new background type made.
+	 */
 	public static final int ANIMATION_NONE = 0,
 			                ANIMATION_FRAME_ANIM = 1,
 	                        ANIMATION_PULSE_HORIZONTAL_BARS = 2,
 	                        ANIMATION_PULSE_VERTICAL_BARS = 3,
 	                        ANIMATION_CIRCULAR_RIPPLE = 4,
 	                        ANIMATION_DIAGONAL_RIPPLE = 5,
-	                        ANIMATION_SLIDING_TILES = 6,
+	                        ANIMATION_SLIDING_TILES = 6,  // NOTE: SDL window handling is gross.
 	                        ANIMATION_TGM3TI_STYLE = 7;  // NOTE: Swing and SDL will not be able to use rotations.
 
 	/** ResourceHolder--- types */

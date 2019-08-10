@@ -1,10 +1,6 @@
 package zeroxfc.nullpo.custom.libs.backgroundtypes;
 
 import mu.nu.nullpo.game.play.GameEngine;
-import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
-import mu.nu.nullpo.gui.swing.NullpoMinoSwing;
-import sdljava.event.SDLActiveEvent;
-import sdljava.event.SDLAppState;
 import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 
 import java.util.Random;
@@ -17,7 +13,6 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 	private static final int DIRECTIONS = 2;
 
 	private ImageChunk[][] gridChunks;
-	private int holderType;
 	private int[][] colours;
 	private Integer skin;
 	private Integer size;
@@ -35,7 +30,6 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 	{
 		ID = AnimatedBackgroundHook.ANIMATION_SLIDING_TILES;
 		setImageName("localSkin");
-		holderType = getResourceHook();
 
 		horizontal = true;
 		move = false;
@@ -133,27 +127,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 
 	@Override
 	public void update() {
-		boolean focus;
-		switch (holderType) {
-			case HOLDER_SLICK:
-				focus = NullpoMinoSlick.appGameContainer.hasFocus();
-				break;
-			case HOLDER_SWING:
-				focus = NullpoMinoSwing.gameFrame.hasFocus();
-				break;
-			case HOLDER_SDL:
-				try {
-					focus = SDLActiveEvent.getAppState() == SDLAppState.APPINPUTFOCUS;
-					if (!focus) focus = SDLActiveEvent.getAppState() == SDLAppState.APPMOUSEFOCUS;
-				} catch (Exception e) {
-					focus = false;
-				}
-				break;
-			default:
-				focus = false;
-		}
-
-		if (move && focus) {
+		if (move) {
 			move = false;
 
 			if (horizontal) {
@@ -221,7 +195,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 					horizontal = true;
 				}
 			}
-		} else if (focus) {
+		} else {
 			move = true;
 		}
 	}
