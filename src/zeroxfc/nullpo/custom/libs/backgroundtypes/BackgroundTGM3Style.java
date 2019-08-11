@@ -12,7 +12,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 
 	private static final double MIN_ANGLE = -60d, MAX_ANGLE = 60d;
 	private static final int MIN_TRAVEL_TIME = 600, MAX_TRAVEL_TIME = 1800;
-	private static final float MIN_SCALE = 1f, MAX_SCALE = 4f;
+	private static final float MIN_SCALE = 2f, MAX_SCALE = 4f;
 
 	/**
 	 * Inside each instance:
@@ -111,8 +111,8 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 
 		// Find max pan from centre
 		int[] imgDim = customHolder.getImageDimensions(imageName);
-		imgDim[0] *= targetValues.valueFloat;
-		imgDim[1] *= targetValues.valueFloat;
+		imgDim[0] *= MIN_SCALE;
+		imgDim[1] *= MIN_SCALE;
 
 		int[] differences;
 
@@ -171,7 +171,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 
 	private void changeImage() {
 		dimTimer--;
-		if (dimTimer == 60) {
+		if (dimTimer == 15) {
 			customHolder.copyImage("transitory", imageName);
 			reset();
 		}
@@ -209,11 +209,11 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 
 		int v = 255;
 		if (dimTimer > 0) {
-			int t = dimTimer - 60;
-			v = Interpolation.lerp(0, 255,(double)Math.abs(t) / 60d);
+			int t = dimTimer - 15;
+			v = Interpolation.lerp(0, 255,(double)Math.abs(t) / 15d);
 		}
 
-		customHolder.drawImage(engine, imageName, currentPan[0] - 320, currentPan[1] - 240, imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255, 0);
+		customHolder.drawImage(engine, imageName, currentPan[0] - (rawImgDim[0] / 2), currentPan[1] - (rawImgDim[1] / 2), imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255, 0);
 	}
 
 	@Override
@@ -241,7 +241,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 				log.info("Minimum recommended size: 1024 x 1024.");
 			} else {
 				// Successful.
-				dimTimer = 120;
+				dimTimer = 30;
 
 				localPath = filePath;
 				if (holderType == HOLDER_SLICK) customHolder.setRotationCentre(imageName,(float)dim[0] / 2, (float)dim[1] / 2);

@@ -6,12 +6,15 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.ExamSpinner;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.*;
 
 public class ThrowawayTestMode extends MarathonModeBase {
 	private int initialBG, initialFadeBG;
 	// private BackgroundCircularRipple backgroundCircularRipple;
 	private BackgroundTGM3Style TIbg;
+	private ExamSpinner es;
+	private int passframe;
 
 	/*
 	 * Mode name
@@ -59,6 +62,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 		// backgroundCircularRipple = new BackgroundCircularRipple(engine, startlevel,8, 8,320, 240, 40f, 12,-1,1f,0.75f);
 		TIbg = new BackgroundTGM3Style(engine,"res/graphics/bg0000.png",0);
+		passframe = 0;
 
 		engine.owner.backgroundStatus.bg = startlevel;
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
@@ -516,6 +520,66 @@ public class ThrowawayTestMode extends MarathonModeBase {
 					receiver.drawMenuFont(engine, playerID, 2, 22, (lastcombo - 1) + "COMBO", EventReceiver.COLOR_CYAN);
 			}
 		}
+	}
+
+	@Override
+	public boolean onGameOver(GameEngine engine, int playerID) {
+		if (engine.statc[0] == 0)  {
+			passframe = 600;
+
+			boolean close = false;
+			int p = 1;
+			int diff = engine.statistics.score - 400000;
+			if (Math.abs(diff) <= 50000) close = true;
+			if (diff >= 0) p = 0;
+			es = new ExamSpinner(engine,"GOOD", p, close);
+		}
+		return false;
+	}
+
+	/*
+	 * 結果画面
+	 */
+	@Override
+	public void renderResult(GameEngine engine, int playerID) {
+		if(passframe > 0) {
+			es.draw(receiver, engine, playerID,passframe % 2 == 0);
+		} else {
+			drawResultStats(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE,
+					STAT_SCORE, STAT_LINES, STAT_LEVEL, STAT_TIME, STAT_SPL, STAT_LPM);
+			drawResultRank(engine, playerID, receiver, 12, EventReceiver.COLOR_BLUE, rankingRank);
+			drawResultNetRank(engine, playerID, receiver, 14, EventReceiver.COLOR_BLUE, netRankingRank[0]);
+			drawResultNetRankDaily(engine, playerID, receiver, 16, EventReceiver.COLOR_BLUE, netRankingRank[1]);
+
+			if(netIsPB) {
+				receiver.drawMenuFont(engine, playerID, 2, 21, "NEW PB", EventReceiver.COLOR_ORANGE);
+			}
+
+			if(netIsNetPlay && (netReplaySendStatus == 1)) {
+				receiver.drawMenuFont(engine, playerID, 0, 22, "SENDING...", EventReceiver.COLOR_PINK);
+			} else if(netIsNetPlay && !netIsWatch && (netReplaySendStatus == 2)) {
+				receiver.drawMenuFont(engine, playerID, 1, 22, "A: RETRY", EventReceiver.COLOR_RED);
+			}
+		}
+	}
+
+	/*
+	 * 結果画面の処理
+	 */
+	@Override
+	public boolean onResult(GameEngine engine, int playerID) {
+		if(passframe > 0) {
+			engine.allowTextRenderByReceiver = false; // Turn off RETRY/END menu
+
+			es.update(engine);
+
+			passframe--;
+			return true;
+		}
+
+		engine.allowTextRenderByReceiver = true;
+
+		return false;
 	}
 
 	/*
