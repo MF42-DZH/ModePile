@@ -124,10 +124,33 @@ public abstract class AnimatedBackgroundHook {
 	protected ResourceHolderCustomAssetExtension customHolder;
 	protected String imageName;
 
+	/**
+	 * Performs an update tick on the background. Advisably used in onLast.
+	 */
 	public abstract void update();
+
+	/**
+	 * Resets the background to its base state.
+	 */
 	public abstract void reset();
+
+	/**
+	 * Draws the background to the game screen.
+	 * @param engine Current GameEngine instance
+	 * @param playerID Current player ID (1P = 0)
+	 */
 	public abstract void draw(GameEngine engine, int playerID);
+
+	/**
+	 * Change BG to one of the default ones.
+	 * @param bg New BG number
+	 */
 	public abstract void setBG(int bg);
+
+	/**
+	 * Change BG to a custom BG using its file path.
+	 * @param filePath File path of new background
+	 */
 	public abstract void setBG(String filePath);
 
 	/**

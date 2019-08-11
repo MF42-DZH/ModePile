@@ -309,6 +309,8 @@ public class TwoThousandAndFortyEight extends DummyMode {
 	public boolean onCustom(GameEngine engine, int playerID) {
 		boolean updateTimer = false;
 
+		engine.rainbowAnimate = true;
+
 		switch (localState) {
 		    case CUSTOMSTATE_CONTROL:
 		        updateTimer = statControl(engine, playerID);
@@ -344,6 +346,8 @@ public class TwoThousandAndFortyEight extends DummyMode {
 				localState = CUSTOMSTATE_IDLE;
 				engine.stat = GameEngine.STAT_EXCELLENT;
 			}
+
+			engine.rainbowAnimate = false;
 
 			return false;
 		}

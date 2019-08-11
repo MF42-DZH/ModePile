@@ -1,6 +1,6 @@
 package zeroxfc.nullpo.custom.modes;
 
-import zeroxfc.nullpo.custom.libs.FieldExtension;
+import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
@@ -333,7 +333,7 @@ public class Scanline extends MarathonModeBase {
 			interrupted = true;
 			
 			if (scannerAdvanceTimer == 0) {
-				boolean flag = FieldExtension.checkSingleLineNoFlag(engine.field, scannerLocation);
+				boolean flag = FieldManipulation.checkSingleLineNoFlag(engine.field, scannerLocation);
 				lineLocations[scannerLocation + engine.field.getHiddenHeight()] = flag;
 				if (flag) {
 					engine.playSE("linescanned");

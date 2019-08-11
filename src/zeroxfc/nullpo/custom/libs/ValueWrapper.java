@@ -1,12 +1,12 @@
 package zeroxfc.nullpo.custom.libs;
 
 public class ValueWrapper {
-	public byte valueByte;
-	public short valueShort;
-	public int valueInt;
-	public long valueLong;
-	public float valueFloat;
-	public double valueDouble;
+	public Byte valueByte;
+	public Short valueShort;
+	public Integer valueInt;
+	public Long valueLong;
+	public Float valueFloat;
+	public Double valueDouble;
 	
 	public ValueWrapper() {
 		this((byte)0, (short)0, 0, 0, 0, 0);
@@ -42,5 +42,14 @@ public class ValueWrapper {
 		this.valueLong = valueLong;
 		this.valueDouble = valueDouble;
 		this.valueFloat = valueFloat;
+	}
+
+	public void copy(ValueWrapper vw) {
+		this.valueByte = vw.valueByte;
+		this.valueShort = vw.valueShort;
+		this.valueInt = vw.valueInt;
+		this.valueLong = vw.valueLong;
+		this.valueDouble = vw.valueDouble;
+		this.valueFloat = vw.valueFloat;
 	}
 }

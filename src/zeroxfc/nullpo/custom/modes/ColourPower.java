@@ -16,7 +16,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 
-import zeroxfc.nullpo.custom.libs.FieldExtension;
+import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 
 public class ColourPower extends MarathonModeBase {
@@ -733,7 +733,7 @@ public class ColourPower extends MarathonModeBase {
 				break;
 			case POWERUP_TOPCLEAR:
 				if (!engine.field.isEmpty()) {
-					FieldExtension.delUpperFix(engine.field);
+					FieldManipulation.delUpperFix(engine.field);
 					engine.field.clearLine();
 					
 					for(int i = 0; i < engine.field.getHeight(); i++) {

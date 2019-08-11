@@ -74,6 +74,25 @@ public class ResourceHolderCustomAssetExtension {
 	}
 
 	/**
+	 * Copies an image from the HashMap key to another key.
+	 * @param source Source key
+	 * @param dest Destination key
+	 */
+	public void copyImage(String source, String dest) {
+		switch (holderType) {
+			case HOLDER_SLICK:
+				slickImages.replace(dest, slickImages.get(source));
+				break;
+			case HOLDER_SWING:
+				swingImages.replace(dest, swingImages.get(source));
+				break;
+			case HOLDER_SDL:
+				sdlImages.replace(dest, sdlImages.get(source));
+				break;
+		}
+	}
+
+	/**
 	 * Gets the pixel dimensions of the named image.
 	 * @param name Image name in holder dictionary.
 	 * @return int[] { width, height } (both in pixels).
@@ -99,6 +118,29 @@ public class ResourceHolderCustomAssetExtension {
 			}
 		} catch (Exception e) {
 			return new int[] { 0, 0 };
+		}
+	}
+
+	/**
+	 * Sets rotation centre for an image when using Slick renderer.
+	 * @param name Image name
+	 * @param x X-coordinate relative to image's top-left corner
+	 * @param y Y-coordinate relative to image's top-left corner
+	 */
+	public void setRotationCentre(String name, float x, float y) {
+		if (holderType == HOLDER_SLICK) {
+			slickImages.get(name).setCenterOfRotation(x, y);
+		}
+	}
+
+	/**
+	 * Sets rotation for an image when using Slick renderer.
+	 * @param name Image name
+	 * @param a Angle, degrees.
+	 */
+	public void setRotation(String name, float a) {
+		if (holderType == HOLDER_SLICK) {
+			slickImages.get(name).setRotation(a);
 		}
 	}
 	

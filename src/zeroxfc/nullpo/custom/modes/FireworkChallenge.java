@@ -6,7 +6,7 @@ package zeroxfc.nullpo.custom.modes;
 
 import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
 import zeroxfc.nullpo.custom.libs.BlockParticleCollection;
-import zeroxfc.nullpo.custom.libs.FieldExtension;
+import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
 
@@ -857,7 +857,7 @@ public class FireworkChallenge extends DummyMode {
 	@Override
 	public boolean onLineClear(GameEngine engine, int playerID) {
 		int lines = engine.field.checkLineNoFlag();
-		if (lines >= 2) isSplit = FieldExtension.checkLineForSplit(engine.field);
+		if (lines >= 2) isSplit = FieldManipulation.checkLineForSplit(engine.field);
 		
 		//  event 発生
 		owner.receiver.onLineClear(engine, playerID);
