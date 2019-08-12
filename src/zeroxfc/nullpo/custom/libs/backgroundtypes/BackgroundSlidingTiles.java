@@ -78,7 +78,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 
 	private void setup(GameEngine engine) {
 		if (customHolder == null) customHolder = new ResourceHolderCustomAssetExtension(engine);
-		customHolder.loadImage("res/graphics/blank_black.png", "blackBG");
+		customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");
 
 		direction = directionRandomiser.nextInt(DIRECTIONS);
 		if (custom) {

@@ -12,7 +12,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 
 	private static final double MIN_ANGLE = -60d, MAX_ANGLE = 60d;
 	private static final int MIN_TRAVEL_TIME = 600, MAX_TRAVEL_TIME = 1800;
-	private static final float MIN_SCALE = 2f, MAX_SCALE = 4f;
+	private static final float MIN_SCALE = 1f, MAX_SCALE = 4f;
 
 	/**
 	 * Inside each instance:
@@ -31,6 +31,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 
 	private int holderType, dimTimer;
 	private String localPath;
+	private boolean hasUpdated;
 
 	{
 		ID = AnimatedBackgroundHook.ANIMATION_TGM3TI_STYLE;
@@ -39,6 +40,8 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 
 		lastValues = new ValueWrapper();
 		currentValues = new ValueWrapper();
+		currentValues.valueFloat = MIN_SCALE;
+
 		targetValues = new ValueWrapper();
 
 		lastPan = new int[2];
@@ -46,12 +49,13 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		targetPan = new int[2];
 
 		dimTimer = 0;
+		hasUpdated = true;
 	}
 
 	public BackgroundTGM3Style(GameEngine engine, String filePath, Random valueRandomiser) {
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
 		customHolder.loadImage(filePath, imageName);
-		customHolder.loadImage("res/graphics/blank_black.png", "blackBG");
+		customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");
 		localPath = filePath;
 
 		this.valueRandomiser = valueRandomiser;
@@ -67,7 +71,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 	public BackgroundTGM3Style(GameEngine engine, String filePath, long seed) {
 		customHolder = new ResourceHolderCustomAssetExtension(engine);
 		customHolder.loadImage(filePath, imageName);
-		customHolder.loadImage("res/graphics/blank_black.png", "blackBG");
+		customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");
 		localPath = filePath;
 
 		this.valueRandomiser = new Random(seed);
@@ -108,11 +112,8 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		} while (!almostEqual(ns, currentValues.valueFloat, 1f));
 		targetValues.valueFloat = ns;
 
-
 		// Find max pan from centre
 		int[] imgDim = customHolder.getImageDimensions(imageName);
-		imgDim[0] *= MIN_SCALE;
-		imgDim[1] *= MIN_SCALE;
 
 		int[] differences;
 
@@ -122,24 +123,22 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 			differences = new int[] { imgDim[0] - 640, imgDim[1] - 480 };
 		}
 
-		if (holderType == HOLDER_SLICK) {
-			differences[0] /= 16;
-			differences[1] /= 16;
-		} else {
-			differences[0] /= 2;
-			differences[1] /= 2;
-			differences[0] *= targetValues.valueFloat; differences[1] *= targetValues.valueFloat;
-		}
-
-
+		differences[0] /= 2;
+		differences[1] /= 2;
+		differences[0] *= targetValues.valueFloat; differences[1] *= targetValues.valueFloat;
 
 		// Set new target pan
+		double r = (differences[0] * differences[1]) / Math.sqrt( (differences[0] * differences[0] * Math.sin(targetValues.valueDouble) * Math.sin(targetValues.valueDouble)) + (differences[1] * differences[1] * Math.cos(targetValues.valueDouble) * Math.cos(targetValues.valueDouble)) );
 		double coefficientX, coefficientY;
-		coefficientX = (valueRandomiser.nextDouble() - 0.5d) * 2;
-		coefficientY = (valueRandomiser.nextDouble() - 0.5d) * 2;
+		do {
+			coefficientX = (valueRandomiser.nextDouble() - 0.5d) * 2;
+			coefficientY = (valueRandomiser.nextDouble() - 0.5d) * 2;
 
-		targetPan[0] = (int)(differences[0] * coefficientX);
-		targetPan[1] = (int)(differences[1] * coefficientY);
+			targetPan[0] = (int) (differences[0] * coefficientX);
+			targetPan[1] = (int) (differences[1] * coefficientY);
+		} while (
+				Math.sqrt(Math.pow(targetPan[0], 2) + Math.pow(targetPan[1], 2)) > r
+		);
 	}
 
 	public void setSeed(long seed) {
@@ -149,6 +148,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 
 	@Override
 	public void update() {
+		hasUpdated = true;
 		currentValues.valueInt++;
 		if (currentValues.valueInt > targetValues.valueInt) {
 			currentValues.valueInt = 0;
@@ -172,28 +172,34 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 	private void changeImage() {
 		dimTimer--;
 		if (dimTimer == 15) {
+			int[] dim = customHolder.getImageDimensions("transitory");
 			customHolder.copyImage("transitory", imageName);
+			if (holderType == HOLDER_SLICK) customHolder.setRotationCentre(imageName,(float)dim[0] / 2, (float)dim[1] / 2);
 			reset();
 		}
 	}
 
 	@Override
 	public void reset() {
-		lastValues = new ValueWrapper();
-		currentValues = new ValueWrapper();
-		targetValues = new ValueWrapper();
+		if (hasUpdated) {
+			lastValues = new ValueWrapper();
+			currentValues = new ValueWrapper();
+			currentValues.valueFloat = MIN_SCALE;
+			targetValues = new ValueWrapper();
 
-		lastValues.valueFloat = 1f;
-		currentValues.valueFloat = 1f;
-		targetValues.valueFloat = 1f;
+			lastValues.valueFloat = 1f;
+			currentValues.valueFloat = MIN_SCALE;
+			targetValues.valueFloat = 1f;
 
-		lastPan = new int[2];
-		currentPan = new int[2];
-		targetPan = new int[2];
+			lastPan = new int[2];
+			currentPan = new int[2];
+			targetPan = new int[2];
 
-		customHolder.setRotation(imageName, 0);
+			customHolder.setRotation(imageName, 0);
 
-		setNewTarget();
+			setNewTarget();
+			hasUpdated = false;
+		}
 	}
 
 	@Override
@@ -213,7 +219,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 			v = Interpolation.lerp(0, 255,(double)Math.abs(t) / 15d);
 		}
 
-		customHolder.drawImage(engine, imageName, currentPan[0] - (rawImgDim[0] / 2), currentPan[1] - (rawImgDim[1] / 2), imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255, 0);
+		customHolder.drawImage(engine, imageName, currentPan[0] - ((imgDim[0] / 2) - 320), currentPan[1] - ((imgDim[1] / 2) - 240), imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255, 0);
 	}
 
 	@Override
@@ -242,9 +248,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 			} else {
 				// Successful.
 				dimTimer = 30;
-
 				localPath = filePath;
-				if (holderType == HOLDER_SLICK) customHolder.setRotationCentre(imageName,(float)dim[0] / 2, (float)dim[1] / 2);
 
 				log.debug("TGM3-Sytle background modified (New File Path: " + filePath + ").");
 			}

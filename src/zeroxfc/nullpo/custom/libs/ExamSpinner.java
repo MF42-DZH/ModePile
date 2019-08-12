@@ -138,6 +138,13 @@ public class ExamSpinner {
 
 			receiver.drawMenuFont(engine, playerID,5 - gradeText.length(), 10, gradeText, color, 2.0f);
 
+			/*
+			 * TODO:
+			 *  > Redo whatever the hell this is.
+			 *  > Add "slowing down".
+			 */
+
+			/*
 			if (frame % 10 == 0 && (frame / 10 % 2) == 1) {
 				customHolder.drawImage(engine, "default", baseX - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
 				customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[2][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1], SOURCE_DETAILS[2][0][0], SOURCE_DETAILS[2][0][1], SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1],255, 255, b, 255, 0);
@@ -158,6 +165,9 @@ public class ExamSpinner {
 				customHolder.drawImage(engine, "default", baseX + pythonModulo(80 - (SOURCE_DETAILS[2][1][0] / 2) - (frame * 8), 160), baseY + size * 14, SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1], SOURCE_DETAILS[2][0][0], SOURCE_DETAILS[2][0][1], SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1],255, 255, b, 255, 0);
 				customHolder.drawImage(engine, "default", baseX + pythonModulo(160 - (SOURCE_DETAILS[3][1][0] / 2) - (frame * 8), 160), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
 			}
+			*/
+
+			// NEW CODE GOES HERE.
 		}
 	}
 

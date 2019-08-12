@@ -73,8 +73,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	 */
 	@Override
 	public boolean onSetting(GameEngine engine, int playerID) {
-		AnimatedBackgroundHook.setBGState(receiver,true);
-		// TIbg.reset();
+		// AnimatedBackgroundHook.setBGState(receiver, true);
+		TIbg.reset();
 		TIbg.setBG("res/graphics/bg0000.png");
 
 		// NET: Net Ranking
@@ -525,7 +525,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public boolean onGameOver(GameEngine engine, int playerID) {
 		if (engine.statc[0] == 0)  {
-			passframe = 600;
+			passframe = 780;
 
 			boolean close = false;
 			int p = 1;
