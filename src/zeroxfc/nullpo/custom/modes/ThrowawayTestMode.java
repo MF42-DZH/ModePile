@@ -61,7 +61,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		}
 
 		// backgroundCircularRipple = new BackgroundCircularRipple(engine, startlevel,8, 8,320, 240, 40f, 12,-1,1f,0.75f);
-		TIbg = new BackgroundTGM3Style(engine,"res/graphics/bg0000.png",0);
+		TIbg = new BackgroundTGM3Style("res/graphics/bg0000.png", 0);
 		passframe = 0;
 
 		engine.owner.backgroundStatus.bg = startlevel;
@@ -532,7 +532,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			int diff = engine.statistics.score - 400000;
 			if (Math.abs(diff) <= 50000) close = true;
 			if (diff >= 0) p = 0;
-			es = new ExamSpinner(engine,"GOOD", p, close);
+			es = new ExamSpinner("GOOD", p, close);
 		}
 		return false;
 	}

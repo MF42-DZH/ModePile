@@ -136,7 +136,7 @@ public class Scanline extends MarathonModeBase {
 		engine.lineGravityType = GameEngine.LINE_GRAVITY_CASCADE;
 		engine.comboType = GameEngine.COMBO_TYPE_DISABLE;
 		
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage("res/graphics/scanner.png", "scanner");
 		
 		sx = 0;

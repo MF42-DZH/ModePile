@@ -11,17 +11,20 @@ public class BackgroundNoAnim extends AnimatedBackgroundHook {
 		setImageName("localBG");
 	}
 
-	public BackgroundNoAnim(GameEngine engine, int bgNumber) {
+	/**
+	 * Almost redundant background.
+	 */
+	public BackgroundNoAnim(int bgNumber) {
 		if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
 
 		log.debug("Non-custom static background (" + bgNumber + ") created.");
 	}
 
-	public BackgroundNoAnim(GameEngine engine, String filePath) {
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+	public BackgroundNoAnim(String filePath) {
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage(filePath, imageName);
 
 		log.debug("Custom static background created (File Path: " + filePath + ").");

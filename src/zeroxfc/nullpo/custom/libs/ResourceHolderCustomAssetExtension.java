@@ -2,6 +2,7 @@ package zeroxfc.nullpo.custom.libs;
 
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.play.GameEngine;
+import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.gui.sdl.*;
 import mu.nu.nullpo.gui.slick.*;
 import mu.nu.nullpo.gui.swing.*;
@@ -19,38 +20,49 @@ import org.apache.log4j.Logger;
 import org.newdawn.slick.Music;
 
 public class ResourceHolderCustomAssetExtension {
-	static Logger log = Logger.getLogger(ResourceHolderCustomAssetExtension.class);
+	private static Logger log = Logger.getLogger(ResourceHolderCustomAssetExtension.class);
 	
 	/** Internal used ResourceHolder class. */
 	private static final int HOLDER_SLICK = 0,
 							HOLDER_SWING = 1,
 							HOLDER_SDL = 2;
+
+	private static int bgmPrevious = -1;
 	
 	private HashMap<String, org.newdawn.slick.Image> slickImages;  // Slick Images
 	private HashMap<String, java.awt.Image> swingImages;           // Swing Images
 	private HashMap<String, sdljava.video.SDLSurface> sdlImages;   // SDL Images
-	
+
+	private HashMap<String, org.newdawn.slick.Music> slickMusic;  // Slick Music
+	private HashMap<String, sdljava.mixer.MixMusic> sdlMusic;     // SDL Music
+
 	private Graphics2D localSwingGraphics;
 	private sdljava.video.SDLSurface localSDLGraphics;
 	
 	private int holderType;
 	
-	public ResourceHolderCustomAssetExtension(GameEngine engine) {
+	public ResourceHolderCustomAssetExtension() {
+		this(8);
+	}
+
+	public ResourceHolderCustomAssetExtension(int initialCapacity) {
 		holderType = -1;
 		if (ResourceHolder.imgNormalBlockList != null) holderType = HOLDER_SLICK;
 		else if (ResourceHolderSwing.imgNormalBlockList != null) holderType = HOLDER_SWING;
 		else if (ResourceHolderSDL.imgNormalBlockList != null) holderType = HOLDER_SDL;
-		
+
 		switch (holderType) {
-		case HOLDER_SLICK:
-			slickImages = new HashMap<String, org.newdawn.slick.Image>(8);
-			break;
-		case HOLDER_SWING:
-			swingImages = new HashMap<String, java.awt.Image>(8);
-			break;
-		case HOLDER_SDL:
-			sdlImages = new HashMap<String, sdljava.video.SDLSurface>(8);
-			break;
+			case HOLDER_SLICK:
+				slickImages = new HashMap<>(initialCapacity);
+				slickMusic = new HashMap<>(initialCapacity);
+				break;
+			case HOLDER_SWING:
+				swingImages = new HashMap<>(initialCapacity);
+				break;
+			case HOLDER_SDL:
+				sdlImages = new HashMap<>(initialCapacity);
+				sdlMusic = new HashMap<>(initialCapacity);
+				break;
 		}
 	}
 	
@@ -118,6 +130,57 @@ public class ResourceHolderCustomAssetExtension {
 			}
 		} catch (Exception e) {
 			return new int[] { 0, 0 };
+		}
+	}
+
+	/**
+	 * Gets object that is an image instance.
+	 * <code>A CAST IS STRICTLY NECESARRY!</code>
+	 * @param name Image name
+	 * @return Image at name
+	 */
+	public Object getImageAt(String name) {
+		try {
+			switch (holderType) {
+				case HOLDER_SLICK:
+					return slickImages.get(name);
+				case HOLDER_SWING:
+					return swingImages.get(name);
+				case HOLDER_SDL:
+					return sdlImages.get(name);
+				default:
+					return null;
+			}
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Replaces an image.
+	 * @param name Key of image to replace
+	 * @param image Image object to replace with.
+	 */
+	public void setImageAt(String name, Object image) {
+		try {
+			switch (holderType) {
+				case HOLDER_SLICK:
+					slickImages.replace(name, (org.newdawn.slick.Image)image);
+					log.error("Image " + name + " replaced.");
+					break;
+				case HOLDER_SWING:
+					swingImages.replace(name, (java.awt.Image)image);
+					log.error("Image " + name + " replaced.");
+					break;
+				case HOLDER_SDL:
+					sdlImages.replace(name, (sdljava.video.SDLSurface)image);
+					log.error("Image " + name + " replaced.");
+					break;
+				default:
+					break;
+			}
+		} catch (Exception e) {
+			log.error("Image does not exist or invalid cast attempted.");
 		}
 	}
 
@@ -506,114 +569,145 @@ public class ResourceHolderCustomAssetExtension {
 	}
 	
 	/**
-	 * Starts the play of a BGM. Use the relative index of the added music. (0 = first added track.)
+	 * Starts the play of an internal BGM. Use the relative index of the added music. (0 = first added track.)
 	 * There is a limitation that the song can't be paused.
-	 * @param no Custom track number.
+	 * @param name Track name.
 	 * @param noLoop Set true if it shouldn't loop.
 	 */
-	public void playCustomBGM(int no, boolean noLoop) {
-		int number = no + BGMStatus.BGM_COUNT;
+	public void playCustomBGM(String name, boolean noLoop) {
 		switch (holderType) {
 		case HOLDER_SLICK:
-			if(NullpoMinoSlick.propConfig.getProperty("option.bgm", false) == false) return;
+			if(!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
 
 			stopCustomBGM();
 
 			int bgmvolume = NullpoMinoSlick.propConfig.getProperty("option.bgmvolume", 128);
 			NullpoMinoSlick.appGameContainer.setMusicVolume(bgmvolume / (float)128);
 
-			if(number >= 0) {
-				if(ResourceHolder.bgm[number] != null) {
-					try {
-						if(noLoop)
-							ResourceHolder.bgm[number].play();
-						else
-							ResourceHolder.bgm[number].loop();
-					} catch(Throwable e) {
-						log.error("Failed to play music " + number, e);
-					}
+				try {
+					if(noLoop)
+						slickMusic.get(name).play();
+					else
+						slickMusic.get(name).play();
+				} catch(Throwable e) {
+					log.error("Failed to play music " + name, e);
 				}
 
-				ResourceHolder.bgmPlaying = number;
-			} else {
-				ResourceHolder.bgmPlaying = -1;
-			}
 			return;
 		case HOLDER_SWING:
 			log.warn("BGM is not supported on Swing.");
 			return;
 		case HOLDER_SDL:
-			if(NullpoMinoSDL.propConfig.getProperty("option.bgm", false) == false) return;
+			if(!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
 
 			stopCustomBGM();
-			ResourceHolderSDL.bgmPlaying = number;
 
-			if(number < 0) return;
+			try {
+				if(noLoop)
+					SDLMixer.playMusic(sdlMusic.get(name), 1);
+				else
+					SDLMixer.playMusic(sdlMusic.get(name), -1);
 
-			if(ResourceHolderSDL.bgm[number] != null) {
-				try {
-					if(noLoop)
-						SDLMixer.playMusic(ResourceHolderSDL.bgm[number], 1);
-					else
-						SDLMixer.playMusic(ResourceHolderSDL.bgm[number], -1);
-
-					SDLMixer.volumeMusic(NullpoMinoSDL.propConfig.getProperty("option.bgmvolume", 128));
-				} catch (Exception e) {
-					log.warn("BGM " + number + " start failed", e);
-				}
+				SDLMixer.volumeMusic(NullpoMinoSDL.propConfig.getProperty("option.bgmvolume", 128));
+			} catch (Exception e) {
+				log.warn("BGM " + name + " start failed", e);
 			}
-			return;
+		}
+	}
+
+	/**
+	 * Remove internal custom BGM by name
+	 * @param name BGM name
+	 */
+	public void removeCustomInternalBGM(String name) {
+		switch (holderType) {
+			case HOLDER_SLICK:
+				slickMusic.remove(name);
+				break;
+			case HOLDER_SDL:
+				sdlMusic.remove(name);
+				break;
+			default:
+				break;
 		}
 	}
 	
 	/**
-	 * Gets number of loaded BGM files.
-	 * @return Number of loaded BGM files.
+	 * Gets number of loaded, appended BGM files.
+	 * @return Number of loaded, appended BGM files.
 	 */
 	public int getAmountLoadedBGM() {
 		switch (holderType) {
-		case HOLDER_SLICK:
-			return ResourceHolder.bgm.length - BGMStatus.BGM_COUNT;
-		case HOLDER_SWING:
-			return 0;
-		case HOLDER_SDL:
-			return ResourceHolderSDL.bgm.length - BGMStatus.BGM_COUNT;
-		default:
-			return 0;
+			case HOLDER_SLICK:
+				return ResourceHolder.bgm.length - BGMStatus.BGM_COUNT;
+			case HOLDER_SDL:
+				return ResourceHolderSDL.bgm.length - BGMStatus.BGM_COUNT;
+			default:
+				return 0;
 		}
 	}
-	
+
 	/**
-	 * Stops all BGM.
+	 * Gets number of loaded BGM files in holder.
+	 * @return Number of loaded BGM files in holder.
+	 */
+	public int getAmountDiscreteLoadedBGM() {
+		switch (holderType) {
+			case HOLDER_SLICK:
+				return slickMusic.size();
+			case HOLDER_SDL:
+				return sdlImages.size();
+			default:
+				return 0;
+		}
+	}
+
+	/**
+	 * Stops all custom BGM.
 	 */
 	public void stopCustomBGM() {
 		switch (holderType) {
-		case HOLDER_SLICK:
-			if(NullpoMinoSlick.propConfig.getProperty("option.bgm", false) == false) return;
-			
-			for(int i = 0; i < ResourceHolder.bgm.length; i++) {
-				if(ResourceHolder.bgm[i] != null) {
-					ResourceHolder.bgm[i].pause();
-					ResourceHolder.bgm[i].stop();
+			case HOLDER_SLICK:
+				if(!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
+
+				for (String s : slickMusic.keySet()) {
+					slickMusic.get(s).pause();
+					slickMusic.get(s).stop();
 				}
-			}
-			
-			return;
-		case HOLDER_SWING:
-			log.warn("BGM is not supported on Swing.");
-			return;
-		case HOLDER_SDL:
-			if(NullpoMinoSDL.propConfig.getProperty("option.bgm", false) == false) return;
-			
-			try {
-				if(ResourceHolderSDL.bgmIsPlaying()) {
+
+				return;
+			case HOLDER_SWING:
+				log.warn("BGM is not supported on Swing.");
+				return;
+			case HOLDER_SDL:
+				if(!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
+
+				try {
 					SDLMixer.haltMusic();
-					ResourceHolderSDL.bgmPlaying = -1;
+				} catch (Exception e) {
+					log.debug("BGM stop failed", e);
 				}
-			} catch (Exception e) {
-				log.debug("BGM stop failed", e);
-			}
-			return;
+				break;
+		}
+	}
+
+	/**
+	 * Stops all BGM.
+	 * @param owner Current GameManager
+	 */
+	public void stopDefaultBGM(GameManager owner) {
+		if (owner.bgmStatus.bgm != -1) bgmPrevious = owner.bgmStatus.bgm;
+		owner.bgmStatus.bgm = -1;
+	}
+
+	/**
+	 * Restarts previously playing default BGM.
+	 * @param owner Current GameManager
+	 */
+	public void restartDefaultBGM(GameManager owner) {
+		if (owner.bgmStatus.bgm == -1) {
+			owner.bgmStatus.bgm = bgmPrevious;
+			owner.bgmStatus.fadesw = false;
 		}
 	}
 	

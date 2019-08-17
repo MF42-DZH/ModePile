@@ -34,10 +34,10 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 		setImageName("localBG");
 	}
 
-	public BackgroundCircularRipple(GameEngine engine, int bgNumber, Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance) {
+	public BackgroundCircularRipple(int bgNumber, Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance) {
 		if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
 
 		setup(cellWidth, cellHeight, pulseCentreX, pulseCentreY, wavelength, waveSpeed, pulseTimerFrames, pulseBaseScale, pulseScaleVariance);
@@ -45,8 +45,8 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 		log.debug("Non-custom circular ripple background (" + bgNumber + ") created.");
 	}
 
-	public BackgroundCircularRipple(GameEngine engine, String filePath, Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance) {
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+	public BackgroundCircularRipple(String filePath, Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance) {
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage(filePath, imageName);
 
 		setup(cellWidth, cellHeight, pulseCentreX, pulseCentreY, wavelength, waveSpeed, pulseTimerFrames, pulseBaseScale, pulseScaleVariance);

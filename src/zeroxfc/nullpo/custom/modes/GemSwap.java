@@ -64,14 +64,14 @@ public class GemSwap extends DummyMode {
 		receiver = engine.owner.receiver;
 		
 		reset(engine, false);
-		events = new ArrayList<ScoreEvent>(8);
+		events = new ArrayList<>(8);
 
 		mouseControl = new MouseParser();
 		engine.blockOutlineType = GameEngine.BLOCK_OUTLINE_NONE;
 		engine.framecolor = GameEngine.FRAME_COLOR_GRAY;
 		localState = CUSTOMSTATE_IDLE;
 		
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage("res/graphics/particle.png", "particle");
 		
 		loadSetting(owner.modeConfig);

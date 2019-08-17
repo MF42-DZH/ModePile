@@ -45,17 +45,16 @@ public class ExamSpinner {
 
 	/**
 	 * Create a new promo exam graphic.
-	 * @param engine GameEngine
 	 * @param gradeText What grade to display
 	 * @param selectedOutcome 0 = pass, 1 = fail
 	 * @param close Was it a close one?
 	 */
-	public ExamSpinner(GameEngine engine, String gradeText, int selectedOutcome, boolean close) {
+	public ExamSpinner(String gradeText, int selectedOutcome, boolean close) {
 		custom = false;
 
 		if (gradeText == null) gradeText = "UNDEFINED";
 
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage("res/graphics/examResultText.png", "default");
 
 		this.gradeText = gradeText;

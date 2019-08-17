@@ -166,7 +166,7 @@ public class Joker extends MarathonModeBase {
 		engine.bigmove = true;
 		
 		// 92 x 96
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage("res/graphics/jevil.png", "jevil");
 		customHolder.loadImage("res/graphics/efficiency_grades.png", "grades");
 	}
@@ -1044,7 +1044,6 @@ public class Joker extends MarathonModeBase {
 
 	/**
 	 * Update rankings
-	 * @param sc Score
 	 * @param li Lines
 	 * @param time Time
 	 */
@@ -1068,7 +1067,6 @@ public class Joker extends MarathonModeBase {
 	
 	/**
 	 * Calculate ranking position
-	 * @param sc Score
 	 * @param li Lines
 	 * @param time Time
 	 * @return Position (-1 if unranked)

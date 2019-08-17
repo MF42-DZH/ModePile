@@ -145,7 +145,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 		lastScore = 0;
 		scGetTime = 0;
 
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage("res/graphics/conveyor.png", "conveyor");
 		customHolder.loadImage("res/graphics/conveyorreverse.png", "conveyorreverse");
 		customHolder.loadImage("res/graphics/cargoreturn.png", "cargoreturn");

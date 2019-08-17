@@ -24,10 +24,10 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
 		setImageName("localBG");
 	}
 
-	public BackgroundHorizontalBars(GameEngine engine, int bgNumber, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
+	public BackgroundHorizontalBars(int bgNumber, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
 		if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
 
 		setup(pulseFrames, sliceSize, pulseBaseScale, pulseScaleVariance, reverse);
@@ -35,8 +35,8 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
 		log.debug("Non-custom horizontal bars background (" + bgNumber + ") created.");
 	}
 
-	public BackgroundHorizontalBars(GameEngine engine, String filePath, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+	public BackgroundHorizontalBars(String filePath, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage(filePath, imageName);
 
 		setup(pulseFrames, sliceSize, pulseBaseScale, pulseScaleVariance, reverse);

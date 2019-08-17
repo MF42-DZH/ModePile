@@ -52,8 +52,8 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		hasUpdated = true;
 	}
 
-	public BackgroundTGM3Style(GameEngine engine, String filePath, Random valueRandomiser) {
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+	public BackgroundTGM3Style(String filePath, Random valueRandomiser) {
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage(filePath, imageName);
 		customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");
 		localPath = filePath;
@@ -68,8 +68,8 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		log.debug("TGM3-Style background created (File Path: " + filePath + ").");
 	}
 
-	public BackgroundTGM3Style(GameEngine engine, String filePath, long seed) {
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+	public BackgroundTGM3Style(String filePath, long seed) {
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage(filePath, imageName);
 		customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");
 		localPath = filePath;

@@ -25,7 +25,6 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 	private int currentMovement;
 	private int width, height;
 	private boolean move;
-	private GameEngine engine;
 
 	{
 		ID = AnimatedBackgroundHook.ANIMATION_SLIDING_TILES;
@@ -36,48 +35,46 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 		currentMovement = 0;
 	}
 
-	public BackgroundSlidingTiles(GameEngine engine, int skin, Random directionRandomiser, Integer colour, int size, float darkness) {
+	public BackgroundSlidingTiles(int skin, Random directionRandomiser, Integer colour, int size, float darkness) {
 		custom = false;
 		this.skin = skin;
 		this.colour = colour;
 		this.size = size;
 		this.darkness = darkness;
 		this.directionRandomiser = directionRandomiser;
-		this.engine = engine;
 
-		setup(engine);
+		setup();
 
 		log.debug("Non-custom sliding tiles background created (Skin: " + skin + ").");
 	}
 
-	public BackgroundSlidingTiles(GameEngine engine, int skin, long seed, Integer colour, int size, float darkness) {
+	public BackgroundSlidingTiles(int skin, long seed, Integer colour, int size, float darkness) {
 		custom = false;
 		this.skin = skin;
 		this.colour = colour;
 		this.size = size;
 		this.darkness = darkness;
 		this.directionRandomiser = new Random(seed);
-		this.engine = engine;
 
-		setup(engine);
+		setup();
 
 		log.debug("Non-custom sliding tiles background created (Skin: " + skin + ").");
 	}
 
-	public BackgroundSlidingTiles(GameEngine engine, String filePath, Random directionRandomiser) {
+	public BackgroundSlidingTiles(String filePath, Random directionRandomiser) {
 		custom = true;
 		this.directionRandomiser = directionRandomiser;
 
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage(filePath, imageName);
 
-		setup(engine);
+		setup();
 
 		log.debug("Custom sliding tiles background created (File Path: " + filePath + ").");
 	}
 
-	private void setup(GameEngine engine) {
-		if (customHolder == null) customHolder = new ResourceHolderCustomAssetExtension(engine);
+	private void setup() {
+		if (customHolder == null) customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");
 
 		direction = directionRandomiser.nextInt(DIRECTIONS);
@@ -208,7 +205,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 
 	@Override
 	public void reset() {
-		setup(engine);
+		setup();
 		horizontal = true;
 		move = false;
 		currentMovement = 0;

@@ -19,8 +19,8 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
 		setImageName("localBG");
 	}
 
-	public BackgroundFrameAnim(GameEngine engine, String filePath, int type, int frameTime, boolean pingPong) {
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+	public BackgroundFrameAnim(String filePath, int type, int frameTime, boolean pingPong) {
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage(filePath, imageName);
 
 		this.type = type;

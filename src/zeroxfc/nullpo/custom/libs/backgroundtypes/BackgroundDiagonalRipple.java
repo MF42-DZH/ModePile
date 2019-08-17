@@ -25,10 +25,10 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
 		setImageName("localBG");
 	}
 
-	public BackgroundDiagonalRipple(GameEngine engine, int bgNumber, Integer cellWidth, Integer cellHeight, int pulseFrames, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse, boolean reverseSlant) {
+	public BackgroundDiagonalRipple(int bgNumber, Integer cellWidth, Integer cellHeight, int pulseFrames, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse, boolean reverseSlant) {
 		if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
 
 		setup(cellWidth, cellHeight, pulseFrames, pulseBaseScale, pulseScaleVariance, reverse, reverseSlant);
@@ -36,8 +36,8 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
 		log.debug("Non-custom diagonal ripple background (" + bgNumber + ") created.");
 	}
 
-	public BackgroundDiagonalRipple(GameEngine engine, String filePath, Integer cellWidth, Integer cellHeight, int pulseFrames, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse, boolean reverseSlant) {
-		customHolder = new ResourceHolderCustomAssetExtension(engine);
+	public BackgroundDiagonalRipple(String filePath, Integer cellWidth, Integer cellHeight, int pulseFrames, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse, boolean reverseSlant) {
+		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage(filePath, imageName);
 
 		setup(cellWidth, cellHeight, pulseFrames, pulseBaseScale, pulseScaleVariance, reverse, reverseSlant);

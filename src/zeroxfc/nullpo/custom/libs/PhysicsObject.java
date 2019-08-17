@@ -51,7 +51,7 @@ public class PhysicsObject implements Cloneable {
 	public int collisionsToDestroy;
 
 	public DoubleVector position, velocity;
-	public int blockSizeX, blockSizeY, anchorPoint, colour;
+	public int blockSizeX, blockSizeY, anchorPoint, colour, bounces;
 
 	public PhysicsObject() {
 		this(new DoubleVector(0, 0, false), new DoubleVector(0, 0, false), -1, 1, 1, 0, 1);
@@ -65,6 +65,7 @@ public class PhysicsObject implements Cloneable {
 		this.blockSizeY = blockSizeY;
 		this.anchorPoint = anchorPoint;
 		this.colour = colour;
+		this.bounces = 0;
 
 		PROPERTY_Static = velocity.getMagnitude() != 0;
 		PROPERTY_Destructible = collisionsToDestroy > 0;
