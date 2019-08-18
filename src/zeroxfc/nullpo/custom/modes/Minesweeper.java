@@ -38,7 +38,6 @@ public class Minesweeper extends DummyMode {
 	
 	@Override
 	public String getName() {
-		// TODO Auto-generated method stub
 		return "MINESWEEPER";
 	}
 	

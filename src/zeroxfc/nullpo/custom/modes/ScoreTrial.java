@@ -53,8 +53,8 @@ public class ScoreTrial extends MarathonModeBase {
 	// - N.B. when timer runs out, simply make the lifecount 0 before triggering game over.
 	private static final int STARTING_LIVES = 4;
 	
-	// TODO: BG changes every 5 levels until 50, then at 200.
-	// TODO: Level changes every 8 lines until lv 50, then every line clear increases it by 1 until 200.
+	// BG changes every 5 levels until 50, then at 200.
+	// Level changes every 8 lines until lv 50, then every line clear increases it by 1 until 200.
 	
 	// 6f LD for NORMAL/HARD
 	// 4'30" LV50 Time Limit for HARD
@@ -607,9 +607,6 @@ public class ScoreTrial extends MarathonModeBase {
 		return false;
 	}
 	
-	// TODO: How does combo affect score? Score *= combo.
-	// TODO: Base line clear score.
-	
 	@Override
 	public boolean onLineClear(GameEngine engine, int playerID) {
 		//  event 発生
@@ -889,7 +886,6 @@ public class ScoreTrial extends MarathonModeBase {
 	
 	/*
 	 * Calculate score - PAIN
-	 * TODO: FIX THIS FOR NORMAL/HARD
 	 */
 	@Override
 	public void calcScore(GameEngine engine, int playerID, int lines) {

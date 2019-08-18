@@ -78,7 +78,7 @@ public class Scanline extends MarathonModeBase {
 	}
 	
 	/*
-	 * TODO:
+	 * DONE:
 	 * 
 	 * - Override line clear method so that it only occurs when the scan time expires. (Possibly use FieldExtension.)
 	 * - Find out how to interrupt and halt game-play and resume it later. STAT_CUSTOM!!!

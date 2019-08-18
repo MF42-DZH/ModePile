@@ -22,10 +22,10 @@ public class Collapse extends DummyMode {
 	// Hey, have any of you played any of the Super Collapse games?
 	// Field Dimensions: 12 x 16; 1 Hidden Height
 	//
-	// TODO: Create a weighted randomiser for the blocks.
-	// TODO: Do the centre-direction column gravity thing... somehow.
-	// TODO: Implement mouse control if you can.
-	// TODO: Implement flying score popups.
+	// DONE: Create a weighted randomiser for the blocks.
+	// DONE: Do the centre-direction column gravity thing... somehow.
+	// DONE: Implement mouse control if you can.
+	// DONE: Implement flying score popups.
 	
 	private static final int[] tableColors = {
 		Block.BLOCK_COLOR_RED,
@@ -157,7 +157,6 @@ public class Collapse extends DummyMode {
 	
 	@Override
 	public String getName() {
-		// TODO Auto-generated method stub
 		return "COLLAPSE";
 	}
 	
@@ -448,7 +447,7 @@ public class Collapse extends DummyMode {
 		return true;
 	}
 	
-	// TODO: Make the rest of the gamemode work.
+	// DONE: Make the rest of the gamemode work.
 
 	private void clearSquares(GameEngine engine) {
 		int score = 0;
@@ -1311,7 +1310,6 @@ public class Collapse extends DummyMode {
 	/**
 	 * Read rankings from property file
 	 * @param prop Property file
-	 * @param ruleName Rule name
 	 */
 	protected void loadRanking(CustomProperties prop) {
 		for(int i = 0; i < MAX_RANKING; i++) {
@@ -1325,7 +1323,6 @@ public class Collapse extends DummyMode {
 	/**
 	 * Save rankings to property file
 	 * @param prop Property file
-	 * @param ruleName Rule name
 	 */
 	private void saveRanking(CustomProperties prop) {
 		for(int i = 0; i < MAX_RANKING; i++) {
@@ -1339,8 +1336,6 @@ public class Collapse extends DummyMode {
 	/**
 	 * Update rankings
 	 * @param sc Score
-	 * @param li Lines
-	 * @param time Time
 	 */
 	private void updateRanking(int sc, int type, int lv) {
 		rankingRank = checkRanking(sc, type);
@@ -1361,8 +1356,6 @@ public class Collapse extends DummyMode {
 	/**
 	 * Calculate ranking position
 	 * @param sc Score
-	 * @param li Lines
-	 * @param time Time
 	 * @return Position (-1 if unranked)
 	 */
 	private int checkRanking(int sc, int type) {

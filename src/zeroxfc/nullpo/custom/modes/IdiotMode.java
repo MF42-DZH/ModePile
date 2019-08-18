@@ -20,7 +20,7 @@ import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
 
 public class IdiotMode extends DummyMode {
 	/*
-	 * TODO:
+	 * DONE:
 	 * 
 	 * !important
 	 * - Implement gravity that isn't 20g.
@@ -521,9 +521,7 @@ public class IdiotMode extends DummyMode {
 		
 		owner.backgroundStatus.bg = levelAtStart;
 	}
-	
-	// TODO: FINISH THIS!
-	
+
 	private void setStartBgmlv(GameEngine engine, int gt) {
 		currentBGM = 0;
 		while((tableBGMChange[gt][currentBGM] != -1) && (engine.statistics.level >= tableBGMChange[gt][currentBGM])) currentBGM++;
@@ -844,8 +842,7 @@ public class IdiotMode extends DummyMode {
 		}
 		modeType = modeType.concat(")");
 		receiver.drawScoreFont(engine, playerID, 0, 1, modeType, EventReceiver.COLOR_RED);
-		
-		// FINISH THIS METHOD [TODO]
+
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false)) ) {
 			if((owner.replayMode == false) && (levelAtStart == 0) && (engine.ai == null)) {
 				if (!daredevil) {

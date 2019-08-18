@@ -842,7 +842,6 @@ public class Joker extends MarathonModeBase {
 	
 	/*
 	 * Calculate score - PAIN
-	 * TODO: FIX THIS FOR NORMAL/HARD
 	 */
 	@Override
 	public void calcScore(GameEngine engine, int playerID, int lines) {

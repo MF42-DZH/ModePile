@@ -380,8 +380,7 @@ public class MissionMode extends MarathonModeBase {
 		// NET: Player name (It may also appear in offline replay)
 		netDrawPlayerName(engine);
 	}
-	
-	// TODO: FINISH THIS.
+
 	/*
 	 * Calculate score
 	 */
@@ -707,7 +706,6 @@ public class MissionMode extends MarathonModeBase {
 	/**
 	 * Update rankings
 	 * @param sc Score
-	 * @param li Lines
 	 * @param time Time
 	 */
 	private void updateRanking(int sc, int time, int type) {
@@ -730,7 +728,6 @@ public class MissionMode extends MarathonModeBase {
 	/**
 	 * Calculate ranking position
 	 * @param sc Score
-	 * @param li Lines
 	 * @param time Time
 	 * @return Position (-1 if unranked)
 	 */

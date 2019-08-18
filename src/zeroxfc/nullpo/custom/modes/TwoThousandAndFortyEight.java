@@ -45,7 +45,6 @@ public class TwoThousandAndFortyEight extends DummyMode {
 	
 	@Override
 	public String getName() {
-		// TODO Auto-generated method stub
 		return "2048";
 	}
 

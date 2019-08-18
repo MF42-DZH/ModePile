@@ -1224,8 +1224,7 @@ public class FireworkChallenge extends DummyMode {
 
 		return false;
 	}
-	
-	// TODO: Fully override onExcellent and onGameOver screens
+
 	@Override
 	public boolean onExcellent(GameEngine engine, int playerID) {
 		if (!addedCompletionFireworks) {
