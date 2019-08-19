@@ -228,7 +228,6 @@ public class FieldManipulation {
 		return fieldCompare(a, b, false, false);
 	}
 
-	// TODO: Please test this to see how it functions.
 	/**
 	 * <p>Compares two fields and calculates the percentage maps between them. Useful for "build shape modes".</p>
 	 * <p></p>
@@ -274,7 +273,7 @@ public class FieldManipulation {
 
 			return ((double)current / (double)total) - ((double)excess / (double)total);
 		} else {
-			final double areaCoefficient = 0.3, sizeCoefficient = 0.2, blockCoefficient = 0.5;
+			final double areaCoefficient = 0.6, sizeCoefficient = 0.3, blockCoefficient = 0.1;
 			double finalResult = 0;
 
 			int areaA = 0, areaB = 0;
