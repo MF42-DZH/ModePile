@@ -69,3 +69,12 @@ Requires the above to compile and run. The "res" directory in the "required file
 
 * Deltarune Assets (*Jevil image, The World Revolving*) - Toby Fox
 * Super Collapse II Assets (_SFX_) - Super Collapse II, released by GameHouse
+
+## Special Thanks
+
+* Oshisaure - A main inspiration for starting this modding project, a code design helper and motivator to allow this to continue.
+* ry00001 - A main inspiration for starting this modding project, a code design helper and motivator to allow this to continue.
+* GlitchyPSI - A main inspiration for starting this modding project, a code design helper (esp. for allowing the adaptation of their custom sound loader code) and motivator to allow this to continue.
+* Akari - A main inspiration for starting this modding project (see *Idiot% Mode* above) and motivator to allow this to continue.
+* NullNoName - Creator of *NullpoMino*.
+* All others that worked on *NullpoMino* - For helping to develop the game into the extensible platform we know today.
