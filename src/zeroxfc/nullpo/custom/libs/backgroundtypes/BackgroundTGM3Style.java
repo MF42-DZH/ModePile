@@ -123,8 +123,8 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 			differences = new int[] { imgDim[0] - 640, imgDim[1] - 480 };
 		}
 
-		differences[0] /= 2;
-		differences[1] /= 2;
+		differences[0] /= 4;
+		differences[1] /= 4;
 		differences[0] *= targetValues.valueFloat; differences[1] *= targetValues.valueFloat;
 
 		// Set new target pan

@@ -1,20 +1,32 @@
 package zeroxfc.nullpo.custom.modes;
 
+import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
+import mu.nu.nullpo.game.component.Field;
 import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
-import zeroxfc.nullpo.custom.libs.ExamSpinner;
+// import zeroxfc.nullpo.custom.libs.ExamSpinner;
+import zeroxfc.nullpo.custom.libs.FieldManipulation;
+import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.*;
 
 public class ThrowawayTestMode extends MarathonModeBase {
 	private int initialBG, initialFadeBG;
 	// private BackgroundCircularRipple backgroundCircularRipple;
 	private BackgroundTGM3Style TIbg;
-	private ExamSpinner es;
+	// private ExamSpinner es;
 	private int passframe;
+
+	private Field T_SHAPE;
+	private static final int[][] T_FIELD = {
+			{ 0, 0, 1, 1, 0, 0 },
+			{ 0, 0, 1, 1, 0, 0 },
+			{ 1, 1, 1, 1, 1, 1 },
+			{ 1, 1, 1, 1, 1, 1 }
+	};
 
 	/*
 	 * Mode name
@@ -29,6 +41,13 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	 */
 	@Override
 	public void playerInit(GameEngine engine, int playerID) {
+		T_SHAPE = new Field(6, 4, 0);
+		for (int y = 0; y < 4; y++) {
+			for (int x = 0; x < 6; x++) {
+				T_SHAPE.getBlock(x, y).copy(new Block(T_FIELD[y][x], 0));
+			}
+		}
+
 		owner = engine.owner;
 		receiver = engine.owner.receiver;
 		lastscore = 0;
@@ -434,6 +453,9 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				}
 			}
 		} else {
+			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
 			String strScore;
 			if ((lastscore == 0) || (scgettime >= 120)) {
@@ -454,6 +476,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 			receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
+
+			if (engine.field != null) GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, baseX + 80, baseY, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, String.format("%.2f", FieldManipulation.fieldCompare(engine.field, T_SHAPE) * 100) + "%", 0, 1f);
 
 			if ((lastevent != EVENT_NONE) && (scgettime < 120)) {
 				String strPieceName = Piece.getPieceName(lastpiece);
@@ -524,16 +548,16 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 	@Override
 	public boolean onGameOver(GameEngine engine, int playerID) {
-		if (engine.statc[0] == 0)  {
-			passframe = 780;
-
-			boolean close = false;
-			int p = 1;
-			int diff = engine.statistics.score - 400000;
-			if (Math.abs(diff) <= 50000) close = true;
-			if (diff >= 0) p = 0;
-			es = new ExamSpinner("GOOD", p, close);
-		}
+//		if (engine.statc[0] == 0)  {
+//			passframe = 780;
+//
+//			boolean close = false;
+//			int p = 1;
+//			int diff = engine.statistics.score - 400000;
+//			if (Math.abs(diff) <= 50000) close = true;
+//			if (diff >= 0) p = 0;
+//			es = new ExamSpinner("GOOD", p, close);
+//		}
 		return false;
 	}
 
@@ -542,9 +566,9 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	 */
 	@Override
 	public void renderResult(GameEngine engine, int playerID) {
-		if(passframe > 0) {
-			es.draw(receiver, engine, playerID,passframe % 2 == 0);
-		} else {
+//		if(passframe > 0) {
+//			es.draw(receiver, engine, playerID,passframe % 2 == 0);
+//		} else {
 			drawResultStats(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE,
 					STAT_SCORE, STAT_LINES, STAT_LEVEL, STAT_TIME, STAT_SPL, STAT_LPM);
 			drawResultRank(engine, playerID, receiver, 12, EventReceiver.COLOR_BLUE, rankingRank);
@@ -560,7 +584,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			} else if(netIsNetPlay && !netIsWatch && (netReplaySendStatus == 2)) {
 				receiver.drawMenuFont(engine, playerID, 1, 22, "A: RETRY", EventReceiver.COLOR_RED);
 			}
-		}
+//		}
 	}
 
 	/*
@@ -568,14 +592,14 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	 */
 	@Override
 	public boolean onResult(GameEngine engine, int playerID) {
-		if(passframe > 0) {
-			engine.allowTextRenderByReceiver = false; // Turn off RETRY/END menu
-
-			es.update(engine);
-
-			passframe--;
-			return true;
-		}
+//		if(passframe > 0) {
+//			engine.allowTextRenderByReceiver = false; // Turn off RETRY/END menu
+//
+//			es.update(engine);
+//
+//			passframe--;
+//			return true;
+//		}
 
 		engine.allowTextRenderByReceiver = true;
 

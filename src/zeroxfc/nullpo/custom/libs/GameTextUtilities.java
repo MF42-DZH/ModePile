@@ -21,6 +21,17 @@ public class GameTextUtilities {
 			EventReceiver.COLOR_PINK,
 	};
 
+	/** Text alignment option */
+	public static final int ALIGN_TOP_LEFT = 0,
+	                        ALIGN_TOP_MIDDLE = 1,
+	                        ALIGN_TOP_RIGHT = 2,
+	                        ALIGN_MIDDLE_LEFT = 3,
+	                        ALIGN_MIDDLE_MIDDLE = 4,
+	                        ALIGN_MIDDLE_RIGHT = 5,
+	                        ALIGN_BOTTOM_LEFT = 6,
+	                        ALIGN_BOTTOM_MIDDLE = 7,
+	                        ALIGN_BOTTOM_RIGHT = 8;
+
 	/** Rainbow colour count */
 	public static final int RAINBOW_COLOURS = 10;
 
@@ -81,6 +92,140 @@ public class GameTextUtilities {
 	}
 
 	// endregion String Utilities
+
+	// region Aligned Text
+
+	/**
+	 * Draws an aligned string using <code>drawDirectFont</code>.
+	 * @param receiver EventReceiver used to draw
+	 * @param engine Current GameEngine
+	 * @param playerID Player ID (1P = 0)
+	 * @param x X coordinate of top-left corner of text
+	 * @param y Y coordinate of top-left corner of text
+	 * @param alignment Alignment of string relative to string's area
+	 * @param str String to draw
+	 * @param color Color of string
+	 * @param scale Scale of string
+	 */
+	public static void drawDirectTextAlign(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int alignment, String str, Integer color, Float scale) {
+		if (color == null) color = 0;
+		if (scale == null) scale = 1f;
+		if (str == null) return;
+
+		int offsetX, offsetY;
+
+		switch (alignment) {
+			case ALIGN_TOP_MIDDLE:
+			case ALIGN_MIDDLE_MIDDLE:
+			case ALIGN_BOTTOM_MIDDLE:
+				offsetX = (int)(8 * str.length() * scale);
+				break;
+			case ALIGN_TOP_RIGHT:
+			case ALIGN_MIDDLE_RIGHT:
+			case ALIGN_BOTTOM_RIGHT:
+				offsetX = (int)(16 * str.length() * scale);
+				break;
+			default:
+				offsetX = 0;
+				break;
+		}
+
+		switch (alignment) {
+			case ALIGN_MIDDLE_LEFT:
+			case ALIGN_MIDDLE_MIDDLE:
+			case ALIGN_MIDDLE_RIGHT:
+				offsetY = (int)(8 * scale);
+				break;
+			case ALIGN_BOTTOM_LEFT:
+			case ALIGN_BOTTOM_MIDDLE:
+			case ALIGN_BOTTOM_RIGHT:
+				offsetY = (int)(16 * scale);
+				break;
+			default:
+				offsetY = 0;
+				break;
+		}
+
+		receiver.drawDirectFont(engine, playerID, x - offsetX, y - offsetY, str, color, scale);
+	}
+
+	/**
+	 * Draws an aligned string using <code>drawScoreFont</code>.
+	 * @param receiver EventReceiver used to draw
+	 * @param engine Current GameEngine
+	 * @param playerID Player ID (1P = 0)
+	 * @param x X coordinate of top-left corner of text
+	 * @param y Y coordinate of top-left corner of text
+	 * @param alignment Alignment of string relative to string's area
+	 * @param str String to draw
+	 * @param color Color of string
+	 * @param scale Scale of string
+	 */
+	public static void drawScoreTextAlign(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int alignment, String str, Integer color, Float scale) {
+		if (color == null) color = 0;
+		if (scale == null) scale = 1f;
+		if (str == null) return;
+
+		int offsetX;
+
+		switch (alignment) {
+			case ALIGN_TOP_MIDDLE:
+			case ALIGN_MIDDLE_MIDDLE:
+			case ALIGN_BOTTOM_MIDDLE:
+				offsetX = str.length() / 2;
+				break;
+			case ALIGN_TOP_RIGHT:
+			case ALIGN_MIDDLE_RIGHT:
+			case ALIGN_BOTTOM_RIGHT:
+				offsetX = str.length();
+				break;
+			default:
+				offsetX = 0;
+				break;
+		}
+
+		receiver.drawScoreFont(engine, playerID, x - offsetX, y, str, color, scale);
+	}
+
+	/**
+	 * Draws an aligned string using <code>drawMenuFont</code>.
+	 * @param receiver EventReceiver used to draw
+	 * @param engine Current GameEngine
+	 * @param playerID Player ID (1P = 0)
+	 * @param x X coordinate of top-left corner of text
+	 * @param y Y coordinate of top-left corner of text
+	 * @param alignment Alignment of string relative to string's area
+	 * @param str String to draw
+	 * @param color Color of string
+	 * @param scale Scale of string
+	 */
+	public static void drawMenuTextAlign(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int alignment, String str, Integer color, Float scale) {
+		if (color == null) color = 0;
+		if (scale == null) scale = 1f;
+		if (str == null) return;
+
+		int offsetX;
+
+		switch (alignment) {
+			case ALIGN_TOP_MIDDLE:
+			case ALIGN_MIDDLE_MIDDLE:
+			case ALIGN_BOTTOM_MIDDLE:
+				offsetX = str.length() / 2;
+				break;
+			case ALIGN_TOP_RIGHT:
+			case ALIGN_MIDDLE_RIGHT:
+			case ALIGN_BOTTOM_RIGHT:
+				offsetX = str.length();
+				break;
+			default:
+				offsetX = 0;
+				break;
+		}
+
+		receiver.drawMenuFont(engine, playerID, x - offsetX, y, str, color, scale);
+	}
+
+	// endregion Aligned Text
 
 	// region Rainbow Text
 
