@@ -147,6 +147,42 @@ public class FieldManipulation {
 	}
 
 	/**
+	 * Deletes blocks with any of the colours in the given array.
+	 * @param field Field to erase colours from
+	 * @param colours Colours to erase
+	 * @return int[]; Amount of blocks of each colour erased
+	 */
+	public static int[] delColours(Field field, int[] colours) {
+		int[] results = new int[colours.length];
+
+		for (int i = 0; i < colours.length; i++) {
+			results[i] = delColour(field, colours[i]);
+		}
+
+		return results;
+	}
+
+	/**
+	 * Deletes all blocks of a certain colour on a field.
+	 * @param field Field to erase colour from
+	 * @param colour Colour to erase
+	 * @return int; Amount of blocks erased
+	 */
+	public static int delColour(Field field, int colour) {
+		int erased = 0;
+		for (int y = (-1 * field.getHiddenHeight()); y < field.getHeight(); y++) {
+			for (int x = 0; x < field.getWidth(); x++) {
+				int c = field.getBlockColor(x, y);
+				if (c == colour) {
+					field.getBlock(x, y).color = Block.BLOCK_COLOR_NONE;
+					erased++;
+				}
+			}
+		}
+		return erased;
+	}
+
+	/**
 	 * Erases a mino in every filled line on a field.
 	 * @param field Field to shoot
 	 * @param random Random instance to use
@@ -244,6 +280,9 @@ public class FieldManipulation {
 	 */
 	public static double fieldCompare(Field a, Field b, boolean exact, boolean colourMatch) {
 		if (exact) {
+			if (a.getWidth() != b.getWidth()) return 0d;
+			if ((a.getHiddenHeight() + a.getHiddenHeight()) != (b.getHiddenHeight() + b.getHiddenHeight())) return 0d;
+
 			final int total = 2 * a.getWidth() * (a.getHeight() + a.getHiddenHeight());
 			int current = 0;
 			int excess = 0;
@@ -280,7 +319,7 @@ public class FieldManipulation {
 			double finalResult = 0;
 
 			int areaA = 0, areaB = 0;
-			int[] topLeftA, bottomRightA, topLeftB, bottomRightB;
+			int[] topLeftA, topLeftB;
 
 			// Stage 1: area filled
 			for (int y = (-1 * a.getHiddenHeight()); y < a.getHeight(); y++) {
@@ -300,11 +339,11 @@ public class FieldManipulation {
 			// Stage 2: blocks
 			final int[][] resA = getOpposingCornerCoords(a);
 			topLeftA = resA[0];
-			bottomRightA = resA[1];
+			// bottomRightA = resA[1];
 
 			final int[][] resB = getOpposingCornerCoords(b);
 			topLeftB = resB[0];
-			bottomRightB = resB[1];
+			// bottomRightB = resB[1];
 
 			final Integer[] bboxSizeA = getOpposingCornerBoxSize(a), bboxSizeB = getOpposingCornerBoxSize(b);
 
@@ -313,7 +352,7 @@ public class FieldManipulation {
 
 				final int aA = bboxSizeA[0] * bboxSizeA[1], aB = bboxSizeB[0] * bboxSizeB[1];
 				int total = 0;
-				int excess = 0;
+				// int excess = 0;
 
 				if (bboxSizeA[0].equals(bboxSizeB[0]) && bboxSizeA[1].equals(bboxSizeB[1])) {
 					for (int y = 0; y < bboxSizeB[1]; y++) {
@@ -481,6 +520,15 @@ public class FieldManipulation {
 	private static int lcm(int a, int b)
 	{
 		return (a * b) / gcd(a, b);
+	}
+
+	/**
+	 * Gets the full height of a field, including hidden height.
+	 * @param field Field to get full height of
+	 * @return int; Full height
+	 */
+	public static int getFullHeight(Field field) {
+		return field.getHiddenHeight() + field.getHeight();
 	}
 
 	/**

@@ -39,6 +39,9 @@ public class ShadowMarathon extends MarathonModeBase {
 			"S-PIECE"
 	};
 
+	/** Mode version */
+	private static final int SCORE_VERSION = 1;
+
 	private static final int[] PIECE_COLOURS = {
 			EventReceiver.COLOR_CYAN,
 			EventReceiver.COLOR_ORANGE,
@@ -616,8 +619,13 @@ public class ShadowMarathon extends MarathonModeBase {
 	};
 	private static final int[] SHAPE_TO_MULTIPLIER = {
 			27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27,
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8
+			8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	};
+	private static final int[] SHAPE_TO_EMU = {
+			4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+			2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 	};
 
 	// Static initialiser for shape fields.
@@ -685,12 +693,17 @@ public class ShadowMarathon extends MarathonModeBase {
 
 	private static final double V_MAX = 16;
 	private static final double GRAVITY = 9.80665 / 10d;
+	private static final double END_MULTIPLIER_MIN = 0.01;
 
 	private int currentMaxIndex;
 	private int currentPieceID;
 	private double currentMaxMatchValue;
 	private Random directionRandom;
 	private int lerpTime, lastScore;
+	private int scoreVersion, pieceNO;
+	private double endMultiplier;
+	private boolean isB2B;
+	private int realCombo;
 
 	@Override
 	public String getName() {
@@ -707,14 +720,19 @@ public class ShadowMarathon extends MarathonModeBase {
 		lastScore = 0;
 		lastevent = EVENT_NONE;
 		lastb2b = false;
+		isB2B = false;
 		lastcombo = 0;
 		lastpiece = 0;
 		bgmlv = 0;
+		realCombo = 0;
 
 		matchConfidences = new ArrayList<>();
 		lastIDs = new ArrayList<>();
 		lastMatchPercentages = new ArrayList<>();
-		
+
+		endMultiplier = 1;
+		pieceNO = 0;
+
 		pieceDirections = new ArrayList<>();
 		pieceRandomDirection = new ArrayList<>();
 		
@@ -731,6 +749,7 @@ public class ShadowMarathon extends MarathonModeBase {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 			version = CURRENT_VERSION;
+			scoreVersion = SCORE_VERSION;
 		} else {
 			loadSetting(owner.replayProp);
 			if((version == 0) && owner.replayProp.getProperty("shadowMarathon.endless", false)) goaltype = 2;
@@ -893,6 +912,12 @@ public class ShadowMarathon extends MarathonModeBase {
 			fallPieceLoc = null;
 			fallPieceVel = null;
 
+			isB2B = false;
+			realCombo = 0;
+
+			endMultiplier = 1;
+			pieceNO = 0;
+
 			lerpTime = 120;
 			lastScore = 0;
 
@@ -950,6 +975,9 @@ public class ShadowMarathon extends MarathonModeBase {
 			onShadow = true;
 			mainField = new Field(engine.field);
 			engine.field = new Field(shadowField);
+
+			isB2B = engine.b2b;
+			realCombo = engine.combo;
 		}
 
 		engine.combo = 0;
@@ -1728,6 +1756,14 @@ public class ShadowMarathon extends MarathonModeBase {
 				fallPieceLoc = new double[] { bX + engine.nowPieceX * 16, bY + engine.nowPieceY * 16 };
 				fallPieceVel = new double[] { ((directionRandom.nextDouble() - 0.5) * 2 * 8), (directionRandom.nextDouble() * -V_MAX) };
 
+				if (tableGameClearLines[goaltype] > 0) {
+					if (pieceNO < (int)Math.floor(tableGameClearLines[goaltype] * 2.5) + 4) {
+						endMultiplier += (currentMaxMatchValue - 0.9) * SHAPE_TO_EMU[currentMaxIndex];
+						endMultiplier = Math.max(endMultiplier, END_MULTIPLIER_MIN);
+						pieceNO++;
+					}
+				}
+
 				engine.resetStatc();
 				engine.stat = GameEngine.STAT_MOVE;
 				engine.nextPieceCount--;
@@ -1784,6 +1820,12 @@ public class ShadowMarathon extends MarathonModeBase {
 		if (onShadow) parseMatches(engine);
 		// log.debug(String.format("ID %d: INDEX %d", currentPieceID, currentMaxIndex));
 
+		if (!onShadow) {
+			engine.combo = realCombo;
+			engine.b2b = isB2B;
+			lastb2b = isB2B;
+		}
+
 		// Line clear bonus
 		int pts = 0;
 
@@ -1800,7 +1842,7 @@ public class ShadowMarathon extends MarathonModeBase {
 			}
 			// Immobile EZ Spin
 			else if(engine.tspinez && (lines > 0)) {
-				if(engine.b2b) {
+				if(isB2B) {
 					pts += 180 * (engine.statistics.level + 1);
 				} else {
 					pts += 120 * (engine.statistics.level + 1);
@@ -1810,14 +1852,14 @@ public class ShadowMarathon extends MarathonModeBase {
 			// T-Spin 1 line
 			else if(lines == 1) {
 				if(engine.tspinmini) {
-					if(engine.b2b) {
+					if(isB2B) {
 						pts += 300 * (engine.statistics.level + 1);
 					} else {
 						pts += 200 * (engine.statistics.level + 1);
 					}
 					lastevent = EVENT_TSPIN_SINGLE_MINI;
 				} else {
-					if(engine.b2b) {
+					if(isB2B) {
 						pts += 1200 * (engine.statistics.level + 1);
 					} else {
 						pts += 800 * (engine.statistics.level + 1);
@@ -1828,14 +1870,14 @@ public class ShadowMarathon extends MarathonModeBase {
 			// T-Spin 2 lines
 			else if(lines == 2) {
 				if(engine.tspinmini && engine.useAllSpinBonus) {
-					if(engine.b2b) {
+					if(isB2B) {
 						pts += 600 * (engine.statistics.level + 1);
 					} else {
 						pts += 400 * (engine.statistics.level + 1);
 					}
 					lastevent = EVENT_TSPIN_DOUBLE_MINI;
 				} else {
-					if(engine.b2b) {
+					if(isB2B) {
 						pts += 1800 * (engine.statistics.level + 1);
 					} else {
 						pts += 1200 * (engine.statistics.level + 1);
@@ -1845,7 +1887,7 @@ public class ShadowMarathon extends MarathonModeBase {
 			}
 			// T-Spin 3 lines
 			else if(lines >= 3) {
-				if(engine.b2b) {
+				if(isB2B) {
 					pts += 2400 * (engine.statistics.level + 1);
 				} else {
 					pts += 1600 * (engine.statistics.level + 1);
@@ -1864,7 +1906,7 @@ public class ShadowMarathon extends MarathonModeBase {
 				lastevent = EVENT_TRIPLE;
 			} else if(lines >= 4) {
 				// 4 lines
-				if(engine.b2b) {
+				if(isB2B) {
 					pts += 1200 * (engine.statistics.level + 1);
 				} else {
 					pts += 800 * (engine.statistics.level + 1);
@@ -1873,12 +1915,12 @@ public class ShadowMarathon extends MarathonModeBase {
 			}
 		}
 
-		lastb2b = engine.b2b;
+		lastb2b = isB2B;
 
 		// Combo
-		if((enableCombo) && (engine.combo >= 1) && (lines >= 1)) {
+		if((enableCombo) && (realCombo >= 1) && (lines >= 1)) {
 			pts += ((engine.combo - 1) * 50) * (engine.statistics.level + 1);
-			lastcombo = engine.combo;
+			lastcombo = realCombo;
 		}
 
 		// All clear
@@ -1934,6 +1976,12 @@ public class ShadowMarathon extends MarathonModeBase {
 
 		if((engine.statistics.lines >= tableGameClearLines[goaltype]) && (tableGameClearLines[goaltype] >= 0)) {
 			// Ending
+			if (scoreVersion > 0) {
+				lastScore = engine.statistics.score;
+				lastscore = 0;
+				scgettime = 0;
+				engine.statistics.score *= endMultiplier;
+			}
 			engine.ending = 1;
 			engine.gameEnded();
 		} else if((engine.statistics.lines >= (engine.statistics.level + 1) * 10) && (engine.statistics.level < 19)) {
@@ -2000,7 +2048,9 @@ public class ShadowMarathon extends MarathonModeBase {
 				}
 			}
 		} else {
-			receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
+			if (scoreVersion <= 0) receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
+			else receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE " + String.format("[%.2f", endMultiplier) + "X]", EventReceiver.COLOR_BLUE);
+
 			String strScore;
 			if((lastscore == 0) || (lerpTime >= 120)) {
 				strScore = String.valueOf(engine.statistics.score);
@@ -2191,6 +2241,7 @@ public class ShadowMarathon extends MarathonModeBase {
 		goaltype = prop.getProperty("shadowMarathon.gametype", 0);
 		big = prop.getProperty("shadowMarathon.big", false);
 		version = prop.getProperty("shadowMarathon.version", 0);
+		scoreVersion = prop.getProperty("shadowMarathon.scoreVersion", 0);
 	}
 
 	/**
@@ -2209,6 +2260,7 @@ public class ShadowMarathon extends MarathonModeBase {
 		prop.setProperty("shadowMarathon.gametype", goaltype);
 		prop.setProperty("shadowMarathon.big", big);
 		prop.setProperty("shadowMarathon.version", version);
+		prop.setProperty("shadowMarathon.scoreVersion", scoreVersion);
 	}
 
 	/**
