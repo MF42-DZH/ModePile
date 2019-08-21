@@ -46,16 +46,16 @@ public class MarathonModeBase extends NetDummyMode {
 	public static final int CURRENT_VERSION = 2;
 
 	/** Fall velocity table (numerators) */
-	public static final int tableGravity[]     = { 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 465, 731, 1280, 1707,  -1,  -1,  -1};
+	public static final int[] tableGravity = { 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 465, 731, 1280, 1707,  -1,  -1,  -1};
 
 	/** Fall velocity table (denominators) */
-	public static final int tableDenominator[] = {63, 50, 39, 30, 22, 16, 12,  8,  6,  4,  3,  2,  1, 256, 256,  256,  256, 256, 256, 256};
+	public static final int[] tableDenominator = {63, 50, 39, 30, 22, 16, 12,  8,  6,  4,  3,  2,  1, 256, 256,  256,  256, 256, 256, 256};
 
 	/** Line counts when BGM changes occur */
-	public static final int tableBGMChange[] = {50, 100, 150, 200, -1};
+	public static final int[] tableBGMChange = {50, 100, 150, 200, -1};
 
 	/** Line counts when game ending occurs */
-	public static final int tableGameClearLines[] = {150, 200, -1};
+	public static final int[] tableGameClearLines = {150, 200, -1};
 
 	/** Number of entries in rankings */
 	public static final int RANKING_MAX = 10;
@@ -301,7 +301,7 @@ public class MarathonModeBase extends NetDummyMode {
 			}
 
 			// NET: Netplay Ranking
-			if(engine.ctrl.isPush(Controller.BUTTON_D) && netIsNetPlay && startlevel == 0 && !big && 
+			if(engine.ctrl.isPush(Controller.BUTTON_D) && netIsNetPlay && startlevel == 0 && !big &&
 					engine.ai == null) {
 				netEnterNetPlayRankingScreen(engine, playerID, goaltype);
 			}

@@ -23,6 +23,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Pong_ - A single-player Pong clone.
 * _Scanline_ - Inspired by Scanner mode on [Tetris for the PSP Mini](https://harddrop.com/wiki/Tetris_(PSP_Mini)) and [Tetris Pop](https://harddrop.com/wiki/Tetris_Pop).
 * _Score Trial_ - An approximation of the SCORE ATTACK modes in DTET.
+* _Shadow Marahton_ - Build your own pieces in this extended Marathon.
 * _Single Death Marathon_ - Marathon, but the pieces queue up to become big.
 
 ## Libraries Available:
@@ -32,11 +33,14 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _BlockParticle_ - Animated block particle for line clear effects.
 * _BlockParticleCollection_ - Collection class for easy generation, update and drawing of block particles.
 * _DoubleVector_ - 2D vector type that uses doubles for more precision.
+* _ExamSpinner_ (incomplete) - TI-style spinner like the one used during Promotion Exam results.
 * _FieldManipulation_ - Adds and fixes methods for dealing with the game's _Field_ type.
 * _FlyInOutText_ - Adds text objects that can fly into the screen from the outside, linger, then return to their starting positions before disappearing.
 * _GameTextUtilities_ - Adds methods for coloured text and other random text / text obfuscation methods.
 * _Interpolation_ - Linear interpolation functions.
 * _MouseParser_ - Allows the use of mouse inside a mode.
+* _PhysicsObject_ - Allows the use of basic frictionless rigid body physics with square objects.
+* _RendererExtension_ - Extra drawing methods.
 * _ResourceHolderCustomAssetExtension_ - Allows the use of custom images and BGM in a mode.
 * _ScrollingMarqueeText_ - Horizontal scrolling text.
 * _SoundLoader_ - Allows the use of custom SFX.

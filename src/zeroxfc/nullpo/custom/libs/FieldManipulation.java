@@ -1,15 +1,17 @@
 package zeroxfc.nullpo.custom.libs;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Random;
+import java.util.*;
 
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Field;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
+import org.apache.log4j.Logger;
 
 public class FieldManipulation {
+	/** debug */
+	private static final Logger log = Logger.getLogger(FieldManipulation.class);
+
 	/**
 	 * Check for split line clears. To be executed in gamemode's onLineClear.
 	 * @param field Field to check
@@ -265,15 +267,16 @@ public class FieldManipulation {
 								current += 2;
 							}
 						} else {
-							excess += 1;
+							excess += 3;
 						}
 					}
 				}
 			}
 
-			return ((double)current / (double)total) - ((double)excess / (double)total);
+			double res = ((double)current / (double)total) - ((double)excess / (double)total);
+			if (res < 0) res = 0;
+			return res;
 		} else {
-			final double areaCoefficient = 0.6, sizeCoefficient = 0.3, blockCoefficient = 0.1;
 			double finalResult = 0;
 
 			int areaA = 0, areaB = 0;
@@ -294,11 +297,6 @@ public class FieldManipulation {
 				}
 			}
 
-			double res = (double)areaA / areaB;
-			if (res > 1) res = 1 - (res - 1);
-			if (res < 0) res = 0;
-			finalResult += res * areaCoefficient;
-
 			// Stage 2: blocks
 			final int[][] resA = getOpposingCornerCoords(a);
 			topLeftA = resA[0];
@@ -312,47 +310,175 @@ public class FieldManipulation {
 
 			if (bboxSizeA[0] != null && bboxSizeA[1] != null && bboxSizeB[0] != null && bboxSizeB[1] != null) {
 				final int aA = bboxSizeA[0] * bboxSizeA[1], aB = bboxSizeB[0] * bboxSizeB[1];
-				double res2 = (double)aA / aB;
-				if (res2 > 1) res2 = 1 - (res2 - 1);
-				if (res2 < 0) res2 = 0;
-				finalResult += (1 - Math.abs((((double)aA / (double)(aA + aB)) - 0.5) / 0.5)) * sizeCoefficient;
 				int total = 0;
 				int excess = 0;
 
 				if (bboxSizeA[0].equals(bboxSizeB[0]) && bboxSizeA[1].equals(bboxSizeB[1])) {
-					for (int y = 0; y < bboxSizeA[0]; y++) {
-						for (int x = 0; x < bboxSizeA[1]; x++) {
+					for (int y = 0; y < bboxSizeB[1]; y++) {
+						for (int x = 0; x < bboxSizeB[0]; x++) {
 							Block blkA = a.getBlock(topLeftA[0] + x, topLeftA[1] + y);
 							Block blkB = b.getBlock(topLeftB[0] + x, topLeftB[1] + y);
 
 							if (blkA != null && blkB != null) {
-								if (blkA.color == Block.BLOCK_COLOR_NONE && blkB.color == Block.BLOCK_COLOR_NONE) {
-									total += 2;
-								} else {
-									if (blkA.color != Block.BLOCK_COLOR_NONE && blkB.color != Block.BLOCK_COLOR_NONE) {
-										if (colourMatch) {
+								if (colourMatch) {
+									if (blkA.isEmpty() && blkB.isEmpty()) {
+										total += 2;
+									} else {
+										if (!blkA.isEmpty() && blkB.isEmpty()) {
+											total -= 6;
+										} else if (!blkA.isEmpty() && !blkB.isEmpty()) {
 											if (blkA.color == blkB.color) {
 												total += 2;
 											} else {
 												total += 1;
 											}
-										} else {
-											total += 2;
 										}
+									}
+								} else {
+									if (blkA.isEmpty() && blkB.isEmpty()) {
+										total += 2;
+										//log.debug("(" + x + ", " + y + ") " + "EMPTY MATCH");
 									} else {
-										excess += 1;
+										if (!blkA.isEmpty() && blkB.isEmpty()) {
+											total -= 6;
+											//log.debug("(" + x + ", " + y + ") " + "EXCESS IN A");
+										} else if (!blkA.isEmpty() && !blkB.isEmpty()) {
+											total += 2;
+											//log.debug("(" + x + ", " + y + ") " + "FULL MATCH");
+										} //else {
+											//total -= 1;
+											//log.debug("(" + x + ", " + y + ") " + "MISMATCH");
+										//}
 									}
 								}
 							}
 						}
 					}
-				}
 
-				finalResult = finalResult + (((double)total / (double)(2 * areaA)) - ((double)excess / (double)(2 * areaB))) * blockCoefficient;
+					double res3 = (double)total / (double)(2 * aB);
+					if (res3 < 0) res3 = 0;
+
+					//log.debug(String.format("TOTAL: %d, MAX: %d, PERCENT: %.2f", total, 2 * aB, res3 * 100));
+					return res3;
+				} else {
+					final int lcmWidth = lcm(bboxSizeA[0], bboxSizeB[0]), lcmHeight = lcm(bboxSizeA[1], bboxSizeB[1]);
+
+					final int multiplierWidthA = lcmWidth / bboxSizeA[0];
+					final int multiplierWidthB = lcmWidth / bboxSizeB[0];
+					final int multiplierHeightA = lcmHeight / bboxSizeA[1];
+					final int multiplierHeightB = lcmHeight / bboxSizeB[1];
+
+					final int maxArea = lcmHeight * lcmWidth * 2;
+
+					double closenessAverageH = ((double)bboxSizeA[0] / bboxSizeB[0]);
+					if (closenessAverageH > 1) closenessAverageH = 1 - (closenessAverageH - 1);
+					if (closenessAverageH < 0) closenessAverageH = 0;
+
+					double closenessAverageV = ((double)bboxSizeA[1] / bboxSizeB[1]);
+					if (closenessAverageV > 1) closenessAverageV = 1 - (closenessAverageV - 1);
+					if (closenessAverageV < 0) closenessAverageV = 0;
+
+					final double closenessAverage = ((closenessAverageH + closenessAverageV) / 2);
+
+					//StringBuilder matchArr = new StringBuilder("MATCH ARRAY:\n");
+
+					for (int y = 0; y < lcmHeight; y++) {
+						for (int x = 0; x < lcmWidth; x++) {
+							int v1 = a.getBlock(topLeftA[0] + (x / multiplierWidthA), topLeftA[1] + (y / multiplierHeightA)).color;
+							int v2 = b.getBlock(topLeftB[0] + (x / multiplierWidthB), topLeftB[1] + (y / multiplierHeightB)).color;
+
+							if (colourMatch) {
+								if (v1 <= 0 && v2 <= 0) {
+									total += 2;
+									//matchArr.append(" 2");
+								} else {
+									if (v1 > 0 && v2 <= 0) {
+										total -= 6;
+										//matchArr.append("-8");
+									} else if (v1 > 0 && v2 > 0) {
+										if (v1 == v2) {
+											total += 2;
+											//matchArr.append(" 2");
+										} else {
+											total += 1;
+											//matchArr.append(" 1");
+										}
+									} else {
+										total -= 1;
+										//matchArr.append("-4");
+									}
+								}
+							} else {
+								if (v1 <= 0 && v2 <= 0) {
+									total += 2;
+									//matchArr.append(" 2");
+								} else {
+									if (v1 > 0 && v2 <= 0) {
+										total -= 6;
+										//matchArr.append("-8");
+									} else if (v1 > 0 && v2 > 0) {
+										total += 2;
+										//matchArr.append(" 2");
+									} else {
+										total -= 1;
+										//matchArr.append("-4");
+									}
+								}
+							}
+						}
+						//matchArr.append("\n");
+					}
+
+//					StringBuilder j = new StringBuilder("FIELD A:\n");
+//					for (int y = 0; y < lcmHeight; y++) {
+//						for (int x = 0; x < lcmWidth; x++) {
+//							j.append(a.getBlock(topLeftA[0] + (x / multiplierWidthA), topLeftA[1] + (y / multiplierHeightA)).color);
+//						}
+//						j.append("\n");
+//					}
+//
+//					StringBuilder k = new StringBuilder("FIELD B:\n");
+//					for (int y = 0; y < lcmHeight; y++) {
+//						for (int x = 0; x < lcmWidth; x++) {
+//							k.append(b.getBlock(topLeftB[0] + (x / multiplierWidthB), topLeftB[1] + (y / multiplierHeightB)).color);
+//						}
+//						k.append("\n");
+//					}
+//
+//					log.debug(j.toString());
+//					log.debug(k.toString());
+//					log.debug(matchArr.toString());
+
+					double res3 = ((double)total / (double)maxArea) * closenessAverage;
+					if (res3 < 0) res3 = 0;
+
+					//log.debug(String.format("TOTAL: %d, MAX: %d, CLOSENESS: %.2f, PERCENT: %.2f", total, maxArea, closenessAverage, res3 * 100));
+					return res3;
+				}
 			}
 
 			return finalResult;
 		}
+	}
+
+	/*
+	 * NOTE: Here's hoping this doesn't slow the game down by much.
+	 *
+	 * Euler's method?
+	 */
+
+	// Recursive method to return gcd of a and b
+	private static int gcd(int a, int b)
+	{
+		if (a == 0)
+			return b;
+		return gcd(b % a, a);
+	}
+
+	// Method to return LCM of two numbers
+	private static int lcm(int a, int b)
+	{
+		return (a * b) / gcd(a, b);
 	}
 
 	/**
@@ -397,7 +523,7 @@ public class FieldManipulation {
 			for (int y = (-1 * field.getHiddenHeight()); y < field.getHeight(); y++) {
 				Block blk = field.getBlock(x, y);
 				if (blk != null) {
-					if (blk.color != Block.BLOCK_COLOR_NONE) return x;
+					if (!blk.isEmpty()) return x;
 				}
 			}
 		}
@@ -414,7 +540,7 @@ public class FieldManipulation {
 			for (int y = (-1 * field.getHiddenHeight()); y < field.getHeight(); y++) {
 				Block blk = field.getBlock(x, y);
 				if (blk != null) {
-					if (blk.color != Block.BLOCK_COLOR_NONE) return x;
+					if (!blk.isEmpty()) return x;
 				}
 			}
 		}
@@ -431,7 +557,7 @@ public class FieldManipulation {
 			for (int x = 0; x < field.getWidth(); x++) {
 				Block blk = field.getBlock(x, y);
 				if (blk != null) {
-					if (blk.color != Block.BLOCK_COLOR_NONE) return y;
+					if (!blk.isEmpty()) return y;
 				}
 			}
 		}

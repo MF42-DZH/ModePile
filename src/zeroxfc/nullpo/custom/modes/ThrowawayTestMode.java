@@ -11,6 +11,7 @@ import mu.nu.nullpo.util.GeneralUtil;
 // import zeroxfc.nullpo.custom.libs.ExamSpinner;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.*;
 
 public class ThrowawayTestMode extends MarathonModeBase {
@@ -247,9 +248,11 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		engine.statistics.scoreFromHardDrop += fall * 2;
 		engine.statistics.score += fall * 2;
 
-//		int x = (16 * engine.nowPieceX) + 12 + receiver.getFieldDisplayPositionX(engine, playerID) + (16 * engine.nowPieceObject.getWidth() / 2);
-//		int y = (16 * engine.nowPieceY) + 60 + receiver.getFieldDisplayPositionY(engine, playerID) + (16 * engine.nowPieceObject.getHeight() / 2);;
-//
+		int x = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID) + (16 * engine.nowPieceObject.getWidth() / 2);
+		int y = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID) + (16 * engine.nowPieceObject.getHeight() / 2);
+
+		RendererExtension.addBlockBreakEffect(receiver, 1, x, y, 1);
+		//
 //		backgroundCircularRipple.manualRipple(x, y);
 	}
 
