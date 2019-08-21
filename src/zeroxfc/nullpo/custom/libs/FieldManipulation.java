@@ -309,6 +309,8 @@ public class FieldManipulation {
 			final Integer[] bboxSizeA = getOpposingCornerBoxSize(a), bboxSizeB = getOpposingCornerBoxSize(b);
 
 			if (bboxSizeA[0] != null && bboxSizeA[1] != null && bboxSizeB[0] != null && bboxSizeB[1] != null) {
+				// log.debug(String.format("%d %d | %d %d", bboxSizeA[0], bboxSizeA[1], bboxSizeB[0], bboxSizeB[1]));
+
 				final int aA = bboxSizeA[0] * bboxSizeA[1], aB = bboxSizeB[0] * bboxSizeB[1];
 				int total = 0;
 				int excess = 0;
@@ -337,18 +339,18 @@ public class FieldManipulation {
 								} else {
 									if (blkA.isEmpty() && blkB.isEmpty()) {
 										total += 2;
-										//log.debug("(" + x + ", " + y + ") " + "EMPTY MATCH");
+										// log.debug("(" + x + ", " + y + ") " + "EMPTY MATCH");
 									} else {
 										if (!blkA.isEmpty() && blkB.isEmpty()) {
 											total -= 6;
-											//log.debug("(" + x + ", " + y + ") " + "EXCESS IN A");
+											// log.debug("(" + x + ", " + y + ") " + "EXCESS IN A");
 										} else if (!blkA.isEmpty() && !blkB.isEmpty()) {
 											total += 2;
-											//log.debug("(" + x + ", " + y + ") " + "FULL MATCH");
-										} //else {
+											// log.debug("(" + x + ", " + y + ") " + "FULL MATCH");
+										}//  else {
 											//total -= 1;
-											//log.debug("(" + x + ", " + y + ") " + "MISMATCH");
-										//}
+											// log.debug("(" + x + ", " + y + ") " + "UNFILLED");
+										// }
 									}
 								}
 							}
@@ -358,7 +360,7 @@ public class FieldManipulation {
 					double res3 = (double)total / (double)(2 * aB);
 					if (res3 < 0) res3 = 0;
 
-					//log.debug(String.format("TOTAL: %d, MAX: %d, PERCENT: %.2f", total, 2 * aB, res3 * 100));
+					// log.debug(String.format("TOTAL: %d, MAX: %d, PERCENT: %.2f", total, 2 * aB, res3 * 100));
 					return res3;
 				} else {
 					final int lcmWidth = lcm(bboxSizeA[0], bboxSizeB[0]), lcmHeight = lcm(bboxSizeA[1], bboxSizeB[1]);
@@ -403,10 +405,10 @@ public class FieldManipulation {
 											total += 1;
 											//matchArr.append(" 1");
 										}
-									} else {
-										total -= 1;
+									} // else {
+										// total -= 1;
 										//matchArr.append("-4");
-									}
+									// }
 								}
 							} else {
 								if (v1 <= 0 && v2 <= 0) {
@@ -419,10 +421,10 @@ public class FieldManipulation {
 									} else if (v1 > 0 && v2 > 0) {
 										total += 2;
 										//matchArr.append(" 2");
-									} else {
-										total -= 1;
+									} // else {
+										// total -= 1;
 										//matchArr.append("-4");
-									}
+									// }
 								}
 							}
 						}
@@ -452,7 +454,7 @@ public class FieldManipulation {
 					double res3 = ((double)total / (double)maxArea) * closenessAverage;
 					if (res3 < 0) res3 = 0;
 
-					//log.debug(String.format("TOTAL: %d, MAX: %d, CLOSENESS: %.2f, PERCENT: %.2f", total, maxArea, closenessAverage, res3 * 100));
+					// log.debug(String.format("TOTAL: %d, MAX: %d, CLOSENESS: %.2f, PERCENT: %.2f", total, maxArea, closenessAverage, res3 * 100));
 					return res3;
 				}
 			}

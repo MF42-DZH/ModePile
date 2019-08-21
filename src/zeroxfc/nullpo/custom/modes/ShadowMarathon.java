@@ -53,329 +53,6 @@ public class ShadowMarathon extends MarathonModeBase {
 
 	// TODO: Fields of different tetromino shapes.
 	private static final int[][][] SHAPES = {
-			// region 2x
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 1, 1 },
-					new int[] { 1, 1 },
-					new int[] { 1, 1 },
-					new int[] { 1, 1 },
-					new int[] { 1, 1 },
-					new int[] { 1, 1 },
-					new int[] { 1, 1 },
-					new int[] { 1, 1 },
-			},  // I-PIECE
-			new int[][] {
-					new int[] { 1, 1, 0, 0, 0, 0 },
-					new int[] { 1, 1, 0, 0, 0, 0 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 0, 0 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 0, 0, 0, 0, 1, 1 },
-					new int[] { 0, 0, 0, 0, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1 }
-			},  // J-PIECE
-			new int[][] {
-					new int[] { 0, 0, 0, 0, 1, 1 },
-					new int[] { 0, 0, 0, 0, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 0, 0, 0, 0 },
-					new int[] { 1, 1, 0, 0, 0, 0 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 0, 0, 1, 1 }
-			},  // L-PIECE
-			new int[][] {
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1 }
-			},  // O-PIECE
-			new int[][] {
-					new int[] { 0, 0, 1, 1, 1, 1 },
-					new int[] { 0, 0, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 0, 0 },
-					new int[] { 1, 1, 1, 1, 0, 0 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 0, 0, 1, 1 }
-			},  // S-PIECE
-			new int[][] {
-					new int[] { 0, 0, 1, 1, 0, 0 },
-					new int[] { 0, 0, 1, 1, 0, 0 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 0, 0 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 0, 0, 1, 1, 0, 0 },
-					new int[] { 0, 0, 1, 1, 0, 0 }
-			},
-			new int[][] {
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 0, 0, 1, 1 }
-			},  // T-PIECE
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 0, 0 },
-					new int[] { 1, 1, 1, 1, 0, 0 },
-					new int[] { 0, 0, 1, 1, 1, 1 },
-					new int[] { 0, 0, 1, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 0, 0, 1, 1 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1 },
-					new int[] { 1, 1, 0, 0 },
-					new int[] { 1, 1, 0, 0 }
-			},  // Z-PIECE
-
-			// endregion 2x
-
-			// region 3x
-
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1 },
-					new int[] { 1, 1, 1 },
-					new int[] { 1, 1, 1 },
-					new int[] { 1, 1, 1 },
-					new int[] { 1, 1, 1 },
-					new int[] { 1, 1, 1 },
-					new int[] { 1, 1, 1 },
-					new int[] { 1, 1, 1 },
-					new int[] { 1, 1, 1 },
-					new int[] { 1, 1, 1 },
-					new int[] { 1, 1, 1 },
-					new int[] { 1, 1, 1 }
-			},  // 3x I-PIECE
-			new int[][] {
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 }
-			},  // 3x L-PIECE
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 }
-			},  // 3x O-PIECE
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 },
-					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
-			},
-			new int[][] {
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 }
-			},  // 3x Z-PIECE
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
-					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
-					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
-			},
-			new int[][] {
-					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
-					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
-					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 }
-			},
-			new int[][] {
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 }
-			},  // 3x T-PIECE
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 }
-			},
-			new int[][] {
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 }
-			},  // 3x J-PIECE
-			new int[][] {
-					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 }
-			},
-			new int[][] {
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 0, 0, 0 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 1, 1, 1, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 },
-					new int[] { 0, 0, 0, 1, 1, 1 }
-			},   // 3x S-PIECE
-
-			// endregion 3x
-
 			// region 4x
 
 			new int[][] {
@@ -603,21 +280,344 @@ public class ShadowMarathon extends MarathonModeBase {
 					new int[] { 0, 0, 0, 0, 1, 1, 1, 1 },
 					new int[] { 0, 0, 0, 0, 1, 1, 1, 1 },
 					new int[] { 0, 0, 0, 0, 1, 1, 1, 1 }
-			}   // 4x S-PIECE
+			},  // 4x S-PIECE
 
 			// endregion 4x
+
+			// region 3x
+
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 1 },
+					new int[] { 1, 1, 1 }
+			},  // 3x I-PIECE
+			new int[][] {
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 }
+			},  // 3x L-PIECE
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 }
+			},  // 3x O-PIECE
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 },
+					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
+			},
+			new int[][] {
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 }
+			},  // 3x Z-PIECE
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
+					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
+					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
+			},
+			new int[][] {
+					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
+					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
+					new int[] { 0, 0, 0, 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 }
+			},
+			new int[][] {
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 }
+			},  // 3x T-PIECE
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0, 0, 0, 0 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 }
+			},
+			new int[][] {
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 }
+			},  // 3x J-PIECE
+			new int[][] {
+					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 1, 1, 1, 0, 0, 0 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 0, 0, 0 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 },
+					new int[] { 0, 0, 0, 1, 1, 1 }
+			},   // 3x S-PIECE
+
+			// endregion 3x
+
+			// region 2x
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 1, 1 },
+					new int[] { 1, 1 },
+					new int[] { 1, 1 },
+					new int[] { 1, 1 },
+					new int[] { 1, 1 },
+					new int[] { 1, 1 },
+					new int[] { 1, 1 },
+					new int[] { 1, 1 },
+			},  // I-PIECE
+			new int[][] {
+					new int[] { 1, 1, 0, 0, 0, 0 },
+					new int[] { 1, 1, 0, 0, 0, 0 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 0, 0 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 0, 0, 0, 0, 1, 1 },
+					new int[] { 0, 0, 0, 0, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1 }
+			},  // J-PIECE
+			new int[][] {
+					new int[] { 0, 0, 0, 0, 1, 1 },
+					new int[] { 0, 0, 0, 0, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 0, 0, 0, 0 },
+					new int[] { 1, 1, 0, 0, 0, 0 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 0, 0, 1, 1 }
+			},  // L-PIECE
+			new int[][] {
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1 }
+			},  // O-PIECE
+			new int[][] {
+					new int[] { 0, 0, 1, 1, 1, 1 },
+					new int[] { 0, 0, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 0, 0 },
+					new int[] { 1, 1, 1, 1, 0, 0 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 0, 0, 1, 1 }
+			},  // S-PIECE
+			new int[][] {
+					new int[] { 0, 0, 1, 1, 0, 0 },
+					new int[] { 0, 0, 1, 1, 0, 0 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 0, 0 }
+			},
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1, 1, 1 },
+					new int[] { 0, 0, 1, 1, 0, 0 },
+					new int[] { 0, 0, 1, 1, 0, 0 }
+			},
+			new int[][] {
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 0, 0, 1, 1 }
+			},  // T-PIECE
+			new int[][] {
+					new int[] { 1, 1, 1, 1, 0, 0 },
+					new int[] { 1, 1, 1, 1, 0, 0 },
+					new int[] { 0, 0, 1, 1, 1, 1 },
+					new int[] { 0, 0, 1, 1, 1, 1 }
+			},
+			new int[][] {
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 0, 0, 1, 1 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 1, 1 },
+					new int[] { 1, 1, 0, 0 },
+					new int[] { 1, 1, 0, 0 }
+			}   // Z-PIECE
+
+			// endregion 2x
 	};
 
 	private static final ArrayList<Field> SHAPE_FIELDS = new ArrayList<>();
 	private static final int[] SHAPE_TO_PIECE_ID = {
-			0, 0, 5, 5, 5, 5, 1, 1, 1, 1, 2, 6, 6, 4, 4, 4, 4, 3, 3,
 			0, 0, 1, 1, 1, 1, 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6,
-			0, 0, 1, 1, 1, 1, 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6
+			0, 0, 1, 1, 1, 1, 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6,
+			0, 0, 5, 5, 5, 5, 1, 1, 1, 1, 2, 6, 6, 4, 4, 4, 4, 3, 3
 	};
 	private static final int[] SHAPE_TO_MULTIPLIER = {
+			27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27,
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-			27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27
+			8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8
 	};
 
 	// Static initialiser for shape fields.
@@ -1694,6 +1694,9 @@ public class ShadowMarathon extends MarathonModeBase {
 			}
 		}
 
+		if (onShadow) parseMatches(engine);
+		// log.debug(String.format("ID %d: INDEX %d", currentPieceID, currentMaxIndex));
+
 		if (!onShadow) switchField(engine);
 		return true;
 	}
@@ -1779,7 +1782,7 @@ public class ShadowMarathon extends MarathonModeBase {
 	@Override
 	public void calcScore(GameEngine engine, int playerID, int lines) {
 		if (onShadow) parseMatches(engine);
-		//log.debug(String.format("ID %d: INDEX %d", currentPieceID, currentMaxIndex));
+		// log.debug(String.format("ID %d: INDEX %d", currentPieceID, currentMaxIndex));
 
 		// Line clear bonus
 		int pts = 0;
@@ -2137,7 +2140,7 @@ public class ShadowMarathon extends MarathonModeBase {
 		matchConfidences.clear();
 		int index = 0;
 		for (Field field : SHAPE_FIELDS) {
-			//log.debug("INDEX " + index + ":");
+			// log.debug("INDEX " + index + ":");
 			matchConfidences.add(FieldManipulation.fieldCompare(engine.field, field));
 			index++;
 		}
