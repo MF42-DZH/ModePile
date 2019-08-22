@@ -218,6 +218,84 @@ public class FieldManipulation {
 	}
 
 	/**
+	 * <p>Randomises the column order in a field.</p>
+	 * Requires a random seed. For consistency, try <code>(engine.randSeed + engine.statistics.time)</code>.
+	 * @param field Field to randomise columns
+	 * @param seed Random seed
+	 */
+	public static void shuffleColumns(Field field, long seed) {
+		final ArrayRandomiser ar = new ArrayRandomiser(seed);
+		shuffleColumns(field, ar);
+	}
+
+	/**
+	 * <p>Randomises the column order in a field.</p>
+	 * Requires a pre-instantiated <code>ArrayRandomiser</code> instance.
+	 * @param field Field to randomise columnds
+	 * @param arrayRandomiser ArrayRandomiser instance
+	 */
+	public static void shuffleColumns(Field field, ArrayRandomiser arrayRandomiser) {
+		int[] columns = new int[field.getWidth()];
+		for (int i = 0; i < columns.length; i++) columns[i] = i;
+
+		columns = arrayRandomiser.permute(columns);
+
+		Field nf = new Field(field);
+		for (int i = 0; i < columns.length; i++) {
+			for (int y = (-1 * nf.getHiddenHeight()); y < nf.getHeight(); y++) {
+				nf.getBlock(i, y).copy(field.getBlock(columns[i], y));
+			}
+		}
+
+		field.copy(nf);
+	}
+
+	/**
+	 * <p>Randomises the row order in a field.</p>
+	 * Requires a random seed. For consistency, try <code>(engine.randSeed + engine.statistics.time)</code>.
+	 * @param field Field to randomise columns
+	 * @param seed Random seed
+	 * @param highestRow Highest row randomised (0 = top visible), recommended / default is >= 2 (inclusive)
+	 * @param lowestRow Lowest row randomised (inclusive)
+	 */
+	public static void shuffleRows(Field field, long seed, Integer highestRow, Integer lowestRow) {
+		final ArrayRandomiser ar = new ArrayRandomiser(seed);
+		shuffleRows(field, ar, highestRow, lowestRow);
+	}
+
+	/**
+	 * <p>Randomises the row order in a field.</p>
+	 * Requires a pre-instantiated <code>ArrayRandomiser</code> instance.
+	 * @param field Field to randomise rows
+	 * @param arrayRandomiser ArrayRandomiser instance
+	 * @param highestRow Highest row randomised (0 = top visible), recommended / default is >= 2 (inclusive)
+	 * @param lowestRow Lowest row randomised (inclusive)
+	 */
+	public static void shuffleRows(Field field, ArrayRandomiser arrayRandomiser, Integer highestRow, Integer lowestRow) {
+		if (highestRow == null) highestRow = 2;
+		if (lowestRow == null) lowestRow = field.getHeight() - 1;
+		if (highestRow < (field.getHiddenHeight() * -1) || highestRow >= field.getHiddenHeight()) return;
+
+		int[] rows = new int[lowestRow - highestRow + 1];
+		for (int i = 0; i < rows.length; i++) {
+			rows[i] = highestRow + i;
+		}
+
+		int[] oldRows = rows.clone();
+		rows = arrayRandomiser.permute(rows);
+
+		Field nf = new Field(field);
+
+		for (int i = 0; i < rows.length; i++) {
+			for (int x = 0; x < nf.getWidth(); x++) {
+				nf.getBlock(x, oldRows[i]).copy(field.getBlock(x, rows[i]));
+			}
+		}
+
+		field.copy(nf);
+	}
+
+	/**
 	 * Erases a mino in every filled line on a field. Displays the blockbreak effect.
 	 * @param receiver EventReceiver instance to display blockbreak effect on.
 	 * @param engine GameEngine of field
@@ -509,16 +587,14 @@ public class FieldManipulation {
 	 */
 
 	// Recursive method to return gcd of a and b
-	private static int gcd(int a, int b)
-	{
+	private static int gcd(int a, int b) {
 		if (a == 0)
 			return b;
 		return gcd(b % a, a);
 	}
 
 	// Method to return LCM of two numbers
-	private static int lcm(int a, int b)
-	{
+	private static int lcm(int a, int b) {
 		return (a * b) / gcd(a, b);
 	}
 

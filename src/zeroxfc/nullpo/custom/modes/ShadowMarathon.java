@@ -976,6 +976,8 @@ public class ShadowMarathon extends MarathonModeBase {
 			mainField = new Field(engine.field);
 			engine.field = new Field(shadowField);
 
+			parseMatches(engine);
+
 			isB2B = engine.b2b;
 			realCombo = engine.combo;
 		}
