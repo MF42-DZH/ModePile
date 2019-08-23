@@ -482,6 +482,10 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 			if (engine.field != null) GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, baseX + 80, baseY, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, String.format("%.2f", FieldManipulation.fieldCompare(engine.field, T_SHAPE) * 100) + "%", 0, 1f);
 
+			float scale = ((engine.statistics.time % 61) / 60f) * 2.5f;
+			scale += 0.5f;
+			RendererExtension.drawScaledBlock(receiver, 16, 16, 2, engine.getSkin(), false, 0f, 1f, scale, Block.BLOCK_ATTRIBUTE_VISIBLE | Block.BLOCK_ATTRIBUTE_CONNECT_LEFT | Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT);
+
 			if ((lastevent != EVENT_NONE) && (scgettime < 120)) {
 				String strPieceName = Piece.getPieceName(lastpiece);
 

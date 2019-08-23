@@ -332,7 +332,9 @@ public class FireworkChallenge extends DummyMode {
 		engine.speed.das = 15;
 		engine.speed.lineDelay = 40;
 		engine.speed.lockDelay = 30;
-		
+
+		engine.ghost = true;
+
 		engine.tspinEnable = false;
 		engine.b2bEnable = false;
 		engine.bighalf = true;
@@ -402,15 +404,12 @@ public class FireworkChallenge extends DummyMode {
 
 				switch(engine.statc[2]) {
 				case 0:
-					tlsMode = !tlsMode;
-					break;
-				case 1:
 					maxGravMode = !maxGravMode;
 					break;
-				case 2:
+				case 1:
 					showST = !showST;
 					break;
-				case 3:
+				case 2:
 					big = !big;
 					break;
 				}
@@ -456,7 +455,6 @@ public class FireworkChallenge extends DummyMode {
 	@Override
 	public void renderSetting(GameEngine engine, int playerID) {
 		drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE, 0,
-				"FULL GHOST", GeneralUtil.getONorOFF(tlsMode),
 				"20G MODE", GeneralUtil.getONorOFF(maxGravMode),
 				"SHOW STIME", GeneralUtil.getONorOFF(showST),
 				"BIG",  GeneralUtil.getONorOFF(big));
@@ -697,7 +695,7 @@ public class FireworkChallenge extends DummyMode {
 		setSpeed(engine);
 
 		// LV100到達でghost を消す
-		if((engine.statistics.level >= 100) && (!tlsMode)) engine.ghost = false;
+		// if((engine.statistics.level >= 100) && (!tlsMode)) engine.ghost = false;
 
 		if(engine.statistics.level >= BGM_FADEOUT_LV) {
 			owner.bgmStatus.fadesw = true;
@@ -1349,7 +1347,7 @@ public class FireworkChallenge extends DummyMode {
 	 * @param prop Property file
 	 */
 	private void loadSetting(CustomProperties prop) {
-		tlsMode = prop.getProperty("fireworkchallenge.alwaysghost", false);
+		// tlsMode = prop.getProperty("fireworkchallenge.alwaysghost", false);
 		maxGravMode = prop.getProperty("fireworkchallenge.always20g", false);
 		showST = prop.getProperty("fireworkchallenge.showsectiontime", false);
 		big = prop.getProperty("fireworkchallenge.big", false);
@@ -1360,7 +1358,7 @@ public class FireworkChallenge extends DummyMode {
 	 * @param prop Property file
 	 */
 	private void saveSetting(CustomProperties prop) {
-		prop.setProperty("fireworkchallenge.alwaysghost", tlsMode);
+		// prop.setProperty("fireworkchallenge.alwaysghost", tlsMode);
 		prop.setProperty("fireworkchallenge.always20g", maxGravMode);
 		prop.setProperty("fireworkchallenge.big", big);
 		prop.setProperty("fireworkchallenge.showsectiontime", showST);

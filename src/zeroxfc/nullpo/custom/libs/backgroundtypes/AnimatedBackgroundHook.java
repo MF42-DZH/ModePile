@@ -92,6 +92,21 @@ public abstract class AnimatedBackgroundHook {
 		}
 	}
 
+	public static boolean getBGState(EventReceiver receiver) {
+		try {
+			Class<EventReceiver> renderer = EventReceiver.class;
+			Field localField;
+			localField = renderer.getDeclaredField("showbg");
+			localField.setAccessible(true);
+			final boolean b = localField.getBoolean(receiver);
+			log.info("showbg in current EventReceiver gotten successfully as " + b);
+			return b;
+		} catch (Exception e) {
+			log.error("Access to showbg in current EventReceiver failed.");
+			return false;
+		}
+	}
+
 	public static void setBGState(EventReceiver receiver, boolean bool) {
 		try {
 			Class<EventReceiver> renderer = EventReceiver.class;

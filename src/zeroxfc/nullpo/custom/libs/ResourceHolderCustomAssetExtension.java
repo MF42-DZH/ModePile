@@ -6,6 +6,7 @@ import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.gui.sdl.*;
 import mu.nu.nullpo.gui.slick.*;
 import mu.nu.nullpo.gui.swing.*;
+import org.newdawn.slick.Graphics;
 import sdljava.mixer.MixMusic;
 import sdljava.mixer.SDLMixer;
 // import sdljava.SDLException;
@@ -719,6 +720,7 @@ public class ResourceHolderCustomAssetExtension {
 			localField.setAccessible(true);
 			return (SDLSurface)localField.get(renderer);
 		} catch (Exception e) {
+			log.error("Failed to extract graphics from SDL renderer.");
 			return null;
 		}
 	}
@@ -731,7 +733,57 @@ public class ResourceHolderCustomAssetExtension {
 			localField.setAccessible(true);
 			return (Graphics2D)localField.get(renderer);
 		} catch (Exception e) {
+			log.error("Failed to extract graphics from Swing renderer.");
 			return null;
+		}
+	}
+
+	public static Graphics getGraphicsSlick(RendererSlick renderer) {
+		Class<RendererSlick> local = RendererSlick.class;
+		Field localField;
+		try {
+			localField = local.getDeclaredField("graphics");
+			localField.setAccessible(true);
+			return (Graphics)localField.get(renderer);
+		} catch (Exception e) {
+			log.error("Failed to extract graphics from Slick renderer.");
+			return null;
+		}
+	}
+
+	public static void setGraphicsSDL(RendererSDL renderer, SDLSurface grp) {
+		Class<RendererSDL> local = RendererSDL.class;
+		Field localField;
+		try {
+			localField = local.getDeclaredField("graphics");
+			localField.setAccessible(true);
+			localField.set(renderer, grp);
+		} catch (Exception e) {
+			log.error("Failed to extract graphics from SDL renderer.");
+		}
+	}
+
+	public static void setGraphicsSwing(RendererSwing renderer, Graphics2D grp) {
+		Class<RendererSwing> local = RendererSwing.class;
+		Field localField;
+		try {
+			localField = local.getDeclaredField("graphics");
+			localField.setAccessible(true);
+			localField.set(renderer, grp);
+		} catch (Exception e) {
+			log.error("Failed to extract graphics from Swing renderer.");
+		}
+	}
+
+	public static void setGraphicsSlick(RendererSlick renderer, Graphics grp) {
+		Class<RendererSlick> local = RendererSlick.class;
+		Field localField;
+		try {
+			localField = local.getDeclaredField("graphics");
+			localField.setAccessible(true);
+			localField.set(renderer, grp);
+		} catch (Exception e) {
+			log.error("Failed to extract graphics from Slick renderer.");
 		}
 	}
 }
