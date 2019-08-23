@@ -397,7 +397,7 @@ public class FireworkChallenge extends DummyMode {
 		// Menu
 		if(engine.owner.replayMode == false) {
 			// Configuration changes
-			int change = updateCursor(engine, 3);
+			int change = updateCursor(engine, 2);
 
 			if(change != 0) {
 				engine.playSE("change");

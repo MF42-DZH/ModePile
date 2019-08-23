@@ -80,10 +80,16 @@ public class ScrollingMarqueeText {
 		
 		mainHeadingString = "";
 		mainTextString = "";
+
+		StringBuilder mHS = new StringBuilder(mainHeadingString);
+		StringBuilder mTS = new StringBuilder(mainTextString);
 		for (int i = 0; i < headings.length; i++) {
-			mainTextString += (new String(new char[headings[i].length()]).replace("\0", " ")) + " " + texts[i] + ((i < headings.length - 1) ? " / " : "");
-			mainHeadingString += headings[i] + " " + (new String(new char[texts[i].length()]).replace("\0", " ")) + ((i < headings.length - 1) ? " / " : "");
+			mHS.append(new String(new char[headings[i].length()]).replace("\0", " ")).append(" ").append(texts[i]).append((i < headings.length - 1) ? " / " : "");
+			mTS.append(headings[i]).append(" ").append(new String(new char[texts[i].length()]).replace("\0", " ")).append((i < headings.length - 1) ? " / " : "");
 		}
+
+		mainHeadingString = mHS.toString();
+		mainTextString = mTS.toString();
 	}
 	
 	public void drawAtY(GameEngine engine, EventReceiver receiver, int playerID, double y, int size, double progress) {
