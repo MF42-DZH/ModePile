@@ -287,6 +287,11 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		}
 	}
 
+	/**
+	 * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+	 * @param holder Storage instance
+	 * @param name Image name
+	 */
 	public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
 		final Object image = holder.getImageAt(name);
 		if (image == null) return;

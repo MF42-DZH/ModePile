@@ -90,6 +90,15 @@ public class ImageChunk {
 		}
 	}
 
+	public int getAnchorType() {
+		return anchorType;
+	}
+
+	public void setAnchorType(int anchorType) {
+		this.anchorType = anchorType;
+		calibrateDrawLocation();
+	}
+
 	public void setAnchorLocation(int[] anchorLocation) {
 		this.anchorLocation = anchorLocation;
 		calibrateDrawLocation();

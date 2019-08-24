@@ -295,7 +295,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 
 		modifyValues(null, null, null);
 
-		log.debug("Non-custom horizontal bars background modified (New Skin: " + bg + ").");
+		log.debug("Non-custom sliding tiles background modified (New Skin: " + bg + ").");
 		log.warn("Please set up new values using modifyValues(...)");
 	}
 
@@ -306,7 +306,23 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 
 		reset();
 
-		log.debug("Custom horizontal bars background modified (New File Path: " + filePath + ").");
+		log.debug("Custom sliding tiles background modified (New File Path: " + filePath + ").");
+	}
+
+	/**
+	 * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+	 *
+	 * @param holder Storage instance
+	 * @param name   Image name
+	 */
+	@Override
+	public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+		custom = true;
+		customHolder.putImageAt(holder.getImageAt(name), imageName);
+
+		reset();
+
+		log.debug("Custom sliding tiles background modified (New Image Reference: " + name + ").");
 	}
 
 	/**

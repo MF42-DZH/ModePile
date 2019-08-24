@@ -17,7 +17,8 @@ import java.util.ArrayList;
 public class ThrowawayTestMode extends MarathonModeBase {
 	private int initialBG, initialFadeBG;
 	// private BackgroundCircularRipple backgroundCircularRipple;
-	private BackgroundTGM3Style TIbg;
+	// private BackgroundTGM3Style TIbg;
+	private BackgroundInterlaceHorizontal HIbg;
 	// private ExamSpinner es;
 	private int passframe;
 
@@ -93,7 +94,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		}
 
 		// backgroundCircularRipple = new BackgroundCircularRipple(engine, startlevel,8, 8,320, 240, 40f, 12,-1,1f,0.75f);
-		TIbg = new BackgroundTGM3Style("res/graphics/bg0000.png", 0);
+		// TIbg = new BackgroundTGM3Style("res/graphics/bg0000.png", 0);
+		HIbg = new BackgroundInterlaceHorizontal(startlevel,1, 60, 1f, 0.075f, true, false);
 		passframe = 0;
 
 		engine.owner.backgroundStatus.bg = startlevel;
@@ -106,8 +108,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public boolean onSetting(GameEngine engine, int playerID) {
 		// AnimatedBackgroundHook.setBGState(receiver, true);
-		TIbg.reset();
-		TIbg.setBG("res/graphics/bg0000.png");
+		HIbg.reset();
+		//HIbg.setBG(0);
 
 		// NET: Net Ranking
 		if(netIsNetRankingDisplayMode) {
@@ -132,6 +134,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 							if(startlevel > 19) startlevel = 0;
 						}
 						engine.owner.backgroundStatus.bg = startlevel;
+						HIbg.setBG(startlevel);
 						break;
 					case 1:
 						//enableTSpin = !enableTSpin;
@@ -221,7 +224,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	public boolean onReady(GameEngine engine, int playerID) {
 		if (engine.statc[0] == 0) {
 			// backgroundCircularRipple.setBG(startlevel);
-			TIbg.setSeed(engine.randSeed);
+			// TIbg.setSeed(engine.randSeed);
 			pCoordList.clear();
 			cPiece = null;
 		}
@@ -244,7 +247,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
 			engine.owner.backgroundStatus.bg = initialBG;
 			engine.owner.backgroundStatus.fadebg = initialFadeBG;
-			TIbg.reset();
+			HIbg.reset();
 		} else {
 			// backgroundCircularRipple.modifyValues(null,null,1f * ((float)(engine.statistics.level + 1) / 20f),null, null);
 
@@ -256,7 +259,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				engine.owner.backgroundStatus.fadebg = -1;
 			}
 
-			TIbg.update();
+			HIbg.update();
 		}
 	}
 
@@ -442,13 +445,13 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			// owner.backgroundStatus.fadesw = true;
 			// owner.backgroundStatus.fadecount = 0;
 			// owner.backgroundStatus.fadebg = engine.statistics.level;
-			// backgroundCircularRipple.setBG(engine.statistics.level);
+			HIbg.setBG(engine.statistics.level);
 			initialBG = engine.statistics.level;
 			initialFadeBG = engine.statistics.level;
 
-			if (engine.statistics.level == 10) {
-				TIbg.setBG("res/graphics/bg0100.png");
-			}
+			//if (engine.statistics.level == 10) {
+				//TIbg.setBG("res/graphics/bg0100.png");
+			//}
 
 			setSpeed(engine);
 			engine.playSE("levelup");
@@ -458,7 +461,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public void renderFirst(GameEngine engine, int playerID) {
 		if( !((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false))) ) {
-			TIbg.draw(engine, playerID);
+			HIbg.draw(engine, playerID);
 		}
 	}
 
@@ -531,7 +534,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				for (int[] loc : pCoordList) {
 					int cx = baseX + (16 * loc[0]);
 					int cy = baseY + (16 * loc[1]);
-					RendererExtension.drawPiece(receiver, cx, cy, cPiece, 1f, 0f);
+					RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
 				}
 			}
 

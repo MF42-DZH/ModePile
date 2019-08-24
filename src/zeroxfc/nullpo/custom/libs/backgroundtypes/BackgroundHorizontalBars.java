@@ -88,6 +88,18 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
 		log.debug("Custom horizontal bars background modified (New File Path: " + filePath + ").");
 	}
 
+	/**
+	 * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+	 *
+	 * @param holder Storage instance
+	 * @param name   Image name
+	 */
+	@Override
+	public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+		customHolder.putImageAt(holder.getImageAt(name), imageName);
+		log.debug("Custom horizontal bars background modified (New Image Reference: " + name + ").");
+	}
+
 	private void setup(int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
 		if (pulseBaseScale == null || pulseScaleVariance == null || sliceSize == null) {
 			chunks = new ImageChunk[AMT];

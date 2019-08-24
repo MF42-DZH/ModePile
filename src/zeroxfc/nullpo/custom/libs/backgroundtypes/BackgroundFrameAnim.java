@@ -185,6 +185,20 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
 	@Override
 	public void setBG(String filePath) {
 		customHolder.loadImage(filePath, imageName);
+		log.debug("Custom frame animation background modified (New File Path: " + filePath + ").");
+		setup();
+	}
+
+	/**
+	 * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+	 *
+	 * @param holder Storage instance
+	 * @param name   Image name
+	 */
+	@Override
+	public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+		customHolder.putImageAt(holder.getImageAt(name), imageName);
+		log.debug("Custom frame animation background modified (New Image Reference: " + name + ").");
 		setup();
 	}
 

@@ -197,6 +197,18 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
 	}
 
 	/**
+	 * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+	 *
+	 * @param holder Storage instance
+	 * @param name   Image name
+	 */
+	@Override
+	public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+		customHolder.putImageAt(holder.getImageAt(name), imageName);
+		log.debug("Custom diagonal ripple background modified (New Image Reference: " + name + ").");
+	}
+
+	/**
 	 * This last one is important. In the case that any of the child types are used, it allows identification.
 	 * The identification can be used to allow casting during operations.
 	 *

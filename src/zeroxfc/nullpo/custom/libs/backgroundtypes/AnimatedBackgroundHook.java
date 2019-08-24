@@ -55,14 +55,16 @@ public abstract class AnimatedBackgroundHook {
 	 *
 	 * Please add a new one for every new background type made.
 	 */
-	public static final int ANIMATION_NONE = 0,
-			                ANIMATION_FRAME_ANIM = 1,
-	                        ANIMATION_PULSE_HORIZONTAL_BARS = 2,
-	                        ANIMATION_PULSE_VERTICAL_BARS = 3,
-	                        ANIMATION_CIRCULAR_RIPPLE = 4,
-	                        ANIMATION_DIAGONAL_RIPPLE = 5,
-	                        ANIMATION_SLIDING_TILES = 6,  // NOTE: SDL window handling is gross.
-	                        ANIMATION_TGM3TI_STYLE = 7;  // NOTE: Swing and SDL will not be able to use rotations.
+	public static final int ANIMATION_NONE = 0,                   // No animation. Essentially a quick-switchable custom BG.
+			                ANIMATION_FRAME_ANIM = 1,             // Full frame 640x480 animation at up to 60 FPS.
+	                        ANIMATION_PULSE_HORIZONTAL_BARS = 2,  // Pulsating horizontal bars, like waves across a pseudo-fluid.
+	                        ANIMATION_PULSE_VERTICAL_BARS = 3,    // Pulsating vertical bars, like waves across a pseudo-fluid.
+	                        ANIMATION_CIRCULAR_RIPPLE = 4,        // Droplets on a smooth psudo-liquid.
+	                        ANIMATION_DIAGONAL_RIPPLE = 5,        // Droplets on a smooth psudo-liquid.
+	                        ANIMATION_SLIDING_TILES = 6,          // NOTE: SDL window handling is gross.
+	                        ANIMATION_TGM3TI_STYLE = 7,           // NOTE: Swing and SDL will not be able to use rotations.
+	                        ANIMATION_INTERLACE_HORIZONTAL = 8,   // I hope you like Earthbound.
+	                        ANIMATION_INTERLACE_VERTICAL = 9;     // I hope you like Earthbound.
 
 	/** ResourceHolder--- types */
 	public static final int HOLDER_SLICK = 0,
@@ -233,6 +235,13 @@ public abstract class AnimatedBackgroundHook {
 	 * @param filePath File path of new background
 	 */
 	public abstract void setBG(String filePath);
+
+	/**
+	 * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+	 * @param holder Storage instance
+	 * @param name Image name
+	 */
+	public abstract void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name);
 
 	/**
 	 * This last one is important. In the case that any of the child types are used, it allows identification.

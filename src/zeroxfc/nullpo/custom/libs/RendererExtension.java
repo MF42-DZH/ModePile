@@ -35,6 +35,7 @@ package zeroxfc.nullpo.custom.libs;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.event.EventReceiver;
+import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.gui.EffectObject;
 import mu.nu.nullpo.gui.sdl.NullpoMinoSDL;
 import mu.nu.nullpo.gui.sdl.RendererSDL;
@@ -128,6 +129,35 @@ public class RendererExtension {
 		for(int i = 0; i < piece.getMaxBlock(); i++) {
 			int x2 = x + (int)(piece.dataX[piece.direction][i] * 16 * scale);
 			int y2 = y + (int)(piece.dataY[piece.direction][i] * 16 * scale);
+
+			Block blkTemp = new Block(piece.block[i]);
+			blkTemp.darkness = darkness;
+
+			drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale, blkTemp.attribute);
+		}
+	}
+
+	/**
+	 * Draw a custom-scaled piece that does not have to have a scale of 0.5f, 1f or 2f.<br />
+	 * Does not draw blocks which intersect the area outside the GameEngine instance's field.
+	 * @param receiver Renderer to draw with
+	 * @param x X-coordinate of piece's top-left corner
+	 * @param y Y-coordinate of piece's top-left corner
+	 * @param piece The piece to draw
+	 * @param scale Scale factor at which the piece is drawn in
+	 * @param darkness Darkness value (0f = None, negative = lighter, positive = darker)
+	 */
+	public static void drawScaledPiece(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, Piece piece, float scale, float darkness) {
+		for(int i = 0; i < piece.getMaxBlock(); i++) {
+			int x2 = x + (int)(piece.dataX[piece.direction][i] * 16 * scale);
+			int y2 = y + (int)(piece.dataY[piece.direction][i] * 16 * scale);
+
+			final int minX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+			final int minY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+			final int maxX = minX + ((engine.field.getWidth() - 1) * 16);
+			final int maxY = minY + ((FieldManipulation.getFullHeight(engine.field) - 1) * 16);
+
+			if (x2 < minX || y2 < minY || x2 > maxX || y2 > maxY) continue;
 
 			Block blkTemp = new Block(piece.block[i]);
 			blkTemp.darkness = darkness;
