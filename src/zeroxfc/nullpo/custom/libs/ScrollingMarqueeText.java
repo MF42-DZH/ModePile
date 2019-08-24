@@ -12,8 +12,7 @@
  * When using this library in a mode / library pack of your own, the following
  * conditions must be satisfied:
  *     - This license must remain visible at the top of the document, unmodified.
- *     - Only binaries of this library are allowed to be distributed unless at the
- *       permission of the Library Creator.
+ *     - You are allowed to use this library for any modding purpose.
  *         - If this is the case, the Library Creator must be credited somewhere.
  *             - Source comments only are fine, but in a README is recommended.
  *     - Modification of this library is allowed, but only in the condition that a
@@ -93,8 +92,8 @@ public class ScrollingMarqueeText {
 	}
 	
 	public void drawAtY(GameEngine engine, EventReceiver receiver, int playerID, double y, int size, double progress) {
-		int mainOffset1 = (40 * SIZES[size]) - (int)((progress) * ((40 * SIZES[size]) + ((mainHeadingString.length() + EXCESS_LENGTH) * SIZES[size])));
-		int mainOffset2 = (40 * SIZES[size]) - (int)((progress) * ((40 * SIZES[size]) + ((mainTextString.length() + EXCESS_LENGTH) * SIZES[size])));
+		int mainOffset1 = (int)(40 * SIZES[size] / SCALES_FLOAT[size]) - (int)((progress) * ((40 * SIZES[size]) + ((mainHeadingString.length() + EXCESS_LENGTH) * SIZES[size])));
+		int mainOffset2 = (int)(40 * SIZES[size] / SCALES_FLOAT[size]) - (int)((progress) * ((40 * SIZES[size]) + ((mainTextString.length() + EXCESS_LENGTH) * SIZES[size])));
 		receiver.drawDirectFont(engine, playerID, mainOffset1, (int)(y * SIZES[size]), mainHeadingString, headingColour, SCALES_FLOAT[size]);
 		receiver.drawDirectFont(engine, playerID, mainOffset2, (int)(y * SIZES[size]), mainTextString, textColour, SCALES_FLOAT[size]);
 	}
