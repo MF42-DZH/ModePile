@@ -34,10 +34,26 @@
 package zeroxfc.nullpo.custom.libs;
 
 import mu.nu.nullpo.gui.sdl.ResourceHolderSDL;
+import mu.nu.nullpo.gui.sdl.SoundManagerSDL;
 import mu.nu.nullpo.gui.slick.ResourceHolder;
+import mu.nu.nullpo.gui.slick.SoundManager;
 import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
+import mu.nu.nullpo.gui.swing.WaveEngine;
+import org.apache.log4j.Logger;
+import org.newdawn.slick.Sound;
+import sdljava.mixer.MixChunk;
+import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
+
+import javax.sound.sampled.Clip;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class SoundLoader {
+	/** Debug log */
+	private static final Logger log = Logger.getLogger(SoundLoader.class);
+
+	/** Soundpack IDs */
 	public static final int LOADTYPE_FIREWORKS = 0,
 							LOADTYPE_SCANNER = 1,
 							LOADTYPE_MINESWEEPER = 2,
@@ -56,11 +72,13 @@ public class SoundLoader {
 		case LOADTYPE_SCANNER:
 			importSound("linescanned");
 			importSound("linescannermove");
+			break;
 		case LOADTYPE_MINESWEEPER:
 			importSound("explosion1");
 			importSound("explosion2");
 			importSound("explosion3");
 			importSound("explosion4");
+			break;
 		case LOADTYPE_COLLAPSE:
 			importSound("bombexplode");
 			importSound("landing");
@@ -70,11 +88,18 @@ public class SoundLoader {
 			importSound("normalclear");
 			importSound("nolanding");
 			importSound("noclear");
+			break;
 		default:
 			break;
 		}
 	}
-	
+
+	/**
+	 * Private sound import method for use with soundpacks.<br />
+	 * <br />
+	 * Credit goes to <code>GlitchyPSI</code> for the base of this code snippet.
+	 * @param soundName Name of sound in pack
+	 */
 	private static void importSound(String soundName) {
 		String skindir = null;
 		int holderType = -1;
@@ -104,6 +129,11 @@ public class SoundLoader {
 		}
 	}
 
+	/**
+	 * Public sound import method when not using a soundpack.
+	 * @param filePath Path to sound
+ 	 * @param soundName Name to store sound as
+	 */
 	public static void importSound(String filePath, String soundName) {
 		if (ResourceHolderSwing.soundManager != null) {
 			ResourceHolderSwing.soundManager.load(soundName, filePath);
@@ -112,5 +142,89 @@ public class SoundLoader {
 		} else if (ResourceHolderSDL.soundManager != null) {
 			ResourceHolderSDL.soundManager.load(soundName, filePath);
 		}
+	}
+
+	/**
+	 * Gets all the internal names for all the loaded sounds.<br />
+	 * Useful for random sound selection or debugging.
+	 * @return ArrayList containing the internal names for all sounds.
+	 */
+	public static ArrayList<String> getSoundNames() {
+		ArrayList<String> soundList = new ArrayList<>();
+		final int holderType = AnimatedBackgroundHook.getResourceHook();
+
+		/*
+		 * XXX: welp, i guess it's time to use reflection again... apologies in advance for this atrocity.
+		 */
+		Field localField;
+		switch (holderType) {
+			case AnimatedBackgroundHook.HOLDER_SLICK:
+				Class<SoundManager> slickSound = SoundManager.class;
+				try {
+					localField = slickSound.getDeclaredField("clipMap");
+					localField.setAccessible(true);
+
+					/*
+					 * This should not return anything other than HashMap<String, Sound>,
+					 * as verified in the source code (see SoundManager.java).
+					 *
+					 * Use @SuppressWarnings("unchecked").
+					 */
+					HashMap<String, Sound> slickSE = (HashMap<String, Sound>)localField.get(ResourceHolder.soundManager);
+
+					soundList.addAll(slickSE.keySet());
+					log.info("Sound name loading from Slick soundManager successful.");
+				} catch (Exception e) {
+					log.error("Sound name loading from Slick soundManager failed.");
+				}
+
+				break;
+			case AnimatedBackgroundHook.HOLDER_SWING:
+				Class<WaveEngine> swingSound = WaveEngine.class;
+				try {
+					localField = swingSound.getDeclaredField("clipMap");
+					localField.setAccessible(true);
+
+					/*
+					 * This should not return anything other than HashMap<String, Clip>,
+					 * as verified in the source code (see WaveEngine.java).
+					 *
+					 * Use @SuppressWarnings("unchecked").
+					 */
+					HashMap<String, Clip> swingSE = (HashMap<String, Clip>)localField.get(ResourceHolderSwing.soundManager);
+
+					soundList.addAll(swingSE.keySet());
+					log.info("Sound name loading from Swing soundManager successful.");
+				} catch (Exception e) {
+					log.error("Sound name loading from Swing soundManager failed.");
+				}
+
+				break;
+			case AnimatedBackgroundHook.HOLDER_SDL:
+				Class<SoundManagerSDL> sdlSound = SoundManagerSDL.class;
+				try {
+					localField = sdlSound.getDeclaredField("clipMap");
+					localField.setAccessible(true);
+
+					/*
+					 * This should not return anything other than HashMap<String, MixChunk>,
+					 * as verified in the source code (see SoundManagerSDL.java).
+					 *
+					 * Use @SuppressWarnings("unchecked").
+					 */
+					HashMap<String, MixChunk> sdlSE = (HashMap<String, MixChunk>)localField.get(ResourceHolderSDL.soundManager);
+
+					soundList.addAll(sdlSE.keySet());
+					log.info("Sound name loading from SDL soundManager successful.");
+				} catch (Exception e) {
+					log.error("Sound name loading from SDL soundManager failed.");
+				}
+
+				break;
+			default:
+				return null;
+		}
+
+		return soundList;
 	}
 }

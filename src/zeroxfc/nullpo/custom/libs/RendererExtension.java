@@ -60,7 +60,7 @@ import java.util.ArrayList;
 
 public class RendererExtension {
 	/** Debug logger */
-	private static Logger log = Logger.getLogger(RendererExtension.class);
+	private static final Logger log = Logger.getLogger(RendererExtension.class);
 
 	/** Run class in debug mode? */
 	private static final boolean DEBUG = true;
@@ -237,6 +237,13 @@ public class RendererExtension {
 				effectList = local.getDeclaredField("effectlist");
 				effectList.setAccessible(true);
 
+				/*
+				 * This should not return anything other than ArrayList<EffectObject>,
+				 * as verified in the source code (see RendererSlick.java, RendererSwing.java
+				 * and RendererSDL.java).
+				 *
+				 * Use @SuppressWarnings("unchecked").
+				 */
 				list = (ArrayList<EffectObject>)(effectList.get(receiver));
 
 				list.add(new EffectObject(effectType, x, y, color));
@@ -246,8 +253,6 @@ public class RendererExtension {
 			if (DEBUG) log.error("Failed to extract, modify and place back effectList.");
 		}
 	}
-
-	// TODO: Make aligned piece and block draw methods.
 
 	/**
 	 * Draws a block that can be scaled to a scale that isn't 0.5f, 1f or 2f.
@@ -683,5 +688,147 @@ public class RendererExtension {
 		}
 
 		drawScaledBlock(receiver, x - offsetX, y - offsetY, color, skin, bone, darkness, alpha, scale, attr);
+	}
+
+	/**
+	 * Draws a speed meter at any pixel location on the screen, with any scale.
+	 * @param receiver Renderer to draw with
+	 * @param x X-coordinate of top-left corner
+	 * @param y Y-coordinate of top-left corner
+	 * @param value Float in the range <code>0 <= value <= 1</code> that denotes how full the meter is
+	 * @param scale Scale factor of speed meter drawn
+	 */
+	public static void drawDirectSpeedMeter(EventReceiver receiver, int x, int y, float value, float scale) {
+		final int renderer = AnimatedBackgroundHook.getResourceHook();
+
+		final int baseWidth = (int)(42 * scale);
+		final int meterMax = baseWidth - 2;
+		final int baseHeight = (int)(4 * scale);
+
+		if (renderer == AnimatedBackgroundHook.HOLDER_SLICK) {
+			//region Slick Case
+			Graphics graphics = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick)receiver);
+
+			if(graphics == null) return;
+
+			graphics.setColor(Color.black);
+			graphics.drawRect(x, y, baseWidth - 1, baseHeight - 1);
+			graphics.setColor(Color.green);
+			graphics.fillRect(x + 1, y + 1, baseWidth - 2, baseHeight - 2);
+
+			int tempSpeedMeter = (int)(value * meterMax);
+			if((tempSpeedMeter < 0) || (tempSpeedMeter > meterMax)) tempSpeedMeter = meterMax;
+
+			if(tempSpeedMeter > 0) {
+				graphics.setColor(Color.red);
+				graphics.fillRect(x + 1, y + 1, tempSpeedMeter, baseHeight - 1);
+			}
+
+			graphics.setColor(Color.white);
+			//endregion Slick Case
+		} else if (renderer == AnimatedBackgroundHook.HOLDER_SWING) {
+			//region Swing Case
+			Graphics2D graphics = ResourceHolderCustomAssetExtension.getGraphicsSwing((RendererSwing)receiver);
+
+			if(graphics == null) return;
+
+			graphics.setColor(java.awt.Color.black);
+			graphics.drawRect(x, y, baseWidth - 1, baseHeight - 1);
+			graphics.setColor(java.awt.Color.green);
+			graphics.fillRect(x + 1, y + 1, baseWidth - 2, baseHeight - 2);
+
+			int tempSpeedMeter = (int)(value * meterMax);
+			if((tempSpeedMeter < 0) || (tempSpeedMeter > meterMax)) tempSpeedMeter = meterMax;
+
+			if(tempSpeedMeter > 0) {
+				graphics.setColor(java.awt.Color.red);
+				graphics.fillRect(x + 1, y + 1, tempSpeedMeter + 1, baseHeight - 1);
+			}
+
+			graphics.setColor(java.awt.Color.white);
+			//endregion Swing Case
+		} else if (renderer == AnimatedBackgroundHook.HOLDER_SDL) {
+			//region SDL Case
+			SDLSurface graphics = ResourceHolderCustomAssetExtension.getGraphicsSDL((RendererSDL)receiver);
+
+			if(graphics == null) return;
+
+			SDLRect rectSrc = new SDLRect(0, 0, 42, 4);
+			SDLRect rectDst = new SDLRect(x, y, baseWidth, baseHeight);
+
+			try {
+				ResourceHolderSDL.imgSprite.blitSurface(rectSrc, graphics, rectDst);
+			} catch (Exception e) {
+				log.debug("SDLException thrown", e);
+			}
+
+			int tempSpeedMeter = (int)(value * meterMax);
+			if((tempSpeedMeter < 0) || (tempSpeedMeter > meterMax)) tempSpeedMeter = meterMax;
+			int tempSpeedMeter2 = (int)(value * 40);
+			if((tempSpeedMeter2 < 0) || (tempSpeedMeter2 > 40)) tempSpeedMeter2 = 40;
+
+			if(tempSpeedMeter > 0) {
+				SDLRect rectSrc2 = new SDLRect(0, 4, tempSpeedMeter2, 2);
+				SDLRect rectDst2 = new SDLRect(x + 1, y + 1, tempSpeedMeter, baseHeight - 2);
+
+				try {
+					ResourceHolderSDL.imgSprite.blitSurface(rectSrc2, graphics, rectDst2);
+				} catch (Exception e) {
+					log.debug("SDLException thrown", e);
+				}
+			}
+			//endregion SDL Case
+		} else {
+			log.error("Invalid renderer detected (Type -1)");
+		}
+	}
+
+	/**
+	 * Draws a speed meter aligned to one of its corners, a midpoint of one of its sides or its centre.
+	 * @param receiver Renderer to draw with
+	 * @param x X-coordinate of anchor point
+	 * @param y Y-coordinate of anchor point
+	 * @param alignment Alignment setting ID (use the ones in this class)
+	 * @param value Float in the range <code>0 <= value <= 1</code> that denotes how full the meter is
+	 * @param scale Scale factor of speed meter drawn
+	 */
+	public static void drawAlignedSpeedMeter(EventReceiver receiver, int x, int y, int alignment, float value, float scale) {
+		final int baseWidth = (int)(42 * scale);
+		final int baseHeight = (int)(4 * scale);
+
+		int offsetX, offsetY;
+		switch (alignment) {
+			case ALIGN_TOP_MIDDLE:
+			case ALIGN_MIDDLE_MIDDLE:
+			case ALIGN_BOTTOM_MIDDLE:
+				offsetX = (int)(baseWidth * 0.5f * scale);
+				break;
+			case ALIGN_TOP_RIGHT:
+			case ALIGN_MIDDLE_RIGHT:
+			case ALIGN_BOTTOM_RIGHT:
+				offsetX = (int)(baseWidth * scale);
+				break;
+			default:
+				offsetX = 0;
+				break;
+		}
+
+		switch (alignment) {
+			case ALIGN_MIDDLE_LEFT:
+			case ALIGN_MIDDLE_MIDDLE:
+			case ALIGN_MIDDLE_RIGHT:
+				offsetY = (int)(baseHeight * 0.5f * scale);
+				break;
+			case ALIGN_BOTTOM_LEFT:
+			case ALIGN_BOTTOM_MIDDLE:
+			case ALIGN_BOTTOM_RIGHT:
+				offsetY = (int)(baseHeight * scale);
+				break;
+			default:
+				offsetY = 0;
+				break;
+		}
+
+		drawDirectSpeedMeter(receiver, x - offsetX, y - offsetY, value, scale);
 	}
 }

@@ -391,39 +391,52 @@ public class FieldManipulation {
 	 */
 	public static double fieldCompare(Field a, Field b, boolean exact, boolean colourMatch) {
 		if (exact) {
+			/*
+			 * This path attempts to match fields exactly.
+			 * This means both fields must have the same dimensions.
+			 */
 			if (a.getWidth() != b.getWidth()) return 0d;
 			if ((a.getHiddenHeight() + a.getHiddenHeight()) != (b.getHiddenHeight() + b.getHiddenHeight())) return 0d;
 
 			final int total = 2 * a.getWidth() * (a.getHeight() + a.getHiddenHeight());
 			int current = 0;
-			int excess = 0;
 
 			for (int y = (-1 * a.getHiddenHeight()); y < a.getHeight(); y++) {
 				for (int x = 0; x < a.getWidth(); x++) {
 					Block blkA = a.getBlock(x, y);
 					Block blkB = b.getBlock(x, y);
 
-					if (blkA.color == Block.BLOCK_COLOR_NONE && blkB.color == Block.BLOCK_COLOR_NONE) {
-						current += 2;
-					} else {
-						if (blkA.color != Block.BLOCK_COLOR_NONE && blkB.color != Block.BLOCK_COLOR_NONE) {
-							if (colourMatch) {
-								if (blkA.color == blkB.color) {
-									current += 2;
-								} else {
-									current += 1;
-								}
-							} else {
+					if (blkA != null && blkB != null) {
+						if (colourMatch) {
+							if (blkA.isEmpty() && blkB.isEmpty()) {
 								current += 2;
+							} else {
+								if (!blkA.isEmpty() && blkB.isEmpty()) {
+									current -= 6;
+								} else if (!blkA.isEmpty() && !blkB.isEmpty()) {
+									if (blkA.color == blkB.color) {
+										current += 2;
+									} else {
+										current += 1;
+									}
+								}
 							}
 						} else {
-							excess += 3;
+							if (blkA.isEmpty() && blkB.isEmpty()) {
+								current += 2;
+							} else {
+								if (!blkA.isEmpty() && blkB.isEmpty()) {
+									current -= 6;
+								} else if (!blkA.isEmpty() && !blkB.isEmpty()) {
+									current += 2;
+								}
+							}
 						}
 					}
 				}
 			}
 
-			double res = ((double)current / (double)total) - ((double)excess / (double)total);
+			double res = (double)current / (double)total;
 			if (res < 0) res = 0;
 			return res;
 		} else {

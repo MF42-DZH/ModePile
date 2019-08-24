@@ -9,10 +9,10 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 // import zeroxfc.nullpo.custom.libs.ExamSpinner;
-import zeroxfc.nullpo.custom.libs.FieldManipulation;
-import zeroxfc.nullpo.custom.libs.GameTextUtilities;
-import zeroxfc.nullpo.custom.libs.RendererExtension;
+import zeroxfc.nullpo.custom.libs.*;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.*;
+
+import java.util.ArrayList;
 
 public class ThrowawayTestMode extends MarathonModeBase {
 	private int initialBG, initialFadeBG;
@@ -29,6 +29,13 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			{ 1, 1, 1, 1, 1, 1 }
 	};
 
+	private static final double[][] POINTS = {
+			new double[] { 0, 360 },
+			new double[] { 100, 0 },
+			new double[] { 500, 480 },
+			new double[] { 640, 120 }
+	};
+
 	/*
 	 * Mode name
 	 */
@@ -36,6 +43,9 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	public String getName() {
 		return "THROWAWAY";
 	}
+
+	private ArrayList<int[]> pCoordList;
+	private Piece cPiece;
 
 	/*
 	 * Initialization
@@ -60,6 +70,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 		initialBG = AnimatedBackgroundHook.getBGState(owner);
 		initialFadeBG = AnimatedBackgroundHook.getFadeBGState(owner);
+		pCoordList = new ArrayList<>();
+		cPiece = null;
 
 		rankingRank = -1;
 		rankingScore = new int[RANKING_TYPE][RANKING_MAX];
@@ -210,9 +222,17 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		if (engine.statc[0] == 0) {
 			// backgroundCircularRipple.setBG(startlevel);
 			TIbg.setSeed(engine.randSeed);
+			pCoordList.clear();
+			cPiece = null;
 		}
 
 		return false;
+	}
+
+	@Override
+	public void onFirst(GameEngine engine, int playerID) {
+		pCoordList.clear();
+		cPiece = null;
 	}
 
 	@Override
@@ -248,10 +268,25 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		engine.statistics.scoreFromHardDrop += fall * 2;
 		engine.statistics.score += fall * 2;
 
-		int x = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID) + (16 * engine.nowPieceObject.getWidth() / 2);
-		int y = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID) + (16 * engine.nowPieceObject.getHeight() / 2);
+		//int x = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID) + (16 * engine.nowPieceObject.getWidth() / 2);
+		//int y = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID) + (16 * engine.nowPieceObject.getHeight() / 2);
 
-		RendererExtension.addBlockBreakEffect(receiver, 1, x, y, 1);
+		int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+		int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+		cPiece = new Piece(engine.nowPieceObject);
+		for (int i = 1; i <= fall; i++) {
+			pCoordList.add(
+					new int[] { engine.nowPieceX, engine.nowPieceY - i }
+			);
+		}
+		for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+			int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+			int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+
+			RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+		}
+
+		//RendererExtension.addBlockBreakEffect(receiver, 1, x, y, 1);
 		//
 //		backgroundCircularRipple.manualRipple(x, y);
 	}
@@ -482,9 +517,23 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 			if (engine.field != null) GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, baseX + 80, baseY, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, String.format("%.2f", FieldManipulation.fieldCompare(engine.field, T_SHAPE) * 100) + "%", 0, 1f);
 
-			float scale = ((engine.statistics.time % 61) / 60f) * 2.5f;
-			scale += 0.5f;
-			RendererExtension.drawScaledBlock(receiver, 16, 16, 2, engine.getSkin(), false, 0f, 1f, scale, Block.BLOCK_ATTRIBUTE_VISIBLE | Block.BLOCK_ATTRIBUTE_CONNECT_LEFT | Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT);
+			//float scale = ((engine.statistics.time % 61) / 60f) * 2.5f;
+			//scale += 0.5f;
+//			float scale = 1.5f;
+//
+//			for (int i = 0; i < 7; i++) {
+//				double lval = MathHelper.pythonModulo(engine.statistics.time + i, 61) / 60d;
+//				double[] coords = Interpolation.bezier2DInterp(POINTS, lval);
+//				RendererExtension.drawAlignedScaledBlock(receiver, (int)coords[0], (int)coords[1], RendererExtension.ALIGN_MIDDLE_MIDDLE, 8 - i, engine.getSkin(), false, 0f, 1f, scale, Block.BLOCK_ATTRIBUTE_VISIBLE | Block.BLOCK_ATTRIBUTE_CONNECT_LEFT | Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT);
+//			}
+
+			if (pCoordList.size() > 0 && cPiece != null) {
+				for (int[] loc : pCoordList) {
+					int cx = baseX + (16 * loc[0]);
+					int cy = baseY + (16 * loc[1]);
+					RendererExtension.drawPiece(receiver, cx, cy, cPiece, 1f, 0f);
+				}
+			}
 
 			if ((lastevent != EVENT_NONE) && (scgettime < 120)) {
 				String strPieceName = Piece.getPieceName(lastpiece);

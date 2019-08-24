@@ -168,6 +168,31 @@ public class ResourceHolderCustomAssetExtension {
 	}
 
 	/**
+	 * Puts image in the holder at name.
+	 * @param name Image name
+	 */
+	public void putImageAt(Object image, String name) {
+		if (image == null) return;
+		try {
+			switch (holderType) {
+				case HOLDER_SLICK:
+					slickImages.put(name, (org.newdawn.slick.Image)image);
+					break;
+				case HOLDER_SWING:
+					swingImages.put(name, (java.awt.Image)image);
+					break;
+				case HOLDER_SDL:
+					sdlImages.put(name, (SDLSurface) image);
+					break;
+				default:
+					break;
+			}
+		} catch (Exception e) {
+			log.error("Unable to insert image " + image.toString() + " at " + name);
+		}
+	}
+
+	/**
 	 * Gets object that is an image instance.
 	 * <code>A CAST IS STRICTLY NECESARRY!</code>
 	 * @param name Image name

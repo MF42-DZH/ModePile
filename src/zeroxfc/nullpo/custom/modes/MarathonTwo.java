@@ -292,6 +292,13 @@ public class MarathonTwo extends MarathonModeBase {
 				try {
 					localField = slickSound.getDeclaredField("clipMap");
 					localField.setAccessible(true);
+
+					/*
+					 * This should not return anything other than HashMap<String, Sound>,
+					 * as verified in the source code (see SoundManager.java).
+					 *
+					 * Use @SuppressWarnings("unchecked").
+					 */
 					HashMap<String, Sound> slickSE = (HashMap<String, Sound>)localField.get(ResourceHolder.soundManager);
 
 					soundList.addAll(slickSE.keySet());
@@ -306,6 +313,13 @@ public class MarathonTwo extends MarathonModeBase {
 				try {
 					localField = swingSound.getDeclaredField("clipMap");
 					localField.setAccessible(true);
+
+					/*
+					 * This should not return anything other than HashMap<String, Clip>,
+					 * as verified in the source code (see WaveEngine.java).
+					 *
+					 * Use @SuppressWarnings("unchecked").
+					 */
 					HashMap<String, Clip> swingSE = (HashMap<String, Clip>)localField.get(ResourceHolderSwing.soundManager);
 
 					soundList.addAll(swingSE.keySet());
@@ -320,6 +334,13 @@ public class MarathonTwo extends MarathonModeBase {
 				try {
 					localField = sdlSound.getDeclaredField("clipMap");
 					localField.setAccessible(true);
+
+					/*
+					 * This should not return anything other than HashMap<String, MixChunk>,
+					 * as verified in the source code (see SoundManagerSDL.java).
+					 *
+					 * Use @SuppressWarnings("unchecked").
+					 */
 					HashMap<String, MixChunk> sdlSE = (HashMap<String, MixChunk>)localField.get(ResourceHolderSDL.soundManager);
 
 					soundList.addAll(sdlSE.keySet());

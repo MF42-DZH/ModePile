@@ -288,6 +288,34 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		}
 	}
 
+	public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+		final Object image = holder.getImageAt(name);
+		if (image == null) return;
+		if (!name.equals(localPath)) {
+			int[] dimOld = customHolder.getImageDimensions(imageName);
+
+			customHolder.putImageAt(image, "transitory");
+
+			int[] dim = customHolder.getImageDimensions("transitory");
+
+			if (dimOld[0] != dim[0] || dimOld[1] != dim[1]) {
+				log.warn("Using differently-sized backgrounds stop seamless transitions from occurring.");
+			}
+
+			if (dim[0] < 1024 || dim[1] < 1024) {
+				// Too small.
+				log.warn("Background size is smaller than recommended minimum size.");
+				log.info("Minimum recommended size: 1024 x 1024.");
+			} else {
+				// Successful.
+				dimTimer = 30;
+				localPath = name;
+
+				log.debug("TGM3-Sytle background modified (New Image Name: " + name + ").");
+			}
+		}
+	}
+
 	/**
 	 * This last one is important. In the case that any of the child types are used, it allows identification.
 	 * The identification can be used to allow casting during operations.

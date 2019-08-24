@@ -71,7 +71,8 @@ public abstract class AnimatedBackgroundHook {
 			                HOLDER_SDL = 2;
 
 	/**
-	 * Gets the current ResourceHolder--- type.
+	 * Gets the current resource holder type.<br />
+	 * Useful for selecting different renderers, sound engines or input handlers.
 	 * @return Integer that represents the holder type.
 	 */
 	public static int getResourceHook() {
@@ -81,6 +82,11 @@ public abstract class AnimatedBackgroundHook {
 		else return -1;
 	}
 
+	/**
+	 * Gets the last valid background number stored in a GameManager instance.
+	 * @param owner GameManager instance to check
+	 * @return Background number (0 <= bg < 19)
+	 */
 	public static int getBGState(GameManager owner) {
 		int bg = owner.backgroundStatus.bg;
 		if (bg < 0 || bg > 19) return LAST_BG;
@@ -90,6 +96,11 @@ public abstract class AnimatedBackgroundHook {
 		}
 	}
 
+	/**
+	 * Gets the last valid background number stored in a GameManager instance.
+	 * @param owner GameManager instance to check
+	 * @return Background number (0 <= bg < 19)
+	 */
 	public static int getFadeBGState(GameManager owner) {
 		int bg = owner.backgroundStatus.fadebg;
 		if (bg < 0 || bg > 19) return LAST_FADE_BG;
@@ -99,6 +110,10 @@ public abstract class AnimatedBackgroundHook {
 		}
 	}
 
+	/**
+	 * Disables the current background.
+	 * @param owner GameManager to disable BG in.
+	 */
 	public static void disableDefaultBG(GameManager owner) {
 		getBGState(owner);
 		getFadeBGState(owner);
@@ -107,11 +122,19 @@ public abstract class AnimatedBackgroundHook {
 		owner.backgroundStatus.fadebg = -1;
 	}
 
+	/**
+	 * Re-enables the current background.
+	 * @param owner GameManager to re-enable BG in.
+	 */
 	public static void enableDefaultBG(GameManager owner) {
 		owner.backgroundStatus.bg = LAST_BG;
 		owner.backgroundStatus.fadebg = LAST_FADE_BG;
 	}
 
+	/**
+	 * Gets the value of the setting that dictates whether backgrounds should be drawn.
+	 * @return <code>boolean</code>; <code>true</code> = enabled, <code>false</code> = disabled.
+	 */
 	public static boolean getInitialBGState() {
 		switch (getResourceHook()) {
 			case HOLDER_SLICK:
@@ -125,6 +148,12 @@ public abstract class AnimatedBackgroundHook {
 		}
 	}
 
+	/**
+	 * Overload of <code>getBGState()</code> that checks if the current renderer has
+	 * background rendering enabled.
+	 * @param receiver Renderer to check
+	 * @return <code>boolean</code>; <code>true</code> = enabled, <code>false</code> = disabled.
+	 */
 	public static boolean getBGState(EventReceiver receiver) {
 		try {
 			Class<EventReceiver> renderer = EventReceiver.class;
@@ -140,6 +169,11 @@ public abstract class AnimatedBackgroundHook {
 		}
 	}
 
+	/**
+	 * Sets the toggle on background rendering in the current renderer.
+	 * @param receiver Renderer to modify
+	 * @param bool State to set it to
+	 */
 	public static void setBGState(EventReceiver receiver, boolean bool) {
 		try {
 			Class<EventReceiver> renderer = EventReceiver.class;
