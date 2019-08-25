@@ -148,4 +148,15 @@ public class MathHelper {
 	public static int lcm(int a, int b) {
 		return (a * b) / gcd(a, b);
 	}
+
+	/**
+	 * Is almost equal to.
+	 * @param a Value
+	 * @param b Value
+	 * @param eps Exclusive maximum difference
+	 * @return Is the difference <= eps?
+	 */
+	public static boolean almostEqual(double a, double b, double eps){
+		return Math.abs(a - b) < eps;
+	}
 }

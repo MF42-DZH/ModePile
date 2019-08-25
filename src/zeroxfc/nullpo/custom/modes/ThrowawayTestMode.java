@@ -19,7 +19,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	// private BackgroundCircularRipple backgroundCircularRipple;
 	// private BackgroundTGM3Style TIbg;
 	private BackgroundInterlaceHorizontal HIbg;
-	// private ExamSpinner es;
+	private ExamSpinner es;
 	private int passframe;
 
 	private Field T_SHAPE;
@@ -99,11 +99,6 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		// TIbg = new BackgroundTGM3Style("res/graphics/bg0000.png", 0);
 		HIbg = new BackgroundInterlaceHorizontal(startlevel,2, 60, 1f, 0.075f, true, false);
 		passframe = 0;
-
-		// -----------------------------------------------------------
-		// TODO: Put the good hard drop effects into your other modes.
-		//       *the good stuff*
-		// -----------------------------------------------------------
 
 		engine.owner.backgroundStatus.bg = startlevel;
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
@@ -535,7 +530,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
 
-			if (engine.field != null) GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, baseX + 80, baseY, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, String.format("%.2f", FieldManipulation.fieldCompare(engine.field, T_SHAPE) * 100) + "%", 0, 1f);
+			// if (engine.field != null) GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, baseX + 80, baseY, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, String.format("%.2f", FieldManipulation.fieldCompare(engine.field, T_SHAPE) * 100) + "%", 0, 1f);
 
 			//float scale = ((engine.statistics.time % 61) / 60f) * 2.5f;
 			//scale += 0.5f;
@@ -624,16 +619,16 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 	@Override
 	public boolean onGameOver(GameEngine engine, int playerID) {
-//		if (engine.statc[0] == 0)  {
-//			passframe = 780;
-//
-//			boolean close = false;
-//			int p = 1;
-//			int diff = engine.statistics.score - 400000;
-//			if (Math.abs(diff) <= 50000) close = true;
-//			if (diff >= 0) p = 0;
-//			es = new ExamSpinner("GOOD", p, close);
-//		}
+ 		if (engine.statc[0] == 0)  {
+ 			passframe = 900;
+
+ 			boolean close = false;
+ 			int p = 1;
+ 			int diff = engine.statistics.score - 350000;
+ 			if (Math.abs(diff) <= 50000) close = true;
+ 			if (diff >= 0) p = 0;
+ 			es = new ExamSpinner("GOOD", p, close);
+ 		}
 		return false;
 	}
 
@@ -642,9 +637,9 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	 */
 	@Override
 	public void renderResult(GameEngine engine, int playerID) {
-//		if(passframe > 0) {
-//			es.draw(receiver, engine, playerID,passframe % 2 == 0);
-//		} else {
+ 		if(passframe > 0) {
+ 			es.draw(receiver, engine, playerID, (passframe / 2) % 2 == 0);
+ 		} else {
 			drawResultStats(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE,
 					STAT_SCORE, STAT_LINES, STAT_LEVEL, STAT_TIME, STAT_SPL, STAT_LPM);
 			drawResultRank(engine, playerID, receiver, 12, EventReceiver.COLOR_BLUE, rankingRank);
@@ -660,7 +655,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			} else if(netIsNetPlay && !netIsWatch && (netReplaySendStatus == 2)) {
 				receiver.drawMenuFont(engine, playerID, 1, 22, "A: RETRY", EventReceiver.COLOR_RED);
 			}
-//		}
+ 		}
 	}
 
 	/*
@@ -668,14 +663,14 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	 */
 	@Override
 	public boolean onResult(GameEngine engine, int playerID) {
-//		if(passframe > 0) {
-//			engine.allowTextRenderByReceiver = false; // Turn off RETRY/END menu
-//
-//			es.update(engine);
-//
-//			passframe--;
-//			return true;
-//		}
+ 		if(passframe > 0) {
+ 			engine.allowTextRenderByReceiver = false; // Turn off RETRY/END menu
+
+ 			es.update(engine);
+
+ 			passframe--;
+ 			return true;
+ 		}
 
 		engine.allowTextRenderByReceiver = true;
 

@@ -525,6 +525,7 @@ public class FieldManipulation {
 					// log.debug(String.format("TOTAL: %d, MAX: %d, PERCENT: %.2f", total, 2 * aB, res3 * 100));
 					return res3;
 				} else {
+					// Use the lowest common multiple + nearest neighbour scaling check method.
 					final int lcmWidth = lcm(bboxSizeA[0], bboxSizeB[0]), lcmHeight = lcm(bboxSizeA[1], bboxSizeB[1]);
 
 					final int multiplierWidthA = lcmWidth / bboxSizeA[0];

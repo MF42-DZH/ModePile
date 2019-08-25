@@ -34,6 +34,8 @@ package zeroxfc.nullpo.custom.libs;
 
 import org.apache.log4j.Logger;
 
+import java.util.Arrays;
+
 public class Interpolation {
 	/** Debug Logger */
 	private static final Logger log = Logger.getLogger(Interpolation.class);
@@ -150,5 +152,37 @@ public class Interpolation {
 
 			return result;
 		}
+	}
+
+	/**
+	 * Smooth curve interpolation of two <code>double</code> values.
+	 * @param v0 Start point
+	 * @param v1 End point
+	 * @param denominator Step ease scale (denominator > 2 where smaller = closer to linear)
+	 * @param lerpVal Proportion of point travelled (0 = start, 1 = end)
+	 * @return Interpolated value as <code>double</code>
+	 */
+	public static double smoothStep(double v0, double v1, double denominator, double lerpVal) {
+		if (denominator <= 2) denominator = 6;
+		double diff = v1 - v0;
+		double p1 = diff * (1d / denominator);
+		double p2 = diff - p1;
+
+		// log.debug(Arrays.toString(new double[] { v0, v0 + p1, v0 + p2, v1 }));
+		// log.debug(Arrays.toString(new double[] { p1, p2}));
+		// log.debug(lerpVal);
+
+		return bezier1DInterp(new double[] { v0, v0 + p1, v0 + p2, v1 }, lerpVal);
+	}
+
+	/**
+	 * Smooth curve interpolation of two <code>double</code> values.
+	 * @param v0 Start point
+	 * @param v1 End point
+	 * @param lerpVal Proportion of point travelled (0 = start, 1 = end)
+	 * @return Interpolated value as <code>double</code>
+	 */
+	public static double smoothStep(double v0, double v1, double lerpVal) {
+		return smoothStep(v0, v1, 6, lerpVal);
 	}
 }

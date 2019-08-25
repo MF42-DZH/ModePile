@@ -127,7 +127,7 @@ public class RendererExtension {
 	 */
 	public static void drawScaledPiece(EventReceiver receiver, int x, int y, Piece piece, float scale, float darkness) {
 		if (piece.big) {
-			for(int i = 0; i < piece.getMaxBlock(); i++) {
+			for(int i = 0; i < piece.block.length; i++) {
 				int x2 = x + (int)(piece.dataX[piece.direction][i] * 32 * scale);
 				int y2 = y + (int)(piece.dataY[piece.direction][i] * 32 * scale);
 
@@ -137,7 +137,7 @@ public class RendererExtension {
 				drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, 2f * scale, blkTemp.attribute);
 			}
 		} else {
-			for(int i = 0; i < piece.getMaxBlock(); i++) {
+			for(int i = 0; i < piece.block.length; i++) {
 				int x2 = x + (int)(piece.dataX[piece.direction][i] * 16 * scale);
 				int y2 = y + (int)(piece.dataY[piece.direction][i] * 16 * scale);
 
@@ -161,7 +161,7 @@ public class RendererExtension {
 	 */
 	public static void drawScaledPiece(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, Piece piece, float scale, float darkness) {
 		if (piece.big) {
-			for(int i = 0; i < piece.getMaxBlock(); i++) {
+			for(int i = 0; i < piece.block.length; i++) {
 				int x2 = x + (int)(piece.dataX[piece.direction][i] * 32 * scale);
 				int y2 = y + (int)(piece.dataY[piece.direction][i] * 32 * scale);
 
@@ -178,7 +178,7 @@ public class RendererExtension {
 				drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale * 2f, blkTemp.attribute);
 			}
 		} else {
-			for(int i = 0; i < piece.getMaxBlock(); i++) {
+			for(int i = 0; i < piece.block.length; i++) {
 				int x2 = x + (int)(piece.dataX[piece.direction][i] * 16 * scale);
 				int y2 = y + (int)(piece.dataY[piece.direction][i] * 16 * scale);
 

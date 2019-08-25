@@ -32,6 +32,8 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
+import mu.nu.nullpo.game.component.Block;
+import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import org.apache.log4j.Logger;
@@ -40,7 +42,7 @@ public class ExamSpinner {
 	private static Logger log = Logger.getLogger(ExamSpinner.class);
 
 	/**
-	 * Default asset coordinates.
+	 * Default asset coordinates and sizes.
 	 */
 	private static final int[][][] SOURCE_DETAILS = {
 			new int[][] {
@@ -61,6 +63,23 @@ public class ExamSpinner {
 			}   // Fail
 	};
 
+	private static final int[] startXs = {
+			0, 80, 160, 240  // P F P F
+	};
+
+	private static final int TravelClose = 320 * 32;
+
+	private static final int[] endXs = {
+			startXs[0] + TravelClose,
+			startXs[1] + TravelClose,
+			startXs[2] + TravelClose,
+			startXs[3] + TravelClose
+	};
+
+	private static final int spinDuration = 360;
+
+	private static final Piece HUGE_O;
+
 	private ResourceHolderCustomAssetExtension customHolder;
 	private String header, subheading;
 	private String gradeText;
@@ -68,11 +87,26 @@ public class ExamSpinner {
 	private Integer selectedOutcome;
 	private Boolean close;
 	private boolean custom;
+	private int[] locations;
+	private boolean clickedBefore;
 
 	private int lifeTime;
 
+	static {
+		HUGE_O = new Piece(Piece.PIECE_O);
+		HUGE_O.big = true;
+		HUGE_O.setSkin(0);
+		HUGE_O.direction = 0;
+		HUGE_O.setColor(Block.BLOCK_COLOR_YELLOW);
+	}
+
 	{
 		lifeTime = 0;
+
+		// locations = endXs;
+		locations = endXs.clone();
+
+		clickedBefore = false;
 	}
 
 	/**
@@ -128,29 +162,6 @@ public class ExamSpinner {
 	 */
 
 	public void draw(EventReceiver receiver, GameEngine engine, int playerID, boolean flag) {
-		int frame = lifeTime;
-
-		if (close) {
-			if (lifeTime < 300) {
-				if (frame > 0) frame %= 160;
-			} else if (lifeTime < 480) {
-				frame = -1 - (lifeTime % 2);
-			} else {
-				if (selectedOutcome == 0) {
-					frame = -3;
-				} else {
-					frame = -4;
-				}
-			}
-
-		} else {
-			if (selectedOutcome == 0) {
-				frame = -3;
-			} else {
-				frame = -4;
-			}
-		}
-
 		int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
 		int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
 		int size = 16;
@@ -162,56 +173,114 @@ public class ExamSpinner {
 			if (flag) b = 0;
 
 			customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[0][1][0] / 2), baseY, SOURCE_DETAILS[0][1][0], SOURCE_DETAILS[0][1][1], SOURCE_DETAILS[0][0][0], SOURCE_DETAILS[0][0][1], SOURCE_DETAILS[0][1][0], SOURCE_DETAILS[0][1][1],255, 255, b, 255, 0);
-			customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[1][1][0] / 2), baseY + size * 6, SOURCE_DETAILS[1][1][0], SOURCE_DETAILS[1][1][1], SOURCE_DETAILS[1][0][0], SOURCE_DETAILS[1][0][1], SOURCE_DETAILS[1][1][0], SOURCE_DETAILS[1][1][1],255, 255, b, 255, 0);
+			customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[1][1][0] / 2), baseY + size * 4, SOURCE_DETAILS[1][1][0], SOURCE_DETAILS[1][1][1], SOURCE_DETAILS[1][0][0], SOURCE_DETAILS[1][0][1], SOURCE_DETAILS[1][1][0], SOURCE_DETAILS[1][1][1],255, 255, b, 255, 0);
 
 			int color = EventReceiver.COLOR_WHITE;
 			if (flag) color = EventReceiver.COLOR_YELLOW;
 
-			receiver.drawMenuFont(engine, playerID,5 - gradeText.length(), 10, gradeText, color, 2.0f);
+			receiver.drawMenuFont(engine, playerID,5 - gradeText.length(), 9, gradeText, color, 2.0f);
 
-			/*
-			 * TODO:
-			 *  > Redo whatever the hell this is.
-			 *  > Add "slowing down".
-			 */
+			int[] alphas = new int[locations.length];
+			for (int i = 0; i < locations.length; i++) {
+				int diff;
+				int l = (locations[i] % 320);
+				if (l <= 80) diff = l;
+				else diff = 80 - (l - 80);
+				if (diff < 0) diff = 0;
 
-			/*
-			if (frame % 10 == 0 && (frame / 10 % 2) == 1) {
-				customHolder.drawImage(engine, "default", baseX - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
-				customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[2][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1], SOURCE_DETAILS[2][0][0], SOURCE_DETAILS[2][0][1], SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1],255, 255, b, 255, 0);
-				customHolder.drawImage(engine, "default", baseX + 160 - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
-			} else if (frame % 10 == 0 && (frame / 10 % 2) == 0) {
-				customHolder.drawImage(engine, "default", baseX - (SOURCE_DETAILS[2][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1], SOURCE_DETAILS[2][0][0], SOURCE_DETAILS[2][0][1], SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1],255, 255, b, 255, 0);
-				customHolder.drawImage(engine, "default", baseX + 160 - (SOURCE_DETAILS[2][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1], SOURCE_DETAILS[2][0][0], SOURCE_DETAILS[2][0][1], SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1],255, 255, b, 255, 0);
-				customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
-			} else if (frame == -1) {
-				customHolder.drawImage(engine, "default", baseX + 79 - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
-			} else if (frame == -2) {
-				customHolder.drawImage(engine, "default", baseX + 81 - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
-			} else if (frame == -3) {
-				customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[2][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1], SOURCE_DETAILS[2][0][0], SOURCE_DETAILS[2][0][1], SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1],255, 255, b, 255, 0);
-			} else if (frame == -4) {
-				customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
-			} else {
-				customHolder.drawImage(engine, "default", baseX + pythonModulo(80 - (SOURCE_DETAILS[2][1][0] / 2) - (frame * 8), 160), baseY + size * 14, SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1], SOURCE_DETAILS[2][0][0], SOURCE_DETAILS[2][0][1], SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1],255, 255, b, 255, 0);
-				customHolder.drawImage(engine, "default", baseX + pythonModulo(160 - (SOURCE_DETAILS[3][1][0] / 2) - (frame * 8), 160), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
+				final int alpha = (int)Interpolation.smoothStep(0, 255, (double)diff / 80d);
+				alphas[i] = alpha;
 			}
-			*/
 
 			// NEW CODE GOES HERE.
+			if (close) {
+				if (lifeTime < spinDuration) {
+					customHolder.drawImage(engine, "default", baseX + (locations[0] % 320) - (SOURCE_DETAILS[2][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1], SOURCE_DETAILS[2][0][0], SOURCE_DETAILS[2][0][1], SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1],255, 255, b, alphas[0], 0);
+					customHolder.drawImage(engine, "default", baseX + (locations[1] % 320) - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, alphas[1], 0);
+					customHolder.drawImage(engine, "default", baseX + (locations[2] % 320) - (SOURCE_DETAILS[2][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1], SOURCE_DETAILS[2][0][0], SOURCE_DETAILS[2][0][1], SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1],255, 255, b, alphas[2], 0);
+					customHolder.drawImage(engine, "default", baseX + (locations[3] % 320) - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, alphas[3], 0);
+				} else if (lifeTime < spinDuration + 120) {
+					int offset = (lifeTime % 3) - 1;
+					customHolder.drawImage(engine, "default", baseX + 80 + offset - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
+
+					if (lifeTime >= spinDuration + 112) {
+						int height = ((lifeTime - spinDuration - 113) * 2) - 1;
+						int width = 3;
+
+						RendererExtension.drawScaledPiece(receiver, baseX + width * 16, baseY + height * 16, HUGE_O, 1f, 0f);
+					}
+				} else {
+					if (lifeTime == spinDuration + 120) {
+						Block blk = new Block(Block.BLOCK_COLOR_YELLOW);
+						for (int y = 13; y < 18; y++) {
+							for (int x = 3; x < 8; x++) {
+								int x2 = x * 16 + baseX;
+								int y2 = y * 16 + baseY;
+								RendererExtension.addBlockBreakEffect(receiver, x2, y2, blk);
+							}
+						}
+					}
+					if (selectedOutcome == 0) {
+						// PASS
+						customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[2][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1], SOURCE_DETAILS[2][0][0], SOURCE_DETAILS[2][0][1], SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1],255, 255, b, 255, 0);
+					} else {
+						customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
+					}
+				}
+			} else if (lifeTime >= 60) {
+				if (selectedOutcome == 0) {
+					// PASS
+					customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[2][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1], SOURCE_DETAILS[2][0][0], SOURCE_DETAILS[2][0][1], SOURCE_DETAILS[2][1][0], SOURCE_DETAILS[2][1][1],255, 255, b, 255, 0);
+				} else {
+					customHolder.drawImage(engine, "default", baseX + 80 - (SOURCE_DETAILS[3][1][0] / 2), baseY + size * 14, SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1], SOURCE_DETAILS[3][0][0], SOURCE_DETAILS[3][0][1], SOURCE_DETAILS[3][1][0], SOURCE_DETAILS[3][1][1],80, 80, 160, 255, 0);
+				}
+			}
 		}
 	}
 
 	public void update(GameEngine engine) {
 		lifeTime++;
-		if (lifeTime < 300 && lifeTime % 10 == 0) {
-			engine.playSE("change");
-		} else {
-			if ((close && lifeTime == 480) || (!close && lifeTime == 1)) {
-				if (selectedOutcome == 0) {
-					engine.playSE("excellent");
-				} else {
-					engine.playSE("regret");
+
+		if (lifeTime == 60 && !close) {
+			engine.playSE("linefall");
+			if (selectedOutcome == 0) {
+				engine.playSE("excellent");
+			} else {
+				engine.playSE("regret");
+			}
+		} else if (lifeTime == spinDuration + 120 && close) {
+			engine.playSE("linefall");
+			if (selectedOutcome == 0) {
+				engine.playSE("excellent");
+			} else {
+				engine.playSE("regret");
+			}
+		}
+
+		if (close && lifeTime <= spinDuration) {
+			double j = (double)lifeTime / (double)spinDuration;
+			// StringBuilder sb = new StringBuilder();
+			// sb.append("[");
+			for (int i = 0; i < locations.length; i++) {
+				double res = Interpolation.smoothStep(endXs[i], startXs[i], 64, j);
+				// sb.append(res).append(", ");
+				locations[i] = (int)res;
+			}
+			// sb.append("]");
+			// log.debug(lifeTime + ": (LOC) " + Arrays.toString(locations) + ", " + j);
+			// log.debug(lifeTime + ": (RAW) " + sb.toString());
+
+			for (int i = 0; i < locations.length; i++) {
+				if (MathHelper.almostEqual(locations[i] % 320, 80, 24)) {
+					if (!clickedBefore) {
+						clickedBefore = true;
+						engine.playSE("change");
+					}
+					break;
+				}
+
+				if (i == locations.length - 1) {
+					clickedBefore = false;
 				}
 			}
 		}
