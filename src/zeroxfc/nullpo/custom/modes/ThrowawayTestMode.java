@@ -627,7 +627,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
  			int diff = engine.statistics.score - 350000;
  			if (Math.abs(diff) <= 50000) close = true;
  			if (diff >= 0) p = 0;
- 			es = new ExamSpinner("GOOD", p, close);
+ 			es = new ExamSpinner("RESULT\nANNOUNCEMENT", "EXAM\nGRADE", "GOOD", new String[] { "PASS", "FAIL" }, p, close);
  		}
 		return false;
 	}
@@ -638,7 +638,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public void renderResult(GameEngine engine, int playerID) {
  		if(passframe > 0) {
- 			es.draw(receiver, engine, playerID, (passframe / 2) % 2 == 0);
+ 			es.draw(receiver, engine, playerID);
  		} else {
 			drawResultStats(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE,
 					STAT_SCORE, STAT_LINES, STAT_LEVEL, STAT_TIME, STAT_SPL, STAT_LPM);

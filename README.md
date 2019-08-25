@@ -33,7 +33,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _BlockParticle_ - Animated block particle for line clear effects.
 * _BlockParticleCollection_ - Collection class for easy generation, update and drawing of block particles.
 * _DoubleVector_ - 2D vector type that uses doubles for more precision.
-* _ExamSpinner_ (incomplete) - TI-style spinner like the one used during Promotion Exam results.
+* _ExamSpinner_ - TI-style spinner like the one used during Promotion Exam results.
 * _FieldManipulation_ - Adds and fixes methods for dealing with the game's _Field_ type.
 * _FlyInOutText_ - Adds text objects that can fly into the screen from the outside, linger, then return to their starting positions before disappearing.
 * _GameTextUtilities_ - Adds methods for coloured text and other random text / text obfuscation methods.
