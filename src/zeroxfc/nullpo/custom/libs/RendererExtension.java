@@ -126,14 +126,26 @@ public class RendererExtension {
 	 * @param darkness Darkness value (0f = None, negative = lighter, positive = darker)
 	 */
 	public static void drawScaledPiece(EventReceiver receiver, int x, int y, Piece piece, float scale, float darkness) {
-		for(int i = 0; i < piece.getMaxBlock(); i++) {
-			int x2 = x + (int)(piece.dataX[piece.direction][i] * 16 * scale);
-			int y2 = y + (int)(piece.dataY[piece.direction][i] * 16 * scale);
+		if (piece.big) {
+			for(int i = 0; i < piece.getMaxBlock(); i++) {
+				int x2 = x + (int)(piece.dataX[piece.direction][i] * 32 * scale);
+				int y2 = y + (int)(piece.dataY[piece.direction][i] * 32 * scale);
 
-			Block blkTemp = new Block(piece.block[i]);
-			blkTemp.darkness = darkness;
+				Block blkTemp = new Block(piece.block[i]);
+				blkTemp.darkness = darkness;
 
-			drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale, blkTemp.attribute);
+				drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, 2f * scale, blkTemp.attribute);
+			}
+		} else {
+			for(int i = 0; i < piece.getMaxBlock(); i++) {
+				int x2 = x + (int)(piece.dataX[piece.direction][i] * 16 * scale);
+				int y2 = y + (int)(piece.dataY[piece.direction][i] * 16 * scale);
+
+				Block blkTemp = new Block(piece.block[i]);
+				blkTemp.darkness = darkness;
+
+				drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale, blkTemp.attribute);
+			}
 		}
 	}
 
@@ -148,21 +160,40 @@ public class RendererExtension {
 	 * @param darkness Darkness value (0f = None, negative = lighter, positive = darker)
 	 */
 	public static void drawScaledPiece(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, Piece piece, float scale, float darkness) {
-		for(int i = 0; i < piece.getMaxBlock(); i++) {
-			int x2 = x + (int)(piece.dataX[piece.direction][i] * 16 * scale);
-			int y2 = y + (int)(piece.dataY[piece.direction][i] * 16 * scale);
+		if (piece.big) {
+			for(int i = 0; i < piece.getMaxBlock(); i++) {
+				int x2 = x + (int)(piece.dataX[piece.direction][i] * 32 * scale);
+				int y2 = y + (int)(piece.dataY[piece.direction][i] * 32 * scale);
 
-			final int minX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
-			final int minY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-			final int maxX = minX + ((engine.field.getWidth() - 1) * 16);
-			final int maxY = minY + ((FieldManipulation.getFullHeight(engine.field) - 1) * 16);
+				final int minX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+				final int minY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+				final int maxX = minX + ((engine.field.getWidth() - 1) * 16);
+				final int maxY = minY + ((FieldManipulation.getFullHeight(engine.field) - 1) * 16);
 
-			if (x2 < minX || y2 < minY || x2 > maxX || y2 > maxY) continue;
+				if (x2 < minX || y2 < minY || x2 > maxX || y2 > maxY) continue;
 
-			Block blkTemp = new Block(piece.block[i]);
-			blkTemp.darkness = darkness;
+				Block blkTemp = new Block(piece.block[i]);
+				blkTemp.darkness = darkness;
 
-			drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale, blkTemp.attribute);
+				drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale * 2f, blkTemp.attribute);
+			}
+		} else {
+			for(int i = 0; i < piece.getMaxBlock(); i++) {
+				int x2 = x + (int)(piece.dataX[piece.direction][i] * 16 * scale);
+				int y2 = y + (int)(piece.dataY[piece.direction][i] * 16 * scale);
+
+				final int minX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+				final int minY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+				final int maxX = minX + ((engine.field.getWidth() - 1) * 16);
+				final int maxY = minY + ((FieldManipulation.getFullHeight(engine.field) - 1) * 16);
+
+				if (x2 < minX || y2 < minY || x2 > maxX || y2 > maxY) continue;
+
+				Block blkTemp = new Block(piece.block[i]);
+				blkTemp.darkness = darkness;
+
+				drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale, blkTemp.attribute);
+			}
 		}
 	}
 
@@ -212,6 +243,10 @@ public class RendererExtension {
 			default:
 				offsetY = 0;
 				break;
+		}
+
+		if (piece.big) {
+			offsetX *= 2; offsetY *= 2;
 		}
 
 		drawScaledPiece(receiver, x - offsetX, y - offsetY, piece, scale, darkness);

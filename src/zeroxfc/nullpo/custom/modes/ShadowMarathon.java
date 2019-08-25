@@ -705,6 +705,10 @@ public class ShadowMarathon extends MarathonModeBase {
 	private boolean isB2B;
 	private int realCombo;
 
+	/** The good hard drop effect */
+	private ArrayList<int[]> pCoordList;
+	private Piece cPiece;
+
 	@Override
 	public String getName() {
 		return "SHADOW MARATHON";
@@ -725,6 +729,9 @@ public class ShadowMarathon extends MarathonModeBase {
 		lastpiece = 0;
 		bgmlv = 0;
 		realCombo = 0;
+
+		pCoordList = new ArrayList<>();
+		cPiece = null;
 
 		matchConfidences = new ArrayList<>();
 		lastIDs = new ArrayList<>();
@@ -2010,6 +2017,12 @@ public class ShadowMarathon extends MarathonModeBase {
 		}
 	}
 
+	@Override
+	public void onFirst(GameEngine engine, int playerID) {
+		pCoordList.clear();
+		cPiece = null;
+	}
+
 	/*
 	 * Hard drop
 	 */
@@ -2018,6 +2031,31 @@ public class ShadowMarathon extends MarathonModeBase {
 		if (!onShadow) {
 			engine.statistics.scoreFromHardDrop += fall * 2;
 			engine.statistics.score += fall * 2;
+		}
+
+		int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+		int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+		cPiece = new Piece(engine.nowPieceObject);
+		for (int i = 1; i <= fall; i++) {
+			pCoordList.add(
+					new int[] { engine.nowPieceX, engine.nowPieceY - i }
+			);
+		}
+		for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+			if (!cPiece.big) {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+			} else {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2+16, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2+16, cPiece.block[i]);
+			}
 		}
 	}
 

@@ -16,7 +16,10 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
+import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
+
+import java.util.ArrayList;
 
 public class IdiotMode extends DummyMode {
 	/*
@@ -373,7 +376,11 @@ public class IdiotMode extends DummyMode {
 	private boolean shouldPlayLSSE;   // should it play the level stop SE?
 	private boolean daredevil;        // Daredevil mode?
 	private boolean torikaned;        // Was the player stopped?
-	
+
+	/** The good hard drop effect */
+	private ArrayList<int[]> pCoordList;
+	private Piece cPiece;
+
 	/*
 	 * [--- OVERRIDE METHOD BLOCK ---]
 	 */
@@ -389,6 +396,9 @@ public class IdiotMode extends DummyMode {
 	public void playerInit(GameEngine engine, int playerID) {
 		owner = engine.owner;
 		receiver = engine.owner.receiver;
+
+		pCoordList = new ArrayList<>();
+		cPiece = null;
 		
 		creditObjectDefault = new ScrollingMarqueeText(CREDIT_HEADINGS, CREDIT_TEXTS, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
 		creditObjectShort = new ScrollingMarqueeText(SHORT_CREDIT_HEADINGS, SHORT_CREDIT_TEXTS, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
@@ -818,7 +828,44 @@ public class IdiotMode extends DummyMode {
 		setStartBgmlv(engine, gameType);
 		owner.bgmStatus.bgm = tableBGMNumber[gameType][currentBGM];
 	}
-	
+
+	@Override
+	public void onFirst(GameEngine engine, int playerID) {
+		pCoordList.clear();
+		cPiece = null;
+	}
+
+	/*
+	 * Hard drop
+	 */
+	@Override
+	public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
+		int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+		int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+		cPiece = new Piece(engine.nowPieceObject);
+		for (int i = 1; i <= fall; i++) {
+			pCoordList.add(
+					new int[] { engine.nowPieceX, engine.nowPieceY - i }
+			);
+		}
+		for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+			if (!cPiece.big) {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+			} else {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2+16, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2+16, cPiece.block[i]);
+			}
+		}
+	}
+
 	// Render score
 	@Override
 	public void renderLast(GameEngine engine, int playerID) {
@@ -932,7 +979,17 @@ public class IdiotMode extends DummyMode {
 			// Time
 			receiver.drawScoreFont(engine, playerID, 0, 15, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 16, GeneralUtil.getTime(engine.statistics.time));
-			
+
+			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+			if (pCoordList.size() > 0 && cPiece != null) {
+				for (int[] loc : pCoordList) {
+					int cx = baseX + (16 * loc[0]);
+					int cy = baseY + (16 * loc[1]);
+					RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+				}
+			}
+
 			// Roll 残り time
 			if((engine.gameActive) && (engine.ending == 2)) {
 				int time = ROLLTIMELIMIT[gameType] - rollTime;

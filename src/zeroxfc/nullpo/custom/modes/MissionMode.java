@@ -1,5 +1,6 @@
 package zeroxfc.nullpo.custom.modes;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Random;
 
@@ -10,6 +11,7 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.RendererExtension;
 
 public class MissionMode extends MarathonModeBase {
 	private static final int MISSION_GENERIC = EventReceiver.COLOR_PINK,
@@ -103,6 +105,10 @@ public class MissionMode extends MarathonModeBase {
 	// private boolean isSpecific;
 	private String specificPieceName;
 	private boolean missionIsComplete;
+
+	/** The good hard drop effect */
+	private ArrayList<int[]> pCoordList;
+	private Piece cPiece;
 	
 	@Override
 	public String getName() {
@@ -123,6 +129,9 @@ public class MissionMode extends MarathonModeBase {
 		lastcombo = 0;
 		lastpiece = 0;
 		bgmlv = 0;
+
+		pCoordList = new ArrayList<>();
+		cPiece = null;
 		
 		currentMissionText = new LinkedHashMap<String, Integer>();
 		missionCategory = -1;
@@ -314,6 +323,16 @@ public class MissionMode extends MarathonModeBase {
 			receiver.drawScoreFont(engine, playerID, 0, 13, missionProgress + "/" + missionGoal, missionIsComplete);
 			if (!missionIsComplete) {
 				drawMissionStrings(engine, playerID, currentMissionText, 0, 15, 1.0f);
+			}
+
+			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+			if (pCoordList.size() > 0 && cPiece != null) {
+				for (int[] loc : pCoordList) {
+					int cx = baseX + (16 * loc[0]);
+					int cy = baseY + (16 * loc[1]);
+					RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+				}
 			}
 			
 			if((lastevent != EVENT_NONE)) {
@@ -592,14 +611,43 @@ public class MissionMode extends MarathonModeBase {
 	public void afterSoftDropFall(GameEngine engine, int playerID, int fall) {
 		return;
 	}
-	
+
+
+	@Override
+	public void onFirst(GameEngine engine, int playerID) {
+		pCoordList.clear();
+		cPiece = null;
+	}
 
 	/*
 	 * Hard drop
 	 */
 	@Override
 	public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
-		return;
+		int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+		int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+		cPiece = new Piece(engine.nowPieceObject);
+		for (int i = 1; i <= fall; i++) {
+			pCoordList.add(
+					new int[] { engine.nowPieceX, engine.nowPieceY - i }
+			);
+		}
+		for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+			if (!cPiece.big) {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+			} else {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2+16, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2+16, cPiece.block[i]);
+			}
+		}
 	}
 	
 	

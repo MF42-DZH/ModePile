@@ -6,6 +6,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.RendererExtension;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -35,6 +36,10 @@ public class SingleDeathMarathon extends MarathonModeBase {
 	private ArrayList<Integer> pieceIDHistory;
 	private Random localIDRandomiser;
 	private int previousScore;
+
+	/** The good hard drop effect */
+	private ArrayList<int[]> pCoordList;
+	private Piece cPiece;
 
 	/*
 	 * Mode name
@@ -68,6 +73,9 @@ public class SingleDeathMarathon extends MarathonModeBase {
 		pieceIDQueue = new ArrayList<>();
 		pieceIDHistory = new ArrayList<>();
 		localIDRandomiser = null;
+
+		pCoordList = new ArrayList<>();
+		cPiece = null;
 
 		netPlayerInit(engine, playerID);
 
@@ -320,6 +328,46 @@ public class SingleDeathMarathon extends MarathonModeBase {
 		return res;
 	}
 
+	@Override
+	public void onFirst(GameEngine engine, int playerID) {
+		pCoordList.clear();
+		cPiece = null;
+	}
+
+	/*
+	 * Hard drop
+	 */
+	@Override
+	public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
+		engine.statistics.scoreFromHardDrop += fall * 2;
+		engine.statistics.score += fall * 2;
+
+		int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+		int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+		cPiece = new Piece(engine.nowPieceObject);
+		for (int i = 1; i <= fall; i++) {
+			pCoordList.add(
+					new int[] { engine.nowPieceX, engine.nowPieceY - i }
+			);
+		}
+		for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+			if (!cPiece.big) {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+			} else {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2+16, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2+16, cPiece.block[i]);
+			}
+		}
+	}
+
 	/*
 	 * Render score
 	 */
@@ -376,6 +424,16 @@ public class SingleDeathMarathon extends MarathonModeBase {
 			for (Integer i : pieceIDQueue) {
 				receiver.drawScoreFont(engine, playerID, 0, 16 + j, (j == 0 ? "> " : "") + PIECE_NAMES[i], PIECE_COLOURS[i]);
 				j++;
+			}
+
+			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+			if (pCoordList.size() > 0 && cPiece != null) {
+				for (int[] loc : pCoordList) {
+					int cx = baseX + (16 * loc[0]);
+					int cy = baseY + (16 * loc[1]);
+					RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+				}
 			}
 
 			if((lastevent != EVENT_NONE) && (scgettime < 120)) {

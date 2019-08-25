@@ -45,6 +45,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		return "THROWAWAY";
 	}
 
+	/** The good hard drop effect */
 	private ArrayList<int[]> pCoordList;
 	private Piece cPiece;
 
@@ -71,6 +72,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 		initialBG = AnimatedBackgroundHook.getBGState(owner);
 		initialFadeBG = AnimatedBackgroundHook.getFadeBGState(owner);
+
 		pCoordList = new ArrayList<>();
 		cPiece = null;
 
@@ -95,8 +97,13 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 		// backgroundCircularRipple = new BackgroundCircularRipple(engine, startlevel,8, 8,320, 240, 40f, 12,-1,1f,0.75f);
 		// TIbg = new BackgroundTGM3Style("res/graphics/bg0000.png", 0);
-		HIbg = new BackgroundInterlaceHorizontal(startlevel,1, 60, 1f, 0.075f, true, false);
+		HIbg = new BackgroundInterlaceHorizontal(startlevel,2, 60, 1f, 0.075f, true, false);
 		passframe = 0;
+
+		// -----------------------------------------------------------
+		// TODO: Put the good hard drop effects into your other modes.
+		//       *the good stuff*
+		// -----------------------------------------------------------
 
 		engine.owner.backgroundStatus.bg = startlevel;
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
@@ -283,10 +290,20 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			);
 		}
 		for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-			int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-			int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+			if (!cPiece.big) {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-			RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+			} else {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2+16, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2+16, cPiece.block[i]);
+			}
 		}
 
 		//RendererExtension.addBlockBreakEffect(receiver, 1, x, y, 1);

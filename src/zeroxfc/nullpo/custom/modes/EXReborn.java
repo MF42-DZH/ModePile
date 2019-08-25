@@ -8,6 +8,9 @@ import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.RendererExtension;
+
+import java.util.ArrayList;
 
 public class EXReborn extends DummyMode {
 	private static final int[] tableARE = {
@@ -59,6 +62,10 @@ public class EXReborn extends DummyMode {
 	/** Rankings' times */
 	private int[] rankingTime;
 
+	/** The good hard drop effect */
+	private ArrayList<int[]> pCoordList;
+	private Piece cPiece;
+
 	private GameManager owner;
 	private EventReceiver receiver;
 	private int rankingRank;
@@ -91,6 +98,9 @@ public class EXReborn extends DummyMode {
 		nextseclv = 0;
 		comboValue = 1;
 		bgmlv = 0;
+
+		pCoordList = new ArrayList<>();
+		cPiece = null;
 
 		engine.bighalf = true;
 		engine.bigmove = true;
@@ -1070,6 +1080,12 @@ public class EXReborn extends DummyMode {
 		return true;
 	}
 
+	@Override
+	public void onFirst(GameEngine engine, int playerID) {
+		pCoordList.clear();
+		cPiece = null;
+	}
+
 	/*
 	 * 各 frame の終わりの処理
 	 */
@@ -1125,6 +1141,16 @@ public class EXReborn extends DummyMode {
 
 			receiver.drawScoreFont(engine, playerID, 0, 8, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 9, GeneralUtil.getTime(engine.statistics.time));
+
+			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+			if (pCoordList.size() > 0 && cPiece != null) {
+				for (int[] loc : pCoordList) {
+					int cx = baseX + (16 * loc[0]);
+					int cy = baseY + (16 * loc[1]);
+					RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+				}
+			}
 		}
 	}
 
@@ -1144,6 +1170,31 @@ public class EXReborn extends DummyMode {
 	public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
 		engine.statistics.scoreFromHardDrop += fall * 2;
 		engine.statistics.score += fall * 2;
+
+		int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+		int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+		cPiece = new Piece(engine.nowPieceObject);
+		for (int i = 1; i <= fall; i++) {
+			pCoordList.add(
+					new int[] { engine.nowPieceX, engine.nowPieceY - i }
+			);
+		}
+		for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+			if (!cPiece.big) {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+			} else {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2+16, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2+16, cPiece.block[i]);
+			}
+		}
 	}
 
 	/*

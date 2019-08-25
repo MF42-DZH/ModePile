@@ -1,9 +1,7 @@
 package zeroxfc.nullpo.custom.modes;
 
-import zeroxfc.nullpo.custom.libs.FieldManipulation;
-import zeroxfc.nullpo.custom.libs.Interpolation;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
-import zeroxfc.nullpo.custom.libs.SoundLoader;
+import mu.nu.nullpo.game.component.Piece;
+import zeroxfc.nullpo.custom.libs.*;
 
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Controller;
@@ -11,6 +9,8 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+
+import java.util.ArrayList;
 
 public class Scanline extends MarathonModeBase {
 	// Scan grace max
@@ -71,6 +71,10 @@ public class Scanline extends MarathonModeBase {
 	private ResourceHolderCustomAssetExtension customHolder;
 	
 	private int sx, sy;
+
+	/** The good hard drop effect */
+	private ArrayList<int[]> pCoordList;
+	private Piece cPiece;
 	
 	@Override
 	public String getName() {
@@ -109,6 +113,9 @@ public class Scanline extends MarathonModeBase {
 		scannerAdvanceTimer = 0;
 		interrupted = false;
 		scoreBeforeIncrease = 0;
+
+		pCoordList = new ArrayList<>();
+		cPiece = null;
 		
 		rankingRank = -1;
 		rankingScore = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
@@ -190,7 +197,41 @@ public class Scanline extends MarathonModeBase {
 			owner.bgmStatus.bgm = BGMStatus.BGM_NOTHING;
 		}
 	}
-	
+
+	/*
+	 * Hard drop
+	 */
+	@Override
+	public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
+		engine.statistics.scoreFromHardDrop += fall * 2;
+		engine.statistics.score += fall * 2;
+
+		int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+		int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+		cPiece = new Piece(engine.nowPieceObject);
+		for (int i = 1; i <= fall; i++) {
+			pCoordList.add(
+					new int[] { engine.nowPieceX, engine.nowPieceY - i }
+			);
+		}
+		for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+			if (!cPiece.big) {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+			} else {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2+16, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2+16, cPiece.block[i]);
+			}
+		}
+	}
+
 	/*
 	 * Render score
 	 */
@@ -248,6 +289,16 @@ public class Scanline extends MarathonModeBase {
 			receiver.drawScoreFont(engine, playerID, 0, 15, "UNTIL NEXT SCAN", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 16, GeneralUtil.getTime(remain), (remain <= 300));
 
+			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+			if (pCoordList.size() > 0 && cPiece != null) {
+				for (int[] loc : pCoordList) {
+					int cx = baseX + (16 * loc[0]);
+					int cy = baseY + (16 * loc[1]);
+					RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+				}
+			}
+
 			if((lastClearAmount > 0) && (scgettime < 120)) {
 				int d = lastClearAmount - 1;
 				String h;
@@ -295,6 +346,9 @@ public class Scanline extends MarathonModeBase {
 		if ((engine.stat == GameEngine.STAT_MOVE || engine.stat == GameEngine.STAT_ARE) && engine.timerActive) {
 			scanTimer++;
 		}
+
+		pCoordList.clear();
+		cPiece = null;
 		
 		// Meter
 		double scv = scanTimer;

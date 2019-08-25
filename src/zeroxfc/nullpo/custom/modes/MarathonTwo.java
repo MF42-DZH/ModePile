@@ -24,10 +24,7 @@ import org.newdawn.slick.Sound;
 
 import sdljava.mixer.MixChunk;
 
-import zeroxfc.nullpo.custom.libs.GameTextUtilities;
-import zeroxfc.nullpo.custom.libs.Interpolation;
-import zeroxfc.nullpo.custom.libs.SoundLoader;
-import zeroxfc.nullpo.custom.libs.WeightedRandomiser;
+import zeroxfc.nullpo.custom.libs.*;
 
 import javax.sound.sampled.Clip;
 import java.util.ArrayList;
@@ -224,6 +221,11 @@ public class MarathonTwo extends MarathonModeBase {
 	private int bTextX, bTextY;
 	private int prevScore;
 	private int rainbowPhase;
+
+	/** The good hard drop effect */
+	private ArrayList<int[]> pCoordList;
+	private Piece cPiece;
+
 	// endregion Private Fields
 
 	/** Mode Name */
@@ -252,6 +254,9 @@ public class MarathonTwo extends MarathonModeBase {
 		rankingScore = new int[RANKING_TYPE][RANKING_MAX];
 		rankingLines = new int[RANKING_TYPE][RANKING_MAX];
 		rankingTime = new int[RANKING_TYPE][RANKING_MAX];
+
+		pCoordList = new ArrayList<>();
+		cPiece = null;
 
 		spookyValue = 0;
 		lastEffect = EFFECT_NONE;
@@ -716,6 +721,48 @@ public class MarathonTwo extends MarathonModeBase {
 		}
 	}
 
+	@Override
+	public void onFirst(GameEngine engine, int playerID) {
+		pCoordList.clear();
+		cPiece = null;
+	}
+
+	/*
+	 * Hard drop
+	 */
+	@Override
+	public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
+		engine.statistics.scoreFromHardDrop += fall * 2;
+		engine.statistics.score += fall * 2;
+
+		if (blackoutTimer == 0) {
+			int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+			int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+			cPiece = new Piece(engine.nowPieceObject);
+			for (int i = 1; i <= fall; i++) {
+				pCoordList.add(
+						new int[] { engine.nowPieceX, engine.nowPieceY - i }
+				);
+			}
+			for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+				if (!cPiece.big) {
+					int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+					int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+
+					RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+				} else {
+					int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+					int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+					RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+					RendererExtension.addBlockBreakEffect(receiver, x2+16, y2, cPiece.block[i]);
+					RendererExtension.addBlockBreakEffect(receiver, x2, y2+16, cPiece.block[i]);
+					RendererExtension.addBlockBreakEffect(receiver, x2+16, y2+16, cPiece.block[i]);
+				}
+			}
+		}
+	}
+
 	/*
 	 * Render score
 	 */
@@ -760,6 +807,16 @@ public class MarathonTwo extends MarathonModeBase {
 		} else if ( (engine.stat == GameEngine.STAT_RESULT) ) {
 			setBGState(initialBGState);
 		} else {
+			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+			if (pCoordList.size() > 0 && cPiece != null) {
+				for (int[] loc : pCoordList) {
+					int cx = baseX + (16 * loc[0]);
+					int cy = baseY + (16 * loc[1]);
+					RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+				}
+			}
+
 			if (glitchTimer > 0) GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 3, GameTextUtilities.randomString(5, renderRandomiser), renderRandomiser, 1f);
 			else receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
 
@@ -865,9 +922,6 @@ public class MarathonTwo extends MarathonModeBase {
 				if((lastcombo >= 2) && (lastevent != EVENT_TSPIN_ZERO_MINI) && (lastevent != EVENT_TSPIN_ZERO))
 					receiver.drawMenuFont(engine, playerID, 2, 22, (lastcombo - 1) + "COMBO", EventReceiver.COLOR_CYAN);
 			}
-
-			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
-			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
 
 			// Fake hover blocks.
 			if (fakeHoverBlocks.size() > 0) {

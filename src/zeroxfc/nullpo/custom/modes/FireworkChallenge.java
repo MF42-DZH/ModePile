@@ -4,12 +4,9 @@
  */
 package zeroxfc.nullpo.custom.modes;
 
-import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
-import zeroxfc.nullpo.custom.libs.BlockParticleCollection;
-import zeroxfc.nullpo.custom.libs.FieldManipulation;
-import zeroxfc.nullpo.custom.libs.SoundLoader;
-import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
+import zeroxfc.nullpo.custom.libs.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -245,6 +242,10 @@ public class FireworkChallenge extends DummyMode {
 	
 	// Particle stuff
 	private BlockParticleCollection blockParticles;
+
+	/** The good hard drop effect */
+	private ArrayList<int[]> pCoordList;
+	private Piece cPiece;
 	
 	// Get mode name
 	@Override
@@ -286,6 +287,9 @@ public class FireworkChallenge extends DummyMode {
 		
 		varispeedComboBonus = 1.0;
 		varispeedFinesseBonus = 1.0;
+
+		pCoordList = new ArrayList<>();
+		cPiece = null;
 		
 		fireworksFired = 0;
 		
@@ -540,6 +544,43 @@ public class FireworkChallenge extends DummyMode {
 		setSpeed(engine);
 		owner.bgmStatus.bgm = 0;
 	}
+
+	@Override
+	public void onFirst(GameEngine engine, int playerID) {
+		pCoordList.clear();
+		cPiece = null;
+	}
+
+	/*
+	 * Hard drop
+	 */
+	@Override
+	public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
+		int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+		int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+		cPiece = new Piece(engine.nowPieceObject);
+		for (int i = 1; i <= fall; i++) {
+			pCoordList.add(
+					new int[] { engine.nowPieceX, engine.nowPieceY - i }
+			);
+		}
+		for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+			if (!cPiece.big) {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+			} else {
+				int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+				int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2, y2+16, cPiece.block[i]);
+				RendererExtension.addBlockBreakEffect(receiver, x2+16, y2+16, cPiece.block[i]);
+			}
+		}
+	}
 	
 	/*
 	 * Render score
@@ -607,6 +648,16 @@ public class FireworkChallenge extends DummyMode {
 
 			receiver.drawScoreFont(engine, playerID, 0, 10, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 11, GeneralUtil.getTime(engine.statistics.time));
+
+			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+			if (pCoordList.size() > 0 && cPiece != null) {
+				for (int[] loc : pCoordList) {
+					int cx = baseX + (16 * loc[0]);
+					int cy = baseY + (16 * loc[1]);
+					RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+				}
+			}
 
 			if((engine.gameActive) && (engine.ending == 2)) {
 				int time = MAX_ROLL_TIME - rollTime;
