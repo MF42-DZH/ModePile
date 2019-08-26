@@ -14,7 +14,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Express Shipping_ - A clone of the space-filling game Puzzle Express by HipSoft.
 * _EX Reborn_ - A clone of Tetris-EX.
 * _Firework Challenge_ - An inaccurate version of Tetris the Grand Master 3's Easy mode.
-* _Gem Swap_ (incomplete) - A generic match-3 game.
+* _Gem Swap_ (incomplete; on hold) - A generic match-3 game.
 * _Idiot% Mode_ - A mode inspired by [this video](https://www.youtube.com/watch?v=omaDz_w4cgg) where it emulates the TGM style of play, but normal line clears are next-to-worthless but spin line clears are boosted to be better than normal.
 * _Joker_ - A mode that approximates the JOKER mode from DTET.
 * _Marathon II_ - "If Marathon was so good, why isn't there a Marathon 2?"
@@ -33,6 +33,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _BlockParticle_ - Animated block particle for line clear effects.
 * _BlockParticleCollection_ - Collection class for easy generation, update and drawing of block particles.
 * _DoubleVector_ - 2D vector type that uses doubles for more precision.
+* _DynamicReactiveSound_ (incomplete; on hold) - Generates and plays PCM samples on the fly.
 * _ExamSpinner_ - TI-style spinner like the one used during Promotion Exam results.
 * _FieldManipulation_ - Adds and fixes methods for dealing with the game's _Field_ type.
 * _FlyInOutText_ - Adds text objects that can fly into the screen from the outside, linger, then return to their starting positions before disappearing.
@@ -40,6 +41,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Interpolation_ - Linear interpolation functions.
 * _MouseParser_ - Allows the use of mouse inside a mode.
 * _PhysicsObject_ - Allows the use of basic frictionless rigid body physics with square objects.
+* _ProfileProperties_ - Allows the use of TI-styled profiles.
 * _RendererExtension_ - Extra drawing methods.
 * _ResourceHolderCustomAssetExtension_ - Allows the use of custom images and BGM in a mode.
 * _ScrollingMarqueeText_ - Horizontal scrolling text.

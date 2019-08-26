@@ -654,6 +654,38 @@ public class FieldManipulation {
 	}
 
 	/**
+	 * Gets the number of non-empty blocks inside the field.
+	 * @param field Field to check
+	 * @return Number of blocks inside (including in hidden height)
+	 */
+	public static int getNumberOfBlocks(Field field) {
+		int result = 0;
+		for (int y = (-1 * field.getHiddenHeight()); y < field.getHeight(); y++) {
+			for (int x = 0; x < field.getWidth(); x++) {
+				Block blk = field.getBlock(x, y);
+				if (!blk.isEmpty()) result++;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Gets the number of empty blocks inside the field.
+	 * @param field Field to check
+	 * @return Number of empty spaces inside (including in hidden height)
+	 */
+	public static int getNumberOfEmptySpaces(Field field) {
+		int result = 0;
+		for (int y = (-1 * field.getHiddenHeight()); y < field.getHeight(); y++) {
+			for (int x = 0; x < field.getWidth(); x++) {
+				Block blk = field.getBlock(x, y);
+				if (blk.isEmpty()) result++;
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Gets the coordinates of the top-left and the bottom-right of the smallest bounding square that covers all blocks in the field.
 	 * @param field Field to check
 	 * @return int[2][2] result: result[0] = top left, result[1] = bottom right. result[i][0] = x, result[i][1] = y.

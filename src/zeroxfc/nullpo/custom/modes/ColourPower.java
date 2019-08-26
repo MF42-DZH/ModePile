@@ -538,15 +538,17 @@ public class ColourPower extends MarathonModeBase {
 			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
 			
 			// Power-up progess
-			receiver.drawScoreFont(engine, playerID, 10, 12, "POWER-UPS", EventReceiver.COLOR_PINK);
-			receiver.drawScoreFont(engine, playerID, 10, 13, "  GREY:" + String.format("%d/%d", meterValues[0], POWER_METER_MAX), POWERUP_TEXT_COLOURS[0]);
-			receiver.drawScoreFont(engine, playerID, 10, 14, "   RED:" + String.format("%d/%d", meterValues[1], POWER_METER_MAX), POWERUP_TEXT_COLOURS[1]);
-			receiver.drawScoreFont(engine, playerID, 10, 15, "ORANGE:" + String.format("%d/%d", meterValues[2], POWER_METER_MAX), POWERUP_TEXT_COLOURS[2]);
-			receiver.drawScoreFont(engine, playerID, 10, 16, "YELLOW:" + String.format("%d/%d", meterValues[3], POWER_METER_MAX), POWERUP_TEXT_COLOURS[3]);
-			receiver.drawScoreFont(engine, playerID, 10, 17, " GREEN:" + String.format("%d/%d", meterValues[4], POWER_METER_MAX), POWERUP_TEXT_COLOURS[4]);
-			receiver.drawScoreFont(engine, playerID, 10, 18, "  CYAN:" + String.format("%d/%d", meterValues[5], POWER_METER_MAX), POWERUP_TEXT_COLOURS[5]);
-			receiver.drawScoreFont(engine, playerID, 10, 19, "  BLUE:" + String.format("%d/%d", meterValues[6], POWER_METER_MAX), POWERUP_TEXT_COLOURS[6]);
-			receiver.drawScoreFont(engine, playerID, 10, 20, "PURPLE:" + String.format("%d/%d", meterValues[7], POWER_METER_MAX), POWERUP_TEXT_COLOURS[7]);
+			float scale = 1f;
+			if (receiver.getNextDisplayType() >= 1) scale = 0.5f;
+			receiver.drawScoreFont(engine, playerID, (int)(10 / scale), (int)(12 / scale), "POWER-UPS", EventReceiver.COLOR_PINK, scale);
+			receiver.drawScoreFont(engine, playerID, (int)(10 / scale), (int)(13 / scale), "  GREY:" + String.format("%d/%d", meterValues[0], POWER_METER_MAX), POWERUP_TEXT_COLOURS[0], scale);
+			receiver.drawScoreFont(engine, playerID, (int)(10 / scale), (int)(14 / scale), "   RED:" + String.format("%d/%d", meterValues[1], POWER_METER_MAX), POWERUP_TEXT_COLOURS[1], scale);
+			receiver.drawScoreFont(engine, playerID, (int)(10 / scale), (int)(15 / scale), "ORANGE:" + String.format("%d/%d", meterValues[2], POWER_METER_MAX), POWERUP_TEXT_COLOURS[2], scale);
+			receiver.drawScoreFont(engine, playerID, (int)(10 / scale), (int)(16 / scale), "YELLOW:" + String.format("%d/%d", meterValues[3], POWER_METER_MAX), POWERUP_TEXT_COLOURS[3], scale);
+			receiver.drawScoreFont(engine, playerID, (int)(10 / scale), (int)(17 / scale), " GREEN:" + String.format("%d/%d", meterValues[4], POWER_METER_MAX), POWERUP_TEXT_COLOURS[4], scale);
+			receiver.drawScoreFont(engine, playerID, (int)(10 / scale), (int)(18 / scale), "  CYAN:" + String.format("%d/%d", meterValues[5], POWER_METER_MAX), POWERUP_TEXT_COLOURS[5], scale);
+			receiver.drawScoreFont(engine, playerID, (int)(10 / scale), (int)(19 / scale), "  BLUE:" + String.format("%d/%d", meterValues[6], POWER_METER_MAX), POWERUP_TEXT_COLOURS[6], scale);
+			receiver.drawScoreFont(engine, playerID, (int)(10 / scale), (int)(20 / scale), "PURPLE:" + String.format("%d/%d", meterValues[7], POWER_METER_MAX), POWERUP_TEXT_COLOURS[7], scale);
 			
 			receiver.drawScoreFont(engine, playerID, 0, 15, "MULTI.", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 16, String.valueOf(scoreMultiplier) + "X");
