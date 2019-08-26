@@ -21,6 +21,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	private BackgroundInterlaceHorizontal HIbg;
 	private ExamSpinner es;
 	private int passframe;
+	//private DynamicReactiveSound drs;
 
 	private Field T_SHAPE;
 	private static final int[][] T_FIELD = {
@@ -72,6 +73,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 		initialBG = AnimatedBackgroundHook.getBGState(owner);
 		initialFadeBG = AnimatedBackgroundHook.getFadeBGState(owner);
+		//d//rs = new DynamicReactiveSound();
 
 		pCoordList = new ArrayList<>();
 		cPiece = null;
@@ -251,6 +253,10 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			engine.owner.backgroundStatus.fadebg = initialFadeBG;
 			HIbg.reset();
 		} else {
+			//if (engine.statistics.time % 120 == 0 && engine.timerActive) {
+				//drs.playSound(DynamicReactiveSound.WAVE_SINUSOIDAL, 220, 110d, 32000, 16000, 0.25f);
+			//}
+
 			// backgroundCircularRipple.modifyValues(null,null,1f * ((float)(engine.statistics.level + 1) / 20f),null, null);
 
 			if (engine.stat == GameEngine.STAT_RESULT) {

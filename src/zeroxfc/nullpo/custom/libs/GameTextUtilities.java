@@ -104,7 +104,7 @@ public class GameTextUtilities {
 	/**
 	 * Obfuscates a string with random characters.
 	 * @param str String to obfuscate
-	 * @param chance Chance of character obfuscation (0 < chance < 1)
+	 * @param chance Chance of character obfuscation (0 < chance <= 1)
 	 * @param randomEngine Random instance to use
 	 * @return Obfuscated string.
 	 */
@@ -639,8 +639,7 @@ public class GameTextUtilities {
 	 */
 	public static char getCurrentCharacter(int offset) {
 		int i = CharacterPhase + offset;
-		i %= CharacterPhase;
-		if (i < 0) i += CharacterPhase;
+		i = MathHelper.pythonModulo(i, CHARACTERS.length());
 
 		return CHARACTERS.charAt(i);
 	}
@@ -657,8 +656,7 @@ public class GameTextUtilities {
 	 * @param x Amount to increment by.
 	 */
 	public static void updatePhase(int x) {
-		CharacterPhase = (CharacterPhase + x) % CHARACTERS.length();
-		if (CharacterPhase < 0) CharacterPhase = CHARACTERS.length() + CharacterPhase;
+		CharacterPhase = MathHelper.pythonModulo(CharacterPhase + x, CHARACTERS.length());
 	}
 
 	/**

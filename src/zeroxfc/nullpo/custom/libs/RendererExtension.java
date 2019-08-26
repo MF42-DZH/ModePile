@@ -694,7 +694,7 @@ public class RendererExtension {
 				}
 				// endregion SDL Case
 			} catch (Exception e) {
-				if (DEBUG) log.error("Failed to draw block using SDL renderer:\n" + e.getMessage());
+				if (DEBUG) log.error("Failed to draw block using SDL renderer:\n" + e.toString());
 			}
 		}
 	}
