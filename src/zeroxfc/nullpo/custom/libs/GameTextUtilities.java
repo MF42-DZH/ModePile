@@ -204,12 +204,12 @@ public class GameTextUtilities {
 			case ALIGN_TOP_MIDDLE:
 			case ALIGN_MIDDLE_MIDDLE:
 			case ALIGN_BOTTOM_MIDDLE:
-				offsetX = str.length() / 2;
+				offsetX = (int)(str.length() * scale / 2);
 				break;
 			case ALIGN_TOP_RIGHT:
 			case ALIGN_MIDDLE_RIGHT:
 			case ALIGN_BOTTOM_RIGHT:
-				offsetX = str.length();
+				offsetX = (int)(str.length() * scale);
 				break;
 			default:
 				offsetX = 0;
@@ -242,12 +242,12 @@ public class GameTextUtilities {
 			case ALIGN_TOP_MIDDLE:
 			case ALIGN_MIDDLE_MIDDLE:
 			case ALIGN_BOTTOM_MIDDLE:
-				offsetX = str.length() / 2;
+				offsetX = (int)(str.length() * scale / 2);
 				break;
 			case ALIGN_TOP_RIGHT:
 			case ALIGN_MIDDLE_RIGHT:
 			case ALIGN_BOTTOM_RIGHT:
-				offsetX = str.length();
+				offsetX = (int)(str.length() * scale);
 				break;
 			default:
 				offsetX = 0;

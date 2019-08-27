@@ -69,7 +69,7 @@ public class MouseParser {
 			try {
 				MouseInputSDL.mouseInput.update();
 			} catch (Exception e) {
-				log.debug("Failed to update SDL's mouse input:\n" + e.toString());
+				log.debug("Failed to update SDL's mouse input:\n", e);
 			}
 			break;
 		default:

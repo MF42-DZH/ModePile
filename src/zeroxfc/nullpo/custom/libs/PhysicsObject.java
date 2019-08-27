@@ -285,7 +285,7 @@ public class PhysicsObject implements Cloneable {
 			return clone;
 		} catch (Exception e) {
 			// Do nothing, but log error.
-			log.error(e.toString());
+			log.error("Failed to create clone.", e);
 			return null;
 		}
 	}

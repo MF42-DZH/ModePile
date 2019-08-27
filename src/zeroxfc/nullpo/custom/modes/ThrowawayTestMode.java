@@ -1,8 +1,6 @@
 package zeroxfc.nullpo.custom.modes;
 
-import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
-import mu.nu.nullpo.game.component.Field;
 import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
@@ -23,13 +21,13 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	private int passframe;
 	//private DynamicReactiveSound drs;
 
-	private Field T_SHAPE;
-	private static final int[][] T_FIELD = {
-			{ 0, 0, 1, 1, 0, 0 },
-			{ 0, 0, 1, 1, 0, 0 },
-			{ 1, 1, 1, 1, 1, 1 },
-			{ 1, 1, 1, 1, 1, 1 }
-	};
+//	private Field T_SHAPE;
+//	private static final int[][] T_FIELD = {
+//			{ 0, 0, 1, 1, 0, 0 },
+//			{ 0, 0, 1, 1, 0, 0 },
+//			{ 1, 1, 1, 1, 1, 1 },
+//			{ 1, 1, 1, 1, 1, 1 }
+//	};
 
 	private static final double[][] POINTS = {
 			new double[] { 0, 360 },
@@ -37,6 +35,16 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			new double[] { 500, 480 },
 			new double[] { 640, 120 }
 	};
+
+	private static final int CUSTOM_STATE_INITIAL_SCREEN = 0,
+	                         CUSTOM_STATE_NAME_INPUT = 1,
+	                         CUSTOM_STATE_PASSWORD_INPUT = 2,
+	                         CUSTOM_STATE_IS_SUCCESS_SCREEN = 3;
+
+	private int[][] rankingScorePlayer, rankingLinesPlayer, rankingTimePlayer;
+	private int rankingRankPlayer;
+	private boolean showPlayerStats;
+	private ProfileProperties playerProperties;
 
 	/*
 	 * Mode name
@@ -55,12 +63,12 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	 */
 	@Override
 	public void playerInit(GameEngine engine, int playerID) {
-		T_SHAPE = new Field(6, 4, 0);
-		for (int y = 0; y < 4; y++) {
-			for (int x = 0; x < 6; x++) {
-				T_SHAPE.getBlock(x, y).copy(new Block(T_FIELD[y][x], 0));
-			}
-		}
+//		T_SHAPE = new Field(6, 4, 0);
+//		for (int y = 0; y < 4; y++) {
+//			for (int x = 0; x < 6; x++) {
+//				T_SHAPE.getBlock(x, y).copy(new Block(T_FIELD[y][x], 0));
+//			}
+//		}
 
 		owner = engine.owner;
 		receiver = engine.owner.receiver;
@@ -83,6 +91,13 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		rankingLines = new int[RANKING_TYPE][RANKING_MAX];
 		rankingTime = new int[RANKING_TYPE][RANKING_MAX];
 
+		rankingRankPlayer = -1;
+		rankingScorePlayer = new int[RANKING_TYPE][RANKING_MAX];
+		rankingLinesPlayer = new int[RANKING_TYPE][RANKING_MAX];
+		rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
+
+		showPlayerStats = false;
+
 		netPlayerInit(engine, playerID);
 
 		if(!owner.replayMode) {
@@ -104,6 +119,12 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 		engine.owner.backgroundStatus.bg = startlevel;
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
+
+		if (!owner.replayMode && playerProperties == null) {
+			playerProperties = new ProfileProperties();
+			engine.stat = GameEngine.STAT_CUSTOM;
+			engine.resetStatc();
+		}
 	}
 
 	/*
@@ -202,6 +223,22 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				engine.quitflag = true;
 			}
 
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E)) {
+				playerProperties = new ProfileProperties();
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
+			}
+
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn()) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+
 			// NET: Netplay Ranking
 			if(engine.ctrl.isPush(Controller.BUTTON_D) && netIsNetPlay && startlevel == 0 && !big &&
 					engine.ai == null) {
@@ -231,9 +268,24 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			// TIbg.setSeed(engine.randSeed);
 			pCoordList.clear();
 			cPiece = null;
+			showPlayerStats = false;
 		}
 
 		return false;
+	}
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		showPlayerStats = false;
+
+		engine.isInGame = true;
+
+		boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+		if (playerProperties.isLoggedIn()) loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+
+		if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+		return s;
 	}
 
 	@Override
@@ -248,7 +300,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		initialBG = AnimatedBackgroundHook.getBGState(owner);
 		initialFadeBG = AnimatedBackgroundHook.getFadeBGState(owner);
 
-		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
 			engine.owner.backgroundStatus.bg = initialBG;
 			engine.owner.backgroundStatus.fadebg = initialFadeBG;
 			HIbg.reset();
@@ -479,7 +531,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	@Override
 	public void renderFirst(GameEngine engine, int playerID) {
 		if( !((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false))) ) {
-			HIbg.draw(engine, playerID);
+			if (engine.stat != GameEngine.STAT_CUSTOM) HIbg.draw(engine, playerID);
 		}
 	}
 
@@ -504,14 +556,28 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, 3, topY - 1, "SCORE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
 
-				for (int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					receiver.drawScoreFont(engine, playerID, 3, topY + i, String.valueOf(rankingScore[goaltype][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLines[goaltype][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 15, topY + i, GeneralUtil.getTime(rankingTime[goaltype][i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for (int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID, 3, topY + i, String.valueOf(rankingScorePlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLinesPlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY + i, GeneralUtil.getTime(rankingTimePlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORE", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+				} else {
+					for (int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID, 3, topY + i, String.valueOf(rankingScore[goaltype][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLines[goaltype][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY + i, GeneralUtil.getTime(rankingTime[goaltype][i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "GLOBAL RANK", EventReceiver.COLOR_BLUE);
 				}
 			}
-		} else {
+		} else if (engine.stat != GameEngine.STAT_CUSTOM) {
 			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
 			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
 
@@ -535,6 +601,11 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 			receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
+
+			if (playerProperties.isLoggedIn()) {
+				receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 16, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
 
 			// if (engine.field != null) GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, baseX + 80, baseY, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, String.format("%.2f", FieldManipulation.fieldCompare(engine.field, T_SHAPE) * 100) + "%", 0, 1f);
 
@@ -620,6 +691,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				if ((lastcombo >= 2) && (lastevent != EVENT_TSPIN_ZERO_MINI) && (lastevent != EVENT_TSPIN_ZERO))
 					receiver.drawMenuFont(engine, playerID, 2, 22, (lastcombo - 1) + "COMBO", EventReceiver.COLOR_CYAN);
 			}
+		} else {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		}
 	}
 
@@ -701,7 +774,10 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+				if (playerProperties.isLoggedIn()) saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) playerProperties.saveProfileConfig();
+				if (playerProperties.isLoggedIn()) loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
 			}
 		}
 	}
@@ -759,6 +835,21 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	}
 
 	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	protected void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < GAMETYPE_MAX; j++) {
+				rankingScorePlayer[j][i] = prop.getProperty("throwaway.ranking." + ruleName + "." + j + ".score." + i, 0);
+				rankingLinesPlayer[j][i] = prop.getProperty("throwaway.ranking." + ruleName + "." + j + ".lines." + i, 0);
+				rankingTimePlayer[j][i] = prop.getProperty("throwaway.ranking." + ruleName + "." + j + ".time." + i, 0);
+			}
+		}
+	}
+
+	/**
 	 * Save rankings to property file
 	 * @param prop Property file
 	 * @param ruleName Rule name
@@ -769,6 +860,21 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				prop.setProperty("throwaway.ranking." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
 				prop.setProperty("throwaway.ranking." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
 				prop.setProperty("throwaway.ranking." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
+			}
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < GAMETYPE_MAX; j++) {
+				prop.setProperty("throwaway.ranking." + ruleName + "." + j + ".score." + i, rankingScorePlayer[j][i]);
+				prop.setProperty("throwaway.ranking." + ruleName + "." + j + ".lines." + i, rankingLinesPlayer[j][i]);
+				prop.setProperty("throwaway.ranking." + ruleName + "." + j + ".time." + i, rankingTimePlayer[j][i]);
 			}
 		}
 	}
@@ -795,6 +901,22 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			rankingLines[type][rankingRank] = li;
 			rankingTime[type][rankingRank] = time;
 		}
+
+		rankingRankPlayer = checkRankingPlayer(sc, li, time, type);
+
+		if(rankingRankPlayer != -1) {
+			// Shift down ranking entries
+			for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+				rankingScorePlayer[type][i] = rankingScorePlayer[type][i - 1];
+				rankingLinesPlayer[type][i] = rankingLinesPlayer[type][i - 1];
+				rankingTimePlayer[type][i] = rankingTimePlayer[type][i - 1];
+			}
+
+			// Add new data
+			rankingScorePlayer[type][rankingRankPlayer] = sc;
+			rankingLinesPlayer[type][rankingRankPlayer] = li;
+			rankingTimePlayer[type][rankingRankPlayer] = time;
+		}
 	}
 
 	/**
@@ -811,6 +933,27 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			} else if((sc == rankingScore[type][i]) && (li > rankingLines[type][i])) {
 				return i;
 			} else if((sc == rankingScore[type][i]) && (li == rankingLines[type][i]) && (time < rankingTime[type][i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param li Lines
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int sc, int li, int time, int type) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScorePlayer[type][i]) {
+				return i;
+			} else if((sc == rankingScorePlayer[type][i]) && (li > rankingLinesPlayer[type][i])) {
+				return i;
+			} else if((sc == rankingScorePlayer[type][i]) && (li == rankingLinesPlayer[type][i]) && (time < rankingTimePlayer[type][i])) {
 				return i;
 			}
 		}
