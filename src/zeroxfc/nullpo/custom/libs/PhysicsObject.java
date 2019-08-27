@@ -36,6 +36,8 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import org.apache.log4j.Logger;
 
+import java.util.ArrayList;
+
 /**
  * PhysicsObject
  *
@@ -204,6 +206,54 @@ public class PhysicsObject implements Cloneable {
 	}
 
 	/**
+	 * Do one movement tick, separated into multiple subticks in order to not merge into / pass through an object.
+	 * @param subticks Amount of movement subticks (recommended >= 4)
+	 * @param obstacles All obstacles.
+	 * @return Did the object collide at all?
+	 */
+	public boolean move(int subticks, ArrayList<PhysicsObject> obstacles, boolean retract) {
+		if (PROPERTY_Static) return false;
+		DoubleVector v = DoubleVector.div(velocity, subticks);
+
+		for (int i = 0; i < subticks; i++) {
+			if (retract) position = DoubleVector.add(position, v);
+
+			for (PhysicsObject obj : obstacles) {
+				if (checkCollision(this, obj)) {
+					position = DoubleVector.sub(position, v);
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Do one movement tick, separated into multiple subticks in order to not merge into / pass through an object.
+	 * @param subticks Amount of movement subticks (recommended >= 4)
+	 * @param obstacles All obstacles.
+	 * @return Did the object collide at all?
+	 */
+	public boolean move(int subticks, PhysicsObject[] obstacles, boolean retract) {
+		if (PROPERTY_Static) return false;
+		DoubleVector v = DoubleVector.div(velocity, subticks);
+
+		for (int i = 0; i < subticks; i++) {
+			if (retract) position = DoubleVector.add(position, v);
+
+			for (PhysicsObject obj : obstacles) {
+				if (checkCollision(this, obj)) {
+					position = DoubleVector.sub(position, v);
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Do one movement tick with a custom velocity.
 	 */
 	public void move(DoubleVector velocity) {
@@ -303,8 +353,8 @@ public class PhysicsObject implements Cloneable {
 		this.anchorPoint = object.anchorPoint;
 		this.colour = object.colour;
 
-		PROPERTY_Static = object.PROPERTY_Static;
-		PROPERTY_Destructible = object.PROPERTY_Destructible;
-		PROPERTY_Collision = object.PROPERTY_Collision;
+		this.PROPERTY_Static = object.PROPERTY_Static;
+		this.PROPERTY_Destructible = object.PROPERTY_Destructible;
+		this.PROPERTY_Collision = object.PROPERTY_Collision;
 	}
 }

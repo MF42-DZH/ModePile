@@ -165,7 +165,6 @@ public class ProfileProperties {
 	 */
 	private boolean testPasswordCrash(String name, int[] buttonPresses) {
 		String nCap = getStorageName(name);
-		String nCapDisplay = name.toUpperCase();
 		boolean crash = false;
 		long number = 0;
 

@@ -22,8 +22,6 @@ import mu.nu.nullpo.game.component.Controller;
 import mu.nu.nullpo.game.component.Piece;
 
 public class FireworkChallenge extends DummyMode {
-	// TODO: call custom audio importer
-	
 	// Base Line clear values
 	private static final double[] BASE_LINE_VALUES = { 1.0, 2.9, 3.8, 4.7 };
 	
@@ -1325,7 +1323,6 @@ public class FireworkChallenge extends DummyMode {
 				engine.playSE("gameover");
 				engine.statc[0]++;
 			} else if(engine.statc[0] < engine.field.getHeight() + 1 + 300 || totalFireworkQueue > 0) {
-				// TODO: make and use firework update method
 				updateFireworkTimers(engine, playerID);
 
 				engine.statc[0]++;
@@ -1376,7 +1373,6 @@ public class FireworkChallenge extends DummyMode {
 	}
 	
 	/*
-	 * TODO: Create firework-firing function.
 	 * Maybe it works???
 	 */
 	private void launchFirework(GameEngine engine, int playerID) {

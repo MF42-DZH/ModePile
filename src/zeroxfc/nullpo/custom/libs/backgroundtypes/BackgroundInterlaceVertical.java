@@ -3,66 +3,66 @@ package zeroxfc.nullpo.custom.libs.backgroundtypes;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 
-public class BackgroundInterlaceHorizontal extends AnimatedBackgroundHook {
+public class BackgroundInterlaceVertical extends AnimatedBackgroundHook {
 	private static final int SCREEN_WIDTH = 640;
 	private static final int SCREEN_HEIGHT = 480;
-	private static final int DEFAULT_ROW_HEIGHT = 1;
+	private static final int DEFAULT_COLUMN_WIDTH = 1;
 	private static final int DEFAULT_TIMER_MAX = 30;
-	private static final boolean LEFT_ODD_DEFAULT = true;
+	private static final boolean UP_ODD_DEFAULT = true;
 	private static final float BASE_SCALE = 1f;
 	private static final float SCALE_VARIANCE = 0.1f;
 
 	private ImageChunk[] chunks;
-	private int pulseTimer, pulseTimerMax, rowHeight;
+	private int pulseTimer, pulseTimerMax, columnWidth;
 	private float baseScale, scaleVariance;
-	private boolean leftOdd, reverse;
+	private boolean upOdd, reverse;
 
 	{
-		ID = AnimatedBackgroundHook.ANIMATION_INTERLACE_HORIZONTAL;
+		ID = AnimatedBackgroundHook.ANIMATION_INTERLACE_VERTICAL;
 		customHolder = new ResourceHolderCustomAssetExtension();
 		setImageName("localBG");
 	}
 
-	public BackgroundInterlaceHorizontal(int bgNumber, Integer rowHeight, Integer pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance, Boolean leftOdd, Boolean reverse) {
+	public BackgroundInterlaceVertical(int bgNumber, Integer columnWidth, Integer pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance, Boolean upOdd, Boolean reverse) {
 		if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
 		customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
-		setup(rowHeight, pulseTimerFrames, pulseBaseScale, pulseScaleVariance, leftOdd, reverse);
+		setup(columnWidth, pulseTimerFrames, pulseBaseScale, pulseScaleVariance, upOdd, reverse);
 
-		log.debug("Non-custom horizontal interlace background (" + bgNumber + ") created.");
+		log.debug("Non-custom vertical interlace background (" + bgNumber + ") created.");
 	}
 
-	public BackgroundInterlaceHorizontal(String filePath, Integer rowHeight, Integer pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance, Boolean leftOdd, Boolean reverse) {
+	public BackgroundInterlaceVertical(String filePath, Integer columnWidth, Integer pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance, Boolean upOdd, Boolean reverse) {
 		customHolder.loadImage(filePath, imageName);
-		setup(rowHeight, pulseTimerFrames, pulseBaseScale, pulseScaleVariance, leftOdd, reverse);
+		setup(columnWidth, pulseTimerFrames, pulseBaseScale, pulseScaleVariance, upOdd, reverse);
 
-		log.debug("Custom horizontal interlace background created (File Path: " + filePath + ").");
+		log.debug("Custom vertical interlace background created (File Path: " + filePath + ").");
 	}
 
-	private void setup(Integer rowHeight, Integer pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance, Boolean leftOdd, Boolean reverse) {
-		if (rowHeight == null) rowHeight = DEFAULT_ROW_HEIGHT;
-		if (480 % rowHeight != 0) rowHeight = DEFAULT_ROW_HEIGHT;
+	private void setup(Integer columnWidth, Integer pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance, Boolean upOdd, Boolean reverse) {
+		if (columnWidth == null) columnWidth = DEFAULT_COLUMN_WIDTH;
+		if (480 % columnWidth != 0) columnWidth = DEFAULT_COLUMN_WIDTH;
 		if (pulseTimerFrames == null) pulseTimerFrames = DEFAULT_TIMER_MAX;
 		if (pulseBaseScale == null) pulseBaseScale = BASE_SCALE;
 		if (pulseScaleVariance == null) pulseScaleVariance = SCALE_VARIANCE;
-		if (leftOdd == null) leftOdd = LEFT_ODD_DEFAULT;
+		if (upOdd == null) upOdd = UP_ODD_DEFAULT;
 		if (reverse == null) reverse = false;
 
-		this.chunks = new ImageChunk[SCREEN_HEIGHT / rowHeight];
-		this.leftOdd = !leftOdd;
+		this.chunks = new ImageChunk[SCREEN_WIDTH / columnWidth];
+		this.upOdd = !upOdd;
 		this.pulseTimerMax = pulseTimerFrames;
 		this.baseScale = pulseBaseScale;
 		this.scaleVariance = pulseScaleVariance;
 		this.pulseTimer = pulseTimerFrames;
 		this.reverse = reverse;
-		this.rowHeight = rowHeight;
+		this.columnWidth = columnWidth;
 
 		for (int i = 0; i < chunks.length; i++) {
-			final boolean left = leftOdd && (i % 2 == 1);
-			final int anchorType = left ? ImageChunk.ANCHOR_POINT_TR : ImageChunk.ANCHOR_POINT_TL;
-			final int[] anchorLocation = new int[] { left ? SCREEN_WIDTH : 0, i * rowHeight };
-			final int[] srcLocation = new int[] { 0, i * rowHeight };
-			chunks[i] = new ImageChunk(anchorType, anchorLocation, srcLocation, new int[] { 640, rowHeight }, new float[] { baseScale, 1f } );
+			final boolean up = upOdd && (i % 2 == 1);
+			final int anchorType = up ? ImageChunk.ANCHOR_POINT_LL : ImageChunk.ANCHOR_POINT_TL;
+			final int[] anchorLocation = new int[] { i * columnWidth, up ? SCREEN_HEIGHT : 0 };
+			final int[] srcLocation = new int[] { i * columnWidth, 0 };
+			chunks[i] = new ImageChunk(anchorType, anchorLocation, srcLocation, new int[] { columnWidth, 480 }, new float[] { 1f, baseScale } );
 		}
 	}
 
@@ -84,12 +84,12 @@ public class BackgroundInterlaceHorizontal extends AnimatedBackgroundHook {
 			double s = Math.sin(Math.PI * ((double)ppu / pulseTimerMax));
 			double scale = baseScale + (scaleVariance * s);
 			if (scale < 1d) scale = 1d;
-			chunks[j].setScale(new float[] { (float)scale, 1f });
+			chunks[j].setScale(new float[] { 1f, (float)scale });
 		}
 	}
 
-	public void modifyValues(Integer pulseFrames, Float pulseBaseScale, Float pulseScaleVariance, Boolean leftOdd) {
-		if (leftOdd != null) this.leftOdd = leftOdd;
+	public void modifyValues(Integer pulseFrames, Float pulseBaseScale, Float pulseScaleVariance, Boolean upOdd) {
+		if (upOdd != null) this.upOdd = upOdd;
 		if (pulseFrames != null) pulseTimerMax = pulseFrames;
 		if (pulseBaseScale != null) this.baseScale = pulseBaseScale;
 		if (pulseScaleVariance != null) this.scaleVariance = pulseScaleVariance;
@@ -131,7 +131,7 @@ public class BackgroundInterlaceHorizontal extends AnimatedBackgroundHook {
 	@Override
 	public void setBG(int bg) {
 		customHolder.loadImage("res/graphics/back" + bg + ".png", imageName);
-		log.debug("Non-custom horizontal interlace background modified (New BG: " + bg + ").");
+		log.debug("Non-custom vertical interlace background modified (New BG: " + bg + ").");
 	}
 
 	/**
@@ -142,7 +142,7 @@ public class BackgroundInterlaceHorizontal extends AnimatedBackgroundHook {
 	@Override
 	public void setBG(String filePath) {
 		customHolder.loadImage(filePath, imageName);
-		log.debug("Custom horizontal interlace background modified (New File Path: " + filePath + ").");
+		log.debug("Custom vertical interlace background modified (New File Path: " + filePath + ").");
 	}
 
 	/**
@@ -154,7 +154,7 @@ public class BackgroundInterlaceHorizontal extends AnimatedBackgroundHook {
 	@Override
 	public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
 		customHolder.putImageAt(holder.getImageAt(name), imageName);
-		log.debug("Custom horizontal interlace background modified (New Image Reference: " + name + ").");
+		log.debug("Custom vertical interlace background modified (New Image Reference: " + name + ").");
 	}
 
 	/**

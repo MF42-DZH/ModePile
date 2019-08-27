@@ -51,8 +51,10 @@ public class Pong extends PuzzleGameEngine {
 	};
 
 	private static final double INITIAL_SPEED = 4.0;
-	private static final double MAXIMUM_SPEED = 16.0;
+	private static final double MAXIMUM_SPEED = 32.0;
 	private static final double SPEED_MULTIPLIER = 1.25;
+
+	private static final int VERSION = 1;
 
 	private GameManager owner;
 	private EventReceiver receiver;
@@ -63,6 +65,7 @@ public class Pong extends PuzzleGameEngine {
 	private int recentCollision, lastCollision;
 	private int playerScore, computerScore;
 	private double computerRange;
+	private int version;
 
 	@Override
 	public String getName() {
@@ -88,6 +91,7 @@ public class Pong extends PuzzleGameEngine {
 			loadSetting(owner.replayProp);
 		} else {
 			loadSetting(owner.modeConfig);
+			version = VERSION;
 		}
 
 		owner.backgroundStatus.bg = bg;
@@ -147,9 +151,7 @@ public class Pong extends PuzzleGameEngine {
 			engine.statc[3]++;
 			engine.statc[2] = -1;
 
-			if (engine.statc[3] >= 60) {
-				return false;
-			}
+			return engine.statc[3] < 60;
 		}
 
 		return true;
@@ -239,7 +241,7 @@ public class Pong extends PuzzleGameEngine {
 	}
 
 	private void resetPhysicsObjects(boolean resetPaddles) {
-		DoubleVector position = new DoubleVector((fieldBoxMinX + fieldBoxMaxX) / 2,(fieldBoxMinY + fieldBoxMaxY) / 2, false);
+		DoubleVector position = new DoubleVector((fieldBoxMinX + fieldBoxMaxX) / 2d,(fieldBoxMinY + fieldBoxMaxY) / 2d, false);
 		ball = new PhysicsObject(position, DoubleVector.zero(), -1, 1, 1, PhysicsObject.ANCHOR_POINT_MM, Block.BLOCK_COLOR_GREEN);
 		ball.PROPERTY_Static = false;
 
@@ -247,8 +249,8 @@ public class Pong extends PuzzleGameEngine {
 		lastCollision = 0;
 
 		if (resetPaddles) {
-			DoubleVector playerPosition = new DoubleVector(fieldBoxMinX,(fieldBoxMinY + fieldBoxMaxY) / 2, false);
-			DoubleVector computerPosition = new DoubleVector(fieldBoxMaxX,(fieldBoxMinY + fieldBoxMaxY) / 2, false);
+			DoubleVector playerPosition = new DoubleVector(fieldBoxMinX,(fieldBoxMinY + fieldBoxMaxY) / 2d, false);
+			DoubleVector computerPosition = new DoubleVector(fieldBoxMaxX,(fieldBoxMinY + fieldBoxMaxY) / 2d, false);
 
 			paddlePlayer = new PhysicsObject(playerPosition, DoubleVector.zero(), -1, 2, 4, PhysicsObject.ANCHOR_POINT_ML, Block.BLOCK_COLOR_CYAN);
 			paddleComputer = new PhysicsObject(computerPosition, DoubleVector.zero(), -1, 2, 4, PhysicsObject.ANCHOR_POINT_MR, Block.BLOCK_COLOR_RED);
@@ -415,10 +417,10 @@ public class Pong extends PuzzleGameEngine {
 
 		switch (localState) {
 			case LOCALSTATE_SPAWNING:
-				updateTimer = statSpawning(engine, playerID);
+				updateTimer = statSpawning(engine);
 				break;
 			case LOCALSTATE_INGAME:
-				updateTimer = statIngame(engine, playerID);
+				updateTimer = statIngame(engine);
 				break;
 			default:
 				break;
@@ -428,7 +430,7 @@ public class Pong extends PuzzleGameEngine {
 		return true;
 	}
 
-	private boolean statSpawning(GameEngine engine, int playerID) {
+	private boolean statSpawning(GameEngine engine) {
 		engine.meterValue = (int)(((double)engine.statc[0] / 60.0) * receiver.getMeterMax(engine));
 		engine.meterColor = GameEngine.METER_COLOR_GREEN;
 
@@ -450,7 +452,7 @@ public class Pong extends PuzzleGameEngine {
 		return Math.abs(a - b) < eps;
 	}
 
-	private boolean statIngame(GameEngine engine, int playerID) {
+	private boolean statIngame(GameEngine engine) {
 		engine.meterValue = receiver.getMeterMax(engine);
 		engine.meterColor = GameEngine.METER_COLOR_GREEN;
 
@@ -524,7 +526,9 @@ public class Pong extends PuzzleGameEngine {
 			}
 		}
 		*/
-		ball.move();
+		if (version >= 1) ball.move(4, new PhysicsObject[] { paddlePlayer, paddleComputer }, false);
+		else ball.move();
+
 		if (PhysicsObject.checkCollision(ball, paddlePlayer) && lastCollision == COLLISION_NONE) {
 			recentCollision = COLLISION_PADDLE_PLAYER;
 			lastCollision = COLLISION_PADDLE_PLAYER;
@@ -585,7 +589,10 @@ public class Pong extends PuzzleGameEngine {
 				break;
 		}
 
-		if (ball.velocity.getMagnitude() > MAXIMUM_SPEED) ball.velocity.setMagnitude(MAXIMUM_SPEED);
+		double maxSpeed = MAXIMUM_SPEED;
+		if (version <= 0) maxSpeed = 16;
+
+		if (ball.velocity.getMagnitude() > maxSpeed) ball.velocity.setMagnitude(maxSpeed);
 
 		if (ball.getMinX() <= fieldBoxMinX) {
 			engine.resetStatc();
@@ -687,6 +694,7 @@ public class Pong extends PuzzleGameEngine {
 		bg = prop.getProperty("pong.bg", 0);
 		bgm = prop.getProperty("pong.bgm", -1);
 		difficulty = prop.getProperty("pong.difficulty", 0);
+		version = prop.getProperty("pong.version", 0);
 	}
 
 	/**
@@ -697,5 +705,6 @@ public class Pong extends PuzzleGameEngine {
 		prop.setProperty("pong.bg", bg);
 		prop.setProperty("pong.bgm", bgm);
 		prop.setProperty("pong.difficulty", difficulty);
+		prop.getProperty("pong.version", version);
 	}
 }

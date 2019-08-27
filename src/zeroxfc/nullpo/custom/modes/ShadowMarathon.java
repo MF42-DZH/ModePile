@@ -54,7 +54,7 @@ public class ShadowMarathon extends MarathonModeBase {
 
 	// region Shapes
 
-	// TODO: Fields of different tetromino shapes.
+	// Fields of different tetromino shapes.
 	private static final int[][][] SHAPES = {
 			// region 4x
 

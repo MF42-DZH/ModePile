@@ -461,6 +461,8 @@ public class ExpressShipping extends PuzzleGameEngine {
 	public boolean onCustom(GameEngine engine, int playerID) {
 		boolean updateTime = false;
 
+		conveyorFrame = (conveyorFrame + 1) % CONVEYOR_ANIMATION_FRAMES;
+
 		mouseControl.update();
 		mouseCoords = mouseControl.getMouseCoordinates();
 
@@ -1141,11 +1143,6 @@ public class ExpressShipping extends PuzzleGameEngine {
 	}
 
 	private void drawConveyorBelt(GameEngine engine) {
-		if (!engine.lagStop) {
-			// TODO: Move this to onCustom.
-			conveyorFrame = (conveyorFrame + 1) % CONVEYOR_ANIMATION_FRAMES;
-		}
-
 		int offset;
 		int cOffset;
 

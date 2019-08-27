@@ -45,7 +45,18 @@ public class SideWaveText {
 	private int lifeTime;
 	private boolean big;
 	private boolean lClear;
-	
+
+	/**
+	 * Creates a Super Collapse II-styled score popup that flies away.<br />
+	 * For now, drawing is manual.
+	 * @param x X-coordinate of centre (?)
+	 * @param y Y-coordinate of centre (?)
+	 * @param frequency Waving frequency
+	 * @param offsetWidth Max offset
+	 * @param text Text to draw
+	 * @param big Should it be double size?
+	 * @param largeclear Should it flash and actually wave?
+	 */
 	public SideWaveText(int x, int y, double frequency, double offsetWidth, String text, boolean big, boolean largeclear) {
 		this.text = text;
 		position = new DoubleVector(x, y, false);

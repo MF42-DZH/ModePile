@@ -171,8 +171,8 @@ public class FieldManipulation {
 	 * @param field Field to trim.
 	 */
 	public static void delUpperFix(Field field) {
-		int rows = ((field.getHeight() - field.getHighestBlockY()) / 2);
-		//TODO: Check if this should round up or down.
+		int rows = (int)Math.round((field.getHeight() - field.getHighestBlockY()) / 2d);
+		// I think this rounds up.
 		int g = field.getHighestBlockY();
 		for (int y = 0; y < rows; y++)
 			field.delLine(g+y);

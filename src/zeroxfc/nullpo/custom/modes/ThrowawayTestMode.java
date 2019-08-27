@@ -235,12 +235,6 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				return true;
 			}
 
-			// Show rank
-			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn()) {
-				showPlayerStats = !showPlayerStats;
-				engine.playSE("change");
-			}
-
 			// NET: Netplay Ranking
 			if(engine.ctrl.isPush(Controller.BUTTON_D) && netIsNetPlay && startlevel == 0 && !big &&
 					engine.ai == null) {
@@ -305,6 +299,13 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
 			engine.owner.backgroundStatus.bg = initialBG;
 			engine.owner.backgroundStatus.fadebg = initialFadeBG;
+
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+
 			HIbg.reset();
 		} else {
 			//if (engine.statistics.time % 120 == 0 && engine.timerActive) {
