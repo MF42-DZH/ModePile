@@ -124,6 +124,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			playerProperties = new ProfileProperties();
 			engine.stat = GameEngine.STAT_CUSTOM;
 			engine.resetStatc();
+		} else if (!owner.replayMode) {
+			if (playerProperties.isLoggedIn()) loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
 		}
 	}
 
@@ -777,7 +779,6 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				if (playerProperties.isLoggedIn()) saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
 				if (playerProperties.isLoggedIn()) playerProperties.saveProfileConfig();
-				if (playerProperties.isLoggedIn()) loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
 			}
 		}
 	}

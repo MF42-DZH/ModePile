@@ -92,6 +92,14 @@ public class ProfileProperties {
 	 * Create a new profile loader. Use this constructor in a mode.
 	 */
 	public ProfileProperties() {
+		this(EventReceiver.COLOR_CYAN);
+	}
+
+	/**
+	 * Create a new profile loader. Use this constructor in a mode.
+	 * @param colourHeading Colour of heading. Use values from {@link EventReceiver} class.
+	 */
+	public ProfileProperties(int colourHeading) {
 		PROP_PROFILE = new CustomProperties();
 
 		try {
@@ -125,7 +133,7 @@ public class ProfileProperties {
 		nameDisplay = "";
 		nameProp = "";
 		loggedIn = false;
-		loginScreen = new LoginScreen(this);
+		loginScreen = new LoginScreen(this, colourHeading);
 	}
 
 	/**
@@ -134,7 +142,7 @@ public class ProfileProperties {
 	 * @return Property name
 	 */
 	private String getStorageName(String name) {
-		return name.toUpperCase().replace(' ', 's')
+		return name.toUpperCase().replace(' ', '_')
 				                 .replace('.', 'd')
 				                 .replace('?','k')
 				                 .replace('!','e');
@@ -145,7 +153,7 @@ public class ProfileProperties {
 	 * @param name Name to test
 	 * @return Available?
 	 */
-	public boolean testUsernameAvailability(String name, long number) {
+	private boolean testUsernameAvailability(String name, long number) {
 		String nCap = getStorageName(name);
 		return !PROP_PROFILE.getProperty(PREFIX_NAME + nCap + "." + number, false);
 	}
@@ -155,7 +163,7 @@ public class ProfileProperties {
 	 * @param name Name to test
 	 * @return Available?
 	 */
-	public boolean testPasswordCrash(String name, int[] buttonPresses) {
+	private boolean testPasswordCrash(String name, int[] buttonPresses) {
 		String nCap = getStorageName(name);
 		String nCapDisplay = name.toUpperCase();
 		boolean crash = false;
@@ -185,7 +193,7 @@ public class ProfileProperties {
 	 * @param name Name to test
 	 * @return Available?
 	 */
-	public boolean testUsernameAvailability(String name) {
+	private boolean testUsernameAvailability(String name) {
 		String nCap = getStorageName(name);
 		return !PROP_PROFILE.getProperty(PREFIX_NAME + nCap + "." + 0, false);
 	}
@@ -196,7 +204,7 @@ public class ProfileProperties {
 	 * @param buttonPresses Password input sequence (exp. length 6)
 	 * @return Was the attempt to log into the account successful?
 	 */
-	public boolean attemptLogIn(String name, int[] buttonPresses) {
+	private boolean attemptLogIn(String name, int[] buttonPresses) {
 		String nCap = getStorageName(name);
 		String nCapDisplay = name.toUpperCase();
 		if (testUsernameAvailability(nCap)) {
@@ -244,7 +252,7 @@ public class ProfileProperties {
 	 * @param buttonPresses Password input sequence (exp. length 6)
 	 * @return Was the attempt to create an account successful?
 	 */
-	public boolean createAccount(String name, int[] buttonPresses) {
+	private boolean createAccount(String name, int[] buttonPresses) {
 		String nCap = getStorageName(name);
 		String nCapDisplay = name.toUpperCase();
 
@@ -283,7 +291,7 @@ public class ProfileProperties {
 	 * @param pass2 Button press sequence (exp. length 6)
 	 * @return Same?
 	 */
-	public static boolean isAdequate(int[] pass1, int[] pass2) {
+	private static boolean isAdequate(int[] pass1, int[] pass2) {
 		if (pass1.length != pass2.length) return false;
 		if (pass1.length != 6) return false;
 
@@ -393,6 +401,20 @@ public class ProfileProperties {
 	}
 
 	/**
+	 * Gets a <code>String</code> property.
+	 * @param path Property path
+	 * @param def Default value
+	 * @return Value of property. Returns <code>def</code> if undefined or not logged in.
+	 */
+	public String getProperty(String path, String def) {
+		if (loggedIn) {
+			return PROP_PROFILE.getProperty(nameProp + "." + path, def);
+		} else {
+			return def;
+		}
+	}
+
+	/**
 	 * Gets an <code>int</code> property.
 	 * @param path Property path
 	 * @param def Default value
@@ -486,6 +508,17 @@ public class ProfileProperties {
 	}
 
 	/**
+	 * Sets a <code>String</code> property.
+	 * @param path Property path
+	 * @param val New value
+	 */
+	public void setProperty(String path, String val) {
+		if (loggedIn) {
+			PROP_PROFILE.setProperty(nameProp + "." + path, val);
+		}
+	}
+
+	/**
 	 * Sets a <code>byte</code> property.
 	 * @param path Property path
 	 * @param val New value
@@ -526,6 +559,9 @@ public class ProfileProperties {
 		return loggedIn;
 	}
 
+	/**
+	 * Screen to draw. Use it inside onCustom and renderLast.
+	 */
 	public static class LoginScreen {
 		private static final int CUSTOM_STATE_INITIAL_SCREEN = 0,
 		                         CUSTOM_STATE_NAME_INPUT = 1,
@@ -540,8 +576,22 @@ public class ProfileProperties {
 		private boolean signup;
 		private boolean success;
 		private ProfileProperties playerProperties;
+		private int colourHeading;
 
-		public LoginScreen(ProfileProperties playerProperties) {
+		/**
+		 * Creates a new login screen for a <code>ProfileProperties</code> instance.
+		 * @param playerProperties <code>ProfileProperties</code> instance that is using this login screen.
+		 */
+		LoginScreen(ProfileProperties playerProperties) {
+			this(playerProperties, EventReceiver.COLOR_CYAN);
+		}
+
+		/**
+		 * Creates a new login screen with a custom heading colour for a <code>ProfileProperties</code> instance.
+		 * @param playerProperties <code>ProfileProperties</code> instance that is using this login screen.
+		 * @param colourHeading Text colour. Get from {@link EventReceiver} class.
+		 */
+		LoginScreen(ProfileProperties playerProperties, int colourHeading) {
 			this.playerProperties = playerProperties;
 
 			nameEntry = "";
@@ -552,8 +602,15 @@ public class ProfileProperties {
 			login = false;
 			signup = false;
 			success = false;
+			this.colourHeading = colourHeading;
 		}
 
+		/**
+		 * Updates the screen data. Used for inputting data into the parent <code>ProfileProperty</code> instance.
+		 * @param engine Current GameEngine instance
+		 * @param playerID Currnet playerID
+		 * @return True to override onCustom routine
+		 */
 		public boolean updateScreen(GameEngine engine, int playerID) {
 			boolean update = false;
 
@@ -732,15 +789,21 @@ public class ProfileProperties {
 			return true;
 		}
 
+		/**
+		 * Render the current login screen.
+		 * @param receiver Renderer to use
+		 * @param engine Current GameEngine instance
+		 * @param playerID Player ID
+		 */
 		public void renderScreen(EventReceiver receiver, GameEngine engine, int playerID) {
 			switch (customState) {
 				case CUSTOM_STATE_INITIAL_SCREEN:
 					// region INITIAL SCREEN
 					GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 0,
-							GameTextUtilities.ALIGN_TOP_MIDDLE, "PLAYER", EventReceiver.COLOR_CYAN,
+							GameTextUtilities.ALIGN_TOP_MIDDLE, "PLAYER", colourHeading,
 							2f);
 					GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 2,
-							GameTextUtilities.ALIGN_TOP_MIDDLE, "DATA", EventReceiver.COLOR_CYAN,
+							GameTextUtilities.ALIGN_TOP_MIDDLE, "DATA", colourHeading,
 							2f);
 
 					receiver.drawMenuFont(engine, playerID, 0, 8, "A: LOG IN", EventReceiver.COLOR_YELLOW);
@@ -753,10 +816,10 @@ public class ProfileProperties {
 				case CUSTOM_STATE_NAME_INPUT:
 					// region NAME INPUT
 					GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 0,
-							GameTextUtilities.ALIGN_TOP_MIDDLE, "NAME", EventReceiver.COLOR_CYAN,
+							GameTextUtilities.ALIGN_TOP_MIDDLE, "NAME", colourHeading,
 							2f);
 					GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 2,
-							GameTextUtilities.ALIGN_TOP_MIDDLE, "ENTRY", EventReceiver.COLOR_CYAN,
+							GameTextUtilities.ALIGN_TOP_MIDDLE, "ENTRY", colourHeading,
 							2f);
 
 					receiver.drawMenuFont(engine, playerID, 2, 8,nameEntry + ProfileProperties.getCharAt(currentChar), 2f);
@@ -767,10 +830,10 @@ public class ProfileProperties {
 				case CUSTOM_STATE_PASSWORD_INPUT:
 					// region PASSWORD INPUT
 					GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 0,
-							GameTextUtilities.ALIGN_TOP_MIDDLE, "PASS", EventReceiver.COLOR_CYAN,
+							GameTextUtilities.ALIGN_TOP_MIDDLE, "PASS", colourHeading,
 							2f);
 					GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 2,
-							GameTextUtilities.ALIGN_TOP_MIDDLE, "ENTRY", EventReceiver.COLOR_CYAN,
+							GameTextUtilities.ALIGN_TOP_MIDDLE, "ENTRY", colourHeading,
 							2f);
 
 					receiver.drawMenuFont(engine, playerID, 2, 8, nameEntry, 2f);
@@ -779,7 +842,7 @@ public class ProfileProperties {
 						String chr = "c";
 						if (x < engine.statc[1]) chr = "d";
 						else if (x == engine.statc[1] && (engine.statc[0] / 2) % 2 == 0) chr = "d";
-						receiver.drawMenuFont(engine, playerID, x + 2, 12, chr, EventReceiver.COLOR_CYAN);
+						receiver.drawMenuFont(engine, playerID, x + 2, 12, chr, colourHeading);
 					}
 
 					if (signup && engine.statc[2] == 1)receiver.drawMenuFont(engine, playerID, 0, 18, "REENTER ACCOUNT\nPASSWORD.");
