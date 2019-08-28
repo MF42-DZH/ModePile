@@ -39,12 +39,14 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _FlyInOutText_ - Adds text objects that can fly into the screen from the outside, linger, then return to their starting positions before disappearing.
 * _GameTextUtilities_ - Adds methods for coloured text and other random text / text obfuscation methods.
 * _Interpolation_ - Linear interpolation functions.
+* _MathHelper_ - A few extra mathematical functions such as LCM or GCD.
 * _MouseParser_ - Allows the use of mouse inside a mode.
 * _PhysicsObject_ - Allows the use of basic frictionless rigid body physics with square objects.
 * _ProfileProperties_ - Allows the use of TI-styled profiles.
 * _RendererExtension_ - Extra drawing methods.
 * _ResourceHolderCustomAssetExtension_ - Allows the use of custom images and BGM in a mode.
 * _ScrollingMarqueeText_ - Horizontal scrolling text.
+* _SideWaveText_ - _Super Collapse II_-styled text popups.
 * _SoundLoader_ - Allows the use of custom SFX.
 * _StaticFlyInText_ - Similar to _FlyInOutText_, but the text does not fly back out.
 * _ValueWrapper_ - Class that holds a set of one of each primitive numbers.
