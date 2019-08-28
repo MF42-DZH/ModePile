@@ -450,7 +450,7 @@ public class ScoreTrial extends MarathonModeBase {
 				for(int i = 0; i < RANKING_MAX; i++) {
 					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
 					String s = String.valueOf(rankingScore[difficultySelected][i]);
-					receiver.drawScoreFont(engine, playerID, (s.length() > 6) ? 6 : 3, (s.length() > 6) ? (topY+i) * 2 : (topY+i), s, (i == rankingRank), (s.length() > 6) ? scale * 0.5f : scale);
+					receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRank), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
 					receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[difficultySelected][i]), (i == rankingRank), scale);
 					receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[difficultySelected][i]), (i == rankingRank), scale);
 				}

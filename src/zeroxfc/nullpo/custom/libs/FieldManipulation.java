@@ -45,46 +45,54 @@ public class FieldManipulation {
 	private static final Logger log = Logger.getLogger(FieldManipulation.class);
 
 	/**
-	 * Check for split line clears. To be executed in gamemode's onLineClear.
+	 * Check for split line clears. To be executed in gamemode's onLineClear.<br />
+	 * Credit goes to MandL27
 	 * @param field Field to check
 	 * @return <code>true</code> if line clear is split. <code>false</code> otherwise.
 	 */
 	public static boolean checkLineForSplit(Field field) {
-		if (field.lastLinesCleared == null){
-			field.lastLinesCleared = new ArrayList<Block[]>();
+/*		if (field.lastLinesCleared == null){
+ *			field.lastLinesCleared = new ArrayList<Block[]>();
+ *		}
+ *		field.lastLinesCleared.clear();
+ *
+ *		boolean previousFlag = false;
+ *		boolean atLeastOne = false;
+ *
+ *		Block[] row = new Block[field.getWidth()];
+ *
+ *		for(int i = (field.getHiddenHeight() * -1); i < field.getHeightWithoutHurryupFloor(); i++) {
+ *			boolean flag = true;
+ *
+ *			for(int j = 0; j < field.getWidth(); j++) {
+ *				row[j] = new Block(field.getBlock(j, i));
+ *				if((field.getBlockEmpty(j, i)) || (field.getBlock(j, i).getAttribute(Block.BLOCK_ATTRIBUTE_WALL))) {
+ *					flag = false;
+ *					break;
+ *				}
+ *			}
+ *
+ *			field.setLineFlag(i, flag);
+ *
+ *			if (flag != previousFlag && atLeastOne && flag) {
+ *				return true;
+ *			}
+ *
+ *			if(flag) {
+ *				atLeastOne = true;
+ *			}
+ *
+ *			previousFlag = flag;
+  		} */
+		int regions = 0;
+		int lines = 0;
+
+		for (int i = field.getHiddenHeight() * -1; i < field.getHeight(); i++) {
+			if (field.getLineFlag(i)) lines++;
+			if (lines > 0) regions++;
 		}
-		field.lastLinesCleared.clear();
-		
-		boolean previousFlag = false;
-		boolean atLeastOne = false;
 
-		Block[] row = new Block[field.getWidth()];
-
-		for(int i = (field.getHiddenHeight() * -1); i < field.getHeightWithoutHurryupFloor(); i++) {
-			boolean flag = true;
-
-			for(int j = 0; j < field.getWidth(); j++) {
-				row[j] = new Block(field.getBlock(j, i));
-				if((field.getBlockEmpty(j, i)) || (field.getBlock(j, i).getAttribute(Block.BLOCK_ATTRIBUTE_WALL))) {
-					flag = false;
-					break;
-				}
-			}
-
-			field.setLineFlag(i, flag);
-			
-			if (flag != previousFlag && atLeastOne && flag) {
-				return true;
-			}
-			
-			if(flag) {
-				atLeastOne = true;
-			}
-			
-			previousFlag = flag;
-		}
-
-		return false;
+		return regions > lines;
 	}
 
 	/**
@@ -397,7 +405,7 @@ public class FieldManipulation {
 			if (a.getWidth() != b.getWidth()) return 0d;
 			if ((a.getHiddenHeight() + a.getHiddenHeight()) != (b.getHiddenHeight() + b.getHiddenHeight())) return 0d;
 
-			final int total = 2 * a.getWidth() * (a.getHeight() + a.getHiddenHeight());
+			final int total = 2 * getNumberOfBlocks(b);
 			int current = 0;
 
 			for (int y = (-1 * a.getHiddenHeight()); y < a.getHeight(); y++) {
@@ -407,9 +415,7 @@ public class FieldManipulation {
 
 					if (blkA != null && blkB != null) {
 						if (colourMatch) {
-							if (blkA.isEmpty() && blkB.isEmpty()) {
-								current += 2;
-							} else {
+							if (!blkA.isEmpty() || !blkB.isEmpty()) {
 								if (!blkA.isEmpty() && blkB.isEmpty()) {
 									current -= 6;
 								} else if (!blkA.isEmpty() && !blkB.isEmpty()) {
@@ -421,9 +427,7 @@ public class FieldManipulation {
 								}
 							}
 						} else {
-							if (blkA.isEmpty() && blkB.isEmpty()) {
-								current += 2;
-							} else {
+							if (!blkA.isEmpty() || !blkB.isEmpty()) {
 								if (!blkA.isEmpty() && blkB.isEmpty()) {
 									current -= 6;
 								} else if (!blkA.isEmpty() && !blkB.isEmpty()) {

@@ -576,7 +576,7 @@ public class ProfileProperties {
 		private boolean signup;
 		private boolean success;
 		private ProfileProperties playerProperties;
-		private int colourHeading;
+		private final int colourHeading;
 
 		/**
 		 * Creates a new login screen for a <code>ProfileProperties</code> instance.
@@ -681,13 +681,13 @@ public class ProfileProperties {
 			 */
 			if (nameEntry.length() == 3) currentChar = ProfileProperties.ENTRY_CHARS.length() - 1;
 
-			if (engine.ctrl.isPress(Controller.BUTTON_DOWN)) {
+			if (engine.ctrl.isPress(Controller.BUTTON_RIGHT)) {
 				if (engine.statc[1] % 6 == 0) {
 					engine.playSE("change");
 					currentChar++;
 				}
 				engine.statc[1]++;
-			} else if (engine.ctrl.isPress(Controller.BUTTON_UP)) {
+			} else if (engine.ctrl.isPress(Controller.BUTTON_LEFT)) {
 				if (engine.statc[1] % 6 == 0) {
 					engine.playSE("change");
 					currentChar--;
@@ -700,7 +700,7 @@ public class ProfileProperties {
 					engine.playSE("change");
 					currentChar = 0;
 				} else if (s.equals("q")) {
-					if (nameEntry.length() < 3) nameEntry = String.format("%3s", nameEntry);
+					if (nameEntry.length() < 3) nameEntry = String.format("%-3s", nameEntry);
 					engine.playSE("decide");
 					currentChar = 0;
 
@@ -724,7 +724,7 @@ public class ProfileProperties {
 				engine.statc[1] = 0;
 			}
 
-			return false;
+			return true;
 		}
 
 		private boolean onPasswordInput(GameEngine engine, int playerID) {
@@ -822,7 +822,10 @@ public class ProfileProperties {
 							GameTextUtilities.ALIGN_TOP_MIDDLE, "ENTRY", colourHeading,
 							2f);
 
-					receiver.drawMenuFont(engine, playerID, 2, 8,nameEntry + ProfileProperties.getCharAt(currentChar), 2f);
+					receiver.drawMenuFont(engine, playerID, 2, 8, nameEntry, 2f);
+					int c = 0;
+					if ((engine.statc[0] / 6) % 2 == 0) c = EventReceiver.COLOR_YELLOW;
+					receiver.drawMenuFont(engine, playerID, 2 + (nameEntry.length() * 2), 8, ProfileProperties.getCharAt(currentChar), c, 2f);
 
 					receiver.drawMenuFont(engine, playerID, 0, 18, "ENTER ACCOUNT\nNAME.");
 					// endregion

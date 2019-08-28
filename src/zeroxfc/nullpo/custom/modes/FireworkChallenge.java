@@ -4,6 +4,7 @@
  */
 package zeroxfc.nullpo.custom.modes;
 
+import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.*;
 
 import java.util.ArrayList;
@@ -22,6 +23,8 @@ import mu.nu.nullpo.game.component.Controller;
 import mu.nu.nullpo.game.component.Piece;
 
 public class FireworkChallenge extends DummyMode {
+	private static final Logger log = Logger.getLogger(FireworkChallenge.class);
+
 	// Base Line clear values
 	private static final double[] BASE_LINE_VALUES = { 1.0, 2.9, 3.8, 4.7 };
 	
@@ -192,9 +195,6 @@ public class FireworkChallenge extends DummyMode {
 	// show best STs?
 	private boolean showBests;
 	
-	// full ghost?
-	private boolean tlsMode;
-	
 	// 20g mode?
 	private boolean maxGravMode;
 	
@@ -309,7 +309,6 @@ public class FireworkChallenge extends DummyMode {
 		lvAtLastSplit = 0;
 		
 		showBests = false;
-		tlsMode = false;
 		maxGravMode = false;
 		big = false;
 		showST = false;
@@ -722,7 +721,6 @@ public class FireworkChallenge extends DummyMode {
 		if((engine.ending == 2) && (rollStarted == false)) {
 			rollStarted = true;
 			owner.bgmStatus.fadesw = false;
-			creditsFreeFireworkDelay = MAX_ROLL_TIME / fireworksFired;
 			owner.bgmStatus.bgm = BGMStatus.BGM_ENDING2;
 		}
 
@@ -775,6 +773,8 @@ public class FireworkChallenge extends DummyMode {
 	@Override
 	public void calcScore(GameEngine engine, int playerID, int lines) {
 		if((lines >= 1) && (engine.ending == 0)) {
+			if (lines >= 2) isSplit = FieldManipulation.checkLineForSplit(engine.field);
+
 			if(engine.field.isEmpty()) {
 				engine.playSE("bravo");
 				bravoFireworkQueue += 6;
@@ -804,8 +804,8 @@ public class FireworkChallenge extends DummyMode {
 			
 			if (engine.lastmove == 5 || engine.lastmove == 6) {
 				lastPiece = engine.nowPieceObject.id;
-				if (Piece.getPieceName(lastPiece) != "O") {
-					if (Piece.getPieceName(lastPiece) == "T") {
+				if (!Piece.getPieceName(lastPiece).equals("O")) {
+					if (Piece.getPieceName(lastPiece).equals("T")) {
 						if (lines >= 3) {
 							fireworkTotal *= 4;
 						} else {
@@ -828,10 +828,14 @@ public class FireworkChallenge extends DummyMode {
 
 			if(engine.statistics.level >= 200) {
 				// Ending
-				comboDuringCredits = engine.combo;
-				if (comboDuringCredits > 9) comboDuringCredits = 9;
-				comboDuringCredits = CREDIT_COMBO_CONVERSION[comboDuringCredits];
-				
+				if (engine.ending == 0) {
+					comboDuringCredits = engine.combo;
+					if (comboDuringCredits > 9) comboDuringCredits = 9;
+					comboDuringCredits = CREDIT_COMBO_CONVERSION[comboDuringCredits];
+
+					creditsFreeFireworkDelay = MAX_ROLL_TIME / fireworksFired;
+				}
+
 				engine.statistics.level = 200;
 				engine.timerActive = false;
 				engine.ending = 1;
@@ -861,6 +865,8 @@ public class FireworkChallenge extends DummyMode {
 				engine.playSE("levelstop");
 			}
 		} else if (lines >= 1) {
+			if (lines >= 2) isSplit = FieldManipulation.checkLineForSplit(engine.field);
+
 			// firework calculation
 			calculateVarispeedCombo(engine, engine.statistics.level);
 			calculateVarispeedFinesse(engine, engine.statistics.level);
@@ -873,7 +879,7 @@ public class FireworkChallenge extends DummyMode {
 			fireworkTotal *= varispeedComboBonus;
 			fireworkTotal *= varispeedFinesseBonus;
 			if (lines > 1) fireworkTotal *= CREDIT_COMBO_MULTIPLIERS[comboDuringCredits];
-			if (Arrays.stream(LUCKY_LEVELS).anyMatch(i -> i == engine.statistics.level)) fireworkTotal *= LUCKY_LEVEL_BONUS;
+			if (engine.statistics.level < 200) if (Arrays.stream(LUCKY_LEVELS).anyMatch(i -> i == engine.statistics.level)) fireworkTotal *= LUCKY_LEVEL_BONUS;
 			if (give30sBonus) {
 				fireworkTotal *= THIRTY_BONUS;
 				give30sBonus = false;
@@ -882,7 +888,7 @@ public class FireworkChallenge extends DummyMode {
 			
 			if (engine.lastmove == 5 || engine.lastmove == 6) {
 				lastPiece = engine.nowPieceObject.id;
-				if (Piece.getPieceName(lastPiece) != "O") {
+				if (!Piece.getPieceName(lastPiece).equals("O")) {
 					if (Piece.getPieceName(lastPiece) == "T") {
 						if (lines >= 3) {
 							fireworkTotal *= 4;
@@ -903,9 +909,6 @@ public class FireworkChallenge extends DummyMode {
 	
 	@Override
 	public boolean onLineClear(GameEngine engine, int playerID) {
-		int lines = engine.field.checkLineNoFlag();
-		if (lines >= 2) isSplit = FieldManipulation.checkLineForSplit(engine.field);
-		
 		//  event 発生
 		owner.receiver.onLineClear(engine, playerID);
 
@@ -1167,23 +1170,27 @@ public class FireworkChallenge extends DummyMode {
 				sectionTime[section]++;
 			}
 			
-			if (engine.statistics.time % 1800 == 0 && engine.ending == 0) {
+			if (engine.statistics.time % 1800 == 0) {
 				if (engine.statistics.level - lvAtLastSplit >= 30) {
 					give30sBonus = true;
 				}
 				else {
 					give30sBonus = false;
 				}
-				
-				if (lastFireworkTimer > 0) lastFireworkTimer--;
+
 				lvAtLastSplit = engine.statistics.level;
 			}
+
+			if (lastFireworkTimer > 0) lastFireworkTimer--;
 		}
 		
 		if (engine.gameActive) {
-			if (totalFireworkQueue >= 0) {
+			totalFireworkQueue = bravoFireworkQueue + comboFireworkQueue + genericFireworkQueue;
+			if (totalFireworkQueue > 0 || engine.ending == 2) {
 				updateFireworkTimers(engine, playerID);
 			}
+
+			lastLineClearTime++;
 		}
 		
 		// Ending
@@ -1548,7 +1555,7 @@ public class FireworkChallenge extends DummyMode {
 			comboFireworkTimer = 0;
 			launchFirework(engine, playerID);
 			comboFireworkQueue--;
-			
+
 			if(!sp) {
 				engine.playSE("fireworklaunch");
 				engine.playSE("fireworkexplode");
@@ -1559,7 +1566,7 @@ public class FireworkChallenge extends DummyMode {
 			completionFireworkTimer = 0;
 			launchFirework(engine, playerID);
 			genericFireworkQueue--;
-			
+
 			if(!sp) {
 				engine.playSE("fireworklaunch");
 				engine.playSE("fireworkexplode");
@@ -1576,8 +1583,10 @@ public class FireworkChallenge extends DummyMode {
 				sp = true;
 			}
 		}
-		
+
 		totalFireworkQueue = bravoFireworkQueue + comboFireworkQueue + genericFireworkQueue;
+
+		// log.debug(String.format("T: %d, BR: %d, CB: %d, CL: %d, CFD: %d, CFT: %d", totalFireworkQueue, bravoFireworkQueue, comboFireworkQueue, genericFireworkQueue, creditsFreeFireworkDelay, creditsFreeFireworkTimer));
 	}
 	
 	private void calculateVarispeedCombo(GameEngine engine, int level) {
@@ -1591,6 +1600,6 @@ public class FireworkChallenge extends DummyMode {
 		int frame = level - engine.statc[0];
 		if (frame < 120) frame = 120;
 		
-		varispeedFinesseBonus = (frame * (1.0 / 120.0));
+		varispeedFinesseBonus = (frame / 120.0);
 	}
 }

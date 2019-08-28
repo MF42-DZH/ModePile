@@ -1,5 +1,10 @@
 package zeroxfc.nullpo.custom.modes;
 
+import mu.nu.nullpo.game.component.Block;
+import mu.nu.nullpo.game.component.Field;
+
+import java.util.ArrayList;
+
 public class DrawMode extends MarathonModeBase {
 	/** This mode always has 0G gravity */
 	private static final int GRAVITY_CONSTANT = 0;
@@ -119,7 +124,36 @@ public class DrawMode extends MarathonModeBase {
 			//endregion
 	};
 
+	private static final ArrayList<Field> SHAPE_FIELDS = new ArrayList<>();
+
+	private static final int[] SHAPE_TO_PIECE_ID = {
+			0, 0, 1, 1, 1, 1, 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6
+	};
+
+	private static final int[] SHAPE_TO_PIECE_DIRECTION = {
+			0, 1, 0, 1, 2, 3, 0, 2, 1, 0, 1, 2, 3, 0, 1, 2, 3, 2, 3
+	};
+
+	static {
+		for (int i = 0; i < SHAPES.length; i++) {
+			int[][] shape = SHAPES[i];
+			int dimX = shape[0].length;
+			int dimY = shape.length;
+
+			SHAPE_FIELDS.add(new Field(dimX, dimY, 0));
+
+			for (int y = 0; y < dimY; y++) {
+				for (int x = 0; x < dimX; x++) {
+					SHAPE_FIELDS.get(i).getBlock(x, y).copy(new Block(shape[y][x], 0));
+				}
+			}
+		}
+	}
+
 	// endregion SHAPES
+
+	/** The match confidence of the field to each piece. */
+	private ArrayList<Double> matchConfidences;
 
 	/** Mode Name */
 	@Override
