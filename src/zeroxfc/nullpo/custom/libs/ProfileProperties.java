@@ -153,9 +153,19 @@ public class ProfileProperties {
 	 * @param name Name to test
 	 * @return Available?
 	 */
-	private boolean testUsernameAvailability(String name, long number) {
+	private boolean testUsernameTaken(String name, long number) {
 		String nCap = getStorageName(name);
-		return !PROP_PROFILE.getProperty(PREFIX_NAME + nCap + "." + number, false);
+		return PROP_PROFILE.getProperty(PREFIX_NAME + nCap + "." + number, false);
+	}
+
+	/**
+	 * Tests to see if a name has not already been taken on the local machine.
+	 * @param name Name to test
+	 * @return Available?
+	 */
+	private boolean testUsernameAvailability(String name) {
+		String nCap = getStorageName(name);
+		return !PROP_PROFILE.getProperty(PREFIX_NAME + nCap + "." + 0, false);
 	}
 
 	/**
@@ -168,7 +178,7 @@ public class ProfileProperties {
 		boolean crash = false;
 		long number = 0;
 
-		while (!testUsernameAvailability(name, number)) {
+		while (testUsernameTaken(name, number)) {
 			if (!PROP_PROFILE.getProperty(PREFIX_NAME + nCap + "." + number, false)) return false;
 			else {
 				crash = true;
@@ -188,16 +198,6 @@ public class ProfileProperties {
 	}
 
 	/**
-	 * Tests to see if a name has already been taken on the local machine.
-	 * @param name Name to test
-	 * @return Available?
-	 */
-	private boolean testUsernameAvailability(String name) {
-		String nCap = getStorageName(name);
-		return !PROP_PROFILE.getProperty(PREFIX_NAME + nCap + "." + 0, false);
-	}
-
-	/**
 	 * Attempt to log into an account with a name and password.
 	 * @param name Account name
 	 * @param buttonPresses Password input sequence (exp. length 6)
@@ -214,7 +214,7 @@ public class ProfileProperties {
 		boolean login = false;
 
 		long number = 0;
-		while (!testUsernameAvailability(nCap, number)) {
+		while (testUsernameTaken(nCap, number)) {
 			int pass = PROP_PROFILE.getProperty(PREFIX_PASS + nCap + "." + number, 0);
 
 			for (int i = 0; i < buttonPresses.length; i++) {
@@ -256,7 +256,7 @@ public class ProfileProperties {
 		String nCapDisplay = name.toUpperCase();
 
 		long number = 0;
-		while (!testUsernameAvailability(nCap, number)) {
+		while (testUsernameTaken(nCap, number)) {
 			log.warn("Creation of " + nCapDisplay + " " + number + " failed. Name and number taken.");
 			number++;
 		}
@@ -562,6 +562,7 @@ public class ProfileProperties {
 	 * Screen to draw. Use it inside onCustom and renderLast.
 	 */
 	public static class LoginScreen {
+		/** Screen states */
 		private static final int CUSTOM_STATE_INITIAL_SCREEN = 0,
 		                         CUSTOM_STATE_NAME_INPUT = 1,
 		                         CUSTOM_STATE_PASSWORD_INPUT = 2,
