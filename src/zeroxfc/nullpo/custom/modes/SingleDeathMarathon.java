@@ -1740,9 +1740,9 @@ public class SingleDeathMarathon extends MarathonModeBase {
 		if (!prop.isLoggedIn()) return;
 		for(int i = 0; i < RANKING_MAX; i++) {
 			for(int j = 0; j < GAMETYPE_MAX; j++) {
-				rankingScore[j][i] = prop.getProperty("singledeath.ranking." + ruleName + "." + j + ".score." + i, 0);
-				rankingLines[j][i] = prop.getProperty("singledeath.ranking." + ruleName + "." + j + ".lines." + i, 0);
-				rankingTime[j][i] = prop.getProperty("singledeath.ranking." + ruleName + "." + j + ".time." + i, 0);
+				rankingScorePlayer[j][i] = prop.getProperty("singledeath.ranking." + ruleName + "." + j + ".score." + i, 0);
+				rankingLinesPlayer[j][i] = prop.getProperty("singledeath.ranking." + ruleName + "." + j + ".lines." + i, 0);
+				rankingTimePlayer[j][i] = prop.getProperty("singledeath.ranking." + ruleName + "." + j + ".time." + i, 0);
 			}
 		}
 	}
@@ -1756,9 +1756,9 @@ public class SingleDeathMarathon extends MarathonModeBase {
 		if (!prop.isLoggedIn()) return;
 		for(int i = 0; i < RANKING_MAX; i++) {
 			for(int j = 0; j < GAMETYPE_MAX; j++) {
-				prop.setProperty("singledeath.ranking." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
-				prop.setProperty("singledeath.ranking." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
-				prop.setProperty("singledeath.ranking." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
+				prop.setProperty("singledeath.ranking." + ruleName + "." + j + ".score." + i, rankingScorePlayer[j][i]);
+				prop.setProperty("singledeath.ranking." + ruleName + "." + j + ".lines." + i, rankingLinesPlayer[j][i]);
+				prop.setProperty("singledeath.ranking." + ruleName + "." + j + ".time." + i, rankingTimePlayer[j][i]);
 			}
 		}
 	}

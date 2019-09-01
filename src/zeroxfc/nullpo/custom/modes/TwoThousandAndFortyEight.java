@@ -662,8 +662,8 @@ public class TwoThousandAndFortyEight extends DummyMode {
 		if (!prop.isLoggedIn()) return;
 		for(int i = 0; i < MAX_RANKING; i++) {
 			for(int j = 0; j < MAX_GAMETYPE; j++) {
-				rankingScore[j][i] = prop.getProperty("2048.ranking." + j + ".score." + i, 0);
-				rankingTile[j][i] = prop.getProperty("2048.ranking." + j + ".maxTile." + i, 0);
+				rankingScorePlayer[j][i] = prop.getProperty("2048.ranking." + j + ".score." + i, 0);
+				rankingTilePlayer[j][i] = prop.getProperty("2048.ranking." + j + ".maxTile." + i, 0);
 			}
 		}
 	}
@@ -676,8 +676,8 @@ public class TwoThousandAndFortyEight extends DummyMode {
 		if (!prop.isLoggedIn()) return;
 		for(int i = 0; i < MAX_RANKING; i++) {
 			for(int j = 0; j < MAX_GAMETYPE; j++) {
-				prop.setProperty("2048.ranking." + j + ".score." + i, rankingScore[j][i]);
-				prop.setProperty("2048.ranking." + j + ".maxTile." + i, rankingTile[j][i]);
+				prop.setProperty("2048.ranking." + j + ".score." + i, rankingScorePlayer[j][i]);
+				prop.setProperty("2048.ranking." + j + ".maxTile." + i, rankingTilePlayer[j][i]);
 			}
 		}
 	}
