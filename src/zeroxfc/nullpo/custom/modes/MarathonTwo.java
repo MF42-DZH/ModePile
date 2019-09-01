@@ -222,6 +222,16 @@ public class MarathonTwo extends MarathonModeBase {
 	private int prevScore;
 	private int rainbowPhase;
 
+	// PROFILE
+	private ProfileProperties playerProperties;
+	private boolean showPlayerStats;
+	private static final int headerColour = EventReceiver.COLOR_DARKBLUE;
+	private int rankingRankPlayer;
+	private int[][] rankingScorePlayer;
+	private int[][] rankingTimePlayer;
+	private int[][] rankingLinesPlayer;
+	private String PLAYER_NAME;
+
 	/** The good hard drop effect */
 	private ArrayList<int[]> pCoordList;
 	private Piece cPiece;
@@ -254,6 +264,17 @@ public class MarathonTwo extends MarathonModeBase {
 		rankingScore = new int[RANKING_TYPE][RANKING_MAX];
 		rankingLines = new int[RANKING_TYPE][RANKING_MAX];
 		rankingTime = new int[RANKING_TYPE][RANKING_MAX];
+
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+
+			showPlayerStats = false;
+
+			rankingRankPlayer = -1;
+			rankingScorePlayer = new int[RANKING_TYPE][RANKING_MAX];
+			rankingLinesPlayer = new int[RANKING_TYPE][RANKING_MAX];
+			rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
+		}
 
 		pCoordList = new ArrayList<>();
 		cPiece = null;
@@ -363,11 +384,21 @@ public class MarathonTwo extends MarathonModeBase {
 		if(!owner.replayMode) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
 			getInitialBGState();
 			version = CURRENT_VERSION;
+
+			PLAYER_NAME = "";
 		} else {
 			loadSetting(owner.replayProp);
 			if((version == 0) && (owner.replayProp.getProperty("marathon2.endless", false))) goaltype = 2;
+
+			PLAYER_NAME = owner.replayProp.getProperty("marathon2.playerName", "");
 
 			// NET: Load name
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -560,11 +591,18 @@ public class MarathonTwo extends MarathonModeBase {
 				}
 			}
 
+			engine.owner.backgroundStatus.bg = startlevel;
+
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 
 				// NET: Signal start of the game
 				if(netIsNetPlay) netLobby.netPlayerClient.send("start1p\n");
@@ -575,6 +613,17 @@ public class MarathonTwo extends MarathonModeBase {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !netIsNetPlay) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			// NET: Netplay Ranking
@@ -797,13 +846,33 @@ public class MarathonTwo extends MarathonModeBase {
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[goaltype][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[goaltype][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[goaltype][i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScorePlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLinesPlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[goaltype][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[goaltype][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[goaltype][i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else if ( (engine.stat == GameEngine.STAT_RESULT) ) {
 			setBGState(initialBGState);
 		} else {
@@ -868,6 +937,16 @@ public class MarathonTwo extends MarathonModeBase {
 
 				receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
 				receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
+			}
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				if (glitchTimer == 0) {
+					receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, 16, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+				} else {
+					GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 15, GameTextUtilities.randomString(6, renderRandomiser), renderRandomiser, 1f);
+					GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 16, GameTextUtilities.randomString(3, renderRandomiser), renderRandomiser, 2f);
+				}
 			}
 
 			if((lastevent != EVENT_NONE) && (scgettime < 120)) {
@@ -998,6 +1077,23 @@ public class MarathonTwo extends MarathonModeBase {
 		}
 		// NET: Player name (It may also appear in offline replay)
 		netDrawPlayerName(engine);
+	}
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		showPlayerStats = false;
+
+		engine.isInGame = true;
+
+		boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+		if (playerProperties.isLoggedIn()) {
+			loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			loadSettingPlayer(playerProperties);
+		}
+
+		if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+		return s;
 	}
 
 	private void executeEffect(GameEngine engine, int playerID) {
@@ -1267,6 +1363,14 @@ public class MarathonTwo extends MarathonModeBase {
 				engine.playSE(randomSound());
 			}
 		}
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
 	}
 
 	/*
@@ -1469,9 +1573,18 @@ public class MarathonTwo extends MarathonModeBase {
 		if((!owner.replayMode) && (!big) && (engine.ai == null)) {
 			updateRanking(engine.statistics.score, engine.statistics.lines, engine.statistics.time, goaltype);
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("marathon2.playerName", playerProperties.getNameDisplay());
+			}
+
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -1515,6 +1628,44 @@ public class MarathonTwo extends MarathonModeBase {
 	}
 
 	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		startlevel = prop.getProperty("marathon2.startlevel", 0);
+		tspinEnableType = prop.getProperty("marathon2.tspinEnableType", 1);
+		enableTSpin = prop.getProperty("marathon2.enableTSpin", true);
+		enableTSpinKick = prop.getProperty("marathon2.enableTSpinKick", true);
+		spinCheckType = prop.getProperty("marathon2.spinCheckType", 0);
+		tspinEnableEZ = prop.getProperty("marathon2.tspinEnableEZ", false);
+		enableB2B = prop.getProperty("marathon2.enableB2B", true);
+		enableCombo = prop.getProperty("marathon2.enableCombo", true);
+		goaltype = prop.getProperty("marathon2.gametype", 0);
+		big = prop.getProperty("marathon2.big", false);
+		initialBGState = prop.getProperty("marathon2.initBG", true);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		prop.setProperty("marathon2.startlevel", startlevel);
+		prop.setProperty("marathon2.tspinEnableType", tspinEnableType);
+		prop.setProperty("marathon2.enableTSpin", enableTSpin);
+		prop.setProperty("marathon2.enableTSpinKick", enableTSpinKick);
+		prop.setProperty("marathon2.spinCheckType", spinCheckType);
+		prop.setProperty("marathon2.tspinEnableEZ", tspinEnableEZ);
+		prop.setProperty("marathon2.enableB2B", enableB2B);
+		prop.setProperty("marathon2.enableCombo", enableCombo);
+		prop.setProperty("marathon2.gametype", goaltype);
+		prop.setProperty("marathon2.big", big);
+		prop.setProperty("marathon2.initBG", initialBGState);
+	}
+
+	/**
 	 * Read rankings from property file
 	 * @param prop Property file
 	 * @param ruleName Rule name
@@ -1546,6 +1697,38 @@ public class MarathonTwo extends MarathonModeBase {
 	}
 
 	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < GAMETYPE_MAX; j++) {
+				rankingScorePlayer[j][i] = prop.getProperty("marathon2.ranking." + ruleName + "." + j + ".score." + i, 0);
+				rankingLinesPlayer[j][i] = prop.getProperty("marathon2.ranking." + ruleName + "." + j + ".lines." + i, 0);
+				rankingTimePlayer[j][i] = prop.getProperty("marathon2.ranking." + ruleName + "." + j + ".time." + i, 0);
+			}
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < GAMETYPE_MAX; j++) {
+				prop.setProperty("marathon2.ranking." + ruleName + "." + j + ".score." + i, rankingScorePlayer[j][i]);
+				prop.setProperty("marathon2.ranking." + ruleName + "." + j + ".lines." + i, rankingLinesPlayer[j][i]);
+				prop.setProperty("marathon2.ranking." + ruleName + "." + j + ".time." + i, rankingTimePlayer[j][i]);
+			}
+		}
+	}
+
+	/**
 	 * Update rankings
 	 * @param sc Score
 	 * @param li Lines
@@ -1567,6 +1750,24 @@ public class MarathonTwo extends MarathonModeBase {
 			rankingLines[type][rankingRank] = li;
 			rankingTime[type][rankingRank] = time;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(sc, li, time, type);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingScorePlayer[type][i] = rankingScorePlayer[type][i - 1];
+					rankingLinesPlayer[type][i] = rankingLinesPlayer[type][i - 1];
+					rankingTimePlayer[type][i] = rankingTimePlayer[type][i - 1];
+				}
+
+				// Add new data
+				rankingScorePlayer[type][rankingRankPlayer] = sc;
+				rankingLinesPlayer[type][rankingRankPlayer] = li;
+				rankingTimePlayer[type][rankingRankPlayer] = time;
+			}
+		}
 	}
 
 	/**
@@ -1583,6 +1784,27 @@ public class MarathonTwo extends MarathonModeBase {
 			} else if((sc == rankingScore[type][i]) && (li > rankingLines[type][i])) {
 				return i;
 			} else if((sc == rankingScore[type][i]) && (li == rankingLines[type][i]) && (time < rankingTime[type][i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param li Lines
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int sc, int li, int time, int type) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScorePlayer[type][i]) {
+				return i;
+			} else if((sc == rankingScorePlayer[type][i]) && (li > rankingLinesPlayer[type][i])) {
+				return i;
+			} else if((sc == rankingScorePlayer[type][i]) && (li == rankingLinesPlayer[type][i]) && (time < rankingTimePlayer[type][i])) {
 				return i;
 			}
 		}

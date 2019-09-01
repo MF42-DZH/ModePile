@@ -150,7 +150,13 @@ public class Collapse extends DummyMode {
 	private int lastScore, scoreToDisplay, scGetTime;
 	private double multiplier;
 	private int acTime;
-	
+
+	private ProfileProperties playerProperties;
+	private int[][] rankingScorePlayer;
+	private int[][] rankingLevelPlayer;
+	private int rankingRankPlayer;
+	private boolean showPlayerStats;
+
 	/*
 	 * ------ MAIN METHODS ------
 	 */
@@ -166,6 +172,15 @@ public class Collapse extends DummyMode {
 		
 		owner = engine.owner;
 		receiver = engine.owner.receiver;
+
+		if (playerProperties == null) {
+			showPlayerStats = false;
+			playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
+
+			rankingScorePlayer = new int[MAX_DIFFICULTIES][MAX_RANKING];
+			rankingLevelPlayer = new int[MAX_DIFFICULTIES][MAX_RANKING];
+			rankingRankPlayer = -1;
+		}
 		
 		enableBombs = false;
 		rankingScore = new int[MAX_DIFFICULTIES][MAX_RANKING];
@@ -208,6 +223,11 @@ public class Collapse extends DummyMode {
 		
 		loadSetting(owner.modeConfig);
 		loadRanking(owner.modeConfig);
+
+		if (playerProperties.isLoggedIn()) {
+			loadSettingPlayer(playerProperties);
+			loadRankingPlayer(playerProperties);
+		}
 	}
 	
 	private void resetSTextArr() {
@@ -275,14 +295,30 @@ public class Collapse extends DummyMode {
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 				return false;
 			}
 
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B)) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
+				playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			engine.statc[3]++;
@@ -420,31 +456,47 @@ public class Collapse extends DummyMode {
 //			engine.rainbowAnimate = false;
 //			return false;
 //		}  // DEBUG CODE.
-		
-		parseMouse(engine, playerID);
-		if (!engine.rainbowAnimate) engine.rainbowAnimate = true;
-		
-		boolean incrementTime = false;
-		switch (localState) {
-		case LOCALSTATE_INGAME:
-			if (engine.timerActive == false) engine.timerActive = true;
-			incrementTime = stateInGame(engine, playerID);
-			break;
-		case LOCALSTATE_TRANSITION:
-			if (engine.timerActive == true) engine.timerActive = false;
-			incrementTime = stateTransition(engine, playerID);
-			break;
-		default:
-			break;
+
+		if (engine.gameActive) {
+			parseMouse(engine, playerID);
+			if (!engine.rainbowAnimate) engine.rainbowAnimate = true;
+
+			boolean incrementTime = false;
+			switch (localState) {
+				case LOCALSTATE_INGAME:
+					if (engine.timerActive == false) engine.timerActive = true;
+					incrementTime = stateInGame(engine, playerID);
+					break;
+				case LOCALSTATE_TRANSITION:
+					if (engine.timerActive == true) engine.timerActive = false;
+					incrementTime = stateTransition(engine, playerID);
+					break;
+				default:
+					break;
+			}
+
+			if (engine.ending != 0) {
+				engine.timerActive = false;
+			}
+
+			if (incrementTime) engine.statc[0]++;
+
+			return true;
+		} else {
+			showPlayerStats = false;
+
+			engine.isInGame = true;
+
+			boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+			if (playerProperties.isLoggedIn()) {
+				loadRankingPlayer(playerProperties);
+				loadSettingPlayer(playerProperties);
+			}
+
+			if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+			return true;
 		}
-		
-		if (engine.ending != 0) {
-			engine.timerActive = false;
-		}
-		
-		if (incrementTime) engine.statc[0]++;
-		
-		return true;
 	}
 	
 	// DONE: Make the rest of the gamemode work.
@@ -1108,6 +1160,10 @@ public class Collapse extends DummyMode {
 			} else {
 				if (enableBombs) updateRanking(engine.statistics.score, difficulty, engine.statistics.level + 1);
 				if (rankingRank != -1) saveRanking(owner.modeConfig);
+				if (rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+					saveRankingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				}
 				receiver.saveModeConfig(owner.modeConfig);
 				
 				for(int i = 0; i < owner.getPlayers(); i++) {
@@ -1169,6 +1225,14 @@ public class Collapse extends DummyMode {
 			if (acTime < 120 && acTime >= 0) acTime++;
 			else acTime = -1;
 		}
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
 	}
 	
 	@Override
@@ -1184,12 +1248,31 @@ public class Collapse extends DummyMode {
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE    LEVEL", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < MAX_RANKING; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[difficulty][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID,  12, topY+i, String.valueOf(rankingLevel[difficulty][i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for(int i = 0; i < MAX_RANKING; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScorePlayer[difficulty][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID,  12, topY+i, String.valueOf(rankingLevelPlayer[difficulty][i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + MAX_RANKING + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + MAX_RANKING + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + MAX_RANKING + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					for(int i = 0; i < MAX_RANKING; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[difficulty][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID,  12, topY+i, String.valueOf(rankingLevel[difficulty][i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + MAX_RANKING + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + MAX_RANKING + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + MAX_RANKING + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 				}
 			}
+		} else if (!engine.gameActive && engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			if (!engine.lagStop) incrementScore(engine);
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
@@ -1203,7 +1286,12 @@ public class Collapse extends DummyMode {
 			
 			receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
-			
+
+			if (playerProperties.isLoggedIn()) {
+				receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 16, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
+
 			for (int i = 0; i < sTextArr.length; i++) {
 				if (sTextArr[i] != null) {
 					int x = 0, y = 0;
@@ -1306,6 +1394,28 @@ public class Collapse extends DummyMode {
 		prop.setProperty("collapse.difficulty", difficulty);
 		prop.setProperty("collapse.bgm", bgm);
 	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		enableBombs = prop.getProperty("collapse.enableBombs", true);
+		difficulty = prop.getProperty("collapse.difficulty", 1);
+		bgm = prop.getProperty("collapse.bgm", 0);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		prop.setProperty("collapse.enableBombs", enableBombs);
+		prop.setProperty("collapse.difficulty", difficulty);
+		prop.setProperty("collapse.bgm", bgm);
+	}
 	
 	/**
 	 * Read rankings from property file
@@ -1334,11 +1444,60 @@ public class Collapse extends DummyMode {
 	}
 
 	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 */
+	private void loadRankingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < MAX_RANKING; i++) {
+			for(int j = 0; j < MAX_DIFFICULTIES; j++) {
+				rankingScorePlayer[j][i] = prop.getProperty("collapse.ranking." + j + ".score." + i, 0);
+				rankingLevelPlayer[j][i] = prop.getProperty("collapse.ranking." + j + ".level." + i, 0);
+			}
+		}
+	}
+
+	/*
+	 * why do i even make stuff like this
+	 * people just keep asking "why?" or just straight up calling it useless (even if they don't explicitly say it)
+	 * nobody's gonna look at this and think "wow this code is cool", they usually only see the surface level end product
+	 * eh, whatever. might as well carry on to satiate my own wants for these modes and libraries
+	 * screw everyone else
+	 * i'll just make this for myself first, others later
+	 * this isn't even original anyway, just piggybacking off an existing engine and other games for concepts
+	 * you got people saying "your workflow is shit, your computer's OS is shit and you should be ashamed, you got people saying the sites you use are shit and you should feel bad" like
+	 * what the hell do i do
+	 * i just want to use my computer and develop shit for mostly fun
+	 * nothing i do in my own time when i'm not interacting with you is hurting you
+	 * ...fucking elitists...
+	 * why the absolute FUCK do you care so much about what i do?
+	 * where i source information about a game which has no official source (a game's speed difficulty ffs) does not hurt you in any way.
+	 * okay then mr. "I'm-right-you're-wrong-fuck-you-and-your-choices".
+	 * i'll go fuck off now so you don't have to deal with my shit.
+	 * poison the well before i even get to make a point will you.
+	 * fuck off
+	 */
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 */
+	private void saveRankingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < MAX_RANKING; i++) {
+			for(int j = 0; j < MAX_DIFFICULTIES; j++) {
+				prop.setProperty("collapse.ranking." + j + ".score." + i, rankingScorePlayer[j][i]);
+				prop.setProperty("collapse.ranking." + j + ".level." + i, rankingLevelPlayer[j][i]);
+			}
+		}
+	}
+
+	/**
 	 * Update rankings
 	 * @param sc Score
 	 */
 	private void updateRanking(int sc, int type, int lv) {
-		rankingRank = checkRanking(sc, type);
+		rankingRank = checkRanking(sc, lv, type);
 
 		if(rankingRank != -1) {
 			// Shift down ranking entries
@@ -1351,6 +1510,22 @@ public class Collapse extends DummyMode {
 			rankingScore[type][rankingRank] = sc;
 			rankingLevel[type][rankingRank] = lv;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(sc, lv, type);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = MAX_RANKING - 1; i > rankingRankPlayer; i--) {
+					rankingScorePlayer[type][i] = rankingScorePlayer[type][i - 1];
+					rankingLevelPlayer[type][i] = rankingLevelPlayer[type][i - 1];
+				}
+
+				// Add new data
+				rankingScorePlayer[type][rankingRankPlayer] = sc;
+				rankingLevelPlayer[type][rankingRankPlayer] = lv;
+			}
+		}
 	}
 
 	/**
@@ -1358,13 +1533,32 @@ public class Collapse extends DummyMode {
 	 * @param sc Score
 	 * @return Position (-1 if unranked)
 	 */
-	private int checkRanking(int sc, int type) {
+	private int checkRanking(int sc, int lv, int type) {
 		for(int i = 0; i < MAX_RANKING; i++) {
 			if(sc > rankingScore[type][i]) {
+				return i;
+			} else if (sc == rankingScore[type][i] && lv < rankingLevel[type][i]) {
 				return i;
 			}
 		}
 		
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int sc, int lv, int type) {
+		for(int i = 0; i < MAX_RANKING; i++) {
+			if(sc > rankingScorePlayer[type][i]) {
+				return i;
+			} else if (sc == rankingScorePlayer[type][i] && lv < rankingLevelPlayer[type][i]) {
+				return i;
+			}
+		}
+
 		return -1;
 	}
 	

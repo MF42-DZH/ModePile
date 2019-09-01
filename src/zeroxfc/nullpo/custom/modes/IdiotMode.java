@@ -16,6 +16,7 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
+import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
 
@@ -82,7 +83,7 @@ public class IdiotMode extends DummyMode {
 	 */
 	
 	// Current version
-	private static final int CURRENT_VERSION = 1;
+	private static final int CURRENT_VERSION = 2;
 	
 	// Default M1 torikan time. Same for all rule styles.
 	private static final int[] DEFAULT_TORIKAN = { 14400, 12300, 25200 };
@@ -381,6 +382,16 @@ public class IdiotMode extends DummyMode {
 	private ArrayList<int[]> pCoordList;
 	private Piece cPiece;
 
+	private static final int headerColour = EventReceiver.COLOR_PURPLE;
+	private ProfileProperties playerProperties;
+	private String PLAYER_NAME;
+	private boolean showPlayerStats;
+	private int currentGameRankPlayer;      // Current attempt's rank
+	private int[][] rankingGradePlayer;     // Grade rankings
+	private int[][] rankingLevelPlayer;     // Level rankings
+	private int[][] rankingTimePlayer;      // Time rankings
+	private int[][] rollClearPlayer;        // Has roll been cleared?
+
 	/*
 	 * [--- OVERRIDE METHOD BLOCK ---]
 	 */
@@ -460,6 +471,18 @@ public class IdiotMode extends DummyMode {
 		rankingLevel = new int[GAMETYPE_MAX][RANKING_MAX];
 		rankingTime = new int[GAMETYPE_MAX][RANKING_MAX];
 		rollClear = new int[GAMETYPE_MAX][RANKING_MAX];
+
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+
+			currentGameRankPlayer = -1;
+			showPlayerStats = false;
+
+			rankingGradePlayer = new int[GAMETYPE_MAX][RANKING_MAX];
+			rankingLevelPlayer = new int[GAMETYPE_MAX][RANKING_MAX];
+			rankingTimePlayer = new int[GAMETYPE_MAX][RANKING_MAX];
+			rollClearPlayer = new int[GAMETYPE_MAX][RANKING_MAX];
+		}
 		
 		sectionBests = new int[GAMETYPE_MAX][];
 		sectionBests[0] = new int[SECTION_MAX[0]];
@@ -481,6 +504,13 @@ public class IdiotMode extends DummyMode {
 			version = CURRENT_VERSION;
 			loadSetting(owner.modeConfig, engine.ruleopt.strRuleName);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
+			PLAYER_NAME = "";
 			
 			switch (gameType) {
 			case GAMETYPE_DEATH:
@@ -511,7 +541,9 @@ public class IdiotMode extends DummyMode {
 					}
 				}
 			}
-			
+
+			PLAYER_NAME = owner.replayProp.getProperty("idiotmode.playerName", "");
+
 			loadSetting(owner.replayProp, engine.ruleopt.strRuleName);
 
 			switch (gameType) {
@@ -690,6 +722,8 @@ public class IdiotMode extends DummyMode {
 				}
 			}
 
+			engine.owner.backgroundStatus.bg = levelAtStart;
+
 			//  section time display切替
 			if(engine.ctrl.isPush(Controller.BUTTON_F) && (engine.statc[3] >= 5)) {
 				engine.playSE("change");
@@ -701,8 +735,13 @@ public class IdiotMode extends DummyMode {
 			// 決定
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig, engine.ruleopt.strRuleName);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties, engine.ruleopt.strRuleName);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig, engine.ruleopt.strRuleName);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 
 				sectionCount = 0;
 
@@ -712,7 +751,19 @@ public class IdiotMode extends DummyMode {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B)) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
 			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
+			}
+
 
 			engine.statc[3]++;
 		} else {
@@ -725,6 +776,23 @@ public class IdiotMode extends DummyMode {
 		}
 
 		return true;
+	}
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		showPlayerStats = false;
+
+		engine.isInGame = true;
+
+		boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+		if (playerProperties.isLoggedIn()) {
+			loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			loadSettingPlayer(playerProperties, engine.ruleopt.strRuleName);
+		}
+
+		if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+		return s;
 	}
 	
 	// Draw Settings screen
@@ -899,18 +967,40 @@ public class IdiotMode extends DummyMode {
 						int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 						receiver.drawScoreFont(engine, playerID, 3, topY-1, "GRADE LEVEL TIME", EventReceiver.COLOR_BLUE, scale);
 
-						for(int i = 0; i < RANKING_MAX; i++) {
-							int gcolor = EventReceiver.COLOR_WHITE;
-							if(rollClear[gameType][i] == 1) gcolor = EventReceiver.COLOR_GREEN;
-							if(rollClear[gameType][i] == 2) gcolor = EventReceiver.COLOR_ORANGE;
+						if (showPlayerStats) {
+							for(int i = 0; i < RANKING_MAX; i++) {
+								int gcolor = EventReceiver.COLOR_WHITE;
+								if(rollClearPlayer[gameType][i] == 1) gcolor = EventReceiver.COLOR_GREEN;
+								if(rollClearPlayer[gameType][i] == 2) gcolor = EventReceiver.COLOR_ORANGE;
 
-							receiver.drawScoreFont(engine, playerID, 0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-							receiver.drawScoreFont(engine, playerID, 3, topY+i, getShortGradeNames()[gameType][rankingGrade[gameType][i]], gcolor, scale);
-							receiver.drawScoreFont(engine, playerID, 9, topY+i, String.valueOf(rankingLevel[gameType][i]), (i == currentGameRank), scale);
-							receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[gameType][i]), (i == currentGameRank), scale);
+								receiver.drawScoreFont(engine, playerID, 0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+								receiver.drawScoreFont(engine, playerID, 3, topY+i, getShortGradeNames()[gameType][rankingGradePlayer[gameType][i]], gcolor, scale);
+								receiver.drawScoreFont(engine, playerID, 9, topY+i, String.valueOf(rankingLevelPlayer[gameType][i]), (i == currentGameRankPlayer), scale);
+								receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[gameType][i]), (i == currentGameRankPlayer), scale);
+							}
+
+							receiver.drawScoreFont(engine, playerID, 0, 17, "F:VIEW SECTION TIME", EventReceiver.COLOR_GREEN);
+							receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+							receiver.drawScoreFont(engine, playerID, 0, 19, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+							receiver.drawScoreFont(engine, playerID, 0, 22, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+						} else {
+							for(int i = 0; i < RANKING_MAX; i++) {
+								int gcolor = EventReceiver.COLOR_WHITE;
+								if(rollClear[gameType][i] == 1) gcolor = EventReceiver.COLOR_GREEN;
+								if(rollClear[gameType][i] == 2) gcolor = EventReceiver.COLOR_ORANGE;
+
+								receiver.drawScoreFont(engine, playerID, 0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+								receiver.drawScoreFont(engine, playerID, 3, topY+i, getShortGradeNames()[gameType][rankingGrade[gameType][i]], gcolor, scale);
+								receiver.drawScoreFont(engine, playerID, 9, topY+i, String.valueOf(rankingLevel[gameType][i]), (i == currentGameRank), scale);
+								receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[gameType][i]), (i == currentGameRank), scale);
+							}
+
+							receiver.drawScoreFont(engine, playerID, 0, 17, "F:VIEW SECTION TIME", EventReceiver.COLOR_GREEN);
+							receiver.drawScoreFont(engine, playerID, 0, 18, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+							if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, 19, "(NOT LOGGED IN)\n(E:LOG IN)");
+							if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, 22, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 						}
-
-						receiver.drawScoreFont(engine, playerID, 0, 20, "F:VIEW SECTION TIME", EventReceiver.COLOR_GREEN);
 					} else {
 						// Section Time
 						receiver.drawScoreFont(engine, playerID, 0, 2, "SECTION TIME", EventReceiver.COLOR_BLUE);
@@ -945,6 +1035,8 @@ public class IdiotMode extends DummyMode {
 					}
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			if(showGrade) {
 				// 段位
@@ -1010,8 +1102,13 @@ public class IdiotMode extends DummyMode {
 			//  medal
 			if(medalAC >= 1) receiver.drawScoreFont(engine, playerID, 0, 21, "AC", getMedalFontColor(medalAC));
 			if(medalST >= 1) receiver.drawScoreFont(engine, playerID, 3, 21, "ST", getMedalFontColor(medalST));
-			if(medalSK >= 1) receiver.drawScoreFont(engine, playerID, 6, 21, "SK", getMedalFontColor(medalSK));
-			if(medalSC >= 1) receiver.drawScoreFont(engine, playerID, 9, 21, "SC", getMedalFontColor(medalSC));
+			if(medalSK >= 1) receiver.drawScoreFont(engine, playerID, 0, 22, "SK", getMedalFontColor(medalSK));
+			if(medalSC >= 1) receiver.drawScoreFont(engine, playerID, 3, 22, "SC", getMedalFontColor(medalSC));
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 6, 21, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 6, 22, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
 
 			// Section Time
 			if((showST == true) && (sectionTime != null)) {
@@ -1272,7 +1369,7 @@ public class IdiotMode extends DummyMode {
 
 		if((lines >= 1) && (engine.ending == 0)) {
 			// 4-line clearカウント
-			if(lines >= 1 && engine.tspin) {
+			if(engine.tspin) {
 				// SK medal
 				switch (gameType) {
 				case GAMETYPE_OMEN:
@@ -1328,10 +1425,8 @@ public class IdiotMode extends DummyMode {
 				case EVENT_TSPIN_EZ:
 					if (lines >= 2) {
 						levelplus = 3;
-					} else if (lines == 1) {
-						levelplus = 1;
 					} else {
-						levelplus = 0;
+						levelplus = 1;
 					}
 					break;
 				case EVENT_TSPIN_SINGLE_MINI:
@@ -1342,29 +1437,42 @@ public class IdiotMode extends DummyMode {
 					break;
 				case EVENT_TSPIN_DOUBLE_MINI:
 					levelplus = 3;
+					if (gameType == GAMETYPE_OMEN && version >= 2) levelplus *= 1.5;
 					break;
 				case EVENT_TSPIN_DOUBLE:
 					levelplus = 4;
+					if (gameType == GAMETYPE_OMEN && version >= 2) levelplus *= 1.5;
 					break;
 				case EVENT_TSPIN_TRIPLE:
 					levelplus = 6;
+					if (gameType == GAMETYPE_OMEN && version >= 2) levelplus *= 1.5;
 					break;
 				case EVENT_SINGLE:
 				case EVENT_DOUBLE:
 				case EVENT_TRIPLE:
-					if (engine.statistics.level < nextSectionLv - 1) {
-						levelplus = daredevil ? -1 : 1;
+					if (engine.tspinEnable || version <= 1) {
+						if (engine.statistics.level < nextSectionLv - 1) {
+							levelplus = daredevil ? -1 : 1;
+						} else {
+							shouldPlayLSSE = false;
+						}
 					} else {
-						shouldPlayLSSE = false;
+						levelplus = lines;
+						if (gameType == GAMETYPE_OMEN && lines > 2) levelplus *= 1.5;
 					}
 					break;
 				case EVENT_FOUR:
-					if (engine.statistics.level < nextSectionLv - 2) { 
-						levelplus = daredevil ? -2 : 2;
-					} else if (engine.statistics.level == nextSectionLv - 2)  {
-						levelplus = daredevil ? -1 : 1;
+					if (engine.tspinEnable || version <= 1) {
+						if (engine.statistics.level < nextSectionLv - 2) {
+							levelplus = daredevil ? -2 : 2;
+						} else if (engine.statistics.level == nextSectionLv - 2)  {
+							levelplus = daredevil ? -1 : 1;
+						} else {
+							shouldPlayLSSE = false;
+						}
 					} else {
-						shouldPlayLSSE = false;
+						levelplus = lines;
+						if (gameType == GAMETYPE_OMEN) levelplus *= 1.5;
 					}
 					break;
 				default:
@@ -1598,6 +1706,14 @@ public class IdiotMode extends DummyMode {
 				engine.stat = GameEngine.STAT_EXCELLENT;
 			}
 		}
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_D) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
 	}
 
 	// GAME OVER
@@ -1692,9 +1808,18 @@ public class IdiotMode extends DummyMode {
 			updateRanking(gameType, grade, engine.statistics.level, engine.statistics.time, rollCleared);
 			if(medalST == 3) updateBestSectionTime(gameType);
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("idiotmode.playerName", playerProperties.getNameDisplay());
+			}
+
 			if((currentGameRank != -1) || (medalST == 3)) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(currentGameRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -1728,6 +1853,42 @@ public class IdiotMode extends DummyMode {
 		prop.setProperty("idiotmode.showGrade." + strRuleName, showGrade);
 		prop.setProperty("idiotmode.condescension." + strRuleName, condescension);
 		prop.setProperty("idiotmode.version." + strRuleName, version);
+		prop.setProperty("idiotmode.version.spinbonus." + strRuleName, tspinEnableType);
+		prop.setProperty("idiotmode.version.spincheck." + strRuleName, spinCheckType);
+		prop.setProperty("idiotmode.version.EZSpin." + strRuleName, tspinEnableEZ);
+		prop.setProperty("idiotmode.version.KickSpin." + strRuleName, enableTSpinKick);
+		prop.setProperty("idiotmode.version.daredevil." + strRuleName, daredevil);
+	}
+
+	// Load last settings
+	private void loadSettingPlayer(ProfileProperties prop, String strRuleName) {
+		if (!prop.isLoggedIn()) return;
+		gameType = prop.getProperty("idiotmode.gameType." + strRuleName, 0);
+		levelAtStart = prop.getProperty("idiotmode.levelAtStart." + strRuleName, 0);
+		lvStopSE = prop.getProperty("idiotmode.lvStopSE." + strRuleName, true);
+		showST = prop.getProperty("idiotmode.showST." + strRuleName, false);
+		torikanTime[0] = prop.getProperty("idiotmode.torikanTime.death." + strRuleName, DEFAULT_TORIKAN[0]);
+		torikanTime[1] = prop.getProperty("idiotmode.torikanTime.omen." + strRuleName, DEFAULT_TORIKAN[1]);
+		showGrade = prop.getProperty("idiotmode.showGrade." + strRuleName, false);
+		condescension = prop.getProperty("idiotmode.condescension." + strRuleName, true);
+		tspinEnableType = prop.getProperty("idiotmode.version.spinbonus." + strRuleName, 1);
+		spinCheckType = prop.getProperty("idiotmode.version.spincheck." + strRuleName, 0);
+		tspinEnableEZ = prop.getProperty("idiotmode.version.EZSpin." + strRuleName, true);
+		enableTSpinKick = prop.getProperty("idiotmode.version.KickSpin." + strRuleName, true);
+		daredevil = prop.getProperty("idiotmode.version.daredevil." + strRuleName, false);
+	}
+
+	// Save last settings
+	private void saveSettingPlayer(ProfileProperties prop, String strRuleName) {
+		if (!prop.isLoggedIn()) return;
+		prop.setProperty("idiotmode.gameType." + strRuleName, gameType);
+		prop.setProperty("idiotmode.levelAtStart." + strRuleName, levelAtStart);
+		prop.setProperty("idiotmode.lvStopSE." + strRuleName, lvStopSE);
+		prop.setProperty("idiotmode.showST." + strRuleName, showST);
+		prop.setProperty("idiotmode.torikanTime.death." + strRuleName, torikanTime[0]);
+		prop.setProperty("idiotmode.torikanTime.omen." + strRuleName, torikanTime[1]);
+		prop.setProperty("idiotmode.showGrade." + strRuleName, showGrade);
+		prop.setProperty("idiotmode.condescension." + strRuleName, condescension);
 		prop.setProperty("idiotmode.version.spinbonus." + strRuleName, tspinEnableType);
 		prop.setProperty("idiotmode.version.spincheck." + strRuleName, spinCheckType);
 		prop.setProperty("idiotmode.version.EZSpin." + strRuleName, tspinEnableEZ);
@@ -1776,6 +1937,32 @@ public class IdiotMode extends DummyMode {
 			}
 		}
 	}
+
+	// Load rankings
+	private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for (int t = 0; t < GAMETYPE_MAX; t++) {
+			for(int i = 0; i < RANKING_MAX; i++) {
+				rankingGradePlayer[t][i] = prop.getProperty("idiotmode.ranking." + ruleName + ".grade." + GAMETYPE_NAMES[t] + "." + i, 0);
+				rankingLevelPlayer[t][i] = prop.getProperty("idiotmode.ranking." + ruleName + ".level." + GAMETYPE_NAMES[t] + "." + i, 0);
+				rankingTimePlayer[t][i] = prop.getProperty("idiotmode.ranking." + ruleName + ".time." + GAMETYPE_NAMES[t] + "." + i, 0);
+				rollClearPlayer[t][i] = prop.getProperty("idiotmode.ranking." + ruleName + ".rollclear." + GAMETYPE_NAMES[t] + "." + i, 0);
+			}
+		}
+	}
+
+	// Save rankings
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for (int t = 0; t < GAMETYPE_MAX; t++) {
+			for(int i = 0; i < RANKING_MAX; i++) {
+				prop.setProperty("idiotmode.ranking." + ruleName + ".grade." + GAMETYPE_NAMES[t] + "." + i, rankingGradePlayer[t][i]);
+				prop.setProperty("idiotmode.ranking." + ruleName + ".level." + GAMETYPE_NAMES[t] + "." + i, rankingLevelPlayer[t][i]);
+				prop.setProperty("idiotmode.ranking." + ruleName + ".time." + GAMETYPE_NAMES[t] + "." + i, rankingTimePlayer[t][i]);
+				prop.setProperty("idiotmode.ranking." + ruleName + ".rollclear." + GAMETYPE_NAMES[t] + "." + i, rollClearPlayer[t][i]);
+			}
+		}
+	}
 	
 	// Compare Rankings - gt: gameType
 	private int checkRanking(int gt, int gr, int lv, int time, int clear) {
@@ -1787,6 +1974,23 @@ public class IdiotMode extends DummyMode {
 			} else if((clear == rollClear[gt][i]) && (gr == rankingGrade[gt][i]) && (lv > rankingLevel[gt][i])) {
 				return i;
 			} else if((clear == rollClear[gt][i]) && (gr == rankingGrade[gt][i]) && (lv == rankingLevel[gt][i]) && (time < rankingTime[gt][i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	// Compare Rankings - gt: gameType
+	private int checkRankingPlayer(int gt, int gr, int lv, int time, int clear) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(clear > rollClearPlayer[gt][i]) {
+				return i;
+			} else if((clear == rollClearPlayer[gt][i]) && (gr > rankingGradePlayer[gt][i])) {
+				return i;
+			} else if((clear == rollClearPlayer[gt][i]) && (gr == rankingGradePlayer[gt][i]) && (lv > rankingLevelPlayer[gt][i])) {
+				return i;
+			} else if((clear == rollClearPlayer[gt][i]) && (gr == rankingGradePlayer[gt][i]) && (lv == rankingLevelPlayer[gt][i]) && (time < rankingTimePlayer[gt][i])) {
 				return i;
 			}
 		}
@@ -1812,6 +2016,26 @@ public class IdiotMode extends DummyMode {
 			rankingLevel[gt][currentGameRank] = lv;
 			rankingTime[gt][currentGameRank] = time;
 			rollClear[gt][currentGameRank] = clear;
+		}
+
+		if (playerProperties.isLoggedIn()) {
+			currentGameRankPlayer = checkRankingPlayer(gt, gr, lv, time, clear);
+
+			if(currentGameRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > currentGameRankPlayer; i--) {
+					rankingGradePlayer[gt][i] = rankingGradePlayer[gt][i - 1];
+					rankingLevelPlayer[gt][i] = rankingLevelPlayer[gt][i - 1];
+					rankingTimePlayer[gt][i] = rankingTimePlayer[gt][i - 1];
+					rollClearPlayer[gt][i] = rollClearPlayer[gt][i - 1];
+				}
+
+				// Add new data
+				rankingGradePlayer[gt][currentGameRankPlayer] = gr;
+				rankingLevelPlayer[gt][currentGameRankPlayer] = lv;
+				rankingTimePlayer[gt][currentGameRankPlayer] = time;
+				rollClearPlayer[gt][currentGameRankPlayer] = clear;
+			}
 		}
 	}
 	

@@ -240,11 +240,11 @@ public class PhysicsObject implements Cloneable {
 		DoubleVector v = DoubleVector.div(velocity, subticks);
 
 		for (int i = 0; i < subticks; i++) {
-			if (retract) position = DoubleVector.add(position, v);
+			position = DoubleVector.add(position, v);
 
 			for (PhysicsObject obj : obstacles) {
 				if (checkCollision(this, obj)) {
-					position = DoubleVector.sub(position, v);
+					if (retract) position = DoubleVector.sub(position, v);
 					return true;
 				}
 			}

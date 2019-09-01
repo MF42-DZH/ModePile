@@ -42,6 +42,14 @@ public class TwoThousandAndFortyEight extends DummyMode {
 	private int moves;
 	private int lastScoreTime;
 	private int lastScore;
+
+	private ProfileProperties playerProperties;
+	private static final int headerColour = EventReceiver.COLOR_CYAN;
+	private boolean showPlayerStats;
+	private String PLAYER_NAME;
+	private int rankingRankPlayer;
+	private int[][] rankingScorePlayer;
+	private int[][] rankingTilePlayer;
 	
 	@Override
 	public String getName() {
@@ -66,13 +74,33 @@ public class TwoThousandAndFortyEight extends DummyMode {
 		rankingScore = new int[MAX_GAMETYPE][MAX_RANKING];
 		rankingRank = -1;
 
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+
+			showPlayerStats = false;
+
+			rankingRankPlayer = -1;
+			rankingScorePlayer = new int[MAX_GAMETYPE][MAX_RANKING];
+			rankingTilePlayer = new int[MAX_GAMETYPE][MAX_RANKING];
+		}
+
 		engine.framecolor = GameEngine.FRAME_COLOR_YELLOW;
 		engine.blockOutlineType = GameEngine.BLOCK_OUTLINE_NONE;
 
-		if (!owner.replayMode) loadSetting(owner.modeConfig);
-		else loadSetting(owner.replayProp);
+		if (!owner.replayMode) {
+			loadSetting(owner.modeConfig);
+			loadRanking(owner.modeConfig);
 
-		if (!owner.replayMode) loadRanking(owner.modeConfig);
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties);
+			}
+
+			PLAYER_NAME = "";
+		} else {
+			loadSetting(owner.replayProp);
+			PLAYER_NAME = owner.replayProp.getProperty("2048.playerName", "");
+		}
 
 		engine.owner.backgroundStatus.bg = bg;
 	}
@@ -108,6 +136,8 @@ public class TwoThousandAndFortyEight extends DummyMode {
 				}
 			}
 
+			engine.owner.backgroundStatus.bg = bg;
+
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
@@ -119,6 +149,16 @@ public class TwoThousandAndFortyEight extends DummyMode {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B)) {
 				engine.quitflag = true;
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			engine.statc[3]++;
@@ -216,6 +256,20 @@ public class TwoThousandAndFortyEight extends DummyMode {
 		engine.owner.bgmStatus.bgm = bgm;
 	}
 
+	/*
+	 * Called after every frame
+	 */
+	@Override
+	public void onLast(GameEngine engine, int playerID) {
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
+	}
+
 	@Override
 	public boolean onGameOver(GameEngine engine, int playerID) {
 		if(engine.lives <= 0) {
@@ -306,24 +360,38 @@ public class TwoThousandAndFortyEight extends DummyMode {
 
 	@Override
 	public boolean onCustom(GameEngine engine, int playerID) {
-		boolean updateTimer = false;
+		if (engine.gameActive) {
+			boolean updateTimer = false;
 
-		engine.rainbowAnimate = true;
+			engine.rainbowAnimate = true;
 
-		switch (localState) {
-		    case CUSTOMSTATE_CONTROL:
-		        updateTimer = statControl(engine, playerID);
-		        break;
-			case CUSTOMSTATE_MOVE:
-				updateTimer = statMove(engine, playerID);
-				break;
-		    default:
-		        break;
+			switch (localState) {
+			    case CUSTOMSTATE_CONTROL:
+			        updateTimer = statControl(engine, playerID);
+			        break;
+				case CUSTOMSTATE_MOVE:
+					updateTimer = statMove(engine, playerID);
+					break;
+			    default:
+			        break;
+			}
+
+			if(lastScoreTime < 120) lastScoreTime++;
+
+			if (updateTimer) engine.statc[0]++;
+		} else {
+			showPlayerStats = false;
+
+			engine.isInGame = true;
+
+			boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+			if (playerProperties.isLoggedIn()) {
+				loadRankingPlayer(playerProperties);
+				loadSettingPlayer(playerProperties);
+			}
+
+			if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
 		}
-
-		if(lastScoreTime < 120) lastScoreTime++;
-
-		if (updateTimer) engine.statc[0]++;
 		return true;
 	}
 
@@ -446,12 +514,32 @@ public class TwoThousandAndFortyEight extends DummyMode {
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, base + 3, topY-1, "MAXTILE SCORE", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < MAX_RANKING; i++) {
-					receiver.drawScoreFont(engine, playerID,  base, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					receiver.drawScoreFont(engine, playerID,  base + 3, topY+i, String.valueOf(rankingTile[endless ? 1 : 0][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID,  base + 11, topY+i, String.valueOf(rankingScore[endless ? 1 : 0][i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for(int i = 0; i < MAX_RANKING; i++) {
+						receiver.drawScoreFont(engine, playerID,  base, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  base + 3, topY+i, String.valueOf(rankingTilePlayer[endless ? 1 : 0][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID,  base + 11, topY+i, String.valueOf(rankingScorePlayer[endless ? 1 : 0][i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, base, topY + MAX_RANKING + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, base, topY + MAX_RANKING + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, base, topY + MAX_RANKING + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					for(int i = 0; i < MAX_RANKING; i++) {
+						receiver.drawScoreFont(engine, playerID,  base, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  base + 3, topY+i, String.valueOf(rankingTile[endless ? 1 : 0][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID,  base + 11, topY+i, String.valueOf(rankingScore[endless ? 1 : 0][i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, base, topY + MAX_RANKING + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, base, topY + MAX_RANKING + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, base, topY + MAX_RANKING + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM && !engine.gameActive) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawScoreFont(engine, playerID, base, 3, "SCORE", EventReceiver.COLOR_BLUE);
 
@@ -470,6 +558,11 @@ public class TwoThousandAndFortyEight extends DummyMode {
 
 			receiver.drawScoreFont(engine, playerID, base, 6, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, base, 7, GeneralUtil.getTime(engine.statistics.time));
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, base, 12, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, base, 13, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
 
 			if (mainGrid != null) {
 				receiver.drawScoreFont(engine, playerID, base, 9, "MAX TILE", EventReceiver.COLOR_BLUE);
@@ -561,6 +654,34 @@ public class TwoThousandAndFortyEight extends DummyMode {
 		}
 	}
 
+	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 */
+	protected void loadRankingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < MAX_RANKING; i++) {
+			for(int j = 0; j < MAX_GAMETYPE; j++) {
+				rankingScore[j][i] = prop.getProperty("2048.ranking." + j + ".score." + i, 0);
+				rankingTile[j][i] = prop.getProperty("2048.ranking." + j + ".maxTile." + i, 0);
+			}
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 */
+	private void saveRankingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < MAX_RANKING; i++) {
+			for(int j = 0; j < MAX_GAMETYPE; j++) {
+				prop.setProperty("2048.ranking." + j + ".score." + i, rankingScore[j][i]);
+				prop.setProperty("2048.ranking." + j + ".maxTile." + i, rankingTile[j][i]);
+			}
+		}
+	}
+
 	private void updateRanking(int sc, int type, int tile) {
 		rankingRank = checkRanking(tile, type, sc);
 
@@ -575,6 +696,22 @@ public class TwoThousandAndFortyEight extends DummyMode {
 			rankingScore[type][rankingRank] = sc;
 			rankingTile[type][rankingRank] = tile;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(tile, type, sc);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = MAX_RANKING - 1; i > rankingRankPlayer; i--) {
+					rankingScorePlayer[type][i] = rankingScorePlayer[type][i - 1];
+					rankingTilePlayer[type][i] = rankingTilePlayer[type][i - 1];
+				}
+
+				// Add new data
+				rankingScorePlayer[type][rankingRankPlayer] = sc;
+				rankingTilePlayer[type][rankingRankPlayer] = tile;
+			}
+		}
 	}
 
 	private int checkRanking(int tile, int type, int sc) {
@@ -582,6 +719,18 @@ public class TwoThousandAndFortyEight extends DummyMode {
 			if(tile > rankingTile[type][i]) {
 				return i;
 			} else if (tile == rankingTile[type][i] && sc > rankingScore[type][i]) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	private int checkRankingPlayer(int tile, int type, int sc) {
+		for(int i = 0; i < MAX_RANKING; i++) {
+			if(tile > rankingTilePlayer[type][i]) {
+				return i;
+			} else if (tile == rankingTilePlayer[type][i] && sc > rankingScorePlayer[type][i]) {
 				return i;
 			}
 		}
@@ -599,9 +748,18 @@ public class TwoThousandAndFortyEight extends DummyMode {
 		if((!owner.replayMode)) {
 			updateRanking(engine.statistics.score, endless ? 1 : 0, mainGrid.getMaxSquare());
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("2048.playerName", playerProperties.getNameDisplay());
+			}
+
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -621,6 +779,28 @@ public class TwoThousandAndFortyEight extends DummyMode {
 	 * @param prop Property file
 	 */
 	private void saveSetting(CustomProperties prop) {
+		prop.setProperty("2048.endless", endless);
+		prop.setProperty("2048.bgm", bgm);
+		prop.setProperty("2048.bg", bg);
+	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		endless = prop.getProperty("2048.endless", false);
+		bgm = prop.getProperty("2048.bgm", 0);
+		bg = prop.getProperty("2048.bg", 0);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
 		prop.setProperty("2048.endless", endless);
 		prop.setProperty("2048.bgm", bgm);
 		prop.setProperty("2048.bg", bg);

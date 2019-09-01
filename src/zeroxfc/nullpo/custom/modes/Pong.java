@@ -51,7 +51,7 @@ public class Pong extends PuzzleGameEngine {
 	};
 
 	private static final double INITIAL_SPEED = 4.0;
-	private static final double MAXIMUM_SPEED = 32.0;
+	private static final double MAXIMUM_SPEED = 24.0;
 	private static final double SPEED_MULTIPLIER = 1.25;
 
 	private static final int VERSION = 1;
@@ -66,6 +66,10 @@ public class Pong extends PuzzleGameEngine {
 	private int playerScore, computerScore;
 	private double computerRange;
 	private int version;
+
+	private ProfileProperties playerProperties;
+	private static final int headerColour = EventReceiver.COLOR_PINK;
+	private String PLAYER_NAME;
 
 	@Override
 	public String getName() {
@@ -87,8 +91,18 @@ public class Pong extends PuzzleGameEngine {
 		computerScore = 0;
 		computerRange = 0;
 
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+		}
+
 		if (owner.replayMode) {
 			loadSetting(owner.replayProp);
+
+			if (playerProperties.isLoggedIn()) {
+
+			}
+
+			PLAYER_NAME = "";
 		} else {
 			loadSetting(owner.modeConfig);
 			version = VERSION;
@@ -131,6 +145,8 @@ public class Pong extends PuzzleGameEngine {
 				}
 			}
 
+			engine.owner.backgroundStatus.bg = bg;
+
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
@@ -139,9 +155,20 @@ public class Pong extends PuzzleGameEngine {
 				return false;
 			}
 
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
+			}
+
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B)) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
 			}
 
 			engine.statc[3]++;
@@ -377,56 +404,71 @@ public class Pong extends PuzzleGameEngine {
 
 		if((!owner.replayMode)) {
 			receiver.saveModeConfig(owner.modeConfig);
+
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("pong.playerName", playerProperties.getNameDisplay());
+			}
 		}
 	}
 
 	@Override
 	public boolean onCustom(GameEngine engine, int playerID) {
-		boolean updateTimer = false;
-		// Override this.
+		if (engine.gameActive) {
+			boolean updateTimer = false;
+			// Override this.
 
-		// Player movement.
-		final DoubleVector playerVelocity = new DoubleVector(0, 0, false);
-		if (engine.ctrl.isPress(Controller.BUTTON_UP)) {
-			playerVelocity.setY(-1 * PLAYER_PADDLE_VELOCITY);
-			paddlePlayer.move(playerVelocity);
-			if (paddlePlayer.getMinY() < fieldBoxMinY) paddlePlayer.position.setY(fieldBoxMinY + 32);
-		}
-
-		if (engine.ctrl.isPress(Controller.BUTTON_DOWN)) {
-			playerVelocity.setY(PLAYER_PADDLE_VELOCITY);
-			paddlePlayer.move(playerVelocity);
-			if (paddlePlayer.getMaxY() > fieldBoxMaxY) paddlePlayer.position.setY(fieldBoxMaxY - 32);
-		}
-
-		// Computer movement.
-		// Use an approx. equal for this.
-		final DoubleVector computerVelocity = new DoubleVector(0, 0, false);
-		if (!almostEqual(ball.position.getY(), paddleComputer.position.getY(), computerRange)) {
-			if (ball.position.getY() > paddleComputer.position.getY()) {
-				computerVelocity.setY(COMPUTER_PADDLE_VELOCITY[difficulty]);
-				paddleComputer.move(computerVelocity);
-				if (paddleComputer.getMaxY() > fieldBoxMaxY) paddleComputer.position.setY(fieldBoxMaxY - 32);
+			// Player movement.
+			final DoubleVector playerVelocity = new DoubleVector(0, 0, false);
+			if (engine.ctrl.isPress(Controller.BUTTON_UP)) {
+				playerVelocity.setY(-1 * PLAYER_PADDLE_VELOCITY);
+				paddlePlayer.move(playerVelocity);
+				if (paddlePlayer.getMinY() < fieldBoxMinY) paddlePlayer.position.setY(fieldBoxMinY + 32);
 			}
-			if (ball.position.getY() < paddleComputer.position.getY()) {
-				computerVelocity.setY(-1 * COMPUTER_PADDLE_VELOCITY[difficulty]);
-				paddleComputer.move(computerVelocity);
-				if (paddleComputer.getMinY() < fieldBoxMinY) paddleComputer.position.setY(fieldBoxMinY + 32);
+
+			if (engine.ctrl.isPress(Controller.BUTTON_DOWN)) {
+				playerVelocity.setY(PLAYER_PADDLE_VELOCITY);
+				paddlePlayer.move(playerVelocity);
+				if (paddlePlayer.getMaxY() > fieldBoxMaxY) paddlePlayer.position.setY(fieldBoxMaxY - 32);
 			}
-		}
 
-		switch (localState) {
-			case LOCALSTATE_SPAWNING:
-				updateTimer = statSpawning(engine);
-				break;
-			case LOCALSTATE_INGAME:
-				updateTimer = statIngame(engine);
-				break;
-			default:
-				break;
-		}
+			// Computer movement.
+			// Use an approx. equal for this.
+			final DoubleVector computerVelocity = new DoubleVector(0, 0, false);
+			if (!almostEqual(ball.position.getY(), paddleComputer.position.getY(), computerRange)) {
+				if (ball.position.getY() > paddleComputer.position.getY()) {
+					computerVelocity.setY(COMPUTER_PADDLE_VELOCITY[difficulty]);
+					paddleComputer.move(computerVelocity);
+					if (paddleComputer.getMaxY() > fieldBoxMaxY) paddleComputer.position.setY(fieldBoxMaxY - 32);
+				}
+				if (ball.position.getY() < paddleComputer.position.getY()) {
+					computerVelocity.setY(-1 * COMPUTER_PADDLE_VELOCITY[difficulty]);
+					paddleComputer.move(computerVelocity);
+					if (paddleComputer.getMinY() < fieldBoxMinY) paddleComputer.position.setY(fieldBoxMinY + 32);
+				}
+			}
 
-		if (updateTimer) engine.statc[0]++;
+			switch (localState) {
+				case LOCALSTATE_SPAWNING:
+					updateTimer = statSpawning(engine);
+					break;
+				case LOCALSTATE_INGAME:
+					updateTimer = statIngame(engine);
+					break;
+				default:
+					break;
+			}
+
+			if (updateTimer) engine.statc[0]++;
+		} else {
+			engine.isInGame = true;
+
+			boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+			}
+
+			if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+		}
 		return true;
 	}
 
@@ -526,8 +568,7 @@ public class Pong extends PuzzleGameEngine {
 			}
 		}
 		*/
-		if (version >= 1) ball.move(4, new PhysicsObject[] { paddlePlayer, paddleComputer }, false);
-		else ball.move();
+		ball.move();
 
 		if (PhysicsObject.checkCollision(ball, paddlePlayer) && lastCollision == COLLISION_NONE) {
 			recentCollision = COLLISION_PADDLE_PLAYER;
@@ -649,6 +690,16 @@ public class Pong extends PuzzleGameEngine {
 				default:
 					break;
 			}
+
+			if (playerProperties.isLoggedIn()) {
+				receiver.drawScoreFont(engine, playerID, 0, 6, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 7, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			} else {
+				receiver.drawScoreFont(engine, playerID, 0, 6, "LOGIN STATUS", EventReceiver.COLOR_BLUE);
+				if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, 7, "(NOT LOGGED IN)\n(E:LOG IN)");
+			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM && !engine.gameActive) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawScoreFont(engine, playerID, 8, 0, getName(), EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 8, 1, "(" + DIFFICULTY_NAMES[difficulty] + " MODE)", EventReceiver.COLOR_BLUE);
@@ -658,6 +709,11 @@ public class Pong extends PuzzleGameEngine {
 
 			receiver.drawScoreFont(engine, playerID, 8, 6, "COM. PTS.", EventReceiver.COLOR_RED);
 			receiver.drawScoreFont(engine, playerID, 8, 7, String.valueOf(computerScore));
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 0, 9, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 10, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
 
 			if (engine.stat != GameEngine.STAT_RESULT) {
 				if (paddleComputer != null) paddleComputer.draw(receiver, engine, playerID);
@@ -706,5 +762,27 @@ public class Pong extends PuzzleGameEngine {
 		prop.setProperty("pong.bgm", bgm);
 		prop.setProperty("pong.difficulty", difficulty);
 		prop.getProperty("pong.version", version);
+	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		bg = prop.getProperty("pong.bg", 0);
+		bgm = prop.getProperty("pong.bgm", -1);
+		difficulty = prop.getProperty("pong.difficulty", 0);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		prop.setProperty("pong.bg", bg);
+		prop.setProperty("pong.bgm", bgm);
+		prop.setProperty("pong.difficulty", difficulty);
 	}
 }

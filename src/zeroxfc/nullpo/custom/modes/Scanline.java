@@ -21,11 +21,12 @@ public class Scanline extends MarathonModeBase {
 	
 	// Line clear names
 	private static final String[] LINE_CLEAR_NAMES = {
-		"SINGLE",       "DOUBLE",        "TRIPLE",       "TETRIS",        "PENTRIS",
-		"HEXATRIS",     "HEPTATRIS",     "OCTRIS",       "NONATRIS",      "DECATRIS",
-		"HENDECATRIS",  "DODECATRIS",    "TRIDECATRIS",  "TETRADECATRIS", "PENTADECATRIS",
-		"HEXADECATRIS", "HEPTADECATRIS", "OCTADECATRIS", "NONADECATRIS",  "ICOSATRIS",
-		"HENICOSATRIS", "DOICOSATRIS",   "TRIAICOSATRIS"
+		"SINGLE",        "DOUBLE",         "TRIPLE",        "TETRIS",         "PENTRIS",
+		"HEXATRIS",      "HEPTATRIS",      "OCTRIS",        "NONATRIS",       "DECATRIS",
+		"HENDECATRIS",   "DODECATRIS",     "TRIDECATRIS",   "TETRADECATRIS",  "PENTADECATRIS",
+		"HEXADECATRIS",  "HEPTADECATRIS",  "OCTADECATRIS",  "NONADECATRIS",   "ICOSATRIS",
+		"HENICOSATRIS",  "DOICOSATRIS",    "TRIAICOSATRIS", "TETRAICOSATRIS", "PENTAICOSATRIS",
+		"HEXAICOSATRIS", "HEPTAICOSATRIS", "OCTAICOSATRIS", "NONAICOSATRIS",  "TRIACONTATRIS"
 	};
 	
 	// Max scan speeds
@@ -75,6 +76,15 @@ public class Scanline extends MarathonModeBase {
 	/** The good hard drop effect */
 	private ArrayList<int[]> pCoordList;
 	private Piece cPiece;
+
+	private ProfileProperties playerProperties;
+	private static final int headerColour = EventReceiver.COLOR_CYAN;
+	private int rankingRankPlayer;
+	private int[][][] rankingScorePlayer;
+	private int[][][] rankingLinesPlayer;
+	private int[][][] rankingTimePlayer;
+	private boolean showPlayerStats;
+	private String PLAYER_NAME;
 	
 	@Override
 	public String getName() {
@@ -122,15 +132,35 @@ public class Scanline extends MarathonModeBase {
 		rankingLines = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
 		rankingTime = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
 
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+
+			showPlayerStats = false;
+
+			rankingRankPlayer = -1;
+			rankingScorePlayer = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
+			rankingLinesPlayer = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
+			rankingTimePlayer = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
+		}
+
 		netPlayerInit(engine, playerID);
 
-		if(owner.replayMode == false) {
+		if(!owner.replayMode) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
+			PLAYER_NAME = "";
 			version = CURRENT_VERSION;
 		} else {
 			loadSetting(owner.replayProp);
-			if((version == 0) && (owner.replayProp.getProperty("scanline.endless", false) == true)) goaltype = 2;
+			if((version == 0) && (owner.replayProp.getProperty("scanline.endless", false))) goaltype = 2;
+
+			PLAYER_NAME = owner.replayProp.getProperty("scanline.playerName", "");
 
 			// NET: Load name
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -143,7 +173,7 @@ public class Scanline extends MarathonModeBase {
 		engine.lineGravityType = GameEngine.LINE_GRAVITY_CASCADE;
 		engine.comboType = GameEngine.COMBO_TYPE_DISABLE;
 		
-		customHolder = new ResourceHolderCustomAssetExtension();
+		customHolder = new ResourceHolderCustomAssetExtension(1);
 		customHolder.loadImage("res/graphics/scanner.png", "scanner");
 		
 		sx = 0;
@@ -253,14 +283,35 @@ public class Scanline extends MarathonModeBase {
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					String s = String.valueOf(rankingScore[scanSpeed][goaltype][i]);
-					receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRank), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
-					receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[scanSpeed][goaltype][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[scanSpeed][goaltype][i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						String s = String.valueOf(rankingScorePlayer[scanSpeed][goaltype][i]);
+						receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRankPlayer), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLinesPlayer[scanSpeed][goaltype][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[scanSpeed][goaltype][i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						String s = String.valueOf(rankingScore[scanSpeed][goaltype][i]);
+						receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRank), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[scanSpeed][goaltype][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[scanSpeed][goaltype][i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM && !engine.gameActive) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
 			String strScore;
@@ -289,6 +340,11 @@ public class Scanline extends MarathonModeBase {
 			receiver.drawScoreFont(engine, playerID, 0, 15, "UNTIL NEXT SCAN", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 16, GeneralUtil.getTime(remain), (remain <= 300));
 
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 19, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
+
 			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
 			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
 			if (pCoordList.size() > 0 && cPiece != null) {
@@ -302,7 +358,7 @@ public class Scanline extends MarathonModeBase {
 			if((lastClearAmount > 0) && (scgettime < 120)) {
 				int d = lastClearAmount - 1;
 				String h;
-				if (d < 23) {
+				if (d < LINE_CLEAR_NAMES.length) {
 					h = LINE_CLEAR_NAMES[d];
 				}
 				else {
@@ -367,6 +423,14 @@ public class Scanline extends MarathonModeBase {
 	@Override
 	public void onLast(GameEngine engine, int playerID) {
 		scgettime++;
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
 	}
 	
 	@Override
@@ -383,46 +447,60 @@ public class Scanline extends MarathonModeBase {
 	
 	@Override
 	public boolean onCustom(GameEngine engine, int playerID) {
-		if (engine.timerActive) {
-			interrupted = true;
-			
-			if (scannerAdvanceTimer == 0) {
-				boolean flag = FieldManipulation.checkSingleLineNoFlag(engine.field, scannerLocation);
-				lineLocations[scannerLocation + engine.field.getHiddenHeight()] = flag;
-				if (flag) {
-					engine.playSE("linescanned");
-				}
-			}
-			
-			scannerAdvanceTimer++;
-			if (scannerAdvanceTimer >= (SCANNER_ADVANCE_DELAY + scanSpeed)) {
-				scannerAdvanceTimer = 0;
-				
-				if (scannerLocation > (engine.field.getHiddenHeight() * -1)) {
-					scannerLocation--;
-					engine.playSE("linescannermove");
-				} else {
-					lineLocations = new boolean[engine.field.getHeight() + engine.field.getHiddenHeight()];
-					scannerLocation = engine.field.getHeight() - 1;
-					setLLFalse();
-					scanTimer = 0;
-					
-					int lines = engine.field.checkLineNoFlag();
-					engine.resetStatc();
-					if (lines > 0) {
-						engine.stat = GameEngine.STAT_LINECLEAR;
-						return true;
-					}
-					else {
-						engine.stat = GameEngine.STAT_ARE;
-						return true;
+		if (engine.gameActive) {
+			if (engine.timerActive) {
+				interrupted = true;
+
+				if (scannerAdvanceTimer == 0) {
+					boolean flag = FieldManipulation.checkSingleLineNoFlag(engine.field, scannerLocation);
+					lineLocations[scannerLocation + engine.field.getHiddenHeight()] = flag;
+					if (flag) {
+						engine.playSE("linescanned");
 					}
 				}
+
+				scannerAdvanceTimer++;
+				if (scannerAdvanceTimer >= (SCANNER_ADVANCE_DELAY + scanSpeed)) {
+					scannerAdvanceTimer = 0;
+
+					if (scannerLocation > (engine.field.getHiddenHeight() * -1)) {
+						scannerLocation--;
+						engine.playSE("linescannermove");
+					} else {
+						lineLocations = new boolean[engine.field.getHeight() + engine.field.getHiddenHeight()];
+						scannerLocation = engine.field.getHeight() - 1;
+						setLLFalse();
+						scanTimer = 0;
+
+						int lines = engine.field.checkLineNoFlag();
+						engine.resetStatc();
+						if (lines > 0) {
+							engine.stat = GameEngine.STAT_LINECLEAR;
+							return true;
+						}
+						else {
+							engine.stat = GameEngine.STAT_ARE;
+							return true;
+						}
+					}
+				}
 			}
+
+			engine.statc[0]++;
+		} else {
+			showPlayerStats = false;
+
+			engine.isInGame = true;
+
+			boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+			if (playerProperties.isLoggedIn()) {
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				loadSettingPlayer(playerProperties);
+			}
+
+			if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
 		}
-		
-		engine.statc[0]++;
-		
+
 		return true;
 	}
 	
@@ -586,11 +664,18 @@ public class Scanline extends MarathonModeBase {
 				}
 			}
 
+			engine.owner.backgroundStatus.bg = startlevel;
+
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 
 				// NET: Signal start of the game
 				if(netIsNetPlay) netLobby.netPlayerClient.send("start1p\n");
@@ -601,6 +686,17 @@ public class Scanline extends MarathonModeBase {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !netIsNetPlay) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			// NET: Netplay Ranking
@@ -640,9 +736,18 @@ public class Scanline extends MarathonModeBase {
 		if((owner.replayMode == false) && (big == false) && (engine.ai == null)) {
 			updateRanking(engine.statistics.score, engine.statistics.lines, engine.statistics.time, goaltype);
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("scanline.playerName", playerProperties.getNameDisplay());
+			}
+
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -669,6 +774,24 @@ public class Scanline extends MarathonModeBase {
 			rankingLines[scanSpeed][type][rankingRank] = li;
 			rankingTime[scanSpeed][type][rankingRank] = time;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(sc, li, time, type);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingScorePlayer[scanSpeed][type][i] = rankingScorePlayer[scanSpeed][type][i - 1];
+					rankingLinesPlayer[scanSpeed][type][i] = rankingLinesPlayer[scanSpeed][type][i - 1];
+					rankingTimePlayer[scanSpeed][type][i] = rankingTimePlayer[scanSpeed][type][i - 1];
+				}
+
+				// Add new data
+				rankingScorePlayer[scanSpeed][type][rankingRankPlayer] = sc;
+				rankingLinesPlayer[scanSpeed][type][rankingRankPlayer] = li;
+				rankingTimePlayer[scanSpeed][type][rankingRankPlayer] = time;
+			}
+		}
 	}
 
 	/**
@@ -685,6 +808,27 @@ public class Scanline extends MarathonModeBase {
 			} else if((sc == rankingScore[scanSpeed][type][i]) && (li > rankingLines[scanSpeed][type][i])) {
 				return i;
 			} else if((sc == rankingScore[scanSpeed][type][i]) && (li == rankingLines[scanSpeed][type][i]) && (time < rankingTime[scanSpeed][type][i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param li Lines
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int sc, int li, int time, int type) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScorePlayer[scanSpeed][type][i]) {
+				return i;
+			} else if((sc == rankingScorePlayer[scanSpeed][type][i]) && (li > rankingLinesPlayer[scanSpeed][type][i])) {
+				return i;
+			} else if((sc == rankingScorePlayer[scanSpeed][type][i]) && (li == rankingLinesPlayer[scanSpeed][type][i]) && (time < rankingTimePlayer[scanSpeed][type][i])) {
 				return i;
 			}
 		}
@@ -721,6 +865,34 @@ public class Scanline extends MarathonModeBase {
 	}
 
 	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		startlevel = prop.getProperty("scanline.startlevel", 0);
+		tspinEnableType = prop.getProperty("scanline.tspinEnableType", 1);
+		enableB2B = prop.getProperty("scanline.enableB2B", true);
+		goaltype = prop.getProperty("scanline.gametype", 0);
+		big = prop.getProperty("scanline.big", false);
+		scanSpeed = prop.getProperty("scanline.speed", 0);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		prop.setProperty("scanline.startlevel", startlevel);
+		prop.setProperty("scanline.tspinEnableType", tspinEnableType);
+		prop.setProperty("scanline.enableB2B", enableB2B);
+		prop.setProperty("scanline.gametype", goaltype);
+		prop.setProperty("scanline.big", big);
+		prop.setProperty("scanline.speed", scanSpeed);
+	}
+
+	/**
 	 * Read rankings from property file
 	 * @param prop Property file
 	 * @param ruleName Rule name
@@ -750,6 +922,42 @@ public class Scanline extends MarathonModeBase {
 					prop.setProperty("scanline.ranking." + ruleName + "." + h + "." + j + ".score." + i, rankingScore[h][j][i]);
 					prop.setProperty("scanline.ranking." + ruleName + "." + h + "." + j + ".lines." + i, rankingLines[h][j][i]);
 					prop.setProperty("scanline.ranking." + ruleName + "." + h + "." + j + ".time." + i, rankingTime[h][j][i]);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for (int h = 0; h < MAX_SCANSPEEDS; h++) {
+			for(int i = 0; i < RANKING_MAX; i++) {
+				for(int j = 0; j < GAMETYPE_MAX; j++) {
+					rankingScorePlayer[h][j][i] = prop.getProperty("scanline.ranking." + ruleName + "." + h + "." + j + ".score." + i, 0);
+					rankingLinesPlayer[h][j][i] = prop.getProperty("scanline.ranking." + ruleName + "." + h + "." + j + ".lines." + i, 0);
+					rankingTimePlayer[h][j][i] = prop.getProperty("scanline.ranking." + ruleName + "." + h + "." + j + ".time." + i, 0);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for (int h = 0; h < MAX_SCANSPEEDS; h++) {
+			for(int i = 0; i < RANKING_MAX; i++) {
+				for(int j = 0; j < GAMETYPE_MAX; j++) {
+					prop.setProperty("scanline.ranking." + ruleName + "." + h + "." + j + ".score." + i, rankingScorePlayer[h][j][i]);
+					prop.setProperty("scanline.ranking." + ruleName + "." + h + "." + j + ".lines." + i, rankingLinesPlayer[h][j][i]);
+					prop.setProperty("scanline.ranking." + ruleName + "." + h + "." + j + ".time." + i, rankingTimePlayer[h][j][i]);
 				}
 			}
 		}

@@ -159,4 +159,21 @@ public class MathHelper {
 	public static boolean almostEqual(double a, double b, double eps){
 		return Math.abs(a - b) < eps;
 	}
+
+	/**
+	 * Checks if a coordinate is within a certain radius.
+	 * @param x X-coordinate of circle's centre.
+	 * @param y Y-coordinate of circle's centre.
+	 * @param xTest X-coordinate of test square.
+	 * @param yTest Y-coordinate of test square.
+	 * @param radius The testing radius
+	 * @return The result of the check. true: within. false: not within.
+	 */
+	public boolean isCoordWithinRadius(int x, int y, int xTest, int yTest, double radius) {
+		int dX = xTest - x;
+		int dY = yTest - y;
+
+		double distance = Math.sqrt((dX * dX) + (dY * dY));
+		return (distance <= radius);
+	}
 }

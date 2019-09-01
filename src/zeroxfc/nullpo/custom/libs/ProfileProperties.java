@@ -711,7 +711,10 @@ public class ProfileProperties {
 					engine.playSE("decide");
 				}
 			} else if (engine.ctrl.isPush(Controller.BUTTON_B)) {
-				if (nameEntry.length() > 0) nameEntry = nameEntry.substring(0, nameEntry.length() - 1);
+				if (nameEntry.length() > 0) {
+					currentChar = ProfileProperties.ENTRY_CHARS.indexOf(nameEntry.charAt(nameEntry.length() - 1));
+					nameEntry = nameEntry.substring(0, nameEntry.length() - 1);
+				}
 				engine.playSE("change");
 			} else if (engine.ctrl.isPush(Controller.BUTTON_E)) {
 				login = false;

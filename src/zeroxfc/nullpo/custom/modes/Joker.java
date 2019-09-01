@@ -11,6 +11,7 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.BlockParticleCollection;
 import zeroxfc.nullpo.custom.libs.FlyInOutText;
+import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 
 public class Joker extends MarathonModeBase {
@@ -90,6 +91,16 @@ public class Joker extends MarathonModeBase {
 	private boolean drawJevil;
 	private float efficiency;
 	private int efficiencyGrade;
+
+	// PROFILE
+	private ProfileProperties playerProperties;
+	private boolean showPlayerStats;
+	private static final int headerColour = EventReceiver.COLOR_RED;
+	private int rankingRankPlayer;
+	private int[] rankingLevelPlayer;
+	private int[] rankingTimePlayer;
+	private int[] rankingLinesPlayer;
+	private String PLAYER_NAME;
 	
 	// Last amount of lines cleared;
 	private int lastLine;
@@ -132,18 +143,37 @@ public class Joker extends MarathonModeBase {
 		rankingLines = new int[RANKING_MAX];
 		rankingTime = new int[RANKING_MAX];
 
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+
+			showPlayerStats = false;
+
+			rankingRankPlayer = -1;
+			rankingLevelPlayer = new int[RANKING_MAX];
+			rankingLinesPlayer = new int[RANKING_MAX];
+			rankingTimePlayer = new int[RANKING_MAX];
+		}
+
 		netPlayerInit(engine, playerID);
 
 		if(owner.replayMode == false) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
 			version = CURRENT_VERSION;
+			PLAYER_NAME = "";
 		} else {
 			loadSetting(owner.replayProp);
 			if((version == 0) && (owner.replayProp.getProperty("joker.endless", false) == true)) goaltype = 2;
 
 			// NET: Load name
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
+			PLAYER_NAME = owner.replayProp.getProperty("joker.playerName", "");
 		}
 
 		engine.owner.backgroundStatus.bg = 18;
@@ -241,8 +271,14 @@ public class Joker extends MarathonModeBase {
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
+
 
 				// NET: Signal start of the game
 				if(netIsNetPlay) netLobby.netPlayerClient.send("start1p\n");
@@ -253,6 +289,17 @@ public class Joker extends MarathonModeBase {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !netIsNetPlay) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			// NET: Netplay Ranking
@@ -406,14 +453,35 @@ public class Joker extends MarathonModeBase {
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "LEVEL  LINE TIME", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					String s = String.valueOf(rankingLevel[i]);
-					receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRank), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
-					receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						String s = String.valueOf(rankingLevelPlayer[i]);
+						receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRankPlayer), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLinesPlayer[i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						String s = String.valueOf(rankingLevel[i]);
+						receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRank), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			if(customHolder != null && drawJevil && engine.timerActive) customHolder.drawImage(engine, "jevil", 548, 0, 92 * (jSpeed ? (jevilTimer % 9) : (jevilTimer / 3)), 0, 92, 96, 255, 255, 255, 255, 1.0f);
 			
@@ -441,8 +509,12 @@ public class Joker extends MarathonModeBase {
 			
 			receiver.drawScoreFont(engine, playerID, 0, 15, "EFFICIENCY", EventReceiver.COLOR_GREEN);
 			receiver.drawScoreFont(engine, playerID, 0, 16, String.format("%.2f", efficiency * 100) + "%", engine.statistics.level >= 300, EventReceiver.COLOR_WHITE, EventReceiver.COLOR_PINK);
-			
-			
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 19, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
+
 			if (shouldUseTimer) {
 				receiver.drawMenuFont(engine, playerID, 0, 21, "TIME LIMIT", EventReceiver.COLOR_RED);
 				receiver.drawMenuFont(engine, playerID, 1, 22, GeneralUtil.getTime(mainTimer), (mainTimer <= 600 && ((mainTimer / 2) % 2 == 0)));
@@ -479,6 +551,23 @@ public class Joker extends MarathonModeBase {
 		}
 		
 		return false;
+	}
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		showPlayerStats = false;
+
+		engine.isInGame = true;
+
+		boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+		if (playerProperties.isLoggedIn()) {
+			loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			loadSettingPlayer(playerProperties);
+		}
+
+		if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+		return s;
 	}
 	
 	/*
@@ -560,6 +649,14 @@ public class Joker extends MarathonModeBase {
 			engine.stat = GameEngine.STAT_GAMEOVER;
 			engine.resetStatc();
 			engine.gameEnded();
+		}
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
 		}
 	}
 	
@@ -981,9 +1078,18 @@ public class Joker extends MarathonModeBase {
 		if((owner.replayMode == false) && (big == false) && (engine.ai == null) && (startingStock == 0)) {
 			updateRanking(engine.statistics.level, engine.statistics.lines, timeScore);
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("joker.playerName", playerProperties.getNameDisplay());
+			}
+
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -1010,6 +1116,32 @@ public class Joker extends MarathonModeBase {
 		prop.setProperty("joker.big", big);
 		prop.setProperty("joker.extrastock", startingStock);
 		prop.setProperty("joker.version", version);
+		prop.setProperty("joker.lcat", lineClearAnimType);
+		prop.setProperty("joker.drawjevil", drawJevil);
+	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		startlevel = prop.getProperty("joker.startlevel", 0);
+		big = prop.getProperty("joker.big", false);
+		startingStock = prop.getProperty("joker.extrastock", 0);
+		lineClearAnimType = prop.getProperty("joker.lcat", 0);
+		drawJevil = prop.getProperty("joker.drawjevil", false);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		prop.setProperty("joker.startlevel", startlevel);
+		prop.setProperty("joker.big", big);
+		prop.setProperty("joker.extrastock", startingStock);
 		prop.setProperty("joker.lcat", lineClearAnimType);
 		prop.setProperty("joker.drawjevil", drawJevil);
 	}
@@ -1042,6 +1174,34 @@ public class Joker extends MarathonModeBase {
 	}
 
 	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			rankingLevelPlayer[i] = prop.getProperty("joker.ranking." + ruleName + ".level." + i, 0);
+			rankingLinesPlayer[i] = prop.getProperty("joker.ranking." + ruleName + ".lines." + i, 0);
+			rankingTimePlayer[i] = prop.getProperty("joker.ranking." + ruleName + ".time." + i, 0);
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			prop.setProperty("joker.ranking." + ruleName + ".level." + i, rankingLevelPlayer[i]);
+			prop.setProperty("joker.ranking." + ruleName + ".lines." + i, rankingLinesPlayer[i]);
+			prop.setProperty("joker.ranking." + ruleName + ".time." + i, rankingTimePlayer[i]);
+		}
+	}
+
+	/**
 	 * Update rankings
 	 * @param li Lines
 	 * @param time Time
@@ -1062,6 +1222,24 @@ public class Joker extends MarathonModeBase {
 			rankingLines[rankingRank] = li;
 			rankingTime[rankingRank] = time;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(lv, li, time);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingLevelPlayer[i] = rankingLevelPlayer[i - 1];
+					rankingLinesPlayer[i] = rankingLinesPlayer[i - 1];
+					rankingTimePlayer[i] = rankingTimePlayer[i - 1];
+				}
+
+				// Add new data
+				rankingLevelPlayer[rankingRankPlayer] = lv;
+				rankingLinesPlayer[rankingRankPlayer] = li;
+				rankingTimePlayer[rankingRankPlayer] = time;
+			}
+		}
 	}
 	
 	/**
@@ -1077,6 +1255,26 @@ public class Joker extends MarathonModeBase {
 			} else if((lv == rankingLevel[i]) && (li > rankingLines[i])) {
 				return i;
 			} else if((lv == rankingLevel[i]) && (li == rankingLines[i]) && (time < rankingTime[i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param li Lines
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int lv, int li, int time) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(lv > rankingLevelPlayer[i]) {
+				return i;
+			} else if((lv == rankingLevelPlayer[i]) && (li > rankingLinesPlayer[i])) {
+				return i;
+			} else if((lv == rankingLevelPlayer[i]) && (li == rankingLinesPlayer[i]) && (time < rankingTimePlayer[i])) {
 				return i;
 			}
 		}

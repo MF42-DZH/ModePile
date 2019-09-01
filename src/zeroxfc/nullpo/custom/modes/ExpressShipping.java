@@ -113,6 +113,12 @@ public class ExpressShipping extends PuzzleGameEngine {
 	private int rankingRank;
 	private int lastScore, scGetTime;
 
+	private ProfileProperties playerProperties;
+	private static final int headerColour = EventReceiver.COLOR_PINK;
+	private boolean showPlayerStats;
+	private int[] rankingScorePlayer, rankingLevelPlayer;
+	private int rankingRankPlayer;
+
 	@Override
 	public String getName() {
 		return "EXPRESS SHIPPING";
@@ -145,13 +151,28 @@ public class ExpressShipping extends PuzzleGameEngine {
 		lastScore = 0;
 		scGetTime = 0;
 
-		customHolder = new ResourceHolderCustomAssetExtension();
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+
+			showPlayerStats = false;
+
+			rankingRankPlayer = -1;
+			rankingLevelPlayer = new int[RANKING_MAX];
+			rankingScorePlayer = new int[RANKING_MAX];
+		}
+
+		customHolder = new ResourceHolderCustomAssetExtension(3);
 		customHolder.loadImage("res/graphics/conveyor.png", "conveyor");
 		customHolder.loadImage("res/graphics/conveyorreverse.png", "conveyorreverse");
 		customHolder.loadImage("res/graphics/cargoreturn.png", "cargoreturn");
 
 		loadSetting(owner.modeConfig);
 		loadRanking(owner.modeConfig);
+
+		if (playerProperties.isLoggedIn()) {
+			loadSettingPlayer(playerProperties);
+			loadRankingPlayer(playerProperties);
+		}
 	}
 
 	private void resetHistory() {
@@ -194,17 +215,35 @@ public class ExpressShipping extends PuzzleGameEngine {
 				}
 			}
 
+			if (bg != -1) engine.owner.backgroundStatus.bg = bg;
+
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 				return false;
 			}
 
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B)) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			engine.statc[3]++;
@@ -459,31 +498,47 @@ public class ExpressShipping extends PuzzleGameEngine {
 
 	@Override
 	public boolean onCustom(GameEngine engine, int playerID) {
-		boolean updateTime = false;
+		if (engine.gameActive) {
+			boolean updateTime = false;
 
-		conveyorFrame = (conveyorFrame + 1) % CONVEYOR_ANIMATION_FRAMES;
+			conveyorFrame = (conveyorFrame + 1) % CONVEYOR_ANIMATION_FRAMES;
 
-		mouseControl.update();
-		mouseCoords = mouseControl.getMouseCoordinates();
+			mouseControl.update();
+			mouseCoords = mouseControl.getMouseCoordinates();
 
-		switch (localState) {
-			case CUSTOMSTATE_INGAME:
-				updateTime = statIngame(engine, playerID);
-				break;
-			case CUSTOMSTATE_RESULTS:
-				updateTime = statResults(engine, playerID);
-				break;
-			default:
-				break;
+			switch (localState) {
+				case CUSTOMSTATE_INGAME:
+					updateTime = statIngame(engine, playerID);
+					break;
+				case CUSTOMSTATE_RESULTS:
+					updateTime = statResults(engine, playerID);
+					break;
+				default:
+					break;
+			}
+
+			if (engine.stat == GameEngine.STAT_GAMEOVER) {
+				updateRanking(engine.statistics.score, engine.statistics.level);
+				if (rankingRank != -1) saveRanking(owner.modeConfig);
+				if (rankingRank != -1) receiver.saveModeConfig(owner.modeConfig);
+				if (rankingRankPlayer != -1 && playerProperties.isLoggedIn()) saveRankingPlayer(playerProperties);
+				if (rankingRankPlayer != -1 && playerProperties.isLoggedIn()) playerProperties.saveProfileConfig();
+			}
+
+			if (updateTime) engine.statc[0]++;
+		} else {
+			showPlayerStats = false;
+
+			engine.isInGame = true;
+
+			boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+			if (playerProperties.isLoggedIn()) {
+				loadRankingPlayer(playerProperties);
+				loadSettingPlayer(playerProperties);
+			}
+
+			if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
 		}
-
-		if (engine.stat == GameEngine.STAT_GAMEOVER) {
-			updateRanking(engine.statistics.score, engine.statistics.level);
-			if (rankingRank != -1) saveRanking(owner.modeConfig);
-			if (rankingRank != -1) receiver.saveModeConfig(owner.modeConfig);
-		}
-
-		if (updateTime) engine.statc[0]++;
 
 		return true;
 	}
@@ -1060,6 +1115,14 @@ public class ExpressShipping extends PuzzleGameEngine {
 			}
 		}
 
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
+
 		if (scGetTime < 60) scGetTime++;
 	}
 
@@ -1074,14 +1137,38 @@ public class ExpressShipping extends PuzzleGameEngine {
 				int topY = (receiver.getNextDisplayType() == 2) ? 5 : 3;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE   LEVEL", EventReceiver.COLOR_PINK, scale);
 
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					receiver.drawScoreFont(engine, playerID, 3, topY+i, String.valueOf(rankingScore[i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 11, topY+i, String.valueOf(rankingLevel[i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID, 3, topY+i, String.valueOf(rankingScorePlayer[i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 11, topY+i, String.valueOf(rankingLevelPlayer[i] + 1), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID, 3, topY+i, String.valueOf(rankingScore[i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 11, topY+i, String.valueOf(rankingLevel[i] + 1), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 				}
 			}
+		} else if (!engine.gameActive && engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawMenuFont(engine, playerID, 0, 19, getName(), EventReceiver.COLOR_PINK);
+
+			if (playerProperties.isLoggedIn()) {
+				receiver.drawMenuFont(engine, playerID, 18, 18, "PLAYER", EventReceiver.COLOR_PINK);
+				receiver.drawMenuFont(engine, playerID, 25, 18, playerProperties.getNameDisplay(), 2f);
+			}
 
 			receiver.drawMenuFont(engine, playerID, 0, 21, "SCORE", EventReceiver.COLOR_PINK);
 			receiver.drawMenuFont(engine, playerID, 0, 22, String.valueOf(Interpolation.lerp(lastScore, engine.statistics.score, (double)scGetTime/60.0)));
@@ -1352,6 +1439,50 @@ public class ExpressShipping extends PuzzleGameEngine {
 	}
 
 	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		bg = prop.getProperty("expressshipping.bg", -1);
+		bgm = prop.getProperty("expressshipping.bgm", 0);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		prop.setProperty("expressshipping.bg", bg);
+		prop.setProperty("expressshipping.bgm", bgm);
+	}
+
+	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 */
+	protected void loadRankingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			rankingScorePlayer[i] = prop.getProperty("expressshipping.ranking" + ".score." + i, 0);
+			rankingLevelPlayer[i] = prop.getProperty("expressshipping.ranking" + ".level." + i, 0);
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 */
+	private void saveRankingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			prop.setProperty("expressshipping.ranking" + ".score." + i, rankingScorePlayer[i]);
+			prop.setProperty("expressshipping.ranking" + ".level." + i, rankingLevelPlayer[i]);
+		}
+	}
+
+	/**
 	 * Update rankings
 	 * @param sc Score
 	 * @param lv Level
@@ -1370,6 +1501,22 @@ public class ExpressShipping extends PuzzleGameEngine {
 			rankingScore[rankingRank] = sc;
 			rankingLevel[rankingRank] = lv;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(sc, lv);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingScorePlayer[i] = rankingScorePlayer[i - 1];
+					rankingLevelPlayer[i] = rankingLevelPlayer[i - 1];
+				}
+
+				// Add new data
+				rankingScorePlayer[rankingRankPlayer] = sc;
+				rankingLevelPlayer[rankingRankPlayer] = lv;
+			}
+		}
 	}
 
 	/**
@@ -1382,7 +1529,25 @@ public class ExpressShipping extends PuzzleGameEngine {
 		for(int i = 0; i < RANKING_MAX; i++) {
 			if(sc > rankingScore[i]) {
 				return i;
-			} else if (rankingScore[i] == sc && lv < rankingScore[i]) {
+			} else if (rankingScore[i] == sc && lv < rankingLevel[i]) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param lv Level
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int sc, int lv) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScorePlayer[i]) {
+				return i;
+			} else if (rankingScorePlayer[i] == sc && lv < rankingLevelPlayer[i]) {
 				return i;
 			}
 		}

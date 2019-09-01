@@ -8,6 +8,7 @@ import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 
 import java.util.ArrayList;
@@ -73,6 +74,21 @@ public class EXReborn extends DummyMode {
 	private boolean lvstopse, big, lvupflag, alwaysghost;
 	private int lastscore, previousscore, scgettime, bgmlv;
 	private int nextseclv;
+
+	private static final int headerColour = EventReceiver.COLOR_BLUE;
+	private ProfileProperties playerProperties;
+	private boolean showPlayerStats;
+	private String PLAYER_NAME;
+	private int rankingRankPlayer;
+
+	/** Rankings' scores */
+	private int[] rankingScorePlayer;
+
+	/** Rankings' level */
+	private int[] rankingLevelPlayer;
+
+	/** Rankings' times */
+	private int[] rankingTimePlayer;
 	
 	/** Mode name */
 	@Override
@@ -84,6 +100,17 @@ public class EXReborn extends DummyMode {
 	public void playerInit(GameEngine engine, int playerID) {
 		owner = engine.owner;
 		receiver = engine.owner.receiver;
+
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+
+			showPlayerStats = false;
+
+			rankingRankPlayer = -1;
+			rankingScorePlayer = new int[RANKING_MAX];
+			rankingLevelPlayer = new int[RANKING_MAX];
+			rankingTimePlayer = new int[RANKING_MAX];
+		}
 
 		rankingScore = new int[RANKING_MAX];
 		rankingLevel = new int[RANKING_MAX];
@@ -108,8 +135,16 @@ public class EXReborn extends DummyMode {
 		if(!owner.replayMode) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
+			PLAYER_NAME = "";
 		} else {
 			loadSetting(owner.replayProp);
+			PLAYER_NAME = owner.replayProp.getProperty("exreborn.playerName", "");
 		}
 	}
 
@@ -143,8 +178,13 @@ public class EXReborn extends DummyMode {
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 
 				return false;
 			}
@@ -152,6 +192,17 @@ public class EXReborn extends DummyMode {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B)) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			engine.statc[3]++;
@@ -1029,53 +1080,67 @@ public class EXReborn extends DummyMode {
 
 	@Override
 	public boolean onCustom(GameEngine engine, int playerID) {
-		if (engine.statc[0] > (180 + (engine.field.getHiddenHeight() + engine.field.getHeight()) * 3)) {
-			engine.resetStatc();
-			engine.stat = GameEngine.STAT_MOVE;
-			engine.initialRotate();
-			engine.playSE("go");
+		if (engine.gameActive) {
+			if (engine.statc[0] > (180 + (engine.field.getHiddenHeight() + engine.field.getHeight()) * 3)) {
+				engine.resetStatc();
+				engine.stat = GameEngine.STAT_MOVE;
+				engine.initialRotate();
+				engine.playSE("go");
 
-			if (!big) engine.big = (engine.statistics.level >= maxLevel);
-			engine.timerActive = true;
+				if (!big) engine.big = (engine.statistics.level >= maxLevel);
+				engine.timerActive = true;
 
-			if (bgmlv < 4) {
-				if(engine.statistics.level >= tableBGMChange[bgmlv]) {
-					bgmlv++;
-					owner.bgmStatus.fadesw = false;
-					owner.bgmStatus.bgm = bgmlv;
+				if (bgmlv < 4) {
+					if(engine.statistics.level >= tableBGMChange[bgmlv]) {
+						bgmlv++;
+						owner.bgmStatus.fadesw = false;
+						owner.bgmStatus.bgm = bgmlv;
+					}
 				}
-			}
-			return true;
-		} else if (engine.statc[0] == (120 + engine.field.getHeight() * 3)) {
-			if (engine.framecolor == GameEngine.FRAME_COLOR_RED) engine.framecolor = GameEngine.FRAME_COLOR_BLUE;
-			if (engine.framecolor == GameEngine.FRAME_COLOR_GRAY) engine.framecolor = GameEngine.FRAME_COLOR_RED;
-			engine.playSE("ready");
-		} else if (engine.statc[0] > 0) {
-			int f = engine.statc[0] - 60;
+				return true;
+			} else if (engine.statc[0] == (120 + engine.field.getHeight() * 3)) {
+				if (engine.framecolor == GameEngine.FRAME_COLOR_RED) engine.framecolor = GameEngine.FRAME_COLOR_BLUE;
+				if (engine.framecolor == GameEngine.FRAME_COLOR_GRAY) engine.framecolor = GameEngine.FRAME_COLOR_RED;
+				engine.playSE("ready");
+			} else if (engine.statc[0] > 0) {
+				int f = engine.statc[0] - 60;
 
-			if (f % 3 == 0 && f >= 0 && ((engine.field.getHeight() - 1) - (f / 3)) >= (-1 * engine.field.getHiddenHeight())) {
-				for (int x = 0; x < engine.field.getWidth(); x++) {
-					int y = engine.field.getHeight() - 1 - (f / 3);
-					Block blk = engine.field.getBlock(x, y);
+				if (f % 3 == 0 && f >= 0 && ((engine.field.getHeight() - 1) - (f / 3)) >= (-1 * engine.field.getHiddenHeight())) {
+					for (int x = 0; x < engine.field.getWidth(); x++) {
+						int y = engine.field.getHeight() - 1 - (f / 3);
+						Block blk = engine.field.getBlock(x, y);
 
-					Block nblk = new Block(Block.BLOCK_COLOR_NONE);
-					nblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
-					nblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
-					nblk.setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, false);
+						Block nblk = new Block(Block.BLOCK_COLOR_NONE);
+						nblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+						nblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+						nblk.setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, false);
 
-					if (blk != null) {
-						if (blk.color > Block.BLOCK_COLOR_NONE) {
-							receiver.blockBreak(engine, playerID, x, y, blk);
-							engine.field.getBlock(x, y).copy(nblk);
+						if (blk != null) {
+							if (blk.color > Block.BLOCK_COLOR_NONE) {
+								receiver.blockBreak(engine, playerID, x, y, blk);
+								engine.field.getBlock(x, y).copy(nblk);
+							}
 						}
 					}
 				}
 			}
+
+			engine.timerActive = false;
+
+			engine.statc[0]++;
+		} else {
+			showPlayerStats = false;
+
+			engine.isInGame = true;
+
+			boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+			if (playerProperties.isLoggedIn()) {
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				loadSettingPlayer(playerProperties);
+			}
+
+			if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
 		}
-
-		engine.timerActive = false;
-
-		engine.statc[0]++;
 
 		return true;
 	}
@@ -1101,6 +1166,14 @@ public class EXReborn extends DummyMode {
 		if(proportion <= 0.75) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
 		if(proportion <= 0.5) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
 		if(proportion <= 0.25) engine.meterColor = GameEngine.METER_COLOR_RED;
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
 	}
 
 	/*
@@ -1118,13 +1191,34 @@ public class EXReborn extends DummyMode {
 				int topY = (receiver.getNextDisplayType() == 2) ? 4 : 3;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LEVEL TIME", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 10, topY+i, getLevelName(rankingLevel[i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 16, topY+i, GeneralUtil.getTime(rankingTime[i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScorePlayer[i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, getLevelName(rankingLevelPlayer[i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 16, topY+i, GeneralUtil.getTime(rankingTimePlayer[i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, getLevelName(rankingLevel[i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 16, topY+i, GeneralUtil.getTime(rankingTime[i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+
 				}
 			}
+		} else if (!engine.gameActive && engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 2, "SCORE", EventReceiver.COLOR_BLUE);
 			String strScore;
@@ -1141,6 +1235,11 @@ public class EXReborn extends DummyMode {
 
 			receiver.drawScoreFont(engine, playerID, 0, 8, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 9, GeneralUtil.getTime(engine.statistics.time));
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 0, 11, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 12, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
 
 			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
 			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
@@ -1247,9 +1346,18 @@ public class EXReborn extends DummyMode {
 		if((!owner.replayMode) && (!big) && (engine.ai == null)) {
 			updateRanking(engine.statistics.score, engine.statistics.level, engine.statistics.time);
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("exreborn.playerName", playerProperties.getNameDisplay());
+			}
+
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -1269,6 +1377,28 @@ public class EXReborn extends DummyMode {
 	 * @param prop Property file
 	 */
 	private void saveSetting(CustomProperties prop) {
+		prop.setProperty("exreborn.lvstopse", lvstopse);
+		prop.setProperty("exreborn.big", big);
+		prop.setProperty("exreborn.alwaysghost", alwaysghost);
+	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		lvstopse = prop.getProperty("exreborn.lvstopse", true);
+		big = prop.getProperty("exreborn.big", false);
+		alwaysghost = prop.getProperty("exreborn.alwaysghost", false);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
 		prop.setProperty("exreborn.lvstopse", lvstopse);
 		prop.setProperty("exreborn.big", big);
 		prop.setProperty("exreborn.alwaysghost", alwaysghost);
@@ -1301,6 +1431,34 @@ public class EXReborn extends DummyMode {
 	}
 
 	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			rankingScorePlayer[i] = prop.getProperty("exreborn.ranking." + ruleName + ".score." + i, 0);
+			rankingLevelPlayer[i] = prop.getProperty("exreborn.ranking." + ruleName + ".lines." + i, 0);
+			rankingTimePlayer[i] = prop.getProperty("exreborn.ranking." + ruleName + ".time." + i, 0);
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			prop.setProperty("exreborn.ranking." + ruleName + ".score." + i, rankingScorePlayer[i]);
+			prop.setProperty("exreborn.ranking." + ruleName + ".lines." + i, rankingLevelPlayer[i]);
+			prop.setProperty("exreborn.ranking." + ruleName + ".time." + i, rankingTimePlayer[i]);
+		}
+	}
+
+	/**
 	 * Update rankings
 	 * @param sc Score
 	 * @param lv Level
@@ -1322,6 +1480,24 @@ public class EXReborn extends DummyMode {
 			rankingLevel[rankingRank] = lv;
 			rankingTime[rankingRank] = time;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(sc, lv, time);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingScorePlayer[i] = rankingScorePlayer[i - 1];
+					rankingLevelPlayer[i] = rankingLevelPlayer[i - 1];
+					rankingTimePlayer[i] = rankingTimePlayer[i - 1];
+				}
+
+				// Add new data
+				rankingScorePlayer[rankingRankPlayer] = sc;
+				rankingLevelPlayer[rankingRankPlayer] = lv;
+				rankingTimePlayer[rankingRankPlayer] = time;
+			}
+		}
 	}
 
 	/**
@@ -1338,6 +1514,27 @@ public class EXReborn extends DummyMode {
 			} else if((sc == rankingScore[i]) && (lv > rankingLevel[i])) {
 				return i;
 			} else if((sc == rankingScore[i]) && (lv == rankingLevel[i]) && (time < rankingTime[i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param lv Level
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int sc, int lv, int time) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScorePlayer[i]) {
+				return i;
+			} else if((sc == rankingScorePlayer[i]) && (lv > rankingLevelPlayer[i])) {
+				return i;
+			} else if((sc == rankingScorePlayer[i]) && (lv == rankingLevelPlayer[i]) && (time < rankingTimePlayer[i])) {
 				return i;
 			}
 		}

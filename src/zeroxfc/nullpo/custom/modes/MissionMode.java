@@ -11,6 +11,7 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 
 public class MissionMode extends MarathonModeBase {
@@ -109,6 +110,13 @@ public class MissionMode extends MarathonModeBase {
 	/** The good hard drop effect */
 	private ArrayList<int[]> pCoordList;
 	private Piece cPiece;
+
+	private static final int headerColour = EventReceiver.COLOR_GREEN;
+	private ProfileProperties playerProperties;
+	private String PLAYER_NAME;
+	private boolean showPlayerStats;
+	private int[][] rankingScorePlayer, rankingTimePlayer;
+	private int rankingRankPlayer;
 	
 	@Override
 	public String getName() {
@@ -147,15 +155,34 @@ public class MissionMode extends MarathonModeBase {
 		rankingScore = new int[RANKING_TYPE][RANKING_MAX];
 		rankingTime = new int[RANKING_TYPE][RANKING_MAX];
 
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+
+			showPlayerStats = false;
+
+			rankingRank = -1;
+			rankingScore = new int[RANKING_TYPE][RANKING_MAX];
+			rankingTime = new int[RANKING_TYPE][RANKING_MAX];
+		}
+
 		netPlayerInit(engine, playerID);
 
 		if(owner.replayMode == false) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
+			PLAYER_NAME = "";
 			version = CURRENT_VERSION;
 		} else {
 			loadSetting(owner.replayProp);
 			if((version == 0) && (owner.replayProp.getProperty("missionmode.endless", false) == true)) goaltype = 2;
+
+			PLAYER_NAME = owner.replayProp.getProperty("missionmode.playerName", "");
 
 			// NET: Load name
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -205,8 +232,13 @@ public class MissionMode extends MarathonModeBase {
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 
 				// NET: Signal start of the game
 				if(netIsNetPlay) netLobby.netPlayerClient.send("start1p\n");
@@ -217,6 +249,17 @@ public class MissionMode extends MarathonModeBase {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !netIsNetPlay) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			// NET: Netplay Ranking
@@ -239,7 +282,24 @@ public class MissionMode extends MarathonModeBase {
 
 		return true;
 	}
-	
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		showPlayerStats = false;
+
+		engine.isInGame = true;
+
+		boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+		if (playerProperties.isLoggedIn()) {
+			loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			loadSettingPlayer(playerProperties);
+		}
+
+		if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+		return s;
+	}
+
 	/*
 	 * Render the settings screen
 	 */
@@ -273,6 +333,14 @@ public class MissionMode extends MarathonModeBase {
 		if ((scgettime >= 120) && (missionIsComplete) && (engine.timerActive)) {
 			generateNewMission(engine, engine.statistics.score == (tableGameClearLines[goaltype] - 1));
 		}
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
 	}
 	
 
@@ -297,12 +365,31 @@ public class MissionMode extends MarathonModeBase {
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE TIME", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID, 0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					receiver.drawScoreFont(engine, playerID, 3, topY+i, String.valueOf(rankingScore[goaltype][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 9, topY+i, GeneralUtil.getTime(rankingTime[goaltype][i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID, 0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID, 3, topY+i, String.valueOf(rankingScorePlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 9, topY+i, GeneralUtil.getTime(rankingTimePlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID, 0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID, 3, topY+i, String.valueOf(rankingScore[goaltype][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 9, topY+i, GeneralUtil.getTime(rankingTime[goaltype][i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 3, "COMPLETED", EventReceiver.COLOR_BLUE);
 			String strScore;
@@ -323,6 +410,11 @@ public class MissionMode extends MarathonModeBase {
 			receiver.drawScoreFont(engine, playerID, 0, 13, missionProgress + "/" + missionGoal, missionIsComplete);
 			if (!missionIsComplete) {
 				drawMissionStrings(engine, playerID, currentMissionText, 0, 15, 1.0f);
+			}
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 0, 20, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 21, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
 			}
 
 			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
@@ -692,9 +784,18 @@ public class MissionMode extends MarathonModeBase {
 		if((owner.replayMode == false) && (big == false) && (engine.ai == null)) {
 			updateRanking(engine.statistics.score, engine.statistics.time, goaltype);
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("missionmode.playerName", playerProperties.getNameDisplay());
+			}
+
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -717,6 +818,25 @@ public class MissionMode extends MarathonModeBase {
 	private void saveSetting(CustomProperties prop) {
 		prop.setProperty("missionmode.gametype", goaltype);
 		prop.setProperty("missionmode.version", version);
+	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		goaltype = prop.getProperty("missionmode.gametype", 0);
+	}
+
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		prop.setProperty("missionmode.gametype", goaltype);
 	}
 	
 
@@ -749,6 +869,37 @@ public class MissionMode extends MarathonModeBase {
 			}
 		}
 	}
+
+	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < GAMETYPE_MAX; j++) {
+				rankingScorePlayer[j][i] = prop.getProperty("missionmode.ranking." + ruleName + "." + j + ".score." + i, 0);
+				rankingTimePlayer[j][i] = prop.getProperty("missionmode.ranking." + ruleName + "." + j + ".time." + i, 0);
+			}
+		}
+	}
+
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < GAMETYPE_MAX; j++) {
+				prop.setProperty("missionmode.ranking." + ruleName + "." + j + ".score." + i, rankingScorePlayer[j][i]);
+				prop.setProperty("missionmode.ranking." + ruleName + "." + j + ".time." + i, rankingTimePlayer[j][i]);
+			}
+		}
+	}
 	
 
 	/**
@@ -770,6 +921,22 @@ public class MissionMode extends MarathonModeBase {
 			rankingScore[type][rankingRank] = sc;
 			rankingTime[type][rankingRank] = time;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(sc, time, type);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingScorePlayer[type][i] = rankingScorePlayer[type][i - 1];
+					rankingTimePlayer[type][i] = rankingTimePlayer[type][i - 1];
+				}
+
+				// Add new data
+				rankingScorePlayer[type][rankingRankPlayer] = sc;
+				rankingTimePlayer[type][rankingRankPlayer] = time;
+			}
+		}
 	}
 	
 
@@ -784,6 +951,24 @@ public class MissionMode extends MarathonModeBase {
 			if(sc > rankingScore[type][i]) {
 				return i;
 			} else if((sc == rankingScore[type][i]) && (time < rankingTime[type][i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int sc, int time, int type) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScorePlayer[type][i]) {
+				return i;
+			} else if((sc == rankingScorePlayer[type][i]) && (time < rankingTimePlayer[type][i])) {
 				return i;
 			}
 		}

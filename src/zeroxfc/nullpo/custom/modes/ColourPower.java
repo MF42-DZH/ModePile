@@ -19,6 +19,7 @@ import mu.nu.nullpo.util.GeneralUtil;
 
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 
 public class ColourPower extends MarathonModeBase {
@@ -97,18 +98,36 @@ public class ColourPower extends MarathonModeBase {
 	private int scoreBeforeIncrease;
 	
 	/** Rankings' scores */
-	public int[][][] rankingScore;
+	private int[][][] rankingScore;
 
 	/** Rankings' line counts */
-	public int[][][] rankingLines;
+	private int[][][] rankingLines;
 
 	/** Rankings' times */
-	public int[][][] rankingTime;
+	private int[][][] rankingTime;
+
+	/** Player profile */
+	private ProfileProperties playerProperties;
+
+	/** Player rank */
+	private int rankingRankPlayer;
+
+	/** Rankings' scores */
+	private int[][][] rankingScorePlayer;
+
+	/** Rankings' line counts */
+	private int[][][] rankingLinesPlayer;
+
+	/** Rankings' times */
+	private int[][][] rankingTimePlayer;
+
+	private boolean showPlayerStats;
 
 	/** The good hard drop effect */
 	private ArrayList<int[]> pCoordList;
 	private Piece cPiece;
 
+	private String PLAYER_NAME;
 	int l;
 	
 	// Mode Name
@@ -147,6 +166,17 @@ public class ColourPower extends MarathonModeBase {
 		preset = false;
 		scoreBeforeIncrease = 0;
 		colourHistory = new int[] { -1, -1, -1, -1 };
+
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(EventReceiver.COLOR_GREEN);
+
+			showPlayerStats = false;
+
+			rankingRankPlayer = -1;
+			rankingScorePlayer = new int[2][RANKING_TYPE][RANKING_MAX];
+			rankingLinesPlayer = new int[2][RANKING_TYPE][RANKING_MAX];
+			rankingTimePlayer = new int[2][RANKING_TYPE][RANKING_MAX];
+		}
 		
 		rankingRank = -1;
 		rankingScore = new int[2][RANKING_TYPE][RANKING_MAX];
@@ -158,10 +188,19 @@ public class ColourPower extends MarathonModeBase {
 		if(owner.replayMode == false) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
+			PLAYER_NAME = "";
 			version = CURRENT_VERSION;
 		} else {
 			loadSetting(owner.replayProp);
 			if((version == 0) && (owner.replayProp.getProperty("colourpower.endless", false) == true)) goaltype = 2;
+
+			PLAYER_NAME = owner.replayProp.getProperty("colourpower.playerName", "");
 
 			// NET: Load name
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -247,6 +286,8 @@ public class ColourPower extends MarathonModeBase {
 				}
 			}
 
+			engine.owner.backgroundStatus.bg = startlevel;
+
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
@@ -262,6 +303,17 @@ public class ColourPower extends MarathonModeBase {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(EventReceiver.COLOR_GREEN);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !netIsNetPlay) {
+				playerProperties = new ProfileProperties(EventReceiver.COLOR_GREEN);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			// NET: Netplay Ranking
@@ -486,6 +538,19 @@ public class ColourPower extends MarathonModeBase {
 //		backgroundCircularRipple.manualRipple(x, y);
 	}
 
+	@Override
+	public void onLast(GameEngine engine, int playerID) {
+		scgettime++;
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
+	}
+
 	/*
 	 * Render score
 	 */
@@ -507,14 +572,35 @@ public class ColourPower extends MarathonModeBase {
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					String s = String.valueOf(rankingScore[ruleboundMode ? 1 : 0][goaltype][i]);
-					receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRank), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
-					receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[ruleboundMode ? 1 : 0][goaltype][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[ruleboundMode ? 1 : 0][goaltype][i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						String s = String.valueOf(rankingScorePlayer[ruleboundMode ? 1 : 0][goaltype][i]);
+						receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRankPlayer), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLinesPlayer[ruleboundMode ? 1 : 0][goaltype][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[ruleboundMode ? 1 : 0][goaltype][i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						String s = String.valueOf(rankingScore[ruleboundMode ? 1 : 0][goaltype][i]);
+						receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRank), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[ruleboundMode ? 1 : 0][goaltype][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[ruleboundMode ? 1 : 0][goaltype][i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM && !engine.gameActive) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
 			String strScore;
@@ -559,6 +645,11 @@ public class ColourPower extends MarathonModeBase {
 			
 			receiver.drawScoreFont(engine, playerID, 0, 18, "LIVES", EventReceiver.COLOR_GREEN);
 			receiver.drawScoreFont(engine, playerID, 0, 19, (engine.stat != GameEngine.STAT_GAMEOVER) ? String.valueOf(engine.lives + 1) + "/5" : l + "/5");
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 0, 21, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 22, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
 
 			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
 			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
@@ -724,130 +815,144 @@ public class ColourPower extends MarathonModeBase {
 	// Where the magic happens
 	@Override
 	public boolean onCustom(GameEngine engine, int playerID) {
-		customTimer++;
-		if (customTimer >= 150) {
-			/*
-			switch (currentActivePower) {
-			case POWERUP_BOTTOMCLEAR:
-			case POWERUP_TOPCLEAR:
-			case POWERUP_FREEFALL:
-				engine.stat = GameEngine.STAT_LINECLEAR;
-				// engine.stat = GameEngine.STAT_MOVE;
-				break;
-			default:
+		if (engine.gameActive) {
+			customTimer++;
+			if (customTimer >= 150) {
+				/*
+				switch (currentActivePower) {
+				case POWERUP_BOTTOMCLEAR:
+				case POWERUP_TOPCLEAR:
+				case POWERUP_FREEFALL:
+					engine.stat = GameEngine.STAT_LINECLEAR;
+					// engine.stat = GameEngine.STAT_MOVE;
+					break;
+				default:
+					engine.stat = GameEngine.STAT_MOVE;
+					break;
+				} */
+				engine.resetStatc();
 				engine.stat = GameEngine.STAT_MOVE;
-				break;
-			} */
-			engine.resetStatc();
-			engine.stat = GameEngine.STAT_MOVE;
-			currentModified = -1;
-			currentActivePower = 1;
-			return true;
-		} else if (customTimer == 120) {
-			switch (currentActivePower) {
-			case POWERUP_EXTRALIFE:
-				if (engine.lives < 4) {
-					engine.lives++;
+				currentModified = -1;
+				currentActivePower = 1;
+				return true;
+			} else if (customTimer == 120) {
+				switch (currentActivePower) {
+				case POWERUP_EXTRALIFE:
+					if (engine.lives < 4) {
+						engine.lives++;
+						engine.playSE("cool");
+					} else {
+						scgettime = 0;
+						lastevent = EVENT_NONE;
+						scoreBeforeIncrease = new Integer(engine.statistics.score);
+						engine.statistics.score += (3200 * scoreMultiplier * (engine.statistics.level + 1));
+						lastscore = (3200 * scoreMultiplier * (engine.statistics.level + 1));
+						engine.playSE("medal");
+					}
+					break;
+				case POWERUP_FREEFALL:
+					if (engine.field.freeFall()) {
+						engine.field.checkLine();
+						engine.field.clearLine();
+
+						for(int i = 0; i < engine.field.getHeight(); i++) {
+							if(engine.field.getLineFlag(i)) {
+								for(int j = 0; j < engine.field.getWidth(); j++) {
+									Block blk = engine.field.getBlock(j, i);
+
+									if(blk != null) {
+										// blockBreak(engine, playerID, j, i, blk);
+										receiver.blockBreak(engine, playerID, j, i, blk);
+									}
+								}
+							}
+						}
+
+						engine.field.downFloatingBlocks();
+						engine.playSE("linefall");
+					}
+					break;
+				case POWERUP_BOTTOMCLEAR:
+					if (!engine.field.isEmpty()) {
+						engine.field.delLower();
+						engine.field.clearLine();
+
+						for(int i = 0; i < engine.field.getHeight(); i++) {
+							if(engine.field.getLineFlag(i)) {
+								for(int j = 0; j < engine.field.getWidth(); j++) {
+									Block blk = engine.field.getBlock(j, i);
+
+									if(blk != null) {
+										// blockBreak(engine, playerID, j, i, blk);
+										receiver.blockBreak(engine, playerID, j, i, blk);
+									}
+								}
+							}
+						}
+
+						engine.field.downFloatingBlocks();
+
+						engine.playSE("linefall");
+					}
+					break;
+				case POWERUP_TOPCLEAR:
+					if (!engine.field.isEmpty()) {
+						FieldManipulation.delUpperFix(engine.field);
+						engine.field.clearLine();
+
+						for(int i = 0; i < engine.field.getHeight(); i++) {
+							if(engine.field.getLineFlag(i)) {
+								for(int j = 0; j < engine.field.getWidth(); j++) {
+									Block blk = engine.field.getBlock(j, i);
+
+									if(blk != null) {
+										// blockBreak(engine, playerID, j, i, blk);
+										receiver.blockBreak(engine, playerID, j, i, blk);
+									}
+								}
+							}
+						}
+
+						engine.field.downFloatingBlocks();
+
+						engine.playSE("linefall");
+					}
+					break;
+				case POWERUP_MULTIPLIER:
+					scoreMultiplier++;
 					engine.playSE("cool");
-				} else {
+					break;
+				case POWERUP_FREEZE:
+					engine.speed.gravity = 0;
+					break;
+				case POWERUP_SIDESHIFT:
+					engine.field.moveLeft();
+					engine.playSE("linefall");
+					break;
+				case POWERUP_SCOREBONUS:
 					scgettime = 0;
 					lastevent = EVENT_NONE;
 					scoreBeforeIncrease = new Integer(engine.statistics.score);
-					engine.statistics.score += (3200 * scoreMultiplier * (engine.statistics.level + 1));
-					lastscore = (3200 * scoreMultiplier * (engine.statistics.level + 1));
+					engine.statistics.score += (6400 * scoreMultiplier * (engine.statistics.level + 1));
+					lastscore = (6400 * scoreMultiplier * (engine.statistics.level + 1));
 					engine.playSE("medal");
+					break;
 				}
-				break;
-			case POWERUP_FREEFALL:
-				if (engine.field.freeFall()) {					
-					engine.field.checkLine();
-					engine.field.clearLine();
-					
-					for(int i = 0; i < engine.field.getHeight(); i++) {
-						if(engine.field.getLineFlag(i)) {
-							for(int j = 0; j < engine.field.getWidth(); j++) {
-								Block blk = engine.field.getBlock(j, i);
-
-								if(blk != null) {
-									// blockBreak(engine, playerID, j, i, blk);
-									receiver.blockBreak(engine, playerID, j, i, blk);
-								}
-							}
-						}
-					}
-					
-					engine.field.downFloatingBlocks();
-					engine.playSE("linefall");
-				}
-				break;
-			case POWERUP_BOTTOMCLEAR:
-				if (!engine.field.isEmpty()) {
-					engine.field.delLower();
-					engine.field.clearLine();
-					
-					for(int i = 0; i < engine.field.getHeight(); i++) {
-						if(engine.field.getLineFlag(i)) {
-							for(int j = 0; j < engine.field.getWidth(); j++) {
-								Block blk = engine.field.getBlock(j, i);
-
-								if(blk != null) {
-									// blockBreak(engine, playerID, j, i, blk);
-									receiver.blockBreak(engine, playerID, j, i, blk);
-								}
-							}
-						}
-					}
-					
-					engine.field.downFloatingBlocks();
-					
-					engine.playSE("linefall");
-				}
-				break;
-			case POWERUP_TOPCLEAR:
-				if (!engine.field.isEmpty()) {
-					FieldManipulation.delUpperFix(engine.field);
-					engine.field.clearLine();
-					
-					for(int i = 0; i < engine.field.getHeight(); i++) {
-						if(engine.field.getLineFlag(i)) {
-							for(int j = 0; j < engine.field.getWidth(); j++) {
-								Block blk = engine.field.getBlock(j, i);
-
-								if(blk != null) {
-									// blockBreak(engine, playerID, j, i, blk);
-									receiver.blockBreak(engine, playerID, j, i, blk);
-								}
-							}
-						}
-					}
-					
-					engine.field.downFloatingBlocks();
-					
-					engine.playSE("linefall");
-				}				
-				break;
-			case POWERUP_MULTIPLIER:
-				scoreMultiplier++;
-				engine.playSE("cool");
-				break;
-			case POWERUP_FREEZE:
-				engine.speed.gravity = 0;
-				break;
-			case POWERUP_SIDESHIFT:
-				engine.field.moveLeft();
-				engine.playSE("linefall");
-				break;
-			case POWERUP_SCOREBONUS:
-				scgettime = 0;
-				lastevent = EVENT_NONE;
-				scoreBeforeIncrease = new Integer(engine.statistics.score);
-				engine.statistics.score += (6400 * scoreMultiplier * (engine.statistics.level + 1));
-				lastscore = (6400 * scoreMultiplier * (engine.statistics.level + 1));
-				engine.playSE("medal");
-				break;
 			}
+		} else {
+			showPlayerStats = false;
+
+			engine.isInGame = true;
+
+			boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+			if (playerProperties.isLoggedIn()) {
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				loadSettingPlayer(playerProperties);
+			}
+
+			if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
 		}
-		
+
 		return false;
 	}
 	
@@ -1036,12 +1141,21 @@ public class ColourPower extends MarathonModeBase {
 		}
 
 		// Update rankings
-		if((owner.replayMode == false) && (big == false) && (engine.ai == null)) {
+		if((!owner.replayMode) && (!big) && (engine.ai == null)) {
 			updateRanking(engine.statistics.score, engine.statistics.lines, engine.statistics.time, goaltype);
+
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("colourpower.playerName", playerProperties.getNameDisplay());
+			}
 
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if (rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -1083,6 +1197,44 @@ public class ColourPower extends MarathonModeBase {
 		prop.setProperty("colourpower.version", version);
 		prop.setProperty("colourpower.rulebound", ruleboundMode);
 	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		startlevel = prop.getProperty("colourpower.startlevel", 0);
+		tspinEnableType = prop.getProperty("colourpower.tspinEnableType", 1);
+		enableTSpin = prop.getProperty("colourpower.enableTSpin", true);
+		enableTSpinKick = prop.getProperty("colourpower.enableTSpinKick", true);
+		spinCheckType = prop.getProperty("colourpower.spinCheckType", 0);
+		tspinEnableEZ = prop.getProperty("colourpower.tspinEnableEZ", false);
+		enableB2B = prop.getProperty("colourpower.enableB2B", true);
+		enableCombo = prop.getProperty("colourpower.enableCombo", true);
+		goaltype = prop.getProperty("colourpower.gametype", 0);
+		big = prop.getProperty("colourpower.big", false);
+		ruleboundMode = prop.getProperty("colourpower.rulebound", false);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		prop.setProperty("colourpower.startlevel", startlevel);
+		prop.setProperty("colourpower.tspinEnableType", tspinEnableType);
+		prop.setProperty("colourpower.enableTSpin", enableTSpin);
+		prop.setProperty("colourpower.enableTSpinKick", enableTSpinKick);
+		prop.setProperty("colourpower.spinCheckType", spinCheckType);
+		prop.setProperty("colourpower.tspinEnableEZ", tspinEnableEZ);
+		prop.setProperty("colourpower.enableB2B", enableB2B);
+		prop.setProperty("colourpower.enableCombo", enableCombo);
+		prop.setProperty("colourpower.gametype", goaltype);
+		prop.setProperty("colourpower.big", big);
+		prop.setProperty("colourpower.rulebound", ruleboundMode);
+	}
 	
 	/**
 	 * Read rankings from property file
@@ -1118,6 +1270,42 @@ public class ColourPower extends MarathonModeBase {
 			}
 		}
 	}
+
+	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for (int h = 0; h < 2; h++) {
+			for(int i = 0; i < RANKING_MAX; i++) {
+				for(int j = 0; j < GAMETYPE_MAX; j++) {
+					rankingScorePlayer[h][j][i] = prop.getProperty("colourpower.ranking." + ruleName + "." + h + "." + j + ".score." + i, 0);
+					rankingLinesPlayer[h][j][i] = prop.getProperty("colourpower.ranking." + ruleName + "." + h + "." + j + ".lines." + i, 0);
+					rankingTimePlayer[h][j][i] = prop.getProperty("colourpower.ranking." + ruleName + "." + h + "." + j + ".time." + i, 0);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for (int h = 0; h < 2; h++) {
+			for(int i = 0; i < RANKING_MAX; i++) {
+				for(int j = 0; j < GAMETYPE_MAX; j++) {
+					prop.setProperty("colourpower.ranking." + ruleName + "." + h + "." + j + ".score." + i, rankingScorePlayer[h][j][i]);
+					prop.setProperty("colourpower.ranking." + ruleName + "." + h + "." + j + ".lines." + i, rankingLinesPlayer[h][j][i]);
+					prop.setProperty("colourpower.ranking." + ruleName + "." + h + "." + j + ".time." + i, rankingTimePlayer[h][j][i]);
+				}
+			}
+		}
+	}
 	
 	/**
 	 * Update rankings
@@ -1141,6 +1329,24 @@ public class ColourPower extends MarathonModeBase {
 			rankingLines[ruleboundMode ? 1 : 0][type][rankingRank] = li;
 			rankingTime[ruleboundMode ? 1 : 0][type][rankingRank] = time;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(sc, li, time, type);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingScorePlayer[ruleboundMode ? 1 : 0][type][i] = rankingScorePlayer[ruleboundMode ? 1 : 0][type][i - 1];
+					rankingLinesPlayer[ruleboundMode ? 1 : 0][type][i] = rankingLinesPlayer[ruleboundMode ? 1 : 0][type][i - 1];
+					rankingTimePlayer[ruleboundMode ? 1 : 0][type][i] = rankingTimePlayer[ruleboundMode ? 1 : 0][type][i - 1];
+				}
+
+				// Add new data
+				rankingScorePlayer[ruleboundMode ? 1 : 0][type][rankingRankPlayer] = sc;
+				rankingLinesPlayer[ruleboundMode ? 1 : 0][type][rankingRankPlayer] = li;
+				rankingTimePlayer[ruleboundMode ? 1 : 0][type][rankingRankPlayer] = time;
+			}
+		}
 	}
 
 	/**
@@ -1157,6 +1363,27 @@ public class ColourPower extends MarathonModeBase {
 			} else if((sc == rankingScore[ruleboundMode ? 1 : 0][type][i]) && (li > rankingLines[ruleboundMode ? 1 : 0][type][i])) {
 				return i;
 			} else if((sc == rankingScore[ruleboundMode ? 1 : 0][type][i]) && (li == rankingLines[ruleboundMode ? 1 : 0][type][i]) && (time < rankingTime[ruleboundMode ? 1 : 0][type][i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param li Lines
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int sc, int li, int time, int type) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScorePlayer[ruleboundMode ? 1 : 0][type][i]) {
+				return i;
+			} else if((sc == rankingScorePlayer[ruleboundMode ? 1 : 0][type][i]) && (li > rankingLinesPlayer[ruleboundMode ? 1 : 0][type][i])) {
+				return i;
+			} else if((sc == rankingScorePlayer[ruleboundMode ? 1 : 0][type][i]) && (li == rankingLinesPlayer[ruleboundMode ? 1 : 0][type][i]) && (time < rankingTimePlayer[ruleboundMode ? 1 : 0][type][i])) {
 				return i;
 			}
 		}

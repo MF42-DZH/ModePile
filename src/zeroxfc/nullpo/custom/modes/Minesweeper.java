@@ -13,6 +13,7 @@ import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 
+import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.modes.objects.minesweeper.*;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 
@@ -32,6 +33,10 @@ public class Minesweeper extends DummyMode {
 	private int timeLimit;
 	private int currentLimit;
 	private int numberOfCover;
+
+	private ProfileProperties playerProperties;
+	private static final int headerColour = EventReceiver.COLOR_YELLOW;
+	private String PLAYER_NAME;
 	
 	private EventReceiver receiver;
 	private GameManager owner;
@@ -69,8 +74,20 @@ public class Minesweeper extends DummyMode {
 		
 		mainGrid = null;
 		blockGrid = null;
-		
-		loadSetting(owner.modeConfig);
+
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+		}
+
+		if (!owner.replayMode) {
+			loadSetting(owner.modeConfig);
+
+			PLAYER_NAME = "";
+		} else {
+			loadSetting(owner.replayProp);
+
+			PLAYER_NAME = owner.replayProp.getProperty("minesweeper.playerName", "");
+		}
 		
 		engine.owner.backgroundStatus.bg = bg;
 	}
@@ -123,17 +140,35 @@ public class Minesweeper extends DummyMode {
 				}
 			}
 
+			engine.owner.backgroundStatus.bg = bg;
+
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 				return false;
 			}
 
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B)) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			engine.statc[3]++;
@@ -194,8 +229,8 @@ public class Minesweeper extends DummyMode {
 			localRand = new Random(engine.randSeed);
 			mainGrid = new GameGrid(length, height, minePercentage, engine.randSeed);
 			
-			engine.ruleopt.fieldWidth = (length <= MAX_DIM) ? length : MAX_DIM;
-			engine.ruleopt.fieldHeight = (height <= MAX_DIM) ? height : MAX_DIM;
+			engine.ruleopt.fieldWidth = Math.min(length, MAX_DIM);
+			engine.ruleopt.fieldHeight = Math.min(height, MAX_DIM);
 			engine.ruleopt.fieldHiddenHeight = 0;
 			
 			engine.fieldWidth = engine.ruleopt.fieldWidth;
@@ -330,114 +365,240 @@ public class Minesweeper extends DummyMode {
 	
 	@Override
 	public boolean onCustom(GameEngine engine, int playerID) {
-		// Block mine = new Block(Block.BLOCK_COLOR_GEM_RED, engine.getSkin(), Block.BLOCK_ATTRIBUTE_VISIBLE);
-		// Block open = new Block(Block.BLOCK_COLOR_GRAY, engine.getSkin(), Block.BLOCK_ATTRIBUTE_VISIBLE);
-		Block dummyBlock = new Block(Block.BLOCK_COLOR_GEM_RED);
-		
-		int changeX = 0;
-		int changeY = 0;
-		
-		if (engine.ctrl.isPress(Controller.BUTTON_LEFT)) {
-			if (engine.ctrl.isPush(Controller.BUTTON_LEFT) || engine.ctrl.isPress(Controller.BUTTON_E)) {
-				cursorX -= 1;
-				changeX += -1;
-				if (cursorX < 0) cursorX = length - 1;
-				engine.playSE("change");
+		if (engine.gameActive) {
+			// Block mine = new Block(Block.BLOCK_COLOR_GEM_RED, engine.getSkin(), Block.BLOCK_ATTRIBUTE_VISIBLE);
+			// Block open = new Block(Block.BLOCK_COLOR_GRAY, engine.getSkin(), Block.BLOCK_ATTRIBUTE_VISIBLE);
+			Block dummyBlock = new Block(Block.BLOCK_COLOR_GEM_RED);
+
+			int changeX = 0;
+			int changeY = 0;
+
+			if (engine.ctrl.isPress(Controller.BUTTON_LEFT)) {
+				if (engine.ctrl.isPush(Controller.BUTTON_LEFT) || engine.ctrl.isPress(Controller.BUTTON_E)) {
+					cursorX -= 1;
+					changeX += -1;
+					if (cursorX < 0) cursorX = length - 1;
+					engine.playSE("change");
+				}
 			}
-		}
-		if (engine.ctrl.isPress(Controller.BUTTON_RIGHT)) {
-			if (engine.ctrl.isPush(Controller.BUTTON_RIGHT) || engine.ctrl.isPress(Controller.BUTTON_E)) {
-				cursorX += 1;
-				changeX += 1;
-				if (cursorX >= length) cursorX = 0;
-				engine.playSE("change");
+			if (engine.ctrl.isPress(Controller.BUTTON_RIGHT)) {
+				if (engine.ctrl.isPush(Controller.BUTTON_RIGHT) || engine.ctrl.isPress(Controller.BUTTON_E)) {
+					cursorX += 1;
+					changeX += 1;
+					if (cursorX >= length) cursorX = 0;
+					engine.playSE("change");
+				}
 			}
-		}
-		if (engine.ctrl.isPress(Controller.BUTTON_UP)) {
-			if (engine.ctrl.isPush(Controller.BUTTON_UP) || engine.ctrl.isPress(Controller.BUTTON_E)) {
-				cursorY -= 1;
-				changeY += -1;
-				if (cursorY < 0) cursorY = height - 1;
-				engine.playSE("change");
+			if (engine.ctrl.isPress(Controller.BUTTON_UP)) {
+				if (engine.ctrl.isPush(Controller.BUTTON_UP) || engine.ctrl.isPress(Controller.BUTTON_E)) {
+					cursorY -= 1;
+					changeY += -1;
+					if (cursorY < 0) cursorY = height - 1;
+					engine.playSE("change");
+				}
 			}
-		}
-		if (engine.ctrl.isPress(Controller.BUTTON_DOWN)) {
-			if (engine.ctrl.isPush(Controller.BUTTON_DOWN) || engine.ctrl.isPress(Controller.BUTTON_E)) {
-				cursorY += 1;
-				changeY += 1;
-				if (cursorY >= height) cursorY = 0;
-				engine.playSE("change");
+			if (engine.ctrl.isPress(Controller.BUTTON_DOWN)) {
+				if (engine.ctrl.isPush(Controller.BUTTON_DOWN) || engine.ctrl.isPress(Controller.BUTTON_E)) {
+					cursorY += 1;
+					changeY += 1;
+					if (cursorY >= height) cursorY = 0;
+					engine.playSE("change");
+				}
 			}
-		}
-		
-		cursorScreenX += changeX;
-		cursorScreenY += changeY;
-		
-		if (length > 20) {
-			if (cursorX == 0) {
-				cursorScreenX = 0;
-				offsetX = 0;
-			} else if (cursorX == length - 1) {
-				cursorScreenX = MAX_DIM - 1;
-				offsetX = length - MAX_DIM;
-			} else if (cursorScreenX < 0) {
-				cursorScreenX = 0;
-				offsetX--;
-			} else if (cursorScreenX >= MAX_DIM) {
-				cursorScreenX = MAX_DIM - 1;
-				offsetX++;
-			}
-		} else {
-			cursorScreenX = cursorX;
-		}
-		
-		if (height > 20) {
-			if (cursorY == 0) {
-				cursorScreenY = 0;
-				offsetY = 0;
-			} else if (cursorY == height - 1) {
-				cursorScreenY = MAX_DIM - 1;
-				offsetY = height - MAX_DIM;
-			} else if (cursorScreenY < 0) {
-				cursorScreenY = 0;
-				offsetY--;
-			} else if (cursorScreenY >= MAX_DIM) {
-				cursorScreenY = MAX_DIM - 1;
-				offsetY++;
-			}
-		} else {
-			cursorScreenY = cursorY;
-		}
-		
-		// IN ORDER: cycle state, uncover, chord uncover, chord flag
-		
-		int res;
-		if (engine.ctrl.isPush(Controller.BUTTON_B)) {
-			res = mainGrid.cycleState(cursorX, cursorY);
-			if (res == 0) {
-				engine.playSE("hold");
+
+			cursorScreenX += changeX;
+			cursorScreenY += changeY;
+
+			if (length > 20) {
+				if (cursorX == 0) {
+					cursorScreenX = 0;
+					offsetX = 0;
+				} else if (cursorX == length - 1) {
+					cursorScreenX = MAX_DIM - 1;
+					offsetX = length - MAX_DIM;
+				} else if (cursorScreenX < 0) {
+					cursorScreenX = 0;
+					offsetX--;
+				} else if (cursorScreenX >= MAX_DIM) {
+					cursorScreenX = MAX_DIM - 1;
+					offsetX++;
+				}
 			} else {
-				engine.playSE("holdfail");
+				cursorScreenX = cursorX;
 			}
-		} else if (engine.ctrl.isPush(Controller.BUTTON_A)) {
-			if (firstClick) {
-				firstClick = false;
-				mainGrid.generateMines(cursorX, cursorY);
+
+			if (height > 20) {
+				if (cursorY == 0) {
+					cursorScreenY = 0;
+					offsetY = 0;
+				} else if (cursorY == height - 1) {
+					cursorScreenY = MAX_DIM - 1;
+					offsetY = height - MAX_DIM;
+				} else if (cursorScreenY < 0) {
+					cursorScreenY = 0;
+					offsetY--;
+				} else if (cursorScreenY >= MAX_DIM) {
+					cursorScreenY = MAX_DIM - 1;
+					offsetY++;
+				}
+			} else {
+				cursorScreenY = cursorY;
 			}
-			
-			res = mainGrid.uncoverAt(cursorX, cursorY);
-			switch (res) {
-			case GameGrid.STATE_ALREADY_OPEN:
-				engine.playSE("holdfail");
-				break;
-			case GameGrid.STATE_MINE:
+
+			// IN ORDER: cycle state, uncover, chord uncover, chord flag
+
+			int res;
+			if (engine.ctrl.isPush(Controller.BUTTON_B)) {
+				res = mainGrid.cycleState(cursorX, cursorY);
+				if (res == 0) {
+					engine.playSE("hold");
+				} else {
+					engine.playSE("holdfail");
+				}
+			} else if (engine.ctrl.isPush(Controller.BUTTON_A)) {
+				if (firstClick) {
+					firstClick = false;
+					mainGrid.generateMines(cursorX, cursorY);
+				}
+
+				res = mainGrid.uncoverAt(cursorX, cursorY);
+				switch (res) {
+				case GameGrid.STATE_ALREADY_OPEN:
+					engine.playSE("holdfail");
+					break;
+				case GameGrid.STATE_MINE:
+					engine.playSE("explosion" + (localRand.nextInt(4) + 1));
+					// receiver.blockBreak(engine, playerID, cursorX, cursorY, dummyBlock);
+					mainGrid.uncoverAllMines();
+
+					updateBlockGrid(engine);
+					updateEngineGrid(engine);
+
+					for (int y = 0; y < (height > 20 ? MAX_DIM : height); y++) {
+						for (int x = 0; x < (length > 20 ? MAX_DIM : length); x++) {
+							if (engine.field.getBlock(x, y).color == Block.BLOCK_COLOR_GEM_RED) {
+								receiver.blockBreak(engine, playerID, x, y, dummyBlock);
+							}
+						}
+					}
+
+	//				for (int y = 0; y < height; y++) {
+	//					for (int x = 0; x < length; x++) {
+	//						if (mainGrid.getSquareAt(x, y).isMine) engine.field.getBlock(x, y).copy(mine);
+	//					}
+	//				}
+
+					engine.gameEnded();
+					engine.resetStatc();
+					engine.stat = GameEngine.STAT_GAMEOVER;
+
+					return true;
+				case GameGrid.STATE_SAFE:
+					if (numberOfCover > mainGrid.getCoveredSquares() && timeLimit > 0) {
+						int bonusCount = numberOfCover - mainGrid.getCoveredSquares();
+						currentLimit += TIMEBONUS_SQUARE * bonusCount;
+						numberOfCover = mainGrid.getCoveredSquares();
+					}
+
+					engine.playSE("lock");
+					break;
+				default:
+					engine.playSE("holdfail");
+					break;
+				}
+			} else if (engine.ctrl.isPush(Controller.BUTTON_C)) {
+				if (!firstClick && mainGrid.getSurroundingMines(cursorX, cursorY) > 0 && mainGrid.getSquareAt(cursorX, cursorY).uncovered && (mainGrid.getSurroundingFlags(cursorX, cursorY) == mainGrid.getSurroundingMines(cursorX, cursorY))) {
+					int[][] testLocations = { { -1, -1 }, { 0, -1 }, { 1, -1 },
+			                  { -1, 0 }, { 1, 0 },
+			                  { -1, 1 }, { 0, 1 }, { 1, 1 }};
+
+					for (int[] loc : testLocations) {
+						int px = cursorX + loc[0];
+						int py = cursorY + loc[1];
+
+						if (px < 0 || px >= length) continue;
+						if (py < 0 || py >= height) continue;
+
+						res = mainGrid.uncoverAt(px, py);
+						switch (res) {
+						case GameGrid.STATE_MINE:
+							engine.playSE("explosion" + (localRand.nextInt(4) + 1));
+							mainGrid.uncoverAllMines();
+
+							updateBlockGrid(engine);
+							updateEngineGrid(engine);
+
+							for (int y = 0; y < (height > 20 ? MAX_DIM : height); y++) {
+								for (int x = 0; x < (length > 20 ? MAX_DIM : length); x++) {
+									if (engine.field.getBlock(x, y).color == Block.BLOCK_COLOR_GEM_RED) {
+										receiver.blockBreak(engine, playerID, x, y, dummyBlock);
+									}
+								}
+							}
+
+	//						for (int y = 0; y < height; y++) {
+	//							for (int x = 0; x < length; x++) {
+	//								if (mainGrid.getSquareAt(x, y).isMine) engine.field.getBlock(x, y).copy(mine);
+	//							}
+	//						}
+
+							engine.gameEnded();
+							engine.resetStatc();
+							engine.stat = GameEngine.STAT_GAMEOVER;
+
+							return true;
+						default:
+							break;
+						}
+					}
+					if (numberOfCover > mainGrid.getCoveredSquares() && timeLimit > 0) {
+						int bonusCount = numberOfCover - mainGrid.getCoveredSquares();
+						currentLimit += TIMEBONUS_SQUARE * bonusCount;
+						numberOfCover = mainGrid.getCoveredSquares();
+					}
+
+					engine.playSE("lock");
+				} else {
+					engine.playSE("holdfail");
+				}
+			} else if (engine.ctrl.isPush(Controller.BUTTON_D)) {
+				if (!firstClick && mainGrid.getSquareAt(cursorX, cursorY).uncovered &&  (mainGrid.getSurroundingCovered(cursorX, cursorY) == mainGrid.getSurroundingMines(cursorX, cursorY))) {
+					int[][] testLocations = { { -1, -1 }, { 0, -1 }, { 1, -1 },
+			                  { -1, 0 }, { 1, 0 },
+			                  { -1, 1 }, { 0, 1 }, { 1, 1 }};
+
+					for (int[] loc : testLocations) {
+						int px = cursorX + loc[0];
+						int py = cursorY + loc[1];
+
+						if (px < 0 || px >= length) continue;
+						if (py < 0 || py >= height) continue;
+
+						if (!mainGrid.getSquareAt(px, py).uncovered) {
+							mainGrid.getSquareAt(px, py).flagged = true;
+							mainGrid.getSquareAt(px, py).question = false;
+						}
+					}
+					engine.playSE("hold");
+				} else {
+					engine.playSE("holdfail");
+				}
+			}
+
+			updateBlockGrid(engine);
+			updateEngineGrid(engine);
+			numberOfCover = mainGrid.getCoveredSquares();
+			if (currentLimit > 0 && timeLimit > 0) {
+				currentLimit--;
+				if (currentLimit % 15 == 0 && currentLimit <= 600) engine.playSE("countdown");
+				else if (currentLimit % 60 == 0 && currentLimit <= 1800) engine.playSE("countdown");
+			} else if (timeLimit > 0) {
 				engine.playSE("explosion" + (localRand.nextInt(4) + 1));
-				// receiver.blockBreak(engine, playerID, cursorX, cursorY, dummyBlock);
 				mainGrid.uncoverAllMines();
-				
+
 				updateBlockGrid(engine);
 				updateEngineGrid(engine);
-				
+
 				for (int y = 0; y < (height > 20 ? MAX_DIM : height); y++) {
 					for (int x = 0; x < (length > 20 ? MAX_DIM : length); x++) {
 						if (engine.field.getBlock(x, y).color == Block.BLOCK_COLOR_GEM_RED) {
@@ -445,162 +606,47 @@ public class Minesweeper extends DummyMode {
 						}
 					}
 				}
-				
-//				for (int y = 0; y < height; y++) {
-//					for (int x = 0; x < length; x++) {
-//						if (mainGrid.getSquareAt(x, y).isMine) engine.field.getBlock(x, y).copy(mine);
-//					}
-//				}
-				
+
 				engine.gameEnded();
 				engine.resetStatc();
 				engine.stat = GameEngine.STAT_GAMEOVER;
-				
+
 				return true;
-			case GameGrid.STATE_SAFE:
-				if (numberOfCover > mainGrid.getCoveredSquares() && timeLimit > 0) {
-					int bonusCount = numberOfCover - mainGrid.getCoveredSquares();
-					currentLimit += TIMEBONUS_SQUARE * bonusCount;
-					numberOfCover = mainGrid.getCoveredSquares();
-				}
-				
-				engine.playSE("lock");
-				break;
-			default:
-				engine.playSE("holdfail");
-				break;
 			}
-		} else if (engine.ctrl.isPush(Controller.BUTTON_C)) {
-			if (!firstClick && mainGrid.getSurroundingMines(cursorX, cursorY) > 0 && mainGrid.getSquareAt(cursorX, cursorY).uncovered && (mainGrid.getSurroundingFlags(cursorX, cursorY) == mainGrid.getSurroundingMines(cursorX, cursorY))) {
-				int[][] testLocations = { { -1, -1 }, { 0, -1 }, { 1, -1 },
-		                  { -1, 0 }, { 1, 0 },
-		                  { -1, 1 }, { 0, 1 }, { 1, 1 }};
 
-				for (int[] loc : testLocations) {
-					int px = cursorX + loc[0];
-					int py = cursorY + loc[1];
-					
-					if (px < 0 || px >= length) continue;
-					if (py < 0 || py >= height) continue;
-					
-					res = mainGrid.uncoverAt(px, py);
-					switch (res) {
-					case GameGrid.STATE_MINE:
-						engine.playSE("explosion" + (localRand.nextInt(4) + 1));
-						mainGrid.uncoverAllMines();
-						
-						updateBlockGrid(engine);
-						updateEngineGrid(engine);
-						
-						for (int y = 0; y < (height > 20 ? MAX_DIM : height); y++) {
-							for (int x = 0; x < (length > 20 ? MAX_DIM : length); x++) {
-								if (engine.field.getBlock(x, y).color == Block.BLOCK_COLOR_GEM_RED) {
-									receiver.blockBreak(engine, playerID, x, y, dummyBlock);
-								}
-							}
-						}
-						
-//						for (int y = 0; y < height; y++) {
-//							for (int x = 0; x < length; x++) {
-//								if (mainGrid.getSquareAt(x, y).isMine) engine.field.getBlock(x, y).copy(mine);
-//							}
-//						}
-						
-						engine.gameEnded();
-						engine.resetStatc();
-						engine.stat = GameEngine.STAT_GAMEOVER;
-						
-						return true;
-					default:
-						break;
-					}
-				}
-				if (numberOfCover > mainGrid.getCoveredSquares() && timeLimit > 0) {
-					int bonusCount = numberOfCover - mainGrid.getCoveredSquares();
-					currentLimit += TIMEBONUS_SQUARE * bonusCount;
-					numberOfCover = mainGrid.getCoveredSquares();
-				}
-				
-				engine.playSE("lock");
-			} else {
-				engine.playSE("holdfail");
-			}
-		} else if (engine.ctrl.isPush(Controller.BUTTON_D)) {
-			if (!firstClick && mainGrid.getSquareAt(cursorX, cursorY).uncovered &&  (mainGrid.getSurroundingCovered(cursorX, cursorY) == mainGrid.getSurroundingMines(cursorX, cursorY))) {
-				int[][] testLocations = { { -1, -1 }, { 0, -1 }, { 1, -1 },
-		                  { -1, 0 }, { 1, 0 },
-		                  { -1, 1 }, { 0, 1 }, { 1, 1 }};
+			if (mainGrid.getCoveredSquares() == mainGrid.getMines() && mainGrid.getMines() > 0) {
+				mainGrid.uncoverNonMines();
+				mainGrid.flagAllCovered();
 
-				for (int[] loc : testLocations) {
-					int px = cursorX + loc[0];
-					int py = cursorY + loc[1];
-					
-					if (px < 0 || px >= length) continue;
-					if (py < 0 || py >= height) continue;
-					
-					if (!mainGrid.getSquareAt(px, py).uncovered) {
-						mainGrid.getSquareAt(px, py).flagged = true;
-						mainGrid.getSquareAt(px, py).question = false;
-					}
-				}
-				engine.playSE("hold");
-			} else {
-				engine.playSE("holdfail");
+				updateBlockGrid(engine);
+				updateEngineGrid(engine);
+
+	//			for (int y = 0; y < height; y++) {
+	//				for (int x = 0; x < length; x++) {
+	//					if (mainGrid.getSquareAt(x, y).uncovered) engine.field.getBlock(x, y).copy(open);
+	//				}
+	//			}
+
+				engine.gameEnded();
+				engine.stat = GameEngine.STAT_EXCELLENT;
+				engine.ending = 1;
+				engine.resetStatc();
+				return true;
 			}
-		}
-		
-		updateBlockGrid(engine);
-		updateEngineGrid(engine);
-		numberOfCover = mainGrid.getCoveredSquares();
-		if (currentLimit > 0 && timeLimit > 0) {
-			currentLimit--;
-			if (currentLimit % 15 == 0 && currentLimit <= 600) engine.playSE("countdown");
-			else if (currentLimit % 60 == 0 && currentLimit <= 1800) engine.playSE("countdown");
-		} else if (timeLimit > 0) {
-			engine.playSE("explosion" + (localRand.nextInt(4) + 1));
-			mainGrid.uncoverAllMines();
-			
-			updateBlockGrid(engine);
-			updateEngineGrid(engine);
-			
-			for (int y = 0; y < (height > 20 ? MAX_DIM : height); y++) {
-				for (int x = 0; x < (length > 20 ? MAX_DIM : length); x++) {
-					if (engine.field.getBlock(x, y).color == Block.BLOCK_COLOR_GEM_RED) {
-						receiver.blockBreak(engine, playerID, x, y, dummyBlock);
-					}
-				}
+
+			if(engine.ending == 0) engine.timerActive = true;
+
+			engine.statc[0]++;
+		} else {
+			engine.isInGame = true;
+
+			boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
 			}
-			
-			engine.gameEnded();
-			engine.resetStatc();
-			engine.stat = GameEngine.STAT_GAMEOVER;
-			
-			return true;
+
+			if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
 		}
-		
-		if (mainGrid.getCoveredSquares() == mainGrid.getMines() && mainGrid.getMines() > 0) {
-			mainGrid.uncoverNonMines();
-			mainGrid.flagAllCovered();
-			
-			updateBlockGrid(engine);
-			updateEngineGrid(engine);
-			
-//			for (int y = 0; y < height; y++) {
-//				for (int x = 0; x < length; x++) {
-//					if (mainGrid.getSquareAt(x, y).uncovered) engine.field.getBlock(x, y).copy(open);
-//				}
-//			}
-			
-			engine.gameEnded();
-			engine.stat = GameEngine.STAT_EXCELLENT;
-			engine.ending = 1;
-			engine.resetStatc();
-			return true;
-		}
-		
-		if(engine.ending == 0) engine.timerActive = true;
-		
-		engine.statc[0]++;
 		return true;
 	}
 	
@@ -651,7 +697,15 @@ public class Minesweeper extends DummyMode {
 
 
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false)) ) {
-			// LITERALLY NOTHING HERE.
+			if (playerProperties.isLoggedIn()) {
+				receiver.drawScoreFont(engine, playerID, ix, 3, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, ix, 4, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			} else {
+				receiver.drawScoreFont(engine, playerID, ix, 3, "LOGIN STATUS", EventReceiver.COLOR_BLUE);
+				if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, ix, 4, "(NOT LOGGED IN)\n(E:LOG IN)");
+			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM && !engine.gameActive) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawScoreFont(engine, playerID, ix, 3, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, ix, 4, GeneralUtil.getTime(engine.statistics.time));
@@ -664,7 +718,7 @@ public class Minesweeper extends DummyMode {
 			if (mainGrid != null) {
 				receiver.drawScoreFont(engine, playerID, ix, 6, "FLAGS LEFT", EventReceiver.COLOR_BLUE);
 				receiver.drawScoreFont(engine, playerID, ix, 7, String.valueOf(mainGrid.getMines() - mainGrid.getFlaggedSquares()));
-				
+
 				int m = mainGrid.getMines() - mainGrid.getFlaggedSquares();
 				float proportion = (float)m / mainGrid.getMines();
 				engine.meterValue = (m * receiver.getMeterMax(engine)) / mainGrid.getMines();
@@ -756,6 +810,11 @@ public class Minesweeper extends DummyMode {
 					}
 				}
 			}
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 0, 20, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 21, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
 		}
 	}
 	
@@ -804,6 +863,32 @@ public class Minesweeper extends DummyMode {
 	 * @param prop Property file
 	 */
 	private void saveSetting(CustomProperties prop) {
+		prop.setProperty("minesweeper.length", length);
+		prop.setProperty("minesweeper.height", height);
+		prop.setProperty("minesweeper.minePercentage", minePercentage);
+		prop.setProperty("minesweeper.bgm", bgm);
+		prop.setProperty("minesweeper.bg", bg);
+		prop.setProperty("minesweeper.timeLimit", timeLimit);
+	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		length = prop.getProperty("minesweeper.length", 15);
+		height = prop.getProperty("minesweeper.height", 15);
+		minePercentage = prop.getProperty("minesweeper.minePercentage", 15f);
+		bgm = prop.getProperty("minesweeper.bgm", 0);
+		bg = prop.getProperty("minesweeper.bg", 0);
+		timeLimit = prop.getProperty("minesweeper.timeLimit", 0);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
 		prop.setProperty("minesweeper.length", length);
 		prop.setProperty("minesweeper.height", height);
 		prop.setProperty("minesweeper.minePercentage", minePercentage);

@@ -11,10 +11,7 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
-import zeroxfc.nullpo.custom.libs.BlockParticleCollection;
-import zeroxfc.nullpo.custom.libs.FlyInOutText;
-import zeroxfc.nullpo.custom.libs.Interpolation;
-import zeroxfc.nullpo.custom.libs.RendererExtension;
+import zeroxfc.nullpo.custom.libs.*;
 
 public class ScoreTrial extends MarathonModeBase {
 	// Speed tables
@@ -114,7 +111,16 @@ public class ScoreTrial extends MarathonModeBase {
 	
 	private boolean o;
 	private int l;
-	
+
+	private ProfileProperties playerProperties;
+	private static final int headerColour = EventReceiver.COLOR_PINK;
+	private boolean showPlayerStats;
+	private String PLAYER_NAME;
+	private int rankingRankPlayer;
+	private int[][] rankingScorePlayer;
+	private int[][] rankingLinesPlayer;
+	private int[][] rankingTimePlayer;
+
 	// Mode name
 	public String getName() {
 		return "SCORE TRIAL";
@@ -158,15 +164,35 @@ public class ScoreTrial extends MarathonModeBase {
 		rankingLines = new int[MAX_DIFFICULTIES][RANKING_MAX];
 		rankingTime = new int[MAX_DIFFICULTIES][RANKING_MAX];
 
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+
+			showPlayerStats = false;
+
+			rankingRankPlayer = -1;
+			rankingScorePlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
+			rankingLinesPlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
+			rankingTimePlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
+		}
+
 		netPlayerInit(engine, playerID);
 
 		if(owner.replayMode == false) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
+			PLAYER_NAME = "";
 			version = CURRENT_VERSION;
 		} else {
 			loadSetting(owner.replayProp);
 			if((version == 0) && (owner.replayProp.getProperty("scoretrial.endless", false) == true)) goaltype = 2;
+
+			PLAYER_NAME = owner.replayProp.getProperty("scoretrial.playerName", "");
 
 			// NET: Load name
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -258,8 +284,13 @@ public class ScoreTrial extends MarathonModeBase {
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 
 				// NET: Signal start of the game
 				if(netIsNetPlay) netLobby.netPlayerClient.send("start1p\n");
@@ -270,6 +301,17 @@ public class ScoreTrial extends MarathonModeBase {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !netIsNetPlay) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			// NET: Netplay Ranking
@@ -430,6 +472,23 @@ public class ScoreTrial extends MarathonModeBase {
 			owner.bgmStatus.bgm = BGMStatus.BGM_NOTHING;
 		}
 	}
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		showPlayerStats = false;
+
+		engine.isInGame = true;
+
+		boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+		if (playerProperties.isLoggedIn()) {
+			loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			loadSettingPlayer(playerProperties);
+		}
+
+		if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+		return s;
+	}
 	
 	/*
 	 * Render score
@@ -447,14 +506,35 @@ public class ScoreTrial extends MarathonModeBase {
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					String s = String.valueOf(rankingScore[difficultySelected][i]);
-					receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRank), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
-					receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[difficultySelected][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[difficultySelected][i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						String s = String.valueOf(rankingScorePlayer[difficultySelected][i]);
+						receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRankPlayer), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLinesPlayer[difficultySelected][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[difficultySelected][i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						String s = String.valueOf(rankingScore[difficultySelected][i]);
+						receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY+i) * 2 : (topY+i), s, (i == rankingRank), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[difficultySelected][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[difficultySelected][i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
 			String strScore;
@@ -487,6 +567,11 @@ public class ScoreTrial extends MarathonModeBase {
 
 			receiver.drawScoreFont(engine, playerID, 0, 15, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 16, GeneralUtil.getTime(engine.statistics.time));
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 19, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
 
 			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
 			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
@@ -615,6 +700,14 @@ public class ScoreTrial extends MarathonModeBase {
 			comboTextNumber.update();
 			if (comboTextNumber.shouldPurge()) {
 				comboTextNumber = null;
+			}
+		}
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
 			}
 		}
 	}
@@ -1076,9 +1169,18 @@ public class ScoreTrial extends MarathonModeBase {
 		if((owner.replayMode == false) && (big == false) && (engine.ai == null) && (lifeOffset == 0)) {
 			updateRanking(engine.statistics.score, engine.statistics.lines, engine.statistics.time, difficultySelected);
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("scoretrial.playerName", playerProperties.getNameDisplay());
+			}
+
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -1105,6 +1207,32 @@ public class ScoreTrial extends MarathonModeBase {
 		prop.setProperty("scoretrial.big", big);
 		prop.setProperty("scoretrial.extralives", lifeOffset);
 		prop.setProperty("scoretrial.version", version);
+		prop.setProperty("scoretrial.lcat", lineClearAnimType);
+		prop.setProperty("scoretrial.difficulty", difficultySelected);
+	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		startlevel = prop.getProperty("scoretrial.startlevel", 0);
+		big = prop.getProperty("scoretrial.big", false);
+		lifeOffset = prop.getProperty("scoretrial.extralives", 0);
+		lineClearAnimType = prop.getProperty("scoretrial.lcat", 0);
+		difficultySelected = prop.getProperty("scoretrial.difficulty", 0);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		prop.setProperty("scoretrial.startlevel", startlevel);
+		prop.setProperty("scoretrial.big", big);
+		prop.setProperty("scoretrial.extralives", lifeOffset);
 		prop.setProperty("scoretrial.lcat", lineClearAnimType);
 		prop.setProperty("scoretrial.difficulty", difficultySelected);
 	}
@@ -1141,6 +1269,38 @@ public class ScoreTrial extends MarathonModeBase {
 	}
 
 	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for (int j = 0; j < MAX_DIFFICULTIES; j++) {
+			for(int i = 0; i < RANKING_MAX; i++) {
+				rankingScorePlayer[j][i] = prop.getProperty("scoretrial.ranking." + ruleName + "." + j + ".score." + i, 0);
+				rankingLinesPlayer[j][i] = prop.getProperty("scoretrial.ranking." + ruleName + "." + j + ".lines." + i, 0);
+				rankingTimePlayer[j][i] = prop.getProperty("scoretrial.ranking." + ruleName + "." + j + ".time." + i, 0);
+			}
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for (int j = 0; j < MAX_DIFFICULTIES; j++) {
+			for(int i = 0; i < RANKING_MAX; i++) {
+				prop.setProperty("scoretrial.ranking." + ruleName + "." + j + ".score." + i, rankingScorePlayer[j][i]);
+				prop.setProperty("scoretrial.ranking." + ruleName + "." + j + ".lines." + i, rankingLinesPlayer[j][i]);
+				prop.setProperty("scoretrial.ranking." + ruleName + "." + j + ".time." + i, rankingTimePlayer[j][i]);
+			}
+		}
+	}
+
+	/**
 	 * Update rankings
 	 * @param sc Score
 	 * @param li Lines
@@ -1162,6 +1322,24 @@ public class ScoreTrial extends MarathonModeBase {
 			rankingLines[diff][rankingRank] = li;
 			rankingTime[diff][rankingRank] = time;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(sc, li, time, diff);
+
+			if(rankingRank != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingScorePlayer[diff][i] = rankingScorePlayer[diff][i - 1];
+					rankingLinesPlayer[diff][i] = rankingLinesPlayer[diff][i - 1];
+					rankingTimePlayer[diff][i] = rankingTimePlayer[diff][i - 1];
+				}
+
+				// Add new data
+				rankingScorePlayer[diff][rankingRankPlayer] = sc;
+				rankingLinesPlayer[diff][rankingRankPlayer] = li;
+				rankingTimePlayer[diff][rankingRankPlayer] = time;
+			}
+		}
 	}
 	
 	/**
@@ -1178,6 +1356,27 @@ public class ScoreTrial extends MarathonModeBase {
 			} else if((sc == rankingScore[diff][i]) && (li > rankingLines[diff][i])) {
 				return i;
 			} else if((sc == rankingScore[diff][i]) && (li == rankingLines[diff][i]) && (time < rankingTime[diff][i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param li Lines
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int sc, int li, int time, int diff) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScorePlayer[diff][i]) {
+				return i;
+			} else if((sc == rankingScorePlayer[diff][i]) && (li > rankingLinesPlayer[diff][i])) {
+				return i;
+			} else if((sc == rankingScorePlayer[diff][i]) && (li == rankingLinesPlayer[diff][i]) && (time < rankingTimePlayer[diff][i])) {
 				return i;
 			}
 		}

@@ -6,6 +6,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 
 import java.util.ArrayList;
@@ -36,6 +37,15 @@ public class SingleDeathMarathon extends MarathonModeBase {
 	private ArrayList<Integer> pieceIDHistory;
 	private Random localIDRandomiser;
 	private int previousScore;
+
+	private ProfileProperties playerProperties;
+	private static final int headerColour = EventReceiver.COLOR_RED;
+	private boolean showPlayerStats;
+	private String PLAYER_NAME;
+	private int rankingRankPlayer;
+	private int[][] rankingScorePlayer;
+	private int[][] rankingLinesPlayer;
+	private int[][] rankingTimePlayer;
 
 	/** The good hard drop effect */
 	private ArrayList<int[]> pCoordList;
@@ -77,15 +87,35 @@ public class SingleDeathMarathon extends MarathonModeBase {
 		pCoordList = new ArrayList<>();
 		cPiece = null;
 
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+
+			showPlayerStats = false;
+
+			rankingRankPlayer = -1;
+			rankingScorePlayer = new int[RANKING_TYPE][RANKING_MAX];
+			rankingLinesPlayer = new int[RANKING_TYPE][RANKING_MAX];
+			rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
+		}
+
 		netPlayerInit(engine, playerID);
 
 		if(owner.replayMode == false) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
+			PLAYER_NAME = "";
 			version = CURRENT_VERSION;
 		} else {
 			loadSetting(owner.replayProp);
 			if((version == 0) && (owner.replayProp.getProperty("singledeath.endless", false) == true)) goaltype = 2;
+
+			PLAYER_NAME = owner.replayProp.getProperty("singledeath.playerName", "");
 
 			// NET: Load name
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -167,11 +197,18 @@ public class SingleDeathMarathon extends MarathonModeBase {
 				}
 			}
 
+			engine.owner.backgroundStatus.bg = startlevel;
+
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 
 				// NET: Signal start of the game
 				if(netIsNetPlay) netLobby.netPlayerClient.send("start1p\n");
@@ -182,6 +219,17 @@ public class SingleDeathMarathon extends MarathonModeBase {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !netIsNetPlay) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			// NET: Netplay Ranking
@@ -254,6 +302,23 @@ public class SingleDeathMarathon extends MarathonModeBase {
 		}
 
 		return false;
+	}
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		showPlayerStats = false;
+
+		engine.isInGame = true;
+
+		boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+		if (playerProperties.isLoggedIn()) {
+			loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			loadSettingPlayer(playerProperties);
+		}
+
+		if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+		return s;
 	}
 
 	/*
@@ -369,6 +434,22 @@ public class SingleDeathMarathon extends MarathonModeBase {
 	}
 
 	/*
+	 * Called after every frame
+	 */
+	@Override
+	public void onLast(GameEngine engine, int playerID) {
+		scgettime++;
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
+	}
+
+	/*
 	 * Render score
 	 */
 	@Override
@@ -389,13 +470,33 @@ public class SingleDeathMarathon extends MarathonModeBase {
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[goaltype][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[goaltype][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[goaltype][i]), (i == rankingRank), scale);
+				if (showPlayerStats) {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScorePlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLinesPlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[goaltype][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[goaltype][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[goaltype][i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
 			String strScore;
@@ -406,6 +507,11 @@ public class SingleDeathMarathon extends MarathonModeBase {
 				strScore = String.valueOf(cScore) + "(+" + String.valueOf(lastscore) + ")";
 			}
 			receiver.drawScoreFont(engine, playerID, 0, 4, strScore);
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 10, 6, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 10, 7, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
 
 			receiver.drawScoreFont(engine, playerID, 0, 6, "LINE", EventReceiver.COLOR_BLUE);
 			if((engine.statistics.level >= 19) && (tableGameClearLines[goaltype] < 0))
@@ -501,6 +607,7 @@ public class SingleDeathMarathon extends MarathonModeBase {
 		netDrawPlayerName(engine);
 	}
 
+	// region MOVE OVERRIDE
 	@Override
 	public boolean onMove(GameEngine engine, int playerID) {
 		owner.receiver.onMove(engine, playerID);
@@ -1321,6 +1428,7 @@ public class SingleDeathMarathon extends MarathonModeBase {
 			}
 		}
 	}
+	// endregion
 
 	/*
 	 * Calculate score
@@ -1514,9 +1622,18 @@ public class SingleDeathMarathon extends MarathonModeBase {
 		if((owner.replayMode == false) && (big == false) && (engine.ai == null)) {
 			updateRanking(engine.statistics.score, engine.statistics.lines, engine.statistics.time, goaltype);
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("singledeath.playerName", playerProperties.getNameDisplay());
+			}
+
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -1553,6 +1670,36 @@ public class SingleDeathMarathon extends MarathonModeBase {
 		prop.setProperty("singledeath.version", version);
 	}
 
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		startlevel = prop.getProperty("singledeath.startlevel", 0);
+		tspinEnableType = prop.getProperty("singledeath.tspinEnableType", 1);
+		enableTSpin = prop.getProperty("singledeath.enableTSpin", true);
+		enableTSpinKick = prop.getProperty("singledeath.enableTSpinKick", true);
+		spinCheckType = prop.getProperty("singledeath.spinCheckType", 0);
+		tspinEnableEZ = prop.getProperty("singledeath.tspinEnableEZ", false);
+		enableB2B = prop.getProperty("singledeath.enableB2B", true);
+		enableCombo = prop.getProperty("singledeath.enableCombo", true);
+		goaltype = prop.getProperty("singledeath.gametype", 0);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		prop.setProperty("singledeath.startlevel", startlevel);
+		prop.setProperty("singledeath.tspinEnableType", tspinEnableType);
+		prop.setProperty("singledeath.enableTSpin", enableTSpin);
+		prop.setProperty("singledeath.enableTSpinKick", enableTSpinKick);
+		prop.setProperty("singledeath.spinCheckType", spinCheckType);
+		prop.setProperty("singledeath.tspinEnableEZ", tspinEnableEZ);
+		prop.setProperty("singledeath.enableB2B", enableB2B);
+		prop.setProperty("singledeath.enableCombo", enableCombo);
+		prop.setProperty("singledeath.gametype", goaltype);
+	}
+
 	/**
 	 * Read rankings from property file
 	 * @param prop Property file
@@ -1585,6 +1732,38 @@ public class SingleDeathMarathon extends MarathonModeBase {
 	}
 
 	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < GAMETYPE_MAX; j++) {
+				rankingScore[j][i] = prop.getProperty("singledeath.ranking." + ruleName + "." + j + ".score." + i, 0);
+				rankingLines[j][i] = prop.getProperty("singledeath.ranking." + ruleName + "." + j + ".lines." + i, 0);
+				rankingTime[j][i] = prop.getProperty("singledeath.ranking." + ruleName + "." + j + ".time." + i, 0);
+			}
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < GAMETYPE_MAX; j++) {
+				prop.setProperty("singledeath.ranking." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
+				prop.setProperty("singledeath.ranking." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
+				prop.setProperty("singledeath.ranking." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
+			}
+		}
+	}
+
+	/**
 	 * Update rankings
 	 * @param sc Score
 	 * @param li Lines
@@ -1606,6 +1785,24 @@ public class SingleDeathMarathon extends MarathonModeBase {
 			rankingLines[type][rankingRank] = li;
 			rankingTime[type][rankingRank] = time;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(sc, li, time, type);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingScorePlayer[type][i] = rankingScorePlayer[type][i - 1];
+					rankingLinesPlayer[type][i] = rankingLinesPlayer[type][i - 1];
+					rankingTimePlayer[type][i] = rankingTimePlayer[type][i - 1];
+				}
+
+				// Add new data
+				rankingScorePlayer[type][rankingRankPlayer] = sc;
+				rankingLinesPlayer[type][rankingRankPlayer] = li;
+				rankingTimePlayer[type][rankingRankPlayer] = time;
+			}
+		}
 	}
 
 	/**
@@ -1622,6 +1819,27 @@ public class SingleDeathMarathon extends MarathonModeBase {
 			} else if((sc == rankingScore[type][i]) && (li > rankingLines[type][i])) {
 				return i;
 			} else if((sc == rankingScore[type][i]) && (li == rankingLines[type][i]) && (time < rankingTime[type][i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param li Lines
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int sc, int li, int time, int type) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScorePlayer[type][i]) {
+				return i;
+			} else if((sc == rankingScorePlayer[type][i]) && (li > rankingLinesPlayer[type][i])) {
+				return i;
+			} else if((sc == rankingScorePlayer[type][i]) && (li == rankingLinesPlayer[type][i]) && (time < rankingTimePlayer[type][i])) {
 				return i;
 			}
 		}

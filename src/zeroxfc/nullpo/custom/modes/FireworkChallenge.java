@@ -210,13 +210,13 @@ public class FireworkChallenge extends DummyMode {
 	// Current round's ranking rank
 	private int rankingRank;
 
-	// Rankings' 段位 
+	// Rankings' 段位
 	private int[] rankingFireworks;
 
-	// Rankings'  level 
+	// Rankings'  level
 	private int[] rankingLevel;
 
-	// Rankings' times 
+	// Rankings' times
 	private int[] rankingTime;
 
 	// Section Time記録 
@@ -244,7 +244,14 @@ public class FireworkChallenge extends DummyMode {
 	/** The good hard drop effect */
 	private ArrayList<int[]> pCoordList;
 	private Piece cPiece;
-	
+
+	private ProfileProperties playerProperties;
+	private boolean showPlayerStats;
+	private String PLAYER_NAME;
+	private static final int headerColour = EventReceiver.COLOR_GREEN;
+	private int rankingRankPlayer;
+	private int[] rankingFireworksPlayer, rankingLevelPlayer, rankingTimePlayer;
+
 	// Get mode name
 	@Override
 	public String getName() {
@@ -319,6 +326,17 @@ public class FireworkChallenge extends DummyMode {
 		rankingFireworks = new int[RANKING_MAX];
 		rankingLevel = new int[RANKING_MAX];
 		rankingTime = new int[RANKING_MAX];
+
+		if (playerProperties == null) {
+			playerProperties = new ProfileProperties(headerColour);
+
+			showPlayerStats = false;
+
+			rankingRankPlayer = -1;
+			rankingFireworksPlayer = new int[RANKING_MAX];
+			rankingLevelPlayer = new int[RANKING_MAX];
+			rankingTimePlayer = new int[RANKING_MAX];
+		}
 		
 		levelUpFlag = false;
 		
@@ -343,11 +361,20 @@ public class FireworkChallenge extends DummyMode {
 		engine.staffrollEnable = true;
 		engine.staffrollNoDeath = false;
 		
-		if(owner.replayMode == false) {
+		if(!owner.replayMode) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
+			PLAYER_NAME = "";
 		} else {
 			loadSetting(owner.replayProp);
+
+			PLAYER_NAME = owner.replayProp.getProperty("fireworkchallenge.playerName", "");
 		}
 	}
 	
@@ -356,7 +383,7 @@ public class FireworkChallenge extends DummyMode {
 	 * @param engine GameEngine
 	 */
 	private void setSpeed(GameEngine engine) {
-		if(maxGravMode == true) {
+		if(maxGravMode) {
 			engine.speed.gravity = -1;
 		} else {
 			while(engine.statistics.level >= GRAVITY_CHANGE_LEVELS[gravityIndex]) gravityIndex++;
@@ -370,8 +397,8 @@ public class FireworkChallenge extends DummyMode {
 	private void setAverageSectionTime() {
 		if(sectionsComplete > 0) {
 			int temp = 0;
-			for(int i = 0; i < 0 + sectionsComplete; i++) {
-				if((i >= 0) && (i < sectionTime.length)) temp += sectionTime[i];
+			for(int i = 0; i < sectionsComplete; i++) {
+				if(i < sectionTime.length) temp += sectionTime[i];
 			}
 			averageSectionTime = temp / sectionsComplete;
 		} else {
@@ -425,8 +452,13 @@ public class FireworkChallenge extends DummyMode {
 			// 決定
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 				showBests = false;
 				sectionsComplete = 0;
 				return false;
@@ -435,6 +467,17 @@ public class FireworkChallenge extends DummyMode {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B)) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(headerColour);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
+				playerProperties = new ProfileProperties(headerColour);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			engine.statc[3]++;
@@ -449,7 +492,24 @@ public class FireworkChallenge extends DummyMode {
 
 		return true;
 	}
-	
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		showPlayerStats = false;
+
+		engine.isInGame = true;
+
+		boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+		if (playerProperties.isLoggedIn()) {
+			loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			loadSettingPlayer(playerProperties);
+		}
+
+		if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+		return s;
+	}
+
 	/*
 	 * Render the settings screen
 	 */
@@ -594,11 +654,31 @@ public class FireworkChallenge extends DummyMode {
 					int topY = (receiver.getNextDisplayType() == 2) ? 5 : 3;
 					receiver.drawScoreFont(engine, playerID, 3, topY-1, "F.WORK LEVEL TIME", EventReceiver.COLOR_BLUE, scale);
 
-					for(int i = 0; i < RANKING_MAX; i++) {
-						receiver.drawScoreFont(engine, playerID, 0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-						receiver.drawScoreFont(engine, playerID, 3, topY+i, String.valueOf(rankingFireworks[i]), (i == rankingRank), scale);
-						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLevel[i]), (i == rankingRank), scale);
-						receiver.drawScoreFont(engine, playerID, 16, topY+i, GeneralUtil.getTime(rankingTime[i]), (i == rankingRank), scale);
+					if (showPlayerStats) {
+						for(int i = 0; i < RANKING_MAX; i++) {
+							receiver.drawScoreFont(engine, playerID, 0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+							receiver.drawScoreFont(engine, playerID, 3, topY+i, String.valueOf(rankingFireworksPlayer[i]), (i == rankingRankPlayer), scale);
+							receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLevelPlayer[i]), (i == rankingRankPlayer), scale);
+							receiver.drawScoreFont(engine, playerID, 16, topY+i, GeneralUtil.getTime(rankingTimePlayer[i]), (i == rankingRankPlayer), scale);
+						}
+
+						receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+						receiver.drawScoreFont(engine, playerID, 0, 19, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+						receiver.drawScoreFont(engine, playerID, 0, 22, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+
+					} else {
+						for(int i = 0; i < RANKING_MAX; i++) {
+							receiver.drawScoreFont(engine, playerID, 0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+							receiver.drawScoreFont(engine, playerID, 3, topY+i, String.valueOf(rankingFireworks[i]), (i == rankingRank), scale);
+							receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLevel[i]), (i == rankingRank), scale);
+							receiver.drawScoreFont(engine, playerID, 16, topY+i, GeneralUtil.getTime(rankingTime[i]), (i == rankingRank), scale);
+						}
+
+						receiver.drawScoreFont(engine, playerID, 0, 18, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+						if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, 19, "(NOT LOGGED IN)\n(E:LOG IN)");
+						if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, 22, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+
 					}
 
 					receiver.drawScoreFont(engine, playerID, 0, 17, "F:VIEW SECTION TIME", EventReceiver.COLOR_GREEN);
@@ -627,6 +707,8 @@ public class FireworkChallenge extends DummyMode {
 					receiver.drawScoreFont(engine, playerID, 0, 17, "F:VIEW RANKING", EventReceiver.COLOR_GREEN);
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 2, "FIREWORKS", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 3, String.valueOf(fireworksFired), (scoreColorTimer > 0));
@@ -645,6 +727,11 @@ public class FireworkChallenge extends DummyMode {
 
 			receiver.drawScoreFont(engine, playerID, 0, 10, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 11, GeneralUtil.getTime(engine.statistics.time));
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 0, 13, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 14, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			}
 
 			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
 			int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
@@ -1220,6 +1307,14 @@ public class FireworkChallenge extends DummyMode {
 		if (blockParticles != null) {
 			blockParticles.update();
 		}
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_D) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
 	}
 	
 	/*
@@ -1411,6 +1506,30 @@ public class FireworkChallenge extends DummyMode {
 	 * Save settings to property file
 	 * @param prop Property file
 	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		// prop.setProperty("fireworkchallenge.alwaysghost", tlsMode);
+		prop.setProperty("fireworkchallenge.always20g", maxGravMode);
+		prop.setProperty("fireworkchallenge.big", big);
+		prop.setProperty("fireworkchallenge.showsectiontime", showST);
+	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		if (!prop.isLoggedIn()) return;
+		// tlsMode = prop.getProperty("fireworkchallenge.alwaysghost", false);
+		maxGravMode = prop.getProperty("fireworkchallenge.always20g", false);
+		showST = prop.getProperty("fireworkchallenge.showsectiontime", false);
+		big = prop.getProperty("fireworkchallenge.big", false);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
 	private void saveSetting(CustomProperties prop) {
 		// prop.setProperty("fireworkchallenge.alwaysghost", tlsMode);
 		prop.setProperty("fireworkchallenge.always20g", maxGravMode);
@@ -1431,9 +1550,18 @@ public class FireworkChallenge extends DummyMode {
 			updateRanking(fireworksFired, engine.statistics.level, engine.statistics.time);
 			if(sectionPBGet) updateBestSectionTime();
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("fireworkchallenge.playerName", playerProperties.getNameDisplay());
+			}
+
 			if((rankingRank != -1) || (sectionPBGet)) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -1471,6 +1599,34 @@ public class FireworkChallenge extends DummyMode {
 	}
 
 	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+ 		for(int i = 0; i < RANKING_MAX; i++) {
+			rankingFireworksPlayer[i] = prop.getProperty("fireworkchallenge.ranking." + ruleName + ".fireworks." + i, 0);
+			rankingLevelPlayer[i] = prop.getProperty("fireworkchallenge.ranking." + ruleName + ".level." + i, 0);
+			rankingTimePlayer[i] = prop.getProperty("fireworkchallenge.ranking." + ruleName + ".time." + i, 0);
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		if (!prop.isLoggedIn()) return;
+		for(int i = 0; i < RANKING_MAX; i++) {
+			prop.setProperty("fireworkchallenge.ranking." + ruleName + ".fireworks." + i, rankingFireworksPlayer[i]);
+			prop.setProperty("fireworkchallenge.ranking." + ruleName + ".level." + i, rankingLevelPlayer[i]);
+			prop.setProperty("fireworkchallenge.ranking." + ruleName + ".time." + i, rankingTimePlayer[i]);
+		}
+	}
+
+	/**
 	 * Update rankings
 	 * @param gr 段位
 	 * @param lv  level
@@ -1492,6 +1648,24 @@ public class FireworkChallenge extends DummyMode {
 			rankingLevel[rankingRank] = lv;
 			rankingTime[rankingRank] = time;
 		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(gr, lv, time);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingFireworksPlayer[i] = rankingFireworksPlayer[i - 1];
+					rankingLevelPlayer[i] = rankingLevelPlayer[i - 1];
+					rankingTimePlayer[i] = rankingTimePlayer[i - 1];
+				}
+
+				// Add new data
+				rankingFireworksPlayer[rankingRankPlayer] = gr;
+				rankingLevelPlayer[rankingRankPlayer] = lv;
+				rankingTimePlayer[rankingRankPlayer] = time;
+			}
+		}
 	}
 
 	/**
@@ -1508,6 +1682,27 @@ public class FireworkChallenge extends DummyMode {
 			} else if((gr == rankingFireworks[i]) && (lv > rankingLevel[i])) {
 				return i;
 			} else if((gr == rankingFireworks[i]) && (lv == rankingLevel[i]) && (time < rankingTime[i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param gr 段位
+	 * @param lv  level
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int gr, int lv, int time) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(gr > rankingFireworksPlayer[i]) {
+				return i;
+			} else if((gr == rankingFireworksPlayer[i]) && (lv > rankingLevelPlayer[i])) {
+				return i;
+			} else if((gr == rankingFireworksPlayer[i]) && (lv == rankingLevelPlayer[i]) && (time < rankingTimePlayer[i])) {
 				return i;
 			}
 		}
