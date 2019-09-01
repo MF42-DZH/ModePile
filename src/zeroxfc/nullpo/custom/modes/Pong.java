@@ -711,8 +711,8 @@ public class Pong extends PuzzleGameEngine {
 			receiver.drawScoreFont(engine, playerID, 8, 7, String.valueOf(computerScore));
 
 			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
-				receiver.drawScoreFont(engine, playerID, 0, 9, "PLAYER", EventReceiver.COLOR_BLUE);
-				receiver.drawScoreFont(engine, playerID, 0, 10, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+				receiver.drawScoreFont(engine, playerID, 8, 9, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 8, 10, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
 			}
 
 			if (engine.stat != GameEngine.STAT_RESULT) {
