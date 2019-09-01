@@ -176,11 +176,11 @@ public class Collapse extends DummyMode {
 		if (playerProperties == null) {
 			showPlayerStats = false;
 			playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
-
-			rankingScorePlayer = new int[MAX_DIFFICULTIES][MAX_RANKING];
-			rankingLevelPlayer = new int[MAX_DIFFICULTIES][MAX_RANKING];
-			rankingRankPlayer = -1;
 		}
+
+		rankingScorePlayer = new int[MAX_DIFFICULTIES][MAX_RANKING];
+		rankingLevelPlayer = new int[MAX_DIFFICULTIES][MAX_RANKING];
+		rankingRankPlayer = -1;
 		
 		enableBombs = false;
 		rankingScore = new int[MAX_DIFFICULTIES][MAX_RANKING];

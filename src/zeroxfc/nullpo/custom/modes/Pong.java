@@ -99,13 +99,15 @@ public class Pong extends PuzzleGameEngine {
 			loadSetting(owner.replayProp);
 
 			if (playerProperties.isLoggedIn()) {
-
+				loadSettingPlayer(playerProperties);
 			}
 
 			PLAYER_NAME = "";
 		} else {
 			loadSetting(owner.modeConfig);
 			version = VERSION;
+
+			PLAYER_NAME = owner.replayProp.getProperty("pong.playerName", "");
 		}
 
 		owner.backgroundStatus.bg = bg;

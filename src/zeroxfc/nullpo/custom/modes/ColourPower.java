@@ -171,12 +171,12 @@ public class ColourPower extends MarathonModeBase {
 			playerProperties = new ProfileProperties(EventReceiver.COLOR_GREEN);
 
 			showPlayerStats = false;
-
-			rankingRankPlayer = -1;
-			rankingScorePlayer = new int[2][RANKING_TYPE][RANKING_MAX];
-			rankingLinesPlayer = new int[2][RANKING_TYPE][RANKING_MAX];
-			rankingTimePlayer = new int[2][RANKING_TYPE][RANKING_MAX];
 		}
+
+		rankingRankPlayer = -1;
+		rankingScorePlayer = new int[2][RANKING_TYPE][RANKING_MAX];
+		rankingLinesPlayer = new int[2][RANKING_TYPE][RANKING_MAX];
+		rankingTimePlayer = new int[2][RANKING_TYPE][RANKING_MAX];
 		
 		rankingRank = -1;
 		rankingScore = new int[2][RANKING_TYPE][RANKING_MAX];

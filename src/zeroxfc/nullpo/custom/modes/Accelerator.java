@@ -102,11 +102,12 @@ public class Accelerator extends MarathonModeBase {
 			playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
 
 			showPlayerStats = false;
-			rankingRankPlayer = -1;
-			rankingScorePlayer = new int[RANKING_TYPE][RANKING_MAX];
-			rankingLinesPlayer = new double[RANKING_TYPE][RANKING_MAX];
-			rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
 		}
+
+		rankingRankPlayer = -1;
+		rankingScorePlayer = new int[RANKING_TYPE][RANKING_MAX];
+		rankingLinesPlayer = new double[RANKING_TYPE][RANKING_MAX];
+		rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
 
 		rankingRank = -1;
 		rankingScore = new int[RANKING_TYPE][RANKING_MAX];

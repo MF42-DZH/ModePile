@@ -168,12 +168,12 @@ public class ScoreTrial extends MarathonModeBase {
 			playerProperties = new ProfileProperties(headerColour);
 
 			showPlayerStats = false;
-
-			rankingRankPlayer = -1;
-			rankingScorePlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
-			rankingLinesPlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
-			rankingTimePlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
 		}
+
+		rankingRankPlayer = -1;
+		rankingScorePlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
+		rankingLinesPlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
+		rankingTimePlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
 
 		netPlayerInit(engine, playerID);
 

@@ -269,12 +269,12 @@ public class MarathonTwo extends MarathonModeBase {
 			playerProperties = new ProfileProperties(headerColour);
 
 			showPlayerStats = false;
-
-			rankingRankPlayer = -1;
-			rankingScorePlayer = new int[RANKING_TYPE][RANKING_MAX];
-			rankingLinesPlayer = new int[RANKING_TYPE][RANKING_MAX];
-			rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
 		}
+
+		rankingRankPlayer = -1;
+		rankingScorePlayer = new int[RANKING_TYPE][RANKING_MAX];
+		rankingLinesPlayer = new int[RANKING_TYPE][RANKING_MAX];
+		rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
 
 		pCoordList = new ArrayList<>();
 		cPiece = null;

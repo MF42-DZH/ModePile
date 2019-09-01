@@ -136,12 +136,12 @@ public class Scanline extends MarathonModeBase {
 			playerProperties = new ProfileProperties(headerColour);
 
 			showPlayerStats = false;
-
-			rankingRankPlayer = -1;
-			rankingScorePlayer = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
-			rankingLinesPlayer = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
-			rankingTimePlayer = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
 		}
+
+		rankingRankPlayer = -1;
+		rankingScorePlayer = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
+		rankingLinesPlayer = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
+		rankingTimePlayer = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
 
 		netPlayerInit(engine, playerID);
 

@@ -155,11 +155,11 @@ public class ExpressShipping extends PuzzleGameEngine {
 			playerProperties = new ProfileProperties(headerColour);
 
 			showPlayerStats = false;
-
-			rankingRankPlayer = -1;
-			rankingLevelPlayer = new int[RANKING_MAX];
-			rankingScorePlayer = new int[RANKING_MAX];
 		}
+
+		rankingRankPlayer = -1;
+		rankingLevelPlayer = new int[RANKING_MAX];
+		rankingScorePlayer = new int[RANKING_MAX];
 
 		customHolder = new ResourceHolderCustomAssetExtension(3);
 		customHolder.loadImage("res/graphics/conveyor.png", "conveyor");

@@ -78,11 +78,11 @@ public class TwoThousandAndFortyEight extends DummyMode {
 			playerProperties = new ProfileProperties(headerColour);
 
 			showPlayerStats = false;
-
-			rankingRankPlayer = -1;
-			rankingScorePlayer = new int[MAX_GAMETYPE][MAX_RANKING];
-			rankingTilePlayer = new int[MAX_GAMETYPE][MAX_RANKING];
 		}
+
+		rankingRankPlayer = -1;
+		rankingScorePlayer = new int[MAX_GAMETYPE][MAX_RANKING];
+		rankingTilePlayer = new int[MAX_GAMETYPE][MAX_RANKING];
 
 		engine.framecolor = GameEngine.FRAME_COLOR_YELLOW;
 		engine.blockOutlineType = GameEngine.BLOCK_OUTLINE_NONE;

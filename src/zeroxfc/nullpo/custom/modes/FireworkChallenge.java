@@ -331,12 +331,12 @@ public class FireworkChallenge extends DummyMode {
 			playerProperties = new ProfileProperties(headerColour);
 
 			showPlayerStats = false;
-
-			rankingRankPlayer = -1;
-			rankingFireworksPlayer = new int[RANKING_MAX];
-			rankingLevelPlayer = new int[RANKING_MAX];
-			rankingTimePlayer = new int[RANKING_MAX];
 		}
+
+		rankingRankPlayer = -1;
+		rankingFireworksPlayer = new int[RANKING_MAX];
+		rankingLevelPlayer = new int[RANKING_MAX];
+		rankingTimePlayer = new int[RANKING_MAX];
 		
 		levelUpFlag = false;
 		

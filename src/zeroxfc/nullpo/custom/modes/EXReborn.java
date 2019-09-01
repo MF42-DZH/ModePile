@@ -105,12 +105,12 @@ public class EXReborn extends DummyMode {
 			playerProperties = new ProfileProperties(headerColour);
 
 			showPlayerStats = false;
-
-			rankingRankPlayer = -1;
-			rankingScorePlayer = new int[RANKING_MAX];
-			rankingLevelPlayer = new int[RANKING_MAX];
-			rankingTimePlayer = new int[RANKING_MAX];
 		}
+
+		rankingRankPlayer = -1;
+		rankingScorePlayer = new int[RANKING_MAX];
+		rankingLevelPlayer = new int[RANKING_MAX];
+		rankingTimePlayer = new int[RANKING_MAX];
 
 		rankingScore = new int[RANKING_MAX];
 		rankingLevel = new int[RANKING_MAX];

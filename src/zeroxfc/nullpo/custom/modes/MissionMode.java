@@ -159,11 +159,11 @@ public class MissionMode extends MarathonModeBase {
 			playerProperties = new ProfileProperties(headerColour);
 
 			showPlayerStats = false;
-
-			rankingRank = -1;
-			rankingScore = new int[RANKING_TYPE][RANKING_MAX];
-			rankingTime = new int[RANKING_TYPE][RANKING_MAX];
 		}
+
+		rankingRank = -1;
+		rankingScore = new int[RANKING_TYPE][RANKING_MAX];
+		rankingTime = new int[RANKING_TYPE][RANKING_MAX];
 
 		netPlayerInit(engine, playerID);
 

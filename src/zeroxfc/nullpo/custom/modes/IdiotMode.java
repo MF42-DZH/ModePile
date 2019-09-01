@@ -475,14 +475,14 @@ public class IdiotMode extends DummyMode {
 		if (playerProperties == null) {
 			playerProperties = new ProfileProperties(headerColour);
 
-			currentGameRankPlayer = -1;
 			showPlayerStats = false;
-
-			rankingGradePlayer = new int[GAMETYPE_MAX][RANKING_MAX];
-			rankingLevelPlayer = new int[GAMETYPE_MAX][RANKING_MAX];
-			rankingTimePlayer = new int[GAMETYPE_MAX][RANKING_MAX];
-			rollClearPlayer = new int[GAMETYPE_MAX][RANKING_MAX];
 		}
+
+		currentGameRankPlayer = -1;
+		rankingGradePlayer = new int[GAMETYPE_MAX][RANKING_MAX];
+		rankingLevelPlayer = new int[GAMETYPE_MAX][RANKING_MAX];
+		rankingTimePlayer = new int[GAMETYPE_MAX][RANKING_MAX];
+		rollClearPlayer = new int[GAMETYPE_MAX][RANKING_MAX];
 		
 		sectionBests = new int[GAMETYPE_MAX][];
 		sectionBests[0] = new int[SECTION_MAX[0]];
