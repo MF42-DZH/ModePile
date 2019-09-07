@@ -32,6 +32,9 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
+import mu.nu.nullpo.game.event.EventReceiver;
+import mu.nu.nullpo.game.play.GameEngine;
+
 public class SideWaveText {
 	public static final int MaxLifeTime = 120;
 	private static final DoubleVector VerticalVelocity = new DoubleVector(0, -1 * (4.0/5.0), false);
@@ -83,6 +86,25 @@ public class SideWaveText {
 	
 	public int[] getLocation() {
 		return new int[] { (int)(position.getX() + xOffset), (int)position.getY() };
+	}
+
+	public void drawCentral(EventReceiver receiver, GameEngine engine, int playerID, boolean flag) {
+		int[] location = getLocation();
+		final int x = location[0];
+		final int y = location[1];
+
+		int color = EventReceiver.COLOR_ORANGE;
+		if (flag) color = EventReceiver.COLOR_YELLOW;
+
+		float scale = 0;
+		float baseScale = big ? 2 : 1;
+		if (lifeTime < 24) {
+			scale = baseScale;
+		} else {
+			scale = baseScale - (baseScale * ((float)(lifeTime - 24) / 96));
+		}
+
+		GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, x, y, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, text, color, scale);
 	}
 	
 	public int getLifeTime() {
