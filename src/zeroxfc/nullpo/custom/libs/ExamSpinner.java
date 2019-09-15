@@ -247,7 +247,7 @@ public class ExamSpinner {
 								splitPossibilityText[1][i], EventReceiver.COLOR_DARKBLUE, 1f);
 					}
 
-					if (lifeTime >= spinDuration + 112) {
+					if ((lifeTime >= spinDuration + 112) && selectedOutcome == 0) {
 						int height = ((lifeTime - spinDuration - 113) * 2) - 1;
 						int width = 3;
 

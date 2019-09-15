@@ -549,6 +549,10 @@ public class ColourPower extends MarathonModeBase {
 				engine.playSE("change");
 			}
 		}
+
+		if (engine.quitflag) {
+			playerProperties = new ProfileProperties(EventReceiver.COLOR_GREEN);
+		}
 	}
 
 	/*

@@ -1371,6 +1371,10 @@ public class MarathonTwo extends MarathonModeBase {
 				engine.playSE("change");
 			}
 		}
+
+		if (engine.quitflag) {
+			playerProperties = new ProfileProperties(headerColour);
+		}
 	}
 
 	/*

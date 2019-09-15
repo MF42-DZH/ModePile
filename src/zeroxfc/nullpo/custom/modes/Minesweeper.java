@@ -198,7 +198,14 @@ public class Minesweeper extends DummyMode {
 				"BGM", String.valueOf(bgm),
 				"BACKGROUND", String.valueOf(bg));
 	}
-	
+
+	@Override
+	public void onLast(GameEngine engine, int playerID) {
+		if (engine.quitflag) {
+			playerProperties = new ProfileProperties(EventReceiver.COLOR_GREEN);
+		}
+	}
+
 	@Override
 	public boolean onReady(GameEngine engine, int playerID) {
 		// 横溜め

@@ -1233,6 +1233,10 @@ public class Collapse extends DummyMode {
 				engine.playSE("change");
 			}
 		}
+
+		if (engine.quitflag) {
+			playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
+		}
 	}
 	
 	@Override

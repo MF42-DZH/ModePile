@@ -1123,6 +1123,10 @@ public class ExpressShipping extends PuzzleGameEngine {
 			}
 		}
 
+		if (engine.quitflag) {
+			playerProperties = new ProfileProperties(headerColour);
+		}
+
 		if (scGetTime < 60) scGetTime++;
 	}
 

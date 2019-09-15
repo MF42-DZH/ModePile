@@ -1315,6 +1315,10 @@ public class FireworkChallenge extends DummyMode {
 				engine.playSE("change");
 			}
 		}
+
+		if (engine.quitflag) {
+			playerProperties = new ProfileProperties(headerColour);
+		}
 	}
 	
 	/*

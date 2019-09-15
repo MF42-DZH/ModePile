@@ -1714,6 +1714,10 @@ public class IdiotMode extends DummyMode {
 				engine.playSE("change");
 			}
 		}
+
+		if (engine.quitflag) {
+			playerProperties = new ProfileProperties(headerColour);
+		}
 	}
 
 	// GAME OVER

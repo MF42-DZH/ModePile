@@ -709,7 +709,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
  			int diff = engine.statistics.score - 350000;
  			if (Math.abs(diff) <= 50000) close = true;
  			if (diff >= 0) p = 0;
- 			es = new ExamSpinner("RESULT\nANNOUNCEMENT", "EXAM\nGRADE", "GOOD", new String[] { "PASS", "FAIL" }, p, close);
+ 			es = new ExamSpinner("AMAZING!", "CONGRATULATIONS", "WIN", new String[] { "YES", "NO" }, p, close);
  		}
 		return false;
 	}
