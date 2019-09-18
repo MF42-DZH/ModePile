@@ -251,7 +251,12 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 			v = Interpolation.lerp(0, 255,(double)Math.abs(t) / 15d);
 		}
 
-		customHolder.drawImage(engine, imageName, currentPan[0] - ((imgDim[0] / 2) - 320), currentPan[1] - ((imgDim[1] / 2) - 240), imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255, 0);
+		/*
+		 * TODO:
+		 *  - calculate the new "size" where it is basically the size of the smallest non-rotated rectangle that can inscribe the new image
+		 */
+
+		customHolder.drawImage(engine, imageName, currentPan[0] - ((imgDim[0] / 2) - (int)(320 * currentValues.valueFloat)), currentPan[1] - ((imgDim[1] / 2) - (int)(240 * currentValues.valueFloat)), imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255, 0);
 	}
 
 	@Override
@@ -262,7 +267,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 
 	@Override
 	public void setBG(String filePath) {
-		if (filePath != localPath) {
+		if (!filePath.equals(localPath)) {
 			int[] dimOld = customHolder.getImageDimensions(imageName);
 
 			customHolder.loadImage(filePath, "transitory");
