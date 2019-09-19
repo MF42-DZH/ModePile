@@ -229,6 +229,7 @@ public class Joker extends MarathonModeBase {
 	@Override
 	public boolean onSetting(GameEngine engine, int playerID) {
 		engine.owner.backgroundStatus.bg = -1;
+		while (customHolder.getAmountLoadedBGM() > 0) customHolder.removeBGMFromEnd(true);
 		
 		// NET: Net Ranking
 		if(netIsNetRankingDisplayMode) {
