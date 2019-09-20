@@ -56,15 +56,16 @@ public abstract class AnimatedBackgroundHook {
 	 * Please add a new one for every new background type made.
 	 */
 	public static final int ANIMATION_NONE = 0,                   // No animation. Essentially a quick-switchable custom BG.
-			                ANIMATION_FRAME_ANIM = 1,             // Full frame 640x480 animation at up to 60 FPS.
-	                        ANIMATION_PULSE_HORIZONTAL_BARS = 2,  // Pulsating horizontal bars, like waves across a pseudo-fluid.
-	                        ANIMATION_PULSE_VERTICAL_BARS = 3,    // Pulsating vertical bars, like waves across a pseudo-fluid.
-	                        ANIMATION_CIRCULAR_RIPPLE = 4,        // Droplets on a smooth psudo-liquid.
-	                        ANIMATION_DIAGONAL_RIPPLE = 5,        // Droplets on a smooth psudo-liquid.
-	                        ANIMATION_SLIDING_TILES = 6,          // NOTE: SDL window handling is gross.
-	                        ANIMATION_TGM3TI_STYLE = 7,           // NOTE: Swing and SDL will not be able to use rotations.
-	                        ANIMATION_INTERLACE_HORIZONTAL = 8,   // I hope you like Earthbound.
-	                        ANIMATION_INTERLACE_VERTICAL = 9;     // I hope you like Earthbound.
+			                ANIMATION_FRAME_ANIM = 1,             // Full frame 640x480 animation at up to 60 FPS. Uses a single image.
+	                        ANIMATION_IMAGE_SEQUENCE_ANIM = 2,    // Full frame 640x480 animation at up to 60 FPS. Uses a sequence of images.
+	                        ANIMATION_PULSE_HORIZONTAL_BARS = 3,  // Pulsating horizontal bars, like waves across a pseudo-fluid.
+	                        ANIMATION_PULSE_VERTICAL_BARS = 4,    // Pulsating vertical bars, like waves across a pseudo-fluid.
+	                        ANIMATION_CIRCULAR_RIPPLE = 5,        // Droplets on a smooth psudo-liquid.
+	                        ANIMATION_DIAGONAL_RIPPLE = 6,        // Droplets on a smooth psudo-liquid.
+	                        ANIMATION_SLIDING_TILES = 7,          // NOTE: SDL window handling is gross.
+	                        ANIMATION_TGM3TI_STYLE = 8,           // NOTE: Swing and SDL will not be able to use rotations.
+	                        ANIMATION_INTERLACE_HORIZONTAL = 9,   // I hope you like Earthbound.
+	                        ANIMATION_INTERLACE_VERTICAL = 10;    // I hope you like Earthbound.
 
 	/** ResourceHolder--- types */
 	public static final int HOLDER_SLICK = 0,
