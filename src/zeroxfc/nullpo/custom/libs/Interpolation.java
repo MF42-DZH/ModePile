@@ -159,10 +159,10 @@ public class Interpolation {
 	 * @param v0 Start point
 	 * @param v1 End point
 	 * @param denominator Step ease scale (denominator > 2 where smaller = closer to linear)
-	 * @param lerpVal Proportion of point travelled (0 = start, 1 = end)
+	 * @param interpVal Proportion of point travelled (0 = start, 1 = end)
 	 * @return Interpolated value as <code>double</code>
 	 */
-	public static double smoothStep(double v0, double v1, double denominator, double lerpVal) {
+	public static double smoothStep(double v0, double v1, double denominator, double interpVal) {
 		if (denominator <= 2) denominator = 6;
 		double diff = v1 - v0;
 		double p1 = diff * (1d / denominator);
@@ -172,17 +172,31 @@ public class Interpolation {
 		// log.debug(Arrays.toString(new double[] { p1, p2}));
 		// log.debug(lerpVal);
 
-		return bezier1DInterp(new double[] { v0, v0 + p1, v0 + p2, v1 }, lerpVal);
+		return bezier1DInterp(new double[] { v0, v0 + p1, v0 + p2, v1 }, interpVal);
 	}
 
 	/**
 	 * Smooth curve interpolation of two <code>double</code> values.
 	 * @param v0 Start point
 	 * @param v1 End point
-	 * @param lerpVal Proportion of point travelled (0 = start, 1 = end)
+	 * @param interpVal Proportion of point travelled (0 = start, 1 = end)
 	 * @return Interpolated value as <code>double</code>
 	 */
-	public static double smoothStep(double v0, double v1, double lerpVal) {
-		return smoothStep(v0, v1, 6, lerpVal);
+	public static double smoothStep(double v0, double v1, double interpVal) {
+		return smoothStep(v0, v1, 6, interpVal);
+	}
+
+	/**
+	 * Sine interpolation of two <code>double</code> values.
+	 * @param v0 Start point
+	 * @param v1 End point
+	 * @param interpVal Proportion of point travelled (0 = start, 1 = end)
+	 * @return Interpolated value as <code>double</code>
+	 */
+	public static double sineStep(double v0, double v1, double interpVal) {
+		final double OFFSET = Math.PI / 4d;
+		final double t = (Math.sin((-1d * OFFSET) + interpVal * OFFSET) + 1d) / 2d;
+
+		return (1.0 - t) * v0 + v1 * t;
 	}
 }

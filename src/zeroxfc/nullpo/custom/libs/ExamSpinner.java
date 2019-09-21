@@ -300,7 +300,7 @@ public class ExamSpinner {
 				else diff = 80 - (l - 80);
 				if (diff < 0) diff = 0;
 
-				final int alpha = (int)Interpolation.smoothStep(0, 255, (double)diff / 80d);
+				final int alpha = (int)Interpolation.sineStep(0, 255, (double)diff / 80d);
 				alphas[i] = alpha;
 			}
 
