@@ -11,7 +11,7 @@ public class BackgroundImageSequenceAnim extends AnimatedBackgroundHook {
 		ID = AnimatedBackgroundHook.ANIMATION_IMAGE_SEQUENCE_ANIM;
 	}
 
-	public BackgroundImageSequenceAnim(String[] filePaths, int type, int frameTime, boolean pingPong) {
+	public BackgroundImageSequenceAnim(String[] filePaths, int frameTime, boolean pingPong) {
 		customHolder = new ResourceHolderCustomAssetExtension();
 
 		for (int i = 0; i < filePaths.length; i++) {
@@ -27,7 +27,7 @@ public class BackgroundImageSequenceAnim extends AnimatedBackgroundHook {
 
 		setup();
 
-		log.debug("Type " + type + " frame animation background created (Frames: " + filePaths.length + ").");
+		log.debug("Sequence frame animation background created (Frames: " + filePaths.length + ").");
 	}
 
 	private void setup() {
