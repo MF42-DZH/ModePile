@@ -164,7 +164,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		int[] differences;
 
 		if (holderType == HOLDER_SLICK) {
-			differences = new int[] { imgDim[0] - MAX_ROTATED_SCREEN_REQUIREMENT, imgDim[1] - MAX_ROTATED_SCREEN_REQUIREMENT };
+			differences = new int[] { (int)sizeX - MAX_ROTATED_SCREEN_REQUIREMENT, (int)sizeY - MAX_ROTATED_SCREEN_REQUIREMENT };
 		} else {
 			differences = new int[] { imgDim[0] - 640, imgDim[1] - 480 };
 		}

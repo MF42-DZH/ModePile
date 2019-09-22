@@ -39,6 +39,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.FieldScatter;
 import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
 
@@ -213,10 +214,17 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 	/** Time records */
 	private int[][] rankingTime;
 
+	/** Credit headings */
 	private String[] marqueeHeading = {"PORT BY", "BASED ON", "SPECIAL THANKS", "SEGA MODE/CUSTOM BGMS/CREDIT ROLL", "MUSIC FROM", ""};
+
+	/** Credit texts */
 	private String[] marqueeText = {"MANDL27/RY00001", "SEGA TETRIS (1999)", "OSHISAURE, 0XFC963F18DC21, LINEPIECE777", "RY00001", "SEGA TETRIS (1999)", "THANK YOU FOR PLAYING!"};
 
+	/** Credit roll object */
 	private ScrollingMarqueeText marquee = new ScrollingMarqueeText(marqueeHeading, marqueeText, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
+
+	/** Field scattering effect */
+	private FieldScatter fieldScatter;
 
 	/**
 	 * Returns the name of this mode
@@ -543,6 +551,8 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 				receiver.drawMenuFont(engine, playerID, 0, 11, "PLAYING!", EventReceiver.COLOR_ORANGE);
 			}
 
+			if (fieldScatter != null) fieldScatter.draw(receiver, engine, playerID);
+
 			//receiver.drawScoreFont(engine, playerID, 0, 15, String.valueOf(linesAfterLastLevelUp));
 			//receiver.drawScoreFont(engine, playerID, 0, 16, GeneralUtil.getTime(levelTime[Math.min(engine.statistics.level,15)] - levelTimer));
 		}
@@ -560,6 +570,7 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 			engine.holdPieceObject = null;
 			setPowerOn(engine, playerID);
 			if (sega) {
+				// Congratulations screen
 				engine.stat = GameEngine.STAT_CUSTOM;
 				engine.resetStatc();
 			}
@@ -608,6 +619,13 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 		if (engine.quitflag && customBgm) {
 			while (rhcae.getAmountLoadedBGM() > 0) rhcae.removeBGMFromEnd(true);
 		}
+
+
+		// Update field scattering effect
+		if (fieldScatter != null) fieldScatter.update();
+		if (fieldScatter != null) if (fieldScatter.shouldNull()) fieldScatter = null;
+
+		if (engine.quitflag) fieldScatter = null;
 	}
 
 	/**
@@ -774,6 +792,9 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 			if (engine.statistics.level < 16) {
 				engine.playSE("levelup");
 			} else if (engine.statistics.level == 16) {
+				// Create new field scatter effect
+				fieldScatter = new FieldScatter(receiver, engine, playerID);
+
 				// Start roll
 				engine.ending = 1;
 				waitingOnBoardClear = true;
