@@ -72,16 +72,19 @@ public class ResourceHolderCustomAssetExtension {
 	private sdljava.video.SDLSurface localSDLGraphics;
 	
 	private int holderType;
-	
+
 	public ResourceHolderCustomAssetExtension() {
 		this(8);
 	}
 
 	public ResourceHolderCustomAssetExtension(int initialCapacity) {
+		String mainClass = getMainClassName();
+		// log.info("MAIN CLASS: " + mainClass);
+
 		holderType = -1;
-		if (ResourceHolder.imgNormalBlockList != null) holderType = HOLDER_SLICK;
-		else if (ResourceHolderSwing.imgNormalBlockList != null) holderType = HOLDER_SWING;
-		else if (ResourceHolderSDL.imgNormalBlockList != null) holderType = HOLDER_SDL;
+		if (mainClass.contains("Slick")) holderType = HOLDER_SLICK;
+		else if (mainClass.contains("Swing")) holderType = HOLDER_SWING;
+		else if (mainClass.contains("SDL")) holderType = HOLDER_SDL;
 
 		switch (holderType) {
 			case HOLDER_SLICK:
@@ -97,7 +100,16 @@ public class ResourceHolderCustomAssetExtension {
 				break;
 		}
 	}
-	
+
+	public static String getMainClassName()
+	{
+		StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+		if (trace.length > 0) {
+			return trace[trace.length - 1].getClassName();
+		}
+		return "Unknown";
+	}
+
 	/**
 	 * Adds an image to the custom image library
 	 * @param filePath Path of image file

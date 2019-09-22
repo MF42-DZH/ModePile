@@ -78,9 +78,11 @@ public abstract class AnimatedBackgroundHook {
 	 * @return Integer that represents the holder type.
 	 */
 	public static int getResourceHook() {
-		if (ResourceHolder.imgNormalBlockList != null) return HOLDER_SLICK;
-		else if (ResourceHolderSwing.imgNormalBlockList != null) return HOLDER_SWING;
-		else if (ResourceHolderSDL.imgNormalBlockList != null) return HOLDER_SDL;
+		String mainClass = ResourceHolderCustomAssetExtension.getMainClassName();
+
+		if (mainClass.contains("Slick")) return HOLDER_SLICK;
+		else if (mainClass.contains("Swing")) return HOLDER_SWING;
+		else if (mainClass.contains("SDL")) return HOLDER_SDL;
 		else return -1;
 	}
 

@@ -302,9 +302,11 @@ public class MarathonTwo extends MarathonModeBase {
 		// Reflection is an unholy magic. It's powerful alright, but very unsafe.
 		// region SOUND NAME EXTRACTION
 		holderType = -1;
-		if (ResourceHolder.imgNormalBlockList != null) holderType = HOLDER_SLICK;
-		else if (ResourceHolderSwing.imgNormalBlockList != null) holderType = HOLDER_SWING;
-		else if (ResourceHolderSDL.imgNormalBlockList != null) holderType = HOLDER_SDL;
+		String mainClass = ResourceHolderCustomAssetExtension.getMainClassName();
+
+		if (mainClass.contains("Slick")) holderType = HOLDER_SLICK;
+		else if (mainClass.contains("Swing")) holderType = HOLDER_SWING;
+		else if (mainClass.contains("SDL")) holderType = HOLDER_SDL;
 
 		soundList = new ArrayList<>();
 

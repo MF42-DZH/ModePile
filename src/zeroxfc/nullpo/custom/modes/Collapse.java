@@ -213,11 +213,13 @@ public class Collapse extends DummyMode {
 		
 		nextBlocks = new Block[12];
 		resetBlockArray(engine);
-		
+
+		String mainClass = ResourceHolderCustomAssetExtension.getMainClassName();
+
 		holderType = -1;
-		if (ResourceHolder.imgNormalBlockList != null) holderType = HOLDER_SLICK;
-		else if (ResourceHolderSwing.imgNormalBlockList != null) holderType = HOLDER_SWING;
-		else if (ResourceHolderSDL.imgNormalBlockList != null) holderType = HOLDER_SDL;
+		if (mainClass.contains("Slick")) holderType = HOLDER_SLICK;
+		else if (mainClass.contains("Swing")) holderType = HOLDER_SWING;
+		else if (mainClass.contains("SDL")) holderType = HOLDER_SDL;
 		
 		engine.framecolor = GameEngine.FRAME_COLOR_YELLOW;
 		
