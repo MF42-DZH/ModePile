@@ -62,6 +62,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 	private int[] lastPan, currentPan, targetPan;
 
 	private int holderType, dimTimer;
+	private double sizeX, sizeY;
 	private String localPath;
 	private boolean hasUpdated;
 
@@ -95,6 +96,9 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		int[] imgDim = customHolder.getImageDimensions(imageName);
 		if (holderType == HOLDER_SLICK) customHolder.setRotationCentre(imageName,(float)imgDim[0] / 2, (float)imgDim[1] / 2);
 
+		sizeX = imgDim[0];
+		sizeY = imgDim[1];
+
 		reset();
 
 		log.debug("TGM3-Style background created (File Path: " + filePath + ").");
@@ -110,6 +114,9 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 
 		int[] imgDim = customHolder.getImageDimensions(imageName);
 		if (holderType == HOLDER_SLICK) customHolder.setRotationCentre(imageName,(float)imgDim[0] / 2, (float)imgDim[1] / 2);
+
+		sizeX = imgDim[0];
+		sizeY = imgDim[1];
 
 		reset();
 
@@ -137,6 +144,10 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 			targetValues.valueDouble = (valueRandomiser.nextDouble() * (MAX_ANGLE - MIN_ANGLE)) + MIN_ANGLE;
 		}
 
+		int[] imgDim = customHolder.getImageDimensions(imageName);
+		sizeX = (imgDim[1] * Math.sin(Math.toRadians(targetValues.valueDouble))) + (imgDim[0] * Math.cos(Math.toRadians(targetValues.valueDouble)));
+		sizeY = (imgDim[1] * Math.cos(Math.toRadians(targetValues.valueDouble))) + (imgDim[0] * Math.sin(Math.toRadians(targetValues.valueDouble)));
+
 		// Set new scale
 		float ns;
 		do {
@@ -144,8 +155,11 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		} while (!almostEqual(ns, currentValues.valueFloat, 1f));
 		targetValues.valueFloat = ns;
 
+		sizeX *= ns;
+		sizeY *= ns;
+
 		// Find max pan from centre
-		int[] imgDim = customHolder.getImageDimensions(imageName);
+		// int[] imgDim = customHolder.getImageDimensions(imageName);
 
 		int[] differences;
 

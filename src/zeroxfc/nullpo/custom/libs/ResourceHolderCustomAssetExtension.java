@@ -761,6 +761,35 @@ public class ResourceHolderCustomAssetExtension {
 	}
 
 	/**
+	 * Stops custom BGM.
+	 */
+	public void stopBGM() {
+		switch (holderType) {
+			case HOLDER_SLICK:
+				if(!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
+
+				for (Music s : ResourceHolder.bgm) {
+					s.pause();
+					s.stop();
+				}
+
+				return;
+			case HOLDER_SWING:
+				log.warn("BGM is not supported on Swing.");
+				return;
+			case HOLDER_SDL:
+				if(!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
+
+				try {
+					SDLMixer.haltMusic();
+				} catch (Exception e) {
+					log.debug("BGM stop failed", e);
+				}
+				break;
+		}
+	}
+
+	/**
 	 * Stops all BGM.
 	 * @param owner Current GameManager
 	 */
