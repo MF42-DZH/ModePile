@@ -101,7 +101,7 @@ public class PhysicsObject implements Cloneable {
 		this.colour = colour;
 		this.bounces = 0;
 
-		PROPERTY_Static = velocity.getMagnitude() != 0;
+		PROPERTY_Static = velocity.getMagnitude() == 0;
 		PROPERTY_Destructible = collisionsToDestroy > 0;
 		PROPERTY_Collision = true;
 	}
@@ -309,6 +309,22 @@ public class PhysicsObject implements Cloneable {
 		} else {
 			vector.setX(vector.getX() * -1);
 		}
+	}
+
+	/**
+	 * Conducts a flat-surface reflection.
+	 * @param vector Velocity vector to modify.
+	 * @param vertical <code>true</code> if using a vertical mirror line. <code>false</code> if using a horizontal mirror line.
+	 * @param restitution The amount of "bounce". Use a value between 0 and 1.
+	 */
+	public static void reflectVelocityWithRestitution(DoubleVector vector, boolean vertical, double restitution) {
+		if (vertical) {
+			vector.setY(vector.getY() * -1);
+		} else {
+			vector.setX(vector.getX() * -1);
+		}
+
+		vector.setMagnitude(vector.getMagnitude() * restitution);
 	}
 
 	/**

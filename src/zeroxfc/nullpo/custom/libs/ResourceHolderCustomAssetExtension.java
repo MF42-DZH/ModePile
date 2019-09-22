@@ -41,7 +41,6 @@ import mu.nu.nullpo.gui.swing.*;
 import org.newdawn.slick.Graphics;
 import sdljava.mixer.MixMusic;
 import sdljava.mixer.SDLMixer;
-// import sdljava.SDLException;
 import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
 

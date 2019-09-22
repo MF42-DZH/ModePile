@@ -58,6 +58,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 	private ArrayList<int[]> pCoordList;
 	private Piece cPiece;
 
+	private FieldScatter fs = null;
+
 	/*
 	 * Initialization
 	 */
@@ -127,6 +129,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		} else if (!owner.replayMode) {
 			if (playerProperties.isLoggedIn()) loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
 		}
+
+		if (owner.replayMode) fs = null;
 	}
 
 	/*
@@ -324,6 +328,11 @@ public class ThrowawayTestMode extends MarathonModeBase {
 
 			HIbg.update();
 		}
+
+		if (fs != null) fs.update();
+		if (fs != null) if (fs.shouldNull()) fs = null;
+
+		if (engine.quitflag) fs = null;
 	}
 
 	/*
@@ -508,6 +517,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		// backgroundCircularRipple.modifyValues(null, null, null, null, null);
 
 		if((engine.statistics.lines >= tableGameClearLines[goaltype]) && (tableGameClearLines[goaltype] >= 0)) {
+			fs = new FieldScatter(receiver, engine, playerID);
+
 			// Ending
 			engine.ending = 1;
 			engine.gameEnded();
@@ -605,9 +616,11 @@ public class ThrowawayTestMode extends MarathonModeBase {
 			receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
 
-			if (playerProperties.isLoggedIn()) {
-				receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
-				receiver.drawScoreFont(engine, playerID, 0, 16, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+			if (playerProperties != null) {
+				if (playerProperties.isLoggedIn()) {
+					receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, 16, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+				}
 			}
 
 			// if (engine.field != null) GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, baseX + 80, baseY, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, String.format("%.2f", FieldManipulation.fieldCompare(engine.field, T_SHAPE) * 100) + "%", 0, 1f);
@@ -694,6 +707,8 @@ public class ThrowawayTestMode extends MarathonModeBase {
 				if ((lastcombo >= 2) && (lastevent != EVENT_TSPIN_ZERO_MINI) && (lastevent != EVENT_TSPIN_ZERO))
 					receiver.drawMenuFont(engine, playerID, 2, 22, (lastcombo - 1) + "COMBO", EventReceiver.COLOR_CYAN);
 			}
+
+			if (fs != null) fs.draw(receiver, engine, playerID);
 		} else {
 			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		}
@@ -709,6 +724,9 @@ public class ThrowawayTestMode extends MarathonModeBase {
  			int diff = engine.statistics.score - 350000;
  			if (Math.abs(diff) <= 50000) close = true;
  			if (diff >= 0) p = 0;
+
+ 			if (!close) passframe = 450;
+
  			es = new ExamSpinner("AMAZING!", "CONGRATULATIONS", "WIN", new String[] { "YES", "NO" }, p, close);
  		}
 		return false;
