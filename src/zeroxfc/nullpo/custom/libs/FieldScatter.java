@@ -9,7 +9,7 @@ import java.util.Random;
 
 public class FieldScatter {
 	/** Gravity */
-	private static final DoubleVector GRAVITY = new DoubleVector(0, 1d / 3d, false);
+	private static final DoubleVector GRAVITY = new DoubleVector(0, 1d / 6d, false);
 
 	/** Blocks to draw */
 	private ArrayList<PhysicsObject> blocks;
