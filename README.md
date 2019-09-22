@@ -12,7 +12,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Colour Power_ - A marathon mode where clearing lines using pieces of different colours nets you different power-ups.
 * _Collapse_ - A clone of Super Collapse II's Traditional mode.
 * _Express Shipping_ - A clone of the space-filling game Puzzle Express by HipSoft.
-* _EX Reborn_ - A clone of Tetris-EX.
+* _EX Reborn_ - A clone of \*\*\*ris-EX.
 * _Firework Challenge_ - An inaccurate version of Tetris the Grand Master 3's Easy mode.
 * _Gem Swap_ (incomplete; on hold) - A generic match-3 game.
 * _Idiot% Mode_ - A mode inspired by [this video](https://www.youtube.com/watch?v=omaDz_w4cgg) where it emulates the TGM style of play, but normal line clears are next-to-worthless but spin line clears are boosted to be better than normal.
@@ -77,6 +77,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 
 * Deltarune Assets (*Jevil image, The World Revolving*) - Toby Fox
 * Super Collapse II Assets (_SFX_) - Super Collapse II, released by GameHouse
+* [Sega \*\*\*ris Music](https://drive.google.com/file/d/1hHB-PVj2r7-KFm0TzolQaDeaOh-9s88_/view) - Sega
 
 ## Special Thanks
 
