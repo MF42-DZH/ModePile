@@ -769,8 +769,10 @@ public class ResourceHolderCustomAssetExtension {
 				if(!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
 
 				for (Music s : ResourceHolder.bgm) {
-					s.pause();
-					s.stop();
+					if (s != null) {
+						s.pause();
+						s.stop();
+					}
 				}
 
 				return;
