@@ -39,7 +39,11 @@ import zeroxfc.nullpo.custom.libs.ValueWrapper;
 
 import java.util.Random;
 
-public class BackgroundTGM3Style extends AnimatedBackgroundHook {
+public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
+	/*
+	 * note: screw slick's image rotation function.
+	 */
+
 	// private static final int MAX_ROTATED_SCREEN_REQUIREMENT = (int)Math.ceil(Math.sin(45) * (640 + 480));
 
 	private static final double MIN_ANGLE = -60d, MAX_ANGLE = 60d;
@@ -85,7 +89,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		hasUpdated = true;
 	}
 
-	public BackgroundTGM3Style(String filePath, Random valueRandomiser) {
+	public BackgroundTGM3StyleNoRotation(String filePath, Random valueRandomiser) {
 		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage(filePath, imageName);
 		customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");
@@ -104,7 +108,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		log.debug("TGM3-Style background created (File Path: " + filePath + ").");
 	}
 
-	public BackgroundTGM3Style(String filePath, long seed) {
+	public BackgroundTGM3StyleNoRotation(String filePath, long seed) {
 		customHolder = new ResourceHolderCustomAssetExtension();
 		customHolder.loadImage(filePath, imageName);
 		customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");

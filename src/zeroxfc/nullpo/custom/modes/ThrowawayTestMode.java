@@ -15,7 +15,7 @@ import java.util.ArrayList;
 public class ThrowawayTestMode extends MarathonModeBase {
 	private int initialBG, initialFadeBG;
 	// private BackgroundCircularRipple backgroundCircularRipple;
-	private BackgroundTGM3Style TIbg;
+	private BackgroundTGM3StyleNoRotation TIbg;
 	// private BackgroundInterlaceHorizontal HIbg;
 	private ExamSpinner es;
 	private int passframe;
@@ -115,7 +115,7 @@ public class ThrowawayTestMode extends MarathonModeBase {
 		}
 
 		// backgroundCircularRipple = new BackgroundCircularRipple(engine, startlevel,8, 8,320, 240, 40f, 12,-1,1f,0.75f);
-		TIbg = new BackgroundTGM3Style("res/graphics/bg0000.png", 4);
+		TIbg = new BackgroundTGM3StyleNoRotation("res/graphics/bg0000.png", 4);
 		// HIbg = new BackgroundInterlaceHorizontal(startlevel,2, 60, 1f, 0.075f, true, false);
 		passframe = 0;
 
