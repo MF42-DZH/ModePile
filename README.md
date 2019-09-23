@@ -13,7 +13,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Collapse_ - A clone of Super Collapse II's Traditional mode.
 * _Express Shipping_ - A clone of the space-filling game Puzzle Express by HipSoft.
 * _EX Reborn_ - A clone of \*\*\*ris-EX.
-* _Firework Challenge_ - An inaccurate version of Tetris the Grand Master 3's Easy mode.
+* _Firework Challenge_ - An inaccurate version of \*\*\*ris the Grand Master 3's Easy mode.
 * _Gem Swap_ (incomplete; on hold) - A generic match-3 game.
 * _Idiot% Mode_ - A mode inspired by [this video](https://www.youtube.com/watch?v=omaDz_w4cgg) where it emulates the TGM style of play, but normal line clears are next-to-worthless but spin line clears are boosted to be better than normal.
 * _Joker_ - A mode that approximates the JOKER mode from DTET.
@@ -21,7 +21,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Minesweeper_ - It's Minesweeper. What else is there to say?
 * _Mission Mode_ - Play a marathon mode, but it asks you to clear Puyo-Puyo-styled missions.
 * _Pong_ - A single-player Pong clone.
-* _Scanline_ - Inspired by Scanner mode on [\*\*\*ris for the PSP Mini](https://harddrop.com/wiki/Tetris_(PSP_Mini)) and [Tetris Pop](https://harddrop.com/wiki/Tetris_Pop).
+* _Scanline_ - Inspired by Scanner mode on [\*\*\*ris for the PSP Mini](https://harddrop.com/wiki/Tetris_(PSP_Mini)) and [\*\*\*ris Pop](https://harddrop.com/wiki/Tetris_Pop).
 * _Score Trial_ - An approximation of the SCORE ATTACK modes in DTET.
 * _Shadow Marahton_ - Build your own pieces in this extended Marathon.
 * _Single Death Marathon_ - Marathon, but the pieces queue up to become big.
@@ -77,7 +77,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 
 * Deltarune Assets (*Jevil image, The World Revolving*) - Toby Fox
 * Super Collapse II Assets (_SFX_) - Super Collapse II, released by GameHouse
-* [Sega \*\*\*ris Music](https://drive.google.com/file/d/1hHB-PVj2r7-KFm0TzolQaDeaOh-9s88_/view) - Sega
+* Sega \*\*\*ris Music - Sega
 
 ## Contributors
 
