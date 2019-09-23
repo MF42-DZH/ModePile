@@ -21,6 +21,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Minesweeper_ - It's Minesweeper. What else is there to say?
 * _Mission Mode_ - Play a marathon mode, but it asks you to clear Puyo-Puyo-styled missions.
 * _Pong_ - A single-player Pong clone.
+* _Retro Marathon 2_ - A mode based on *Sega \*\*\*ris '99*
 * _Scanline_ - Inspired by Scanner mode on [\*\*\*ris for the PSP Mini](https://harddrop.com/wiki/Tetris_(PSP_Mini)) and [\*\*\*ris Pop](https://harddrop.com/wiki/Tetris_Pop).
 * _Score Trial_ - An approximation of the SCORE ATTACK modes in DTET.
 * _Shadow Marahton_ - Build your own pieces in this extended Marathon.
@@ -36,6 +37,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _DynamicReactiveSound_ (incomplete; on hold) - Generates and plays PCM samples on the fly.
 * _ExamSpinner_ - TI-style spinner like the one used during Promotion Exam results.
 * _FieldManipulation_ - Adds and fixes methods for dealing with the game's _Field_ type.
+* _FieldScatter_ - A 2D implementation of Sega \*\*\*ris '99's block explosion.
 * _FlyInOutText_ - Adds text objects that can fly into the screen from the outside, linger, then return to their starting positions before disappearing.
 * _GameTextUtilities_ - Adds methods for coloured text and other random text / text obfuscation methods.
 * _Interpolation_ - Linear interpolation functions.
@@ -79,11 +81,11 @@ Requires the above to compile and run. The "res" directory in the "required file
 * Super Collapse II Assets (_SFX_) - Super Collapse II, released by GameHouse
 * Sega \*\*\*ris Music - Sega
 
-## Contributors
+## Main Contributors
 
-* 0xFC963F18DC21
-* MandL27
-* ry00001
+* 0xFC963F18DC21 (as [Shots243](https://github.com/Shots243))
+* [MandL27](https://github.com/MandL27)
+* [ry00001](https://github.com/ry00001)
 
 ## Special Thanks
 

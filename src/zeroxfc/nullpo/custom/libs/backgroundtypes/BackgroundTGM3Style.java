@@ -40,11 +40,11 @@ import zeroxfc.nullpo.custom.libs.ValueWrapper;
 import java.util.Random;
 
 public class BackgroundTGM3Style extends AnimatedBackgroundHook {
-	private static final int MAX_ROTATED_SCREEN_REQUIREMENT = (int)Math.ceil(Math.sin(45) * (640 + 480));
+	// private static final int MAX_ROTATED_SCREEN_REQUIREMENT = (int)Math.ceil(Math.sin(45) * (640 + 480));
 
 	private static final double MIN_ANGLE = -60d, MAX_ANGLE = 60d;
 	private static final int MIN_TRAVEL_TIME = 600, MAX_TRAVEL_TIME = 1800;
-	private static final float MIN_SCALE = 1f, MAX_SCALE = 4f;
+	private static final float MIN_SCALE = 1.5f, MAX_SCALE = 4f;
 
 	/**
 	 * Inside each instance:
@@ -164,13 +164,13 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		int[] differences;
 
 		if (holderType == HOLDER_SLICK) {
-			differences = new int[] { (int)sizeX - MAX_ROTATED_SCREEN_REQUIREMENT, (int)sizeY - MAX_ROTATED_SCREEN_REQUIREMENT };
+			differences = new int[] { (int)Math.min(imgDim[0] * ns, imgDim[1] * ns) - 640, (int)Math.min(imgDim[0] * ns, imgDim[1] * ns) - 480 };
 		} else {
 			differences = new int[] { imgDim[0] - 640, imgDim[1] - 480 };
 		}
 
-		differences[0] /= 4;
-		differences[1] /= 4;
+		differences[0] /= 2;
+		differences[1] /= 2;
 		differences[0] *= targetValues.valueFloat; differences[1] *= targetValues.valueFloat;
 
 		// Set new target pan
@@ -266,11 +266,9 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		}
 
 		/*
-		 * TODO:
-		 *  - calculate the new "size" where it is basically the size of the smallest non-rotated rectangle that can inscribe the new image
+		 * Calculate the new "size" where it is basically the size of the smallest non-rotated rectangle that can inscribe the new image
 		 */
-
-		customHolder.drawImage(engine, imageName, currentPan[0] - ((imgDim[0] / 2) - (int)(320 * currentValues.valueFloat)), currentPan[1] - ((imgDim[1] / 2) - (int)(240 * currentValues.valueFloat)), imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255, 0);
+		customHolder.drawImage(engine, imageName, currentPan[0] + 320 - (int)(sizeX / 2), currentPan[1] + 240 - (int)(sizeY / 2), imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255, 0);
 	}
 
 	@Override

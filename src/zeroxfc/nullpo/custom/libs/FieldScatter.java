@@ -24,7 +24,7 @@ public class FieldScatter {
 	 * @param playerID  Current player ID.
 	 */
 	public FieldScatter(EventReceiver receiver, GameEngine engine, int playerID) {
-		/** Direction randomiser */
+		// Direction randomiser
 		Random rdm = new Random(engine.randSeed + engine.statistics.time);
 		lifeTime = 0;
 
