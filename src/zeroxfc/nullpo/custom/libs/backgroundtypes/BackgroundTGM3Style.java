@@ -94,7 +94,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		this.valueRandomiser = valueRandomiser;
 
 		int[] imgDim = customHolder.getImageDimensions(imageName);
-		if (holderType == HOLDER_SLICK) customHolder.setRotationCentre(imageName,(float)imgDim[0] / 2, (float)imgDim[1] / 2);
+		// if (holderType == HOLDER_SLICK) customHolder.setRotationCentre(imageName,(float)imgDim[0] / 2, (float)imgDim[1] / 2);
 
 		sizeX = imgDim[0];
 		sizeY = imgDim[1];
@@ -113,7 +113,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		this.valueRandomiser = new Random(seed);
 
 		int[] imgDim = customHolder.getImageDimensions(imageName);
-		if (holderType == HOLDER_SLICK) customHolder.setRotationCentre(imageName,(float)imgDim[0] / 2, (float)imgDim[1] / 2);
+		// if (holderType == HOLDER_SLICK) customHolder.setRotationCentre(imageName,(float)imgDim[0] / 2, (float)imgDim[1] / 2);
 
 		sizeX = imgDim[0];
 		sizeY = imgDim[1];
@@ -124,7 +124,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 	}
 
 	/**
-	 * Sets a new target rotation and panning location for the background image.
+	 * Sets a new panning location for the background image.
 	 * Rather complex and somewhat heavy.
 	 */
 	private void setNewTarget() {
@@ -139,14 +139,12 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		// Set new time limit
 		targetValues.valueInt = valueRandomiser.nextInt(MAX_TRAVEL_TIME - MIN_TRAVEL_TIME + 1) + MIN_TRAVEL_TIME;
 
-		if (holderType == HOLDER_SLICK) {
-			// Set new rotation
-			targetValues.valueDouble = (valueRandomiser.nextDouble() * (MAX_ANGLE - MIN_ANGLE)) + MIN_ANGLE;
-		}
+		//  (holderType == HOLDER_SLICK) {
+		// 	// Set new rotation
+		// 	targetValues.valueDouble = (valueRandomiser.nextDouble() * (MAX_ANGLE - MIN_ANGLE)) + MIN_ANGLE;
+		//
 
 		int[] imgDim = customHolder.getImageDimensions(imageName);
-		sizeX = (imgDim[1] * Math.sin(Math.toRadians(targetValues.valueDouble))) + (imgDim[0] * Math.cos(Math.toRadians(targetValues.valueDouble)));
-		sizeY = (imgDim[1] * Math.cos(Math.toRadians(targetValues.valueDouble))) + (imgDim[0] * Math.sin(Math.toRadians(targetValues.valueDouble)));
 
 		// Set new scale
 		float ns;
@@ -155,36 +153,32 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		} while (!almostEqual(ns, currentValues.valueFloat, 1f));
 		targetValues.valueFloat = ns;
 
-		sizeX *= ns;
-		sizeY *= ns;
-
 		// Find max pan from centre
 		// int[] imgDim = customHolder.getImageDimensions(imageName);
 
 		int[] differences;
 
-		if (holderType == HOLDER_SLICK) {
-			differences = new int[] { (int)Math.min(imgDim[0] * ns, imgDim[1] * ns) - 640, (int)Math.min(imgDim[0] * ns, imgDim[1] * ns) - 480 };
-		} else {
-			differences = new int[] { imgDim[0] - 640, imgDim[1] - 480 };
-		}
+		// if (holderType == HOLDER_SLICK) {
+		// 	differences = new int[] { (int)Math.min(imgDim[0] * ns, imgDim[1] * ns) - 640, (int)Math.min(imgDim[0] * ns, imgDim[1] * ns) - 480 };
+		// } else {
+			differences = new int[] {(int) (imgDim[0] * ns - 640), (int) (imgDim[1] * ns - 480)};
+		// }
 
 		differences[0] /= 2;
 		differences[1] /= 2;
-		differences[0] *= targetValues.valueFloat; differences[1] *= targetValues.valueFloat;
 
 		// Set new target pan
-		double r = (differences[0] * differences[1]) / Math.sqrt( (differences[0] * differences[0] * Math.sin(targetValues.valueDouble) * Math.sin(targetValues.valueDouble)) + (differences[1] * differences[1] * Math.cos(targetValues.valueDouble) * Math.cos(targetValues.valueDouble)) );
+		// double r = (differences[0] * differences[1]) / Math.sqrt( (differences[0] * differences[0] * Math.sin(targetValues.valueDouble) * Math.sin(targetValues.valueDouble)) + (differences[1] * differences[1] * Math.cos(targetValues.valueDouble) * Math.cos(targetValues.valueDouble)) );
 		double coefficientX, coefficientY;
-		do {
+		// do {
 			coefficientX = (valueRandomiser.nextDouble() - 0.5d) * 2;
 			coefficientY = (valueRandomiser.nextDouble() - 0.5d) * 2;
 
 			targetPan[0] = (int) (differences[0] * coefficientX);
 			targetPan[1] = (int) (differences[1] * coefficientY);
-		} while (
-				Math.sqrt(Math.pow(targetPan[0], 2) + Math.pow(targetPan[1], 2)) > r
-		);
+		// } while (
+		// 		Math.sqrt(Math.pow(targetPan[0], 2) + Math.pow(targetPan[1], 2)) > r
+		// );
 	}
 
 	public void setSeed(long seed) {
@@ -202,14 +196,20 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		} else {
 			double t = (double)currentValues.valueInt / (double)targetValues.valueInt;
 
-			if (holderType == HOLDER_SLICK) {
-				currentValues.valueDouble = Interpolation.lerp(lastValues.valueDouble, targetValues.valueDouble, t);
-				customHolder.setRotation(imageName, currentValues.valueDouble.floatValue());
-			}
-			currentValues.valueFloat = Interpolation.lerp(lastValues.valueFloat, targetValues.valueFloat, t);
+			// if (holderType == HOLDER_SLICK) {
+			// 	currentValues.valueDouble = Interpolation.sineStep(lastValues.valueDouble, targetValues.valueDouble, t);
+			// 	customHolder.setRotation(imageName, currentValues.valueDouble.floatValue());
+			// }
+			currentValues.valueFloat = (float) Interpolation.sineStep(lastValues.valueFloat, targetValues.valueFloat, t);
 
-			currentPan[0] = Interpolation.lerp(lastPan[0], targetPan[0], t);
-			currentPan[1] = Interpolation.lerp(lastPan[1], targetPan[1], t);
+			// int[] imgDim = customHolder.getImageDimensions(imageName);
+			// sizeX = (imgDim[1] * Math.sin(Math.toRadians(currentValues.valueDouble))) + (imgDim[0] * Math.cos(Math.toRadians(currentValues.valueDouble)));
+			// sizeY = (imgDim[1] * Math.cos(Math.toRadians(currentValues.valueDouble))) + (imgDim[0] * Math.sin(Math.toRadians(currentValues.valueDouble)));
+			// sizeX *= currentValues.valueFloat;
+			// sizeY *= currentValues.valueFloat;
+
+			currentPan[0] = (int) Interpolation.sineStep(lastPan[0], targetPan[0], t);
+			currentPan[1] = (int) Interpolation.sineStep(lastPan[1], targetPan[1], t);
 		}
 
 		if (dimTimer > 0) changeImage();
@@ -220,7 +220,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		if (dimTimer == 15) {
 			int[] dim = customHolder.getImageDimensions("transitory");
 			customHolder.copyImage("transitory", imageName);
-			if (holderType == HOLDER_SLICK) customHolder.setRotationCentre(imageName,(float)dim[0] / 2, (float)dim[1] / 2);
+			// if (holderType == HOLDER_SLICK) customHolder.setRotationCentre(imageName,(float)dim[0] / 2, (float)dim[1] / 2);
 			reset();
 		}
 	}
@@ -268,7 +268,7 @@ public class BackgroundTGM3Style extends AnimatedBackgroundHook {
 		/*
 		 * Calculate the new "size" where it is basically the size of the smallest non-rotated rectangle that can inscribe the new image
 		 */
-		customHolder.drawImage(engine, imageName, currentPan[0] + 320 - (int)(sizeX / 2), currentPan[1] + 240 - (int)(sizeY / 2), imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255, 0);
+		customHolder.drawImage(engine, imageName, currentPan[0] + 320 - (imgDim[0] / 2), currentPan[1] + 240 - (imgDim[1] / 2), imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255, 0);
 	}
 
 	@Override

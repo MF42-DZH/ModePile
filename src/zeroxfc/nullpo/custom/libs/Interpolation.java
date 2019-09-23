@@ -194,8 +194,8 @@ public class Interpolation {
 	 * @return Interpolated value as <code>double</code>
 	 */
 	public static double sineStep(double v0, double v1, double interpVal) {
-		final double OFFSET = Math.PI / 4d;
-		final double t = (Math.sin((-1d * OFFSET) + interpVal * OFFSET) + 1d) / 2d;
+		final double OFFSET = Math.PI / 2d;
+		final double t = (Math.sin((-1d * OFFSET) + (interpVal * OFFSET * 2)) + 1d) / 2d;
 
 		return (1.0 - t) * v0 + v1 * t;
 	}
