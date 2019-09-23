@@ -258,6 +258,45 @@ public class FieldManipulation {
 	}
 
 	/**
+	 * Erases a mino in every filled line on a field.
+	 * @param receiver Renderer to use
+	 * @param engine Current GameEngine
+	 * @param playerID Current player ID
+	 * @param field Field to shoot
+	 * @param random Random instance to use
+	 */
+	public static void shotgunField(EventReceiver receiver, GameEngine engine, int playerID, Field field, Random random) {
+		for (int y = field.getHiddenHeight() * -1; y < field.getHeight(); y++) {
+			boolean allEmpty = true;
+			ArrayList<Integer> spaces = new ArrayList<>();
+
+			for (int x = 0; x < field.getWidth(); x++) {
+				Block blk = field.getBlock(x, y);
+				if (blk != null) {
+					if (blk.color > Block.BLOCK_COLOR_NONE) {
+						allEmpty = false;
+						spaces.add(x);
+					}
+				}
+			}
+
+			if (!allEmpty) {
+				while (true) {
+					int x = spaces.get(random.nextInt(spaces.size()));
+					Block blk = field.getBlock(x, y);
+					if (blk != null) {
+						if (blk.color > Block.BLOCK_COLOR_NONE) {
+							receiver.blockBreak(engine, playerID, x, y,blk);
+							blk.color = Block.BLOCK_COLOR_NONE;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * <p>Randomises the column order in a field.</p>
 	 * Requires a random seed. For consistency, try <code>(engine.randSeed + engine.statistics.time)</code>.
 	 * @param field Field to randomise columns

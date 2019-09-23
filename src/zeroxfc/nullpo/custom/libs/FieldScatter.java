@@ -25,7 +25,7 @@ public class FieldScatter {
 	 */
 	public FieldScatter(EventReceiver receiver, GameEngine engine, int playerID) {
 		/** Direction randomiser */
-		Random rdm = new Random(engine.randSeed);
+		Random rdm = new Random(engine.randSeed + engine.statistics.time);
 		lifeTime = 0;
 
 		Block eBlock = new Block(0, engine.getSkin());
@@ -57,6 +57,46 @@ public class FieldScatter {
 	}
 
 	/**
+	 * Makes a new field explostion.
+	 * @param receiver  Renderer to draw with.
+	 * @param engine    Current GameEngine.
+	 * @param playerID  Current player ID.
+	 */
+	public FieldScatter(EventReceiver receiver, GameEngine engine, int playerID, ArrayList<int[]> fieldBlockLocations) {
+		/** Direction randomiser */
+		Random rdm = new Random(engine.randSeed + engine.statistics.time);
+		lifeTime = 0;
+
+		Block eBlock = new Block(0, engine.getSkin());
+		blocks = new ArrayList<>();
+		for (int[] loc : fieldBlockLocations) {
+			int j = loc[0];
+			int i = loc[1];
+
+			// Generate object array.
+			Block blk = engine.field.getBlock(j, i);
+			if (blk.color > 0) {
+				blocks.add(new PhysicsObject(
+
+						new DoubleVector(
+								receiver.getFieldDisplayPositionX(engine, playerID) + 4 + j * 16,
+								receiver.getFieldDisplayPositionY(engine, playerID) + 52 + i * 16,
+								false
+						),
+						new DoubleVector(
+								rdm.nextDouble() * 8, rdm.nextDouble() * Math.PI * 2, true
+						),
+						-1, 1, 1, PhysicsObject.ANCHOR_POINT_TL, blk.color
+				));
+
+				receiver.blockBreak(engine, playerID, j, i, blk);
+
+				blk.copy(eBlock);
+			}
+		}
+	}
+
+	/**
 	 * Updates the life cycle of the explosion.
 	 */
 	public void update() {
@@ -67,9 +107,9 @@ public class FieldScatter {
 
 			pho.move();
 
-			if (pho.position.getY() > 464) {
+			if (pho.position.getY() > 465) {
 				PhysicsObject.reflectVelocityWithRestitution(pho.velocity, true, 0.75);
-				while (pho.position.getY() > 464) pho.move();
+				while (pho.position.getY() > 465) pho.move();
 			}
 			pho.velocity = DoubleVector.add(pho.velocity, GRAVITY);
 		}

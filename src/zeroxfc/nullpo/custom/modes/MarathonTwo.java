@@ -232,6 +232,9 @@ public class MarathonTwo extends MarathonModeBase {
 	private int[][] rankingLinesPlayer;
 	private String PLAYER_NAME;
 
+	/** Field scattering effect */
+	private FieldScatter fs = null;
+
 	/** The good hard drop effect */
 	private ArrayList<int[]> pCoordList;
 	private Piece cPiece;
@@ -754,9 +757,30 @@ public class MarathonTwo extends MarathonModeBase {
 					}
 				}
 			}
+
+			if (engine.statistics.lines < 100) fs = new FieldScatter(receiver, engine, playerID);
 		}
 
 		return false;
+	}
+
+	@Override
+	public void renderGameOver(GameEngine engine, int playerID) {
+		if (engine.statistics.lines >= 100) {
+			for (int y = 0; y < 480 / 32; y++) {
+				for (int x = 0; x < 640 / 32; x++) {
+					receiver.drawSingleBlock(engine, playerID,
+							(32 * x), (32 * y),Block.BLOCK_COLOR_GRAY,
+							0,false, 1f,1f, 2f);
+				}
+			}
+			for (int i = 0; i < 480 / 16; i++) {
+				StringBuilder sb = new StringBuilder();
+				long seed = (System.nanoTime() + i) * ((long)engine.statistics.time - i);
+				sb.append(GameTextUtilities.randomString(640 / 16, new Random(seed))).append("\n");
+				GameTextUtilities.drawRandomRainbowDirectString(receiver, engine, playerID, 0, i * 16, sb.toString(), new Random(seed + (i * i)), 1f);
+			}
+		}
 	}
 
 	@Override
@@ -1070,6 +1094,8 @@ public class MarathonTwo extends MarathonModeBase {
 			}
 		}
 
+		if (fs != null) fs.draw(receiver, engine, playerID);
+
 		// NET: Number of spectators
 		netDrawSpectatorsCount(engine, 0, 18);
 		// NET: All number of players
@@ -1184,6 +1210,7 @@ public class MarathonTwo extends MarathonModeBase {
 								Block blk = engine.field.getBlock(x, y);
 								if (blk != null) {
 									if (blk.color > Block.BLOCK_COLOR_NONE) {
+										receiver.blockBreak(engine, playerID, x, y, blk);
 										blk.color = Block.BLOCK_COLOR_NONE;
 										break;
 									}
@@ -1373,6 +1400,11 @@ public class MarathonTwo extends MarathonModeBase {
 				engine.playSE("change");
 			}
 		}
+
+		if (fs != null) fs.update();
+		if (fs != null) if (fs.shouldNull()) fs = null;
+
+		if (engine.quitflag) fs = null;
 
 		if (engine.quitflag) {
 			playerProperties = new ProfileProperties(headerColour);

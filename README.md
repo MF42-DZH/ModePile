@@ -79,6 +79,12 @@ Requires the above to compile and run. The "res" directory in the "required file
 * Super Collapse II Assets (_SFX_) - Super Collapse II, released by GameHouse
 * [Sega \*\*\*ris Music](https://drive.google.com/file/d/1hHB-PVj2r7-KFm0TzolQaDeaOh-9s88_/view) - Sega
 
+## Contributors
+
+* 0xFC963F18DC21
+* MandL27
+* ry00001
+
 ## Special Thanks
 
 * Oshisaure - A main inspiration for starting this modding project, a code design helper and motivator to allow this to continue.

@@ -374,7 +374,7 @@ public class Scanline extends MarathonModeBase {
 				int locY = sy - (int)((16 * engine.field.getHeight()) * ((float)engine.statc[0] / scanLength)) - 16;
 				
 				for (int i = 0; i < lineLocations.length; i++) {
-					if (lineLocations[i]) receiver.drawMenuFont(engine, playerID, 0, i-3, new String(new char[engine.field.getWidth()]).replace("\0", "e"), EventReceiver.COLOR_RED);
+					if (lineLocations[i]) receiver.drawMenuFont(engine, playerID, 0, i - engine.field.getHiddenHeight(), new String(new char[engine.field.getWidth()]).replace("\0", "e"), EventReceiver.COLOR_RED);
 				}
 				
 				for (int i = 0; i < engine.field.getWidth(); i++) {
@@ -524,8 +524,8 @@ public class Scanline extends MarathonModeBase {
 			// engine.statCustom();
 			return true;
 		} else if (!interrupted) {
+			engine.statc[1] = engine.getARE();
 			engine.stat = GameEngine.STAT_ARE;
-			engine.resetStatc();
 			// engine.statARE();
 			return true;
 		} else {
