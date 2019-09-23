@@ -5,6 +5,7 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 public class FieldScatter {
@@ -58,9 +59,10 @@ public class FieldScatter {
 
 	/**
 	 * Makes a new field explostion.
-	 * @param receiver  Renderer to draw with.
-	 * @param engine    Current GameEngine.
-	 * @param playerID  Current player ID.
+	 * @param receiver             Renderer to draw with.
+	 * @param engine               Current GameEngine.
+	 * @param playerID             Current player ID.
+	 * @param fieldBlockLocations  Blocck locations.
 	 */
 	public FieldScatter(EventReceiver receiver, GameEngine engine, int playerID, ArrayList<int[]> fieldBlockLocations) {
 		/** Direction randomiser */
@@ -97,11 +99,22 @@ public class FieldScatter {
 	}
 
 	/**
+	 * Makes a new field explostion.
+	 * @param receiver             Renderer to draw with.
+	 * @param engine               Current GameEngine.
+	 * @param playerID             Current player ID.
+	 * @param fieldBlockLocations  Blocck locations.
+	 */
+	public FieldScatter(EventReceiver receiver, GameEngine engine, int playerID, int[][] fieldBlockLocations) {
+		this(receiver, engine, playerID, (ArrayList<int[]>)Arrays.asList(fieldBlockLocations));
+	}
+
+	/**
 	 * Updates the life cycle of the explosion.
 	 */
 	public void update() {
 		if (shouldNull()) return;
-		for (PhysicsObject pho : blocks) {
+		for (PhysicsObject pho /* NOTE: Delicious */ : blocks) {
 //			if ((pho.position.getX() <= -16 || pho.position.getX() > 640)) continue;
 //			if ((pho.position.getY() > 460 && Math.abs(pho.velocity.getMagnitude()) < 0.0001)) continue;
 
