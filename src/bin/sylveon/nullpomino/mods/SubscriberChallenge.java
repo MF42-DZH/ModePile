@@ -42,7 +42,7 @@ import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
-
+import zeroxfc.nullpo.custom.libs.Interpolation;
 import java.util.Random;
 
 /**
@@ -127,6 +127,8 @@ public class SubscriberChallenge extends NetDummyMode {
 	public int subscriber; // BRO! YOU JUST POSTED T-SPIN! YOU ARE GOING TO GAIN SUBSCRIBER!
 	public Random subscriberRNG = new Random();
 
+	public int lastValue;
+
 	/** Flag for enabling wallkick T-Spins */
 	public boolean enableTSpinKick;
 
@@ -185,6 +187,8 @@ public class SubscriberChallenge extends NetDummyMode {
 		lastcombo = 0;
 		lastpiece = 0;
 		bgmlv = 0;
+		lastValue = 0;
+		scgettime = 120;
 
 		rankingRank = -1;
 		rankingScore = new int[RANKING_TYPE][RANKING_MAX];
@@ -370,6 +374,8 @@ public class SubscriberChallenge extends NetDummyMode {
 	@Override
 	public void startGame(GameEngine engine, int playerID) {
 		engine.statistics.level = startlevel;
+		scgettime = 120;
+		lastValue = 0;
 		engine.statistics.levelDispAdd = 1;
 		engine.b2bEnable = enableB2B;
 		if(enableCombo == true) {
@@ -432,14 +438,12 @@ public class SubscriberChallenge extends NetDummyMode {
 				}
 			}
 		} else {
-			receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
-			String strScore;
-			if((lastscore == 0) || (scgettime >= 120)) {
-				strScore = String.valueOf(engine.statistics.score);
+			receiver.drawScoreFont(engine, playerID, 0, 3, "SUBSCRIBER", EventReceiver.COLOR_BLUE);
+			if (scgettime < 120) {
+				receiver.drawScoreFont(engine, playerID, 0, 4, String.valueOf(Interpolation.lerp(lastValue, subscriber, scgettime/120d)));
 			} else {
-				strScore = String.valueOf(engine.statistics.score) + "(+" + String.valueOf(lastscore) + ")";
+				receiver.drawScoreFont(engine, playerID, 0, 4, String.valueOf(subscriber));
 			}
-			receiver.drawScoreFont(engine, playerID, 0, 4, strScore);
 
 			receiver.drawScoreFont(engine, playerID, 0, 6, "LINE", EventReceiver.COLOR_BLUE);
 			if((engine.statistics.level >= 19) && (tableGameClearLines[goaltype] < 0))
@@ -450,11 +454,9 @@ public class SubscriberChallenge extends NetDummyMode {
 			receiver.drawScoreFont(engine, playerID, 0, 9, "LEVEL", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 10, String.valueOf(engine.statistics.level + 1));
 
-			receiver.drawScoreFont(engine, playerID, 0, 12, "SUBSCRIBER", EventReceiver.COLOR_BLUE);
-			receiver.drawScoreFont(engine, playerID, 0, 13, String.valueOf(subscriber));
 
-			receiver.drawScoreFont(engine, playerID, 0, 15, "TIME", EventReceiver.COLOR_BLUE);
-			receiver.drawScoreFont(engine, playerID, 0, 16, GeneralUtil.getTime(engine.statistics.time));
+			receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
+			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
 
 			if((lastevent != EVENT_NONE) && (scgettime < 120)) {
 				String strPieceName = Piece.getPieceName(lastpiece);
@@ -473,40 +475,32 @@ public class SubscriberChallenge extends NetDummyMode {
 				case EVENT_FOUR:
 					if(lastb2b) receiver.drawMenuFont(engine, playerID, 3, 21, "FOUR", EventReceiver.COLOR_RED);
 					else receiver.drawMenuFont(engine, playerID, 3, 21, "FOUR", EventReceiver.COLOR_ORANGE);
-					subscriber += subscriberRNG.nextInt(20)+30;
 					break;
 				case EVENT_TSPIN_ZERO_MINI:
 					receiver.drawMenuFont(engine, playerID, 2, 21, strPieceName + "-SPIN", EventReceiver.COLOR_PURPLE);
-					subscriber += 3;
 					break;
 				case EVENT_TSPIN_ZERO:
 					receiver.drawMenuFont(engine, playerID, 2, 21, strPieceName + "-SPIN", EventReceiver.COLOR_PINK);
-					subscriber += 5;
 					break;
 				case EVENT_TSPIN_SINGLE_MINI:
 					if(lastb2b) receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-S", EventReceiver.COLOR_RED);
 					else receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-S", EventReceiver.COLOR_ORANGE);
-					subscriber += subscriberRNG.nextInt(10)+20;
 					break;
 				case EVENT_TSPIN_SINGLE:
 					if(lastb2b) receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-SINGLE", EventReceiver.COLOR_RED);
 					else receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-SINGLE", EventReceiver.COLOR_ORANGE);
-					subscriber += subscriberRNG.nextInt(20)+20;
 					break;
 				case EVENT_TSPIN_DOUBLE_MINI:
 					if(lastb2b) receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-D", EventReceiver.COLOR_RED);
 					else receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-D", EventReceiver.COLOR_ORANGE);
-					subscriber += subscriberRNG.nextInt(30)+20;
 					break;
 				case EVENT_TSPIN_DOUBLE:
 					if(lastb2b) receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-DOUBLE", EventReceiver.COLOR_RED);
 					else receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-DOUBLE", EventReceiver.COLOR_ORANGE);
-					subscriber += subscriberRNG.nextInt(30)+20;
 					break;
 				case EVENT_TSPIN_TRIPLE:
 					if(lastb2b) receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-TRIPLE", EventReceiver.COLOR_RED);
 					else receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-TRIPLE", EventReceiver.COLOR_ORANGE);
-					subscriber += subscriberRNG.nextInt(40)+50;
 					break;
 				case EVENT_TSPIN_EZ:
 					if(lastb2b) receiver.drawMenuFont(engine, playerID, 3, 21, "EZ-" + strPieceName, EventReceiver.COLOR_RED);
@@ -570,6 +564,7 @@ public class SubscriberChallenge extends NetDummyMode {
 	public void calcScore(GameEngine engine, int playerID, int lines) {
 		// Line clear bonus
 		int pts = 0;
+		lastValue = subscriber;
 
 		if(engine.tspin) {
 			// T-Spin 0 lines
@@ -600,12 +595,14 @@ public class SubscriberChallenge extends NetDummyMode {
 						pts += 200 * (engine.statistics.level + 1);
 					}
 					lastevent = EVENT_TSPIN_SINGLE_MINI;
+					subscriber += subscriberRNG.nextInt(200)+3000;
 				} else {
 					if(engine.b2b) {
 						pts += 1200 * (engine.statistics.level + 1);
 					} else {
 						pts += 800 * (engine.statistics.level + 1);
 					}
+					subscriber += subscriberRNG.nextInt(700)+6000;
 					lastevent = EVENT_TSPIN_SINGLE;
 				}
 			}
@@ -626,6 +623,7 @@ public class SubscriberChallenge extends NetDummyMode {
 					}
 					lastevent = EVENT_TSPIN_DOUBLE;
 				}
+				subscriber += subscriberRNG.nextInt(2300)+6000;
 			}
 			// T-Spin 3 lines
 			else if(lines >= 3) {
@@ -635,11 +633,13 @@ public class SubscriberChallenge extends NetDummyMode {
 					pts += 1600 * (engine.statistics.level + 1);
 				}
 				lastevent = EVENT_TSPIN_TRIPLE;
+				subscriber += subscriberRNG.nextInt(5000)+9000;
 			}
 		} else {
 			if(lines == 1) {
 				pts += 100 * (engine.statistics.level + 1); // 1列
 				lastevent = EVENT_SINGLE;
+				subscriber -= subscriberRNG.nextInt(1000)+500;
 			} else if(lines == 2) {
 				pts += 300 * (engine.statistics.level + 1); // 2列
 				lastevent = EVENT_DOUBLE;
@@ -654,6 +654,7 @@ public class SubscriberChallenge extends NetDummyMode {
 					pts += 800 * (engine.statistics.level + 1);
 				}
 				lastevent = EVENT_FOUR;
+				subscriber += subscriberRNG.nextInt(2300)+6000;
 			}
 		}
 
