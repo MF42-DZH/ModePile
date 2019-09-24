@@ -26,6 +26,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Score Trial_ - An approximation of the SCORE ATTACK modes in DTET.
 * _Shadow Marahton_ - Build your own pieces in this extended Marathon.
 * _Single Death Marathon_ - Marathon, but the pieces queue up to become big.
+* _Subscriber Challenge_ - git gud, get subscriber!
 
 ## Libraries Available:
 

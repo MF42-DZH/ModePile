@@ -746,19 +746,21 @@ public class MarathonTwo extends MarathonModeBase {
 	@Override
 	public boolean onGameOver(GameEngine engine, int playerID) {
 		if (engine.statc[0] == 0) {
-			for (int y = engine.field.getHiddenHeight() * -1; y < engine.field.getHeight(); y++) {
-				for (int x = 0; x < engine.field.getWidth(); x++) {
-					Block blk = engine.field.getBlock(x, y);
-					if (blk != null) {
-						if (blk.color > Block.BLOCK_COLOR_NONE) {
-							blk.secondaryColor = 0;
-							blk.hard = 0;
+			if (engine.statistics.lines < 100) {
+				for (int y = engine.field.getHiddenHeight() * -1; y < engine.field.getHeight(); y++) {
+					for (int x = 0; x < engine.field.getWidth(); x++) {
+						Block blk = engine.field.getBlock(x, y);
+						if (blk != null) {
+							if (blk.color > Block.BLOCK_COLOR_NONE) {
+								blk.secondaryColor = 0;
+								blk.hard = 0;
+							}
 						}
 					}
 				}
-			}
 
-			if (engine.statistics.lines < 100) fs = new FieldScatter(receiver, engine, playerID);
+				fs = new FieldScatter(receiver, engine, playerID);
+			}
 		}
 
 		return false;
@@ -766,7 +768,7 @@ public class MarathonTwo extends MarathonModeBase {
 
 	@Override
 	public void renderGameOver(GameEngine engine, int playerID) {
-		if (engine.statistics.lines >= 100) {
+		if (engine.statistics.lines >= 100 && engine.statistics.lines < tableGameClearLines[goaltype]) {
 			for (int y = 0; y < 480 / 32; y++) {
 				for (int x = 0; x < 640 / 32; x++) {
 					receiver.drawSingleBlock(engine, playerID,
@@ -1123,6 +1125,12 @@ public class MarathonTwo extends MarathonModeBase {
 
 		return s;
 	}
+
+	/*
+	 * TODO:
+	 *  Implement the following effects -
+	 *  https://canary.discordapp.com/channels/@me/561721947176697867/626143449837731860
+	 */
 
 	private void executeEffect(GameEngine engine, int playerID) {
 		double procRoll = effectRandomiser.nextDouble();
