@@ -471,7 +471,6 @@ public class SubscriberChallenge extends NetDummyMode {
 				switch(lastevent) {
 				case EVENT_SINGLE:
 					receiver.drawMenuFont(engine, playerID, 2, 21, "SINGLE", EventReceiver.COLOR_DARKBLUE);
-					subscriber -= subscriberRNG.nextInt(10)+5;
 					break;
 				case EVENT_DOUBLE:
 					receiver.drawMenuFont(engine, playerID, 2, 21, "DOUBLE", EventReceiver.COLOR_BLUE);
