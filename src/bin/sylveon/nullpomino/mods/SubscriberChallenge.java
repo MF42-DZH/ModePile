@@ -41,6 +41,7 @@ import mu.nu.nullpo.gui.slick.ResourceHolder;
 import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import java.util.Random;
@@ -439,8 +440,14 @@ public class SubscriberChallenge extends NetDummyMode {
 			}
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SUBSCRIBER", EventReceiver.COLOR_BLUE);
+			StringBuilder a = new StringBuilder(String.valueOf(Interpolation.lerp(lastValue, subscriber, scgettime/120d)));
+			a.append("("+ (subscriber - lastValue > 0 ? "+" : "") + (subscriber - lastValue) + ")");
 			if (scgettime < 120) {
-				receiver.drawScoreFont(engine, playerID, 0, 4, String.valueOf(Interpolation.lerp(lastValue, subscriber, scgettime/120d)));
+				if ((subscriber - lastValue) > 0) {
+					GameTextUtilities.drawRainbowScoreString(receiver, engine, playerID, 0, 4, a.toString(), (int)GameTextUtilities.RAINBOW_ORDER[(scgettime/4) % GameTextUtilities.RAINBOW_ORDER.length], 1f);
+				} else {
+					receiver.drawScoreFont(engine, playerID, 0, 4, a.toString(), EventReceiver.COLOR_RED);
+				}
 			} else {
 				receiver.drawScoreFont(engine, playerID, 0, 4, String.valueOf(subscriber));
 			}
