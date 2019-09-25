@@ -46,8 +46,7 @@ import sdljava.video.SDLSurface;
 
 import java.awt.Graphics2D;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.newdawn.slick.Music;
@@ -61,6 +60,8 @@ public class ResourceHolderCustomAssetExtension {
 							HOLDER_SDL = 2;
 
 	private static int bgmPrevious = -1;
+
+	private static String mainClassName = "";
 	
 	private HashMap<String, org.newdawn.slick.Image> slickImages;  // Slick Images
 	private HashMap<String, java.awt.Image> swingImages;           // Swing Images
@@ -111,30 +112,44 @@ public class ResourceHolderCustomAssetExtension {
 
 	/**
 	 * Gets the current instance's main class name.
+	 * @param forceSingleThreadCheck Use <strong>thread-unsafe</strong> check.
 	 * @return Main class name.
 	 */
-	public static String getMainClassName()
+	public static String getMainClassName(boolean forceSingleThreadCheck)
 	{
-		/*
-		 * Old, thread unsafe code.
-		 *
-		 * StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-		 * if (trace.length > 0) {
-		 * 	   return trace[trace.length - 1].getClassName();
-		 * }
-		 * return "Unknown";
-		*/
-
-		// New, thread-safe code:
-		Map<Thread, StackTraceElement[]> k = Thread.getAllStackTraces();
-		for (StackTraceElement[] g : k.values()) {
-			for (StackTraceElement i : g) {
-				if (i.getClassName().contains("NullpoMinoSlick") || i.getClassName().contains("NullpoMinoSwing") || i.getClassName().contains("NullpoMinoSDL")) {
-					return i.getClassName();
+		if (mainClassName.length() < 1 || mainClassName.equals("Unknown")) {
+			if (forceSingleThreadCheck) {
+				// Thread unsafe code used when only 1 thread is used.
+				// Faster.
+				StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+				if (trace.length > 0) {
+					mainClassName = trace[trace.length - 1].getClassName();
+				} else {
+					mainClassName = "Unknown";
 				}
+			} else {
+				// Thread-safe code used for when more threads are being used.
+				// Warning: slower.
+				Collection<StackTraceElement[]> allStackTraces = Thread.getAllStackTraces().values();
+				for (StackTraceElement[] traceElements : allStackTraces) {
+					for (StackTraceElement element : traceElements) {
+						String name = element.getClassName();
+						if (name.contains("NullpoMinoSlick") || name.contains("NullpoMinoSwing") || name.contains("NullpoMinoSDL")) mainClassName = name;
+					}
+				}
+				if (mainClassName.length() < 1) mainClassName = "Unknown";
 			}
 		}
-		return "Unknown";
+
+		return mainClassName;
+	}
+
+	/**
+	 * Gets the current instance's main class name.
+	 * @return Main class name.
+	 */
+	public static String getMainClassName() {
+		return getMainClassName(false);
 	}
 
 	/**
