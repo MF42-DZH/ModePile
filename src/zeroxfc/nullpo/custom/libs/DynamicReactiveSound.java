@@ -48,6 +48,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+@Deprecated
 public class DynamicReactiveSound {
 	/** Debug Logger */
 	private static final Logger log = Logger.getLogger(DynamicReactiveSound.class);
