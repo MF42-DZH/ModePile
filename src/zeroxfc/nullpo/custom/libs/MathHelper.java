@@ -133,9 +133,13 @@ public class MathHelper {
 	 * @return GCD of the two integers
 	 */
 	public static int gcd(int a, int b) {
-		if (a == 0)
-			return b;
-		return gcd(b % a, a);
+		while (a != 0)
+		{
+			int temp = a;
+			a = b % a;
+			b = temp;
+		}
+		return b;
 	}
 
 	/**
@@ -175,5 +179,19 @@ public class MathHelper {
 
 		double distance = Math.sqrt((dX * dX) + (dY * dY));
 		return (distance <= radius);
+	}
+
+	/**
+	 * Gets the direct distance between two coordinate points.
+	 * @param x0 X-coordinate of the first point
+	 * @param y0 Y-coordinate of the first point
+	 * @param x1 X-coordinate of the second point
+	 * @param y1 Y-coordinate of the second point
+	 * @return Direct distance between the two points.
+	 */
+	public double distanceBetween(int x0, int y0, int x1, int y1) {
+		int dX, dY;
+		dX = x1 - x0; dY = y1 - y0;
+		return Math.sqrt((dX * dX) + (dY * dY));
 	}
 }

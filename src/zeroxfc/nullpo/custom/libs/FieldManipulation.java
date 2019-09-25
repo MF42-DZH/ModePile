@@ -677,9 +677,13 @@ public class FieldManipulation {
 
 	// Recursive method to return gcd of a and b
 	private static int gcd(int a, int b) {
-		if (a == 0)
-			return b;
-		return gcd(b % a, a);
+		while (a != 0)
+		{
+			int temp = a;
+			a = b % a;
+			b = temp;
+		}
+		return b;
 	}
 
 	// Method to return LCM of two numbers
