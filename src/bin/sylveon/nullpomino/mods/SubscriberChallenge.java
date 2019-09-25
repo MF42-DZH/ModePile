@@ -191,6 +191,9 @@ public class SubscriberChallenge extends NetDummyMode {
 		lastValue = 0;
 		scgettime = 120;
 
+		subscriber = 0;
+		lastValue = 0;
+
 		rankingRank = -1;
 		rankingScore = new int[RANKING_TYPE][RANKING_MAX];
 		rankingLines = new int[RANKING_TYPE][RANKING_MAX];
@@ -440,13 +443,13 @@ public class SubscriberChallenge extends NetDummyMode {
 			}
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SUBSCRIBER", EventReceiver.COLOR_BLUE);
-			StringBuilder a = new StringBuilder(String.valueOf(Interpolation.lerp(lastValue, subscriber, scgettime/120d)));
-			a.append("("+ (subscriber - lastValue > 0 ? "+" : "") + (subscriber - lastValue) + ")");
+			StringBuilder a = new StringBuilder(String.valueOf((subscriber != lastValue) ? Interpolation.lerp(lastValue, subscriber, scgettime/120d) : subscriber));
+			if (subscriber - lastValue != 0) a.append("("+ (subscriber - lastValue > 0 ? "+" : "") + (subscriber - lastValue) + ")");
 			if (scgettime < 120) {
 				if ((subscriber - lastValue) > 0) {
 					GameTextUtilities.drawRainbowScoreString(receiver, engine, playerID, 0, 4, a.toString(), (int)GameTextUtilities.RAINBOW_ORDER[(scgettime/4) % GameTextUtilities.RAINBOW_ORDER.length], 1f);
 				} else {
-					receiver.drawScoreFont(engine, playerID, 0, 4, a.toString(), EventReceiver.COLOR_RED);
+					receiver.drawScoreFont(engine, playerID, 0, 4, a.toString(), subscriber - lastValue < 0);
 				}
 			} else {
 				receiver.drawScoreFont(engine, playerID, 0, 4, String.valueOf(subscriber));
@@ -571,6 +574,8 @@ public class SubscriberChallenge extends NetDummyMode {
 		// Line clear bonus
 		int pts = 0;
 
+		if (lines > 0) lastValue = subscriber;
+
 		if(engine.tspin) {
 			// T-Spin 0 lines
 			if((lines == 0) && (!engine.tspinez)) {
@@ -601,7 +606,6 @@ public class SubscriberChallenge extends NetDummyMode {
 					}
 					lastevent = EVENT_TSPIN_SINGLE_MINI;
 
-					lastValue = subscriber;
 					subscriber += subscriberRNG.nextInt(200)+3000;
 				} else {
 					if(engine.b2b) {
@@ -610,7 +614,6 @@ public class SubscriberChallenge extends NetDummyMode {
 						pts += 800 * (engine.statistics.level + 1);
 					}
 
-					lastValue = subscriber;
 					subscriber += subscriberRNG.nextInt(700)+6000;
 					lastevent = EVENT_TSPIN_SINGLE;
 				}
@@ -632,7 +635,6 @@ public class SubscriberChallenge extends NetDummyMode {
 					}
 					lastevent = EVENT_TSPIN_DOUBLE;
 				}
-				lastValue = subscriber;
 				subscriber += subscriberRNG.nextInt(2300)+6000;
 			}
 			// T-Spin 3 lines
@@ -642,7 +644,6 @@ public class SubscriberChallenge extends NetDummyMode {
 				} else {
 					pts += 1600 * (engine.statistics.level + 1);
 				}
-				lastValue = subscriber;
 				lastevent = EVENT_TSPIN_TRIPLE;
 				subscriber += subscriberRNG.nextInt(5000)+9000;
 			}
@@ -650,7 +651,6 @@ public class SubscriberChallenge extends NetDummyMode {
 			if(lines == 1) {
 				pts += 100 * (engine.statistics.level + 1); // 1列
 				lastevent = EVENT_SINGLE;
-				lastValue = subscriber;
 				subscriber -= subscriberRNG.nextInt(1000)+500;
 			} else if(lines == 2) {
 				pts += 300 * (engine.statistics.level + 1); // 2列
@@ -665,7 +665,6 @@ public class SubscriberChallenge extends NetDummyMode {
 				} else {
 					pts += 800 * (engine.statistics.level + 1);
 				}
-				lastValue = subscriber;
 				lastevent = EVENT_FOUR;
 				subscriber += subscriberRNG.nextInt(2300)+6000;
 			}
