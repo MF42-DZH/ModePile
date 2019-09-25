@@ -112,44 +112,24 @@ public class ResourceHolderCustomAssetExtension {
 
 	/**
 	 * Gets the current instance's main class name.
-	 * @param forceSingleThreadCheck Use <strong>thread-unsafe</strong> check.
 	 * @return Main class name.
 	 */
-	public static String getMainClassName(boolean forceSingleThreadCheck)
+	public static String getMainClassName()
 	{
 		if (mainClassName.length() < 1 || mainClassName.equals("Unknown")) {
-			if (forceSingleThreadCheck) {
-				// Thread unsafe code used when only 1 thread is used.
-				// Faster.
-				StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-				if (trace.length > 0) {
-					mainClassName = trace[trace.length - 1].getClassName();
-				} else {
-					mainClassName = "Unknown";
+			// Thread-safe code used for when more threads are being used.
+			// Warning: slower.
+			Collection<StackTraceElement[]> allStackTraces = Thread.getAllStackTraces().values();
+			for (StackTraceElement[] traceElements : allStackTraces) {
+				for (StackTraceElement element : traceElements) {
+					String name = element.getClassName();
+					if (name.contains("NullpoMinoSlick") || name.contains("NullpoMinoSwing") || name.contains("NullpoMinoSDL")) mainClassName = name;
 				}
-			} else {
-				// Thread-safe code used for when more threads are being used.
-				// Warning: slower.
-				Collection<StackTraceElement[]> allStackTraces = Thread.getAllStackTraces().values();
-				for (StackTraceElement[] traceElements : allStackTraces) {
-					for (StackTraceElement element : traceElements) {
-						String name = element.getClassName();
-						if (name.contains("NullpoMinoSlick") || name.contains("NullpoMinoSwing") || name.contains("NullpoMinoSDL")) mainClassName = name;
-					}
-				}
-				if (mainClassName.length() < 1) mainClassName = "Unknown";
 			}
+			if (mainClassName.length() < 1) mainClassName = "Unknown";
 		}
 
 		return mainClassName;
-	}
-
-	/**
-	 * Gets the current instance's main class name.
-	 * @return Main class name.
-	 */
-	public static String getMainClassName() {
-		return getMainClassName(false);
 	}
 
 	/**
