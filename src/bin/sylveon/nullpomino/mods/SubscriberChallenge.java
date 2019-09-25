@@ -570,7 +570,6 @@ public class SubscriberChallenge extends NetDummyMode {
 	public void calcScore(GameEngine engine, int playerID, int lines) {
 		// Line clear bonus
 		int pts = 0;
-		lastValue = subscriber;
 
 		if(engine.tspin) {
 			// T-Spin 0 lines
@@ -601,6 +600,8 @@ public class SubscriberChallenge extends NetDummyMode {
 						pts += 200 * (engine.statistics.level + 1);
 					}
 					lastevent = EVENT_TSPIN_SINGLE_MINI;
+
+					lastValue = subscriber;
 					subscriber += subscriberRNG.nextInt(200)+3000;
 				} else {
 					if(engine.b2b) {
@@ -608,6 +609,8 @@ public class SubscriberChallenge extends NetDummyMode {
 					} else {
 						pts += 800 * (engine.statistics.level + 1);
 					}
+
+					lastValue = subscriber;
 					subscriber += subscriberRNG.nextInt(700)+6000;
 					lastevent = EVENT_TSPIN_SINGLE;
 				}
@@ -629,6 +632,7 @@ public class SubscriberChallenge extends NetDummyMode {
 					}
 					lastevent = EVENT_TSPIN_DOUBLE;
 				}
+				lastValue = subscriber;
 				subscriber += subscriberRNG.nextInt(2300)+6000;
 			}
 			// T-Spin 3 lines
@@ -638,6 +642,7 @@ public class SubscriberChallenge extends NetDummyMode {
 				} else {
 					pts += 1600 * (engine.statistics.level + 1);
 				}
+				lastValue = subscriber;
 				lastevent = EVENT_TSPIN_TRIPLE;
 				subscriber += subscriberRNG.nextInt(5000)+9000;
 			}
@@ -645,6 +650,7 @@ public class SubscriberChallenge extends NetDummyMode {
 			if(lines == 1) {
 				pts += 100 * (engine.statistics.level + 1); // 1列
 				lastevent = EVENT_SINGLE;
+				lastValue = subscriber;
 				subscriber -= subscriberRNG.nextInt(1000)+500;
 			} else if(lines == 2) {
 				pts += 300 * (engine.statistics.level + 1); // 2列
@@ -659,6 +665,7 @@ public class SubscriberChallenge extends NetDummyMode {
 				} else {
 					pts += 800 * (engine.statistics.level + 1);
 				}
+				lastValue = subscriber;
 				lastevent = EVENT_FOUR;
 				subscriber += subscriberRNG.nextInt(2300)+6000;
 			}
