@@ -19,12 +19,23 @@ public class FieldScatter {
 	private int lifeTime;
 
 	/**
-	 * Makes a new field explostion.
+	 * Makes a new field explosion. Destroys blocks by default.
 	 * @param receiver  Renderer to draw with.
 	 * @param engine    Current GameEngine.
 	 * @param playerID  Current player ID.
 	 */
 	public FieldScatter(EventReceiver receiver, GameEngine engine, int playerID) {
+		this(receiver, engine, playerID, true);
+	}
+
+	/**
+	 * Makes a new field explosion.
+	 * @param receiver     Renderer to draw with.
+	 * @param engine       Current GameEngine.
+	 * @param playerID     Current player ID.
+	 * @param clearBlocks  Clear the blocks in the field?
+	 */
+	public FieldScatter(EventReceiver receiver, GameEngine engine, int playerID, boolean clearBlocks) {
 		// Direction randomiser
 		Random rdm = new Random(engine.randSeed + engine.statistics.time);
 		lifeTime = 0;
@@ -49,16 +60,16 @@ public class FieldScatter {
 							-1, 1, 1, PhysicsObject.ANCHOR_POINT_TL, blk.color
 					));
 
-					receiver.blockBreak(engine, playerID, j, i, blk);
+					if (clearBlocks) receiver.blockBreak(engine, playerID, j, i, blk);
 
-					blk.copy(eBlock);
+					if (clearBlocks) blk.copy(eBlock);
 				}
 			}
 		}
 	}
 
 	/**
-	 * Makes a new field explostion.
+	 * Makes a new field explosion. Destroys specfic blocks.
 	 * @param receiver             Renderer to draw with.
 	 * @param engine               Current GameEngine.
 	 * @param playerID             Current player ID.
@@ -99,7 +110,7 @@ public class FieldScatter {
 	}
 
 	/**
-	 * Makes a new field explostion.
+	 * Makes a new field explosion. Destroys specfic blocks.
 	 * @param receiver             Renderer to draw with.
 	 * @param engine               Current GameEngine.
 	 * @param playerID             Current player ID.

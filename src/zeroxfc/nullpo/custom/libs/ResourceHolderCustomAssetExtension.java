@@ -47,6 +47,7 @@ import sdljava.video.SDLSurface;
 import java.awt.Graphics2D;
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.newdawn.slick.Music;
@@ -73,10 +74,17 @@ public class ResourceHolderCustomAssetExtension {
 	
 	private int holderType;
 
+	/**
+	 * Creates a new custom resource holder with 8 initial capacity.
+	 */
 	public ResourceHolderCustomAssetExtension() {
 		this(8);
 	}
 
+	/**
+	 * Creates a new custom resource holder.
+	 * @param initialCapacity Start capacity of the internal hashmaps.
+	 */
 	public ResourceHolderCustomAssetExtension(int initialCapacity) {
 		String mainClass = getMainClassName();
 		// log.info("MAIN CLASS: " + mainClass);
@@ -101,11 +109,30 @@ public class ResourceHolderCustomAssetExtension {
 		}
 	}
 
+	/**
+	 * Gets the current instance's main class name.
+	 * @return Main class name.
+	 */
 	public static String getMainClassName()
 	{
-		StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-		if (trace.length > 0) {
-			return trace[trace.length - 1].getClassName();
+		/*
+		 * Old, thread unsafe code.
+		 *
+		 * StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+		 * if (trace.length > 0) {
+		 * 	   return trace[trace.length - 1].getClassName();
+		 * }
+		 * return "Unknown";
+		*/
+
+		// New, thread-safe code:
+		Map<Thread, StackTraceElement[]> k = Thread.getAllStackTraces();
+		for (StackTraceElement[] g : k.values()) {
+			for (StackTraceElement i : g) {
+				if (i.getClassName().contains("NullpoMinoSlick") || i.getClassName().contains("NullpoMinoSwing") || i.getClassName().contains("NullpoMinoSDL")) {
+					return i.getClassName();
+				}
+			}
 		}
 		return "Unknown";
 	}
