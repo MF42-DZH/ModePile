@@ -72,18 +72,25 @@ public abstract class AnimatedBackgroundHook {
 			                HOLDER_SWING = 1,
 			                HOLDER_SDL = 2;
 
+	/** Stored ResourceHolder--- type */
+	private static int ResourceHolderType = -1;
+
 	/**
 	 * Gets the current resource holder type.<br />
 	 * Useful for selecting different renderers, sound engines or input handlers.
 	 * @return Integer that represents the holder type.
 	 */
 	public static int getResourceHook() {
-		String mainClass = ResourceHolderCustomAssetExtension.getMainClassName();
+		if (ResourceHolderType < 0) {
+			String mainClass = ResourceHolderCustomAssetExtension.getMainClassName();
 
-		if (mainClass.contains("Slick")) return HOLDER_SLICK;
-		else if (mainClass.contains("Swing")) return HOLDER_SWING;
-		else if (mainClass.contains("SDL")) return HOLDER_SDL;
-		else return -1;
+			if (mainClass.contains("Slick")) ResourceHolderType = HOLDER_SLICK;
+			else if (mainClass.contains("Swing")) ResourceHolderType = HOLDER_SWING;
+			else if (mainClass.contains("SDL")) ResourceHolderType = HOLDER_SDL;
+			else ResourceHolderType = -1;
+		}
+
+		return ResourceHolderType;
 	}
 
 	/**
@@ -139,6 +146,7 @@ public abstract class AnimatedBackgroundHook {
 	 * Gets the value of the setting that dictates whether backgrounds should be drawn.
 	 * @return <code>boolean</code>; <code>true</code> = enabled, <code>false</code> = disabled.
 	 */
+	@Deprecated
 	public static boolean getInitialBGState() {
 		switch (getResourceHook()) {
 			case HOLDER_SLICK:
@@ -158,6 +166,7 @@ public abstract class AnimatedBackgroundHook {
 	 * @param receiver Renderer to check
 	 * @return <code>boolean</code>; <code>true</code> = enabled, <code>false</code> = disabled.
 	 */
+	@Deprecated
 	public static boolean getBGState(EventReceiver receiver) {
 		try {
 			Class<EventReceiver> renderer = EventReceiver.class;
@@ -178,6 +187,7 @@ public abstract class AnimatedBackgroundHook {
 	 * @param receiver Renderer to modify
 	 * @param bool State to set it to
 	 */
+	@Deprecated
 	public static void setBGState(EventReceiver receiver, boolean bool) {
 		try {
 			Class<EventReceiver> renderer = EventReceiver.class;

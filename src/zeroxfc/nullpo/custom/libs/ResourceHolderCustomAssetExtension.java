@@ -50,6 +50,7 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.newdawn.slick.Music;
+import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 public class ResourceHolderCustomAssetExtension {
 	private static Logger log = Logger.getLogger(ResourceHolderCustomAssetExtension.class);
@@ -123,13 +124,35 @@ public class ResourceHolderCustomAssetExtension {
 			for (StackTraceElement[] traceElements : allStackTraces) {
 				for (StackTraceElement element : traceElements) {
 					String name = element.getClassName();
-					if (name.contains("NullpoMinoSlick") || name.contains("NullpoMinoSwing") || name.contains("NullpoMinoSDL")) mainClassName = name;
+					if (name.contains("NullpoMinoSlick") || name.contains("NullpoMinoSwing") || name.contains("NullpoMinoSDL")) {
+						mainClassName = name;
+						break;
+					}
 				}
+
+				if (mainClassName.length() >= 1) break;
 			}
 			if (mainClassName.length() < 1) mainClassName = "Unknown";
 		}
 
 		return mainClassName;
+	}
+
+	/**
+	 * Gets the number of currently loaded block-skins inside the game.
+	 * @return Number of block skins.
+	 */
+	public static int getNumberLoadedBlockSkins() {
+		switch (AnimatedBackgroundHook.getResourceHook()) {
+			case AnimatedBackgroundHook.HOLDER_SLICK:
+				return ResourceHolder.imgNormalBlockList.size();
+			case AnimatedBackgroundHook.HOLDER_SWING:
+				return ResourceHolderSwing.imgNormalBlockList.size();
+			case AnimatedBackgroundHook.HOLDER_SDL:
+				return ResourceHolderSDL.imgNormalBlockList.size();
+			default:
+				return 0;
+		}
 	}
 
 	/**

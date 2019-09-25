@@ -70,6 +70,9 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 	public BackgroundSlidingTiles(int skin, Random directionRandomiser, Integer colour, int size, float darkness) {
 		custom = false;
 		this.skin = skin;
+
+		if (skin < 0 || skin >= ResourceHolderCustomAssetExtension.getNumberLoadedBlockSkins()) skin = 0;
+
 		this.colour = colour;
 		this.size = size;
 		this.darkness = darkness;
@@ -83,6 +86,9 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 	public BackgroundSlidingTiles(int skin, long seed, Integer colour, int size, float darkness) {
 		custom = false;
 		this.skin = skin;
+
+		if (skin < 0 || skin >= ResourceHolderCustomAssetExtension.getNumberLoadedBlockSkins()) skin = 0;
+
 		this.colour = colour;
 		this.size = size;
 		this.darkness = darkness;
