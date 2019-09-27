@@ -1,5 +1,8 @@
 package zeroxfc.nullpo.custom.modes;
 
+import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.MathHelper;
+
 public class LetsGoByIPiece extends MarathonModeBase {
 	private static final double FRICTION_COEFFICIENT = 0.6;
 
@@ -12,11 +15,76 @@ public class LetsGoByIPiece extends MarathonModeBase {
 	private static final int PASSENGER_MAX_COUNT = 40 * PASSENGER_CARRIAGE_COUNT;
 
 	private int passengers;
+	private int brakeApplicationTime;
+	private int throttleApplicationTime;
 	private double passengerPercentage;
+	private double velocity;
 	private boolean controlsLocked;
 	private GameType gameType;
 	private GameDifficulty difficulty;
 	private GearboxGear engineState;
+
+	/**
+	 * Gets the acceleration of the train relative to the gear state, application time and velocity.
+	 * @param gear     Current train gear
+	 * @param velocity Current train velocity
+	 * @return Current acceleration.
+	 */
+	private double getEngineAcceleration(GearboxGear gear, double velocity) {
+		double acceleration;
+		int tat = MathHelper.clamp(throttleApplicationTime, 0, 300);
+		int bat = MathHelper.clamp(brakeApplicationTime, 0, 30);
+
+		switch (gear) {
+			case THROTTLE_1:
+				acceleration = Interpolation.lerp(1d, 0d, velocity / 25d);
+				return Interpolation.lerp(0, acceleration, tat / 300d);
+			case THROTTLE_2:
+				acceleration = Interpolation.lerp(2d, 0d, velocity / 50d);
+				return Interpolation.lerp(0, acceleration, tat / 300d);
+			case THROTTLE_3:
+				acceleration = Interpolation.lerp(4d, 0d, velocity / 75d);
+				return Interpolation.lerp(0, acceleration, tat / 300d);
+			case THROTTLE_4:
+				acceleration = Interpolation.lerp(5d, 0d, velocity / 100d);
+				return Interpolation.lerp(0, acceleration, tat / 300d);
+			case THROTTLE_5:
+				acceleration = Interpolation.lerp(7d, 0d, velocity / 125d);
+				return Interpolation.lerp(0, acceleration, tat / 300d);
+			case THROTTLE_6:
+				acceleration = Interpolation.lerp(8d, 0d, velocity / 150d);
+				return Interpolation.lerp(0, acceleration, tat / 300d);
+			case BRAKE_1:
+				return Interpolation.lerp(0d, -0.5d, bat / 30d);
+			case BRAKE_2:
+				return Interpolation.lerp(0d, -1.0d, bat / 30d);
+			case BRAKE_3:
+				return Interpolation.lerp(0d, -2.0d, bat / 30d);
+			case BRAKE_4:
+				return Interpolation.lerp(0d, -3.0d, bat / 30d);
+			case BRAKE_5:
+				return Interpolation.lerp(0d, -4.5d, bat / 30d);
+			case BRAKE_6:
+				return Interpolation.lerp(0d, -8.0d, bat / 30d);
+			case BRAKE_EMERGENCY:
+				return Interpolation.lerp(0d, -12.0d, bat / 30d);
+			default:
+				return 0d;
+		}
+	}
+
+	/**
+	 * Gets new velocity given old velocity and acceleration.
+	 * @param oldVelocity  Old train velocity
+	 * @param acceleration Current train acceleration
+	 * @return New train velocity.
+	 */
+	private double calculateNewVelocity(double oldVelocity, double acceleration) {
+		double vel = oldVelocity + ((1d / 60d) * acceleration);
+		if (vel < 0) vel = 0;
+
+		return vel;
+	}
 
 	/**
 	 * The engine's various power states during travel.
@@ -27,12 +95,12 @@ public class LetsGoByIPiece extends MarathonModeBase {
 
 		// Engine throttle levels. (SPEED UP.)
 		/*
-		 * 1: 20 km/h, Acc. Max = 1 km/h/s
-		 * 2: 40 km/h, Acc. Max = 2 km/h/s
-		 * 3: 60 km/h, Acc. Max = 3 km/h/s
-		 * 4: 80 km/h, Acc. Max = 4 km/h/s
-		 * 5: 100 km/h, Acc. Max = 5 km/h/s
-		 * 6: 120 km/h, Acc. Max = 6 km/h/s
+		 * 1: 25 km/h, Acc. Max = 1 km/h/s
+		 * 2: 50 km/h, Acc. Max = 2 km/h/s
+		 * 3: 75 km/h, Acc. Max = 4 km/h/s
+		 * 4: 100 km/h, Acc. Max = 5 km/h/s
+		 * 5: 125 km/h, Acc. Max = 7 km/h/s
+		 * 6: 150 km/h, Acc. Max = 8 km/h/s
 		 */
 		THROTTLE_1, THROTTLE_2, THROTTLE_3, THROTTLE_4, THROTTLE_5, THROTTLE_6,
 
