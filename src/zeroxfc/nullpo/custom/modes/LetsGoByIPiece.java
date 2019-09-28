@@ -3,8 +3,11 @@ package zeroxfc.nullpo.custom.modes;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.MathHelper;
 
+import java.util.Random;
+
 public class LetsGoByIPiece extends MarathonModeBase {
 	private static final double FRICTION_COEFFICIENT = 0.6;
+	private static final double G = 9.80665;
 
 	// All masses in kilograms.
 	private static final double LOCOMOTIVE_MASS = 80000d;
@@ -20,9 +23,13 @@ public class LetsGoByIPiece extends MarathonModeBase {
 	private double passengerPercentage;
 	private double velocity;
 	private boolean controlsLocked;
+	private boolean controlThrottle;
 	private GameType gameType;
 	private GameDifficulty difficulty;
 	private GearboxGear engineState;
+
+	// Yep. The courses will be procedurally generated. Please enjoy game.
+	private Random passengerRandomiser, courseRandomiser;
 
 	/**
 	 * Gets the acceleration of the train relative to the gear state, application time and velocity.
@@ -32,28 +39,34 @@ public class LetsGoByIPiece extends MarathonModeBase {
 	 */
 	private double getEngineAcceleration(GearboxGear gear, double velocity) {
 		double acceleration;
-		int tat = MathHelper.clamp(throttleApplicationTime, 0, 300);
+		int tat = MathHelper.clamp(throttleApplicationTime, 0, 600);
 		int bat = MathHelper.clamp(brakeApplicationTime, 0, 30);
 
 		switch (gear) {
 			case THROTTLE_1:
 				acceleration = Interpolation.lerp(1d, 0d, velocity / 25d);
-				return Interpolation.lerp(0, acceleration, tat / 300d);
+				if (acceleration < 0) acceleration = 0;
+				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case THROTTLE_2:
 				acceleration = Interpolation.lerp(2d, 0d, velocity / 50d);
-				return Interpolation.lerp(0, acceleration, tat / 300d);
+				if (acceleration < 0) acceleration = 0;
+				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case THROTTLE_3:
 				acceleration = Interpolation.lerp(4d, 0d, velocity / 75d);
-				return Interpolation.lerp(0, acceleration, tat / 300d);
+				if (acceleration < 0) acceleration = 0;
+				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case THROTTLE_4:
-				acceleration = Interpolation.lerp(5d, 0d, velocity / 100d);
-				return Interpolation.lerp(0, acceleration, tat / 300d);
+				acceleration = Interpolation.lerp(7d, 0d, velocity / 100d);
+				if (acceleration < 0) acceleration = 0;
+				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case THROTTLE_5:
-				acceleration = Interpolation.lerp(7d, 0d, velocity / 125d);
-				return Interpolation.lerp(0, acceleration, tat / 300d);
+				acceleration = Interpolation.lerp(11d, 0d, velocity / 125d);
+				if (acceleration < 0) acceleration = 0;
+				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case THROTTLE_6:
-				acceleration = Interpolation.lerp(8d, 0d, velocity / 150d);
-				return Interpolation.lerp(0, acceleration, tat / 300d);
+				acceleration = Interpolation.lerp(16d, 0d, velocity / 150d);
+				if (acceleration < 0) acceleration = 0;
+				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case BRAKE_1:
 				return Interpolation.lerp(0d, -0.5d, bat / 30d);
 			case BRAKE_2:
@@ -80,7 +93,14 @@ public class LetsGoByIPiece extends MarathonModeBase {
 	 * @return New train velocity.
 	 */
 	private double calculateNewVelocity(double oldVelocity, double acceleration) {
-		double vel = oldVelocity + ((1d / 60d) * acceleration);
+		double mass = LOCOMOTIVE_MASS + (PASSENGER_CARRIAGE_MASS * PASSENGER_CARRIAGE_COUNT) + (PASSENGER_MASS * passengers);
+		double frictionForce = FRICTION_COEFFICIENT * mass * G;
+		double frictionDecel = frictionForce / mass / 55;
+
+		double finalAcceleration = (acceleration - frictionDecel);
+
+		double vel = oldVelocity + ((1d / 60d) * finalAcceleration);
+
 		if (vel < 0) vel = 0;
 
 		return vel;
