@@ -569,8 +569,8 @@ public class ScoreTrial extends MarathonModeBase {
 			receiver.drawScoreFont(engine, playerID, 0, 16, GeneralUtil.getTime(engine.statistics.time));
 
 			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
-				receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER", EventReceiver.COLOR_BLUE);
-				receiver.drawScoreFont(engine, playerID, 0, 19, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+				receiver.drawScoreFont(engine, playerID, 11, 6, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 11, 7, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
 			}
 
 			int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
