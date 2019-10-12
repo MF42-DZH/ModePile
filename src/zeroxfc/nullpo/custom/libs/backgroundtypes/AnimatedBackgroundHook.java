@@ -166,7 +166,6 @@ public abstract class AnimatedBackgroundHook {
 	 * @param receiver Renderer to check
 	 * @return <code>boolean</code>; <code>true</code> = enabled, <code>false</code> = disabled.
 	 */
-	@Deprecated
 	public static boolean getBGState(EventReceiver receiver) {
 		try {
 			Class<EventReceiver> renderer = EventReceiver.class;
