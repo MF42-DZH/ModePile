@@ -1,8 +1,8 @@
 package zeroxfc.nullpo.custom.modes;
 
-import zeroxfc.nullpo.custom.libs.Interpolation;
-import zeroxfc.nullpo.custom.libs.MathHelper;
+import zeroxfc.nullpo.custom.libs.*;
 
+import java.util.LinkedHashMap;
 import java.util.Random;
 
 public class LetsGoByIPiece extends MarathonModeBase {
@@ -27,9 +27,11 @@ public class LetsGoByIPiece extends MarathonModeBase {
 	private GameType gameType;
 	private GameDifficulty difficulty;
 	private GearboxGear engineState;
+	private LinkedHashMap<NavigatorMarker, Double> distancesUntilMarker;
 
 	// Yep. The courses will be procedurally generated. Please enjoy game.
 	private Random passengerRandomiser, courseRandomiser;
+	private ShakingText shakingText;
 
 	/**
 	 * Gets the acceleration of the train relative to the gear state, application time and velocity.
@@ -44,27 +46,27 @@ public class LetsGoByIPiece extends MarathonModeBase {
 
 		switch (gear) {
 			case THROTTLE_1:
-				acceleration = Interpolation.lerp(1d, 0d, velocity / 25d);
+				acceleration = Interpolation.lerp(1d, 0d, velocity / 30d);
 				if (acceleration < 0) acceleration = 0;
 				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case THROTTLE_2:
-				acceleration = Interpolation.lerp(2d, 0d, velocity / 50d);
+				acceleration = Interpolation.lerp(2d, 0d, velocity / 60d);
 				if (acceleration < 0) acceleration = 0;
 				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case THROTTLE_3:
-				acceleration = Interpolation.lerp(4d, 0d, velocity / 75d);
+				acceleration = Interpolation.lerp(4d, 0d, velocity / 90d);
 				if (acceleration < 0) acceleration = 0;
 				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case THROTTLE_4:
-				acceleration = Interpolation.lerp(7d, 0d, velocity / 100d);
+				acceleration = Interpolation.lerp(7d, 0d, velocity / 120d);
 				if (acceleration < 0) acceleration = 0;
 				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case THROTTLE_5:
-				acceleration = Interpolation.lerp(11d, 0d, velocity / 125d);
+				acceleration = Interpolation.lerp(11d, 0d, velocity / 150d);
 				if (acceleration < 0) acceleration = 0;
 				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case THROTTLE_6:
-				acceleration = Interpolation.lerp(16d, 0d, velocity / 150d);
+				acceleration = Interpolation.lerp(16d, 0d, velocity / 180d);
 				if (acceleration < 0) acceleration = 0;
 				return Interpolation.lerp(0, acceleration, tat / 600d);
 			case BRAKE_1:
@@ -115,12 +117,12 @@ public class LetsGoByIPiece extends MarathonModeBase {
 
 		// Engine throttle levels. (SPEED UP.)
 		/*
-		 * 1: 25 km/h, Acc. Max = 1 km/h/s
-		 * 2: 50 km/h, Acc. Max = 2 km/h/s
-		 * 3: 75 km/h, Acc. Max = 4 km/h/s
-		 * 4: 100 km/h, Acc. Max = 5 km/h/s
-		 * 5: 125 km/h, Acc. Max = 7 km/h/s
-		 * 6: 150 km/h, Acc. Max = 8 km/h/s
+		 * 1: 30 km/h, Acc. Max = 1 km/h/s
+		 * 2: 60 km/h, Acc. Max = 2 km/h/s
+		 * 3: 90 km/h, Acc. Max = 4 km/h/s
+		 * 4: 120 km/h, Acc. Max = 7 km/h/s
+		 * 5: 150 km/h, Acc. Max = 11 km/h/s
+		 * 6: 180 km/h, Acc. Max = 16 km/h/s
 		 */
 		THROTTLE_1, THROTTLE_2, THROTTLE_3, THROTTLE_4, THROTTLE_5, THROTTLE_6,
 
@@ -232,4 +234,72 @@ public class LetsGoByIPiece extends MarathonModeBase {
 			this.value = value;
 		}
 	}
+
+	// region Subclass for Navigator
+
+	private static class NavigatorMarker {
+		/** Marker type */
+		private MarkerType typeOfMarker;
+
+		/** Given speed limit. If null, do not change the limit */
+		private Integer speedLimit;
+
+		/**
+		 * Creates a new marker for the navigator system.
+		 * @param type     Marker type
+		 * @param newLimit New speed limit, if any. Set to <code>null</code> to not set new limit.<br /><br />
+		 *                 <strong>NOTES:</strong><br />
+		 *                 -1 removes a speed limit.<br />
+		 *                 65 on a traffic light renders a Y/G.<br />
+		 *                 45 on a traffic light gives a Y.<br />
+		 *                 0 on a traffic light gives a stop.
+		 */
+		public NavigatorMarker(MarkerType type, Integer newLimit) {
+			typeOfMarker = type;
+			speedLimit = newLimit;
+		}
+
+		/**
+		 * Gets the current marker type for navigator rendering.
+		 * @return Marker type
+		 */
+		public MarkerType getTypeOfMarker() {
+			return typeOfMarker;
+		}
+
+		/**
+		 * Gets the new speed limit for setting (and rendering if required).
+		 * @return New speed limit (<code>null</code> if not applicable)
+		 */
+		public Integer getSpeedLimit() {
+			return speedLimit;
+		}
+
+		/**
+		 * Sets a new speed limit. Only works if the marker is a traffic light.
+		 * @param speedLimit New speed limit value
+		 */
+		public void setSpeedLimit(Integer speedLimit) {
+			this.speedLimit = speedLimit;
+		}
+
+		/**
+		 * Possible marker types.
+		 */
+		enum MarkerType {
+			TRAFFIC_LIGHT(new int[] { 255, 255, 255 }), SPEED_LIMIT_MARKER(new int[] { 255, 255, 0 }), STATION_PASS(new int[] { 0, 255, 0 }), STATION_STOP(new int[] { 255, 128, 0 });
+
+			private int[] colour;
+
+			MarkerType(int[] colour) {
+				this.colour = colour;
+			}
+
+			public int[] getColour() {
+				return colour;
+			}
+		}
+	}
+
+	// endregion
 }

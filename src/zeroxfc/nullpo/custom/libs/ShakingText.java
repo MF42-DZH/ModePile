@@ -38,11 +38,14 @@ public class ShakingText {
 	 */
 	public void drawDirectText(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int maxDevianceX, int maxDevianceY, String text, int colour, float scale) {
 		final double offset = 16d * scale;
+		if (maxDevianceX < 0) maxDevianceX *= -1;
+		if (maxDevianceY < 0) maxDevianceY *= -1;
+
 		for (int i = 0; i < text.length(); i++) {
 			int offsetUsed = (int)(offset * i);
-			int xDiff, yDiff;
-			xDiff = textPositionRandomiser.nextInt(maxDevianceX * 2 + 1) - maxDevianceX;
-			yDiff = textPositionRandomiser.nextInt(maxDevianceY * 2 + 1) - maxDevianceY;
+			int xDiff = 0, yDiff = 0;
+			if (maxDevianceX > 0) xDiff = textPositionRandomiser.nextInt(maxDevianceX * 2 + 1) - maxDevianceX;
+			if (maxDevianceY > 0) yDiff = textPositionRandomiser.nextInt(maxDevianceY * 2 + 1) - maxDevianceY;
 
 			receiver.drawDirectFont(engine, playerID, x + offsetUsed + xDiff, y + yDiff, text.substring(i, i + 1), colour, scale);
 		}
