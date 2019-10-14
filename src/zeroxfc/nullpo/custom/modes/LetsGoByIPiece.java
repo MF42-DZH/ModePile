@@ -22,6 +22,7 @@ public class LetsGoByIPiece extends MarathonModeBase {
 	private int throttleApplicationTime;
 	private double passengerPercentage;
 	private double velocity;
+	private double[] carriageStability;  // MTD Mode only
 	private boolean controlsLocked;
 	private boolean controlThrottle;
 	private GameType gameType;
@@ -89,6 +90,40 @@ public class LetsGoByIPiece extends MarathonModeBase {
 	}
 
 	/**
+	 * Gets the speed boost applied for clearing lines (for <code>MTD</code> mode).<br />
+	 * Also gives a bonus to stability.
+	 * @param lines Lines cleared
+	 * @param tspin Was it a t-spin clear?
+	 * @return The boost value
+	 */
+	private double getBoost(int lines, boolean tspin) {
+		if (lines <= 0 || gameType != GameType.MTD) return 0;
+
+		double boostValue = 0, stbValue;
+
+		if (lines == 1) {
+			boostValue = 2.5;
+			stbValue = 0.05;
+		} else if (lines == 2) {
+			boostValue = 5.0;
+			stbValue = 0.1;
+		} else if (lines == 3) {
+			boostValue = 10.0;
+			stbValue = 0.2;
+		} else {
+			boostValue = 20.0;
+			stbValue = 0.4;
+		}
+
+		for (int i = 0; i < carriageStability.length; i++) {
+			carriageStability[i] = Interpolation.lerp(carriageStability[i], 100, tspin ? stbValue * 2 : stbValue);
+		}
+
+		if (tspin) boostValue *= 1.5;
+		return boostValue;
+	}
+
+	/**
 	 * Gets new velocity given old velocity and acceleration.
 	 * @param oldVelocity  Old train velocity
 	 * @param acceleration Current train acceleration
@@ -97,7 +132,7 @@ public class LetsGoByIPiece extends MarathonModeBase {
 	private double calculateNewVelocity(double oldVelocity, double acceleration) {
 		double mass = LOCOMOTIVE_MASS + (PASSENGER_CARRIAGE_MASS * PASSENGER_CARRIAGE_COUNT) + (PASSENGER_MASS * passengers);
 		double frictionForce = FRICTION_COEFFICIENT * mass * G;
-		double frictionDecel = frictionForce / mass / 55;
+		double frictionDecel = frictionForce / mass / (1000d / 36d);
 
 		double finalAcceleration = (acceleration - frictionDecel);
 
@@ -287,7 +322,11 @@ public class LetsGoByIPiece extends MarathonModeBase {
 		 * Possible marker types.
 		 */
 		enum MarkerType {
-			TRAFFIC_LIGHT(new int[] { 255, 255, 255 }), SPEED_LIMIT_MARKER(new int[] { 255, 255, 0 }), STATION_PASS(new int[] { 0, 255, 0 }), STATION_STOP(new int[] { 255, 128, 0 });
+			TRAFFIC_LIGHT(new int[] { 255, 255, 255 }),
+			SPEED_LIMIT_MARKER(new int[] { 255, 255, 0 }),
+			STATION_PASS(new int[] { 0, 255, 0 }),
+			STATION_STOP(new int[] { 255, 128, 0 }),
+			CORNER_MTD(new int[] { 200, 0 , 255 });
 
 			private int[] colour;
 
