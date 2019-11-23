@@ -301,6 +301,7 @@ public class MarathonTwo extends MarathonModeBase {
 		SoundLoader.loadSoundset(SoundLoader.LOADTYPE_SCANNER);
 		SoundLoader.loadSoundset(SoundLoader.LOADTYPE_MINESWEEPER);
 		SoundLoader.loadSoundset(SoundLoader.LOADTYPE_COLLAPSE);
+		SoundLoader.importSound("res/se/zeroxfc/timereduce.wav", "timereduce");
 
 		// Reflection is an unholy magic. It's powerful alright, but very unsafe.
 		// region SOUND NAME EXTRACTION

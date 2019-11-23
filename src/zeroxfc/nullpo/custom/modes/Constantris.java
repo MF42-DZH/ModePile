@@ -1,7 +1,10 @@
 package zeroxfc.nullpo.custom.modes;
 
+import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
+import zeroxfc.nullpo.custom.libs.ShakingText;
+import zeroxfc.nullpo.custom.libs.SoundLoader;
 
 import java.util.Random;
 
@@ -13,15 +16,34 @@ public class Constantris extends MarathonModeBase {
 	                         DIFFICULTY_HARD = 2,
 	                         DIFFICULTY_VERY_HARD = 3;
 
-	private static final int[] GOAL_LEVELS = { 10, 20, 40, 80 };
+	private static final int[] GOAL_LINES = {
+		5, 5, 5, 5, 5, 10, 10, 10, 10, 10,
+		15, 15, 15, 15, 15, 20, 20, 20, 20, 20,
+		30, 30, 30, 30, 30, 40, 40, 40, 40, 40,
+		50, 50, 50, 50, 50, 60, 60, 60, 60, 60,
+		75, 75, 75, 75, 75, 90, 90, 90, 90, 90,
+		105, 105, 105, 105, 105, 120, 120, 120, 120, 120,
+		140, 140, 140, 140, 140, 160, 160, 160, 160, 160,
+		180, 180, 180, 180, 180, 200, 200, 200, 200, 200
+	};
+
+	private static final int[] GOAL_LEVELS = { 20, 20, 40, 80 };
 	private static final int[] STARTING_SPARE_TIME = { 60, 40, 20, 10 };
+	private static final int[] STALLING_LIMITS = { 150, 300 };
 	private static final int[] PENALTY_MULTIPLIER = { 1, 1, 2, 4 };
-	private static final int BASE_TOP_OUT_PENALTY = 5;
+	private static final int BASE_PENALTY = 5;
+
+	private static final int RESTRICTION_NONE = 0,
+	                         RESTRICTION_NO_HARD_DROP = 1,
+	                         RESTRICTION_NO_STALLING = 2;
 
 	private int difficulty;
 	private int currentLineTarget;
+	private int currentTimeTarget;
 	private int spareTime;
+	private int restriction;
 	private Random localRandom;
+	private ShakingText shakingText;
 
 	// region Mode Block
 
@@ -48,6 +70,10 @@ public class Constantris extends MarathonModeBase {
 		lastcombo = 0;
 		lastpiece = 0;
 		bgmlv = 0;
+		currentLineTarget = 0;
+		currentTimeTarget = 0;
+		spareTime = 0;
+		restriction = RESTRICTION_NONE;
 
 		rankingRank = -1;
 		rankingScore = new int[RANKING_TYPE][RANKING_MAX];
@@ -68,13 +94,74 @@ public class Constantris extends MarathonModeBase {
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
 		}
 
-		engine.owner.backgroundStatus.bg = startlevel;
-		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
+		SoundLoader.importSound("res/se/zeroxfc/timereduce.wav", "timereduce");
+
+		owner.backgroundStatus.bg = 0;
+		engine.framecolor = GameEngine.FRAME_COLOR_YELLOW;
+	}
+
+	/*
+	 * Called for initialization during "Ready" screen
+	 */
+	@Override
+	public void startGame(GameEngine engine, int playerID) {
+		localRandom = new Random(engine.randSeed + 1L);
+		shakingText = new ShakingText(new Random(engine.randSeed + 2L));
+
+		engine.statistics.level = 0;
+		engine.statistics.levelDispAdd = 1;
+		engine.b2bEnable = enableB2B;
+		if(enableCombo == true) {
+			engine.comboType = GameEngine.COMBO_TYPE_NORMAL;
+		} else {
+			engine.comboType = GameEngine.COMBO_TYPE_DISABLE;
+		}
+		engine.big = big;
+
+		if(version >= 2) {
+			engine.tspinAllowKick = enableTSpinKick;
+			if(tspinEnableType == 0) {
+				engine.tspinEnable = false;
+			} else if(tspinEnableType == 1) {
+				engine.tspinEnable = true;
+			} else {
+				engine.tspinEnable = true;
+				engine.useAllSpinBonus = true;
+			}
+		} else {
+			engine.tspinEnable = enableTSpin;
+		}
+
+		engine.spinCheckType = spinCheckType;
+		engine.tspinEnableEZ = tspinEnableEZ;
+
+		setSpeed(engine);
+
+		if(netIsWatch) {
+			owner.bgmStatus.bgm = BGMStatus.BGM_NOTHING;
+		}
+	}
+
+	/**
+	 * Set the gravity rate
+	 * @param engine GameEngine
+	 */
+	public void setSpeed(GameEngine engine) {
+		int lv = engine.statistics.level / 4;
+
+		if(lv < 0) lv = 0;
+		if(lv >= tableGravity.length) lv = tableGravity.length - 1;
+
+		engine.speed.gravity = tableGravity[lv];
+		engine.speed.denominator = tableDenominator[lv];
+
+		currentLineTarget = engine.statistics.lines + GOAL_LINES[engine.statistics.level];
+		currentTimeTarget = (engine.statistics.time - (engine.statistics.time % 60)) + getTimeLimit(GOAL_LINES[engine.statistics.level]);
 	}
 
 	@Override
 	public boolean onGameOver(GameEngine engine, int playerID) {
-		int penalty = BASE_TOP_OUT_PENALTY * PENALTY_MULTIPLIER[difficulty];
+		int penalty = BASE_PENALTY * PENALTY_MULTIPLIER[difficulty];
 
 		if (spareTime > penalty && engine.ending == 0) {
 			engine.lives++;
@@ -87,10 +174,18 @@ public class Constantris extends MarathonModeBase {
 
 	@Override
 	public void onLast(GameEngine engine, int playerID) {
-		if (spareTime == 0) {
+		if (engine.statistics.time >= currentTimeTarget + 60) {
+			if (engine.statistics.time % 60 == 0) {
+				--spareTime;
+				engine.playSE("timereduce");
+			}
+		}
+
+		if (spareTime == 0 && engine.gameStarted) {
 			engine.stat = GameEngine.STAT_GAMEOVER;
 			engine.gameEnded();
 		}
+
 		scgettime++;
 	}
 
@@ -122,7 +217,6 @@ public class Constantris extends MarathonModeBase {
 	 * @param prop Property file
 	 */
 	private void loadSetting(CustomProperties prop) {
-		startlevel = prop.getProperty("constantris.startlevel", 0);
 		tspinEnableType = prop.getProperty("constantris.tspinEnableType", 1);
 		enableTSpin = prop.getProperty("constantris.enableTSpin", true);
 		enableTSpinKick = prop.getProperty("constantris.enableTSpinKick", true);
@@ -133,6 +227,7 @@ public class Constantris extends MarathonModeBase {
 		goaltype = prop.getProperty("constantris.gametype", 0);
 		big = prop.getProperty("constantris.big", false);
 		version = prop.getProperty("constantris.version", 0);
+		difficulty = prop.getProperty("constantris.difficulty", DIFFICULTY_EASY);
 	}
 
 	/**
@@ -140,7 +235,6 @@ public class Constantris extends MarathonModeBase {
 	 * @param prop Property file
 	 */
 	private void saveSetting(CustomProperties prop) {
-		prop.setProperty("constantris.startlevel", startlevel);
 		prop.setProperty("constantris.tspinEnableType", tspinEnableType);
 		prop.setProperty("constantris.enableTSpin", enableTSpin);
 		prop.setProperty("constantris.enableTSpinKick", enableTSpinKick);
@@ -151,6 +245,7 @@ public class Constantris extends MarathonModeBase {
 		prop.setProperty("constantris.gametype", goaltype);
 		prop.setProperty("constantris.big", big);
 		prop.setProperty("constantris.version", version);
+		prop.setProperty("constantris.difficulty", difficulty);
 	}
 
 	/**
@@ -252,6 +347,9 @@ public class Constantris extends MarathonModeBase {
 		}
 
 		double multiplier = nextLineGoal / 10d;
+
+		if (restriction == RESTRICTION_NO_HARD_DROP) timeLimit *= 2;
+
 		return (int)(timeLimit * multiplier);
 	}
 
