@@ -14,6 +14,7 @@ import java.util.Random;
 
 public class Constantris extends MarathonModeBase {
 	private static final int DIFFICULTIES = 4;
+	private static final int CURRENT_VERSION = 3;
 
 	private static final int DIFFICULTY_EASY = 0,
 	                         DIFFICULTY_NORMAL = 1,
@@ -25,14 +26,22 @@ public class Constantris extends MarathonModeBase {
 	};
 
 	private static final int[] GOAL_LINES = {
-		5, 5, 5, 5, 5, 10, 10, 10, 10, 10,
-		15, 15, 15, 15, 15, 20, 20, 20, 20, 20,
-		30, 30, 30, 30, 30, 40, 40, 40, 40, 40,
-		50, 50, 50, 50, 50, 60, 60, 60, 60, 60,
-		75, 75, 75, 75, 75, 90, 90, 90, 90, 90,
-		105, 105, 105, 105, 105, 120, 120, 120, 120, 120,
-		140, 140, 140, 140, 140, 160, 160, 160, 160, 160,
-		180, 180, 180, 180, 180, 200, 200, 200, 200, 200
+		// 5, 5, 5, 5, 5, 10, 10, 10, 10, 10,
+		// 15, 15, 15, 15, 15, 20, 20, 20, 20, 20,
+		// 30, 30, 30, 30, 30, 40, 40, 40, 40, 40,
+		// 50, 50, 50, 50, 50, 60, 60, 60, 60, 60,
+		// 75, 75, 75, 75, 75, 90, 90, 90, 90, 90,
+		// 105, 105, 105, 105, 105, 120, 120, 120, 120, 120,
+		// 140, 140, 140, 140, 140, 160, 160, 160, 160, 160,
+		// 180, 180, 180, 180, 180, 200, 200, 200, 200, 200
+		5, 5, 5, 5, 5, 6, 7, 8, 9, 10,
+		10, 10, 10, 10, 10, 12, 14, 16, 18, 20,
+		20, 20, 20, 20, 20, 22, 24, 26, 28, 30,
+		30, 30, 30, 30, 30, 33, 36, 39, 42, 45,
+		45, 45, 45, 45, 45, 48, 51, 54, 57, 60,
+		60, 60, 60, 60, 60, 64, 68, 72, 76, 80,
+		80, 80, 80, 80, 80, 84, 88, 92, 96, 100,
+		100, 100, 100, 100, 100, 100, 100, 100, 100, 100
 	};
 
 	private static final int[] GOAL_LEVELS = { 20, 20, 40, 80 };
@@ -40,7 +49,7 @@ public class Constantris extends MarathonModeBase {
 	private static final int[] STARTING_SPARE_TIME = { 50, 30, 20, 10 };
 	private static final int[] STALLING_LIMITS = { 150, 300 };
 	private static final int[] PENALTY_MULTIPLIER = { 1, 1, 2, 4 };
-	private static final int BASE_PENALTY = 5;
+	private static final int BASE_TOP_OUT_PENALTY = 10;
 
 	private static int sumOf(int max) {
 		int sum = 0;
@@ -54,7 +63,8 @@ public class Constantris extends MarathonModeBase {
 
 	private static final int RESTRICTION_NONE = 0,
 	                         RESTRICTION_NO_HARD_DROP = 1,
-	                         RESTRICTION_NO_STALLING = 2;
+	                         RESTRICTION_NO_NEXT_VIEW = 2,
+	                         RESTRICTION_NO_STALLING = 3;
 
 	private static final int TIME_QUEUE_TICK = 6;
 
@@ -226,9 +236,7 @@ public class Constantris extends MarathonModeBase {
 			engine.statc[3]++;
 			engine.statc[2] = -1;
 
-			if(engine.statc[3] >= 60) {
-				return false;
-			}
+			return engine.statc[3] < 60;
 		}
 
 		return true;
@@ -333,20 +341,20 @@ public class Constantris extends MarathonModeBase {
 		engine.speed.denominator = tableDenominator[lv];
 
 		currentLineTarget = sumOf(engine.statistics.level) + GOAL_LINES[engine.statistics.level];
-		currentTimeTarget = currentTimeTarget + getTimeLimit(GOAL_LINES[engine.statistics.level]);
+		currentTimeTarget = currentTimeTarget + getTimeLimit(engine, GOAL_LINES[engine.statistics.level]);
 	}
 
 	@Override
 	public boolean onGameOver(GameEngine engine, int playerID) {
 		if (engine.statc[0] == 0) {
-			int penalty = BASE_PENALTY * PENALTY_MULTIPLIER[difficulty];
+			int penalty = BASE_TOP_OUT_PENALTY * PENALTY_MULTIPLIER[difficulty];
 
 			if (spareTime > penalty && engine.ending == 0) {
 				engine.lives++;
 				addTimeReduceQueue(penalty);
 			} else if (spareTime > 0) {
 				spareTime = 0;
-				engine.playSE("timereduce");
+				if (engine.ending == 0) engine.playSE("timereduce");
 			}
 		}
 
@@ -394,6 +402,14 @@ public class Constantris extends MarathonModeBase {
 			}
 		}
 
+		if (restriction == RESTRICTION_NO_NEXT_VIEW) {
+			engine.isNextVisible = false;
+			engine.isHoldVisible = false;
+		} else {
+			engine.isNextVisible = true;
+			engine.isHoldVisible = true;
+		}
+
 		if (restrictionViolationFrame > 0) --restrictionViolationFrame;
 		if (bonusFrame > 0) --bonusFrame;
 
@@ -428,7 +444,7 @@ public class Constantris extends MarathonModeBase {
 
 		if (changeFrame > 0) --changeFrame;
 		else {
-			if (lastChange != 0) lastChange = 0;
+			if (lastChange != 0 && timeIncreaseQueue <= 0 && timeReduceQueue <= 0) lastChange = 0;
 		}
 
 		scgettime++;
@@ -458,7 +474,7 @@ public class Constantris extends MarathonModeBase {
 				}
 			}
 		} else {
-			if (restrictionViolationFrame > 0) {
+			if (restrictionViolationFrame > 0 && bonusFrame <= 0) {
 				int xx = receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (engine.field.getWidth() / 2) * 16;
 				int yy = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
 				GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, xx, yy + 8, GameTextUtilities.ALIGN_TOP_MIDDLE, "RESTRICTION", EventReceiver.COLOR_RED, 1f);
@@ -473,7 +489,7 @@ public class Constantris extends MarathonModeBase {
 			}
 
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SPARE TIME", EventReceiver.COLOR_BLUE);
-			String timeVal = spareTime + " SECONDS ";
+			String timeVal = (engine.ending == 0 ? spareTime : engine.statistics.score) + " SECONDS ";
 			if (timeReduceQueue > 0 || timeIncreaseQueue > 0 || changeFrame > 0) {
 				timeVal += "(";
 				if (lastChange > 0) timeVal += "+";
@@ -505,6 +521,8 @@ public class Constantris extends MarathonModeBase {
 				} else {
 					receiver.drawScoreFont(engine, playerID, 0, 17, "STALL LIMIT 5.0S", EventReceiver.COLOR_YELLOW);
 				}
+			} else if (restriction == RESTRICTION_NO_NEXT_VIEW) {
+				receiver.drawScoreFont(engine, playerID, 0, 17, "INVISIBLE PREVIEWS", EventReceiver.COLOR_ORANGE);
 			}
 
 			if((lastevent != EVENT_NONE) && (scgettime < 120)) {
@@ -605,6 +623,7 @@ public class Constantris extends MarathonModeBase {
 		// Line clear bonus
 		int pts = 0;
 
+		lastevent = EVENT_NONE;
 		if(engine.tspin) {
 			// T-Spin 0 lines
 			if((lines == 0) && (!engine.tspinez)) {
@@ -693,6 +712,30 @@ public class Constantris extends MarathonModeBase {
 
 		if((engine.statistics.lines >= GOAL_LINE_TOTALS[difficulty]) && (GOAL_LINE_TOTALS[difficulty] >= 0)) {
 			// Ending
+			int diff = engine.statistics.time - currentTimeTarget;
+			if (diff >= -60 && diff < 60) {
+				int bonus = 0;
+				switch (difficulty) {
+					case DIFFICULTY_EASY:
+						bonus = 20;
+						break;
+					case DIFFICULTY_NORMAL:
+						bonus = 40;
+						break;
+					case DIFFICULTY_HARD:
+						bonus = 80;
+						break;
+					case DIFFICULTY_VERY_HARD:
+						bonus = 160;
+						break;
+					default:
+						break;
+				}
+
+				addTimeIncreaseQueue(bonus + 3 + streak);
+				bonusFrame = 120;
+			}
+
 			engine.ending = 1;
 			engine.gameEnded();
 		} else if((engine.statistics.lines >= currentLineTarget) && (engine.statistics.level < GOAL_LEVELS[difficulty])) {
@@ -712,7 +755,9 @@ public class Constantris extends MarathonModeBase {
 				streak = 0;
 			}
 
-			if (diff <= -600) {
+			if (diff <= -900) {
+				restriction = RESTRICTION_NO_NEXT_VIEW;
+			} else if (diff <= -450) {
 				restriction = RESTRICTION_NO_HARD_DROP;
 			} else if (diff >= 600) {
 				restriction = RESTRICTION_NO_STALLING;
@@ -814,9 +859,9 @@ public class Constantris extends MarathonModeBase {
 	protected void loadRanking(CustomProperties prop, String ruleName) {
 		for(int i = 0; i < RANKING_MAX; i++) {
 			for(int j = 0; j < DIFFICULTIES; j++) {
-				rankingScore[j][i] = prop.getProperty("constantris.ranking." + ruleName + "." + j + ".score." + i, 0);
-				rankingLines[j][i] = prop.getProperty("constantris.ranking." + ruleName + "." + j + ".lines." + i, 0);
-				rankingTime[j][i] = prop.getProperty("constantris.ranking." + ruleName + "." + j + ".time." + i, 0);
+				rankingScore[j][i] = prop.getProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".score." + i, 0);
+				rankingLines[j][i] = prop.getProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".lines." + i, 0);
+				rankingTime[j][i] = prop.getProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".time." + i, 0);
 			}
 		}
 	}
@@ -829,9 +874,9 @@ public class Constantris extends MarathonModeBase {
 	private void saveRanking(CustomProperties prop, String ruleName) {
 		for(int i = 0; i < RANKING_MAX; i++) {
 			for(int j = 0; j < DIFFICULTIES; j++) {
-				prop.setProperty("constantris.ranking." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
-				prop.setProperty("constantris.ranking." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
-				prop.setProperty("constantris.ranking." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
+				prop.setProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
+				prop.setProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
+				prop.setProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
 			}
 		}
 	}
@@ -885,7 +930,7 @@ public class Constantris extends MarathonModeBase {
 
 	// region Misc Block
 
-	private int getTimeLimit(int nextLineGoal) {
+	private int getTimeLimit(GameEngine engine, int nextLineGoal) {
 		int base = 20;
 		int timeLimit = 60 * base;
 
@@ -905,6 +950,11 @@ public class Constantris extends MarathonModeBase {
 
 		double multiplier = (double)nextLineGoal / 10d;
 		int t = (int)(timeLimit * multiplier);
+
+		if (engine.statistics.level >= 20) {
+			double extraMultiplier = 1 - (0.25 * ((engine.statistics.level - 19d) / 60d));
+			t *= extraMultiplier;
+		}
 
 		return t + (60 - (t % 60)) + (localRandom.nextInt(5) * 60);
 	}
