@@ -11,6 +11,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Accelerator_ - A marathon mode where playing fast is rewarded.
 * _Colour Power_ - A marathon mode where clearing lines using pieces of different colours nets you different power-ups.
 * _Collapse_ - A clone of Super Collapse II's Traditional mode.
+* _Constantris_ - A 電車でＧＯ！-inspired mode where you must advance to the next level at the correct time.
 * _Express Shipping_ - A clone of the space-filling game Puzzle Express by HipSoft.
 * _EX Reborn_ - A clone of \*\*\*ris-EX.
 * _Firework Challenge_ - An inaccurate version of \*\*\*ris the Grand Master 3's Easy mode.
