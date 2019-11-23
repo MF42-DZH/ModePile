@@ -56,7 +56,8 @@ public class SoundLoader {
 	public static final int LOADTYPE_FIREWORKS = 0,
 							LOADTYPE_SCANNER = 1,
 							LOADTYPE_MINESWEEPER = 2,
-							LOADTYPE_COLLAPSE = 3;
+							LOADTYPE_COLLAPSE = 3,
+	                        LOADTYPE_CONSTANTRIS = 4;
 	
 	private static final int HOLDER_SLICK = 0,
 							 HOLDER_SWING = 1,
@@ -87,6 +88,10 @@ public class SoundLoader {
 			importSound("normalclear");
 			importSound("nolanding");
 			importSound("noclear");
+			break;
+		case LOADTYPE_CONSTANTRIS:
+			importSound("timeincrease");
+			importSound("timereduce");
 			break;
 		default:
 			break;
