@@ -85,6 +85,8 @@ public class Constantris extends MarathonModeBase {
 	private int restriction;
 	private Random localRandom;
 
+	private int honkTimer;
+
 	private ProfileProperties playerProperties;
 	private int[][] rankingScorePlayer;
 	private int[][] rankingLinesPlayer;
@@ -152,6 +154,7 @@ public class Constantris extends MarathonModeBase {
 		rankingTimePlayer = new int[DIFFICULTIES][RANKING_MAX];
 
 		unfair = false;
+		honkTimer = 0;
 
 		showPlayerStats = false;
 
@@ -463,7 +466,20 @@ public class Constantris extends MarathonModeBase {
 	}
 
 	@Override
+	public void onFirst(GameEngine engine, int playerID) {
+		int diff = currentTimeTarget - engine.statistics.time;
+
+		if (engine.timerActive && engine.ctrl.isPush(Controller.BUTTON_F)) {
+			engine.playSE("horn");
+			if (diff > -60 && diff <= 60) honkTimer = 120;
+		}
+	}
+
+	@Override
 	public void onLast(GameEngine engine, int playerID) {
+		int diff = currentTimeTarget - engine.statistics.time;
+		if (honkTimer > 0) --honkTimer;
+
 		if (engine.statc[0] == 0 && engine.stat == GameEngine.STAT_MOVE) hasPenalised = false;
 		if (restriction == RESTRICTION_NO_STALLING && engine.stat == GameEngine.STAT_MOVE && !hasPenalised && engine.statc[0] > currentStallRestriction) {
 			addTimeReduceQueue(5 * PENALTY_MULTIPLIER[difficulty]);
@@ -477,7 +493,6 @@ public class Constantris extends MarathonModeBase {
 			}
 		}
 
-		int diff = currentTimeTarget - engine.statistics.time;
 		if (currentTimeTarget > 0 && diff < 300 && diff >= 0 && (diff % 60 == 0)) engine.playSE("countdown");
 
 		if (restriction == RESTRICTION_NO_NEXT_VIEW) {
@@ -603,7 +618,7 @@ public class Constantris extends MarathonModeBase {
 			}
 
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SPARE TIME", EventReceiver.COLOR_BLUE);
-			String timeVal = ((engine.stat == GameEngine.STAT_GAMEOVER || engine.stat == GameEngine.STAT_RESULT) ? engine.statistics.score : spareTime) + " SECONDS ";
+			String timeVal = (((spareTime == 0 && engine.stat == GameEngine.STAT_GAMEOVER) || engine.stat == GameEngine.STAT_RESULT) ? engine.statistics.score : spareTime) + " SECONDS ";
 			if (timeReduceQueue > 0 || timeIncreaseQueue > 0 || changeFrame > 0) {
 				timeVal += "(";
 				if (lastChange > 0) timeVal += "+";
@@ -621,7 +636,8 @@ public class Constantris extends MarathonModeBase {
 			receiver.drawScoreFont(engine, playerID, 0, 10, String.valueOf(engine.statistics.level + 1));
 
 			receiver.drawScoreFont(engine, playerID, 0, 12, "TIME / TARGET", EventReceiver.COLOR_BLUE);
-			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time), engine.statistics.time > currentTimeTarget + 60, EventReceiver.COLOR_WHITE, EventReceiver.COLOR_RED);
+			int diff = engine.statistics.time - currentTimeTarget;
+			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time), engine.statistics.time > currentTimeTarget + 60, (diff >= -60 && diff < 60 && honkTimer > 0) ? EventReceiver.COLOR_CYAN : EventReceiver.COLOR_WHITE, EventReceiver.COLOR_RED);
 			receiver.drawScoreFont(engine, playerID, 0, 14, GeneralUtil.getTime(currentTimeTarget), EventReceiver.COLOR_GREEN);
 
 			receiver.drawScoreFont(engine, playerID, 0, 16, "RESTRICTION", EventReceiver.COLOR_RED);
@@ -875,7 +891,8 @@ public class Constantris extends MarathonModeBase {
 
 			int diff = engine.statistics.time - currentTimeTarget;
 			if (diff >= -60 && diff < 60) {
-				addTimeIncreaseQueue((unfair ? 1 : 3) + streak);
+				int bonus = (honkTimer > 0 ? 2 : 0);
+				addTimeIncreaseQueue((unfair ? 1 : 3) + streak + bonus);
 				bonusFrame = 120;
 				++streak;
 			} else {

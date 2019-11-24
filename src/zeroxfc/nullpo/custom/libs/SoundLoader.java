@@ -90,6 +90,7 @@ public class SoundLoader {
 			importSound("noclear");
 			break;
 		case LOADTYPE_CONSTANTRIS:
+			importSound("horn");
 			importSound("timeincrease");
 			importSound("timereduce");
 			break;
