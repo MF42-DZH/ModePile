@@ -397,7 +397,7 @@ public class Constantris extends MarathonModeBase {
 	private void addTimeReduceQueue(int time) {
 		timeReduceQueue += ((unfair && difficulty != DIFFICULTY_VERY_HARD) ? time * 2 : time);
 		timeReduceDelay = 0;
-		lastChange = -time;
+		lastChange = -time * ((unfair && difficulty != DIFFICULTY_VERY_HARD) ? 2 : 1);
 		changeFrame = 60;
 	}
 
@@ -423,7 +423,7 @@ public class Constantris extends MarathonModeBase {
 		if (engine.statc[0] == 0) {
 			int penalty = BASE_TOP_OUT_PENALTY * PENALTY_MULTIPLIER[difficulty];
 
-			if (spareTime > penalty && engine.ending == 0) {
+			if (spareTime > (penalty * ((unfair && difficulty != DIFFICULTY_VERY_HARD) ? 2 : 1)) && engine.ending == 0) {
 				engine.lives++;
 				addTimeReduceQueue(penalty);
 			} else if (spareTime > 0) {
@@ -835,8 +835,8 @@ public class Constantris extends MarathonModeBase {
 		if((engine.statistics.lines >= GOAL_LINE_TOTALS[difficulty]) && (GOAL_LINE_TOTALS[difficulty] >= 0)) {
 			// Ending
 			int diff = engine.statistics.time - currentTimeTarget;
+			int bonus = 0;
 			if (diff >= -60 && diff < 60) {
-				int bonus = 0;
 				switch (difficulty) {
 					case DIFFICULTY_EASY:
 						bonus = 20;
@@ -856,9 +856,12 @@ public class Constantris extends MarathonModeBase {
 
 				if (unfair) bonus *= 1.5;
 
-				addTimeIncreaseQueue(bonus + (unfair ? 1 : 3) + streak);
+				bonus += (unfair ? 1 : 3) + streak;
 				bonusFrame = 120;
 			}
+
+			if (streak == engine.statistics.level) bonus += 20 * PENALTY_MULTIPLIER[difficulty] * ((unfair && difficulty != DIFFICULTY_VERY_HARD) ? 2 : 1);
+			if (bonus != 0) addTimeIncreaseQueue(bonus);
 
 			engine.ending = 1;
 			engine.gameEnded();
