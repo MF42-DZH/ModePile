@@ -150,6 +150,8 @@ public class Constantris extends MarathonModeBase {
 		rankingLinesPlayer = new int[DIFFICULTIES][RANKING_MAX];
 		rankingTimePlayer = new int[DIFFICULTIES][RANKING_MAX];
 
+		showPlayerStats = false;
+
 		netPlayerInit(engine, playerID);
 
 		if(!owner.replayMode) {
