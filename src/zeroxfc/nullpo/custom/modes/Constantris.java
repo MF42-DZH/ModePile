@@ -892,6 +892,7 @@ public class Constantris extends MarathonModeBase {
 			int diff = engine.statistics.time - currentTimeTarget;
 			if (diff >= -60 && diff < 60) {
 				int bonus = (honkTimer > 0 ? 2 : 0);
+				if (honkTimer > 0) honkTimer = 0;
 				addTimeIncreaseQueue((unfair ? 1 : 3) + streak + bonus);
 				bonusFrame = 120;
 				++streak;
