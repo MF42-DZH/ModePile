@@ -8,6 +8,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 
 import java.util.Random;
@@ -83,6 +84,15 @@ public class Constantris extends MarathonModeBase {
 	private int restriction;
 	private Random localRandom;
 
+	private ProfileProperties playerProperties;
+	private int[][] rankingScorePlayer;
+	private int[][] rankingLinesPlayer;
+	private int[][] rankingTimePlayer;
+	private int rankingRankPlayer;
+	private boolean showPlayerStats;
+	private String PLAYER_NAME;
+	private static final int HEADER = EventReceiver.COLOR_YELLOW;
+
 	// region Mode Block
 
 	/**
@@ -101,6 +111,12 @@ public class Constantris extends MarathonModeBase {
 	public void playerInit(GameEngine engine, int playerID) {
 		owner = engine.owner;
 		receiver = engine.owner.receiver;
+
+		if (playerProperties == null) {
+			showPlayerStats = false;
+			playerProperties = new ProfileProperties(HEADER);
+		}
+
 		lastscore = 0;
 		scgettime = 0;
 		lastevent = EVENT_NONE;
@@ -129,15 +145,29 @@ public class Constantris extends MarathonModeBase {
 		rankingLines = new int[DIFFICULTIES][RANKING_MAX];
 		rankingTime = new int[DIFFICULTIES][RANKING_MAX];
 
+		rankingRankPlayer = -1;
+		rankingScorePlayer = new int[DIFFICULTIES][RANKING_MAX];
+		rankingLinesPlayer = new int[DIFFICULTIES][RANKING_MAX];
+		rankingTimePlayer = new int[DIFFICULTIES][RANKING_MAX];
+
 		netPlayerInit(engine, playerID);
 
 		if(!owner.replayMode) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
 			version = CURRENT_VERSION;
+			PLAYER_NAME = "";
 		} else {
 			loadSetting(owner.replayProp);
 			if((version == 0) && (owner.replayProp.getProperty("constantris.endless", false))) goaltype = 2;
+
+			PLAYER_NAME = owner.replayProp.getProperty("constantris.playerName", "");
 
 			// NET: Load name
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -209,8 +239,13 @@ public class Constantris extends MarathonModeBase {
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 
 				// NET: Signal start of the game
 				if(netIsNetPlay) netLobby.netPlayerClient.send("start1p\n");
@@ -221,6 +256,17 @@ public class Constantris extends MarathonModeBase {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(HEADER);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
+				playerProperties = new ProfileProperties(HEADER);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			// NET: Netplay Ranking
@@ -311,6 +357,23 @@ public class Constantris extends MarathonModeBase {
 		if(netIsWatch) {
 			owner.bgmStatus.bgm = BGMStatus.BGM_NOTHING;
 		}
+	}
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		showPlayerStats = false;
+
+		engine.isInGame = true;
+
+		boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+		if (playerProperties.isLoggedIn()) {
+			loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			loadSettingPlayer(playerProperties);
+		}
+
+		if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+		return s;
 	}
 
 	private void addTimeIncreaseQueue(int time) {
@@ -447,6 +510,10 @@ public class Constantris extends MarathonModeBase {
 			if (lastChange != 0 && timeIncreaseQueue <= 0 && timeReduceQueue <= 0) lastChange = 0;
 		}
 
+		if (engine.quitflag) {
+			playerProperties = new ProfileProperties(HEADER);
+		}
+
 		scgettime++;
 	}
 
@@ -462,17 +529,41 @@ public class Constantris extends MarathonModeBase {
 
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
 			if((!owner.replayMode) && (!big) && (engine.ai == null)) {
-				float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
-				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
-				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
+				if (showPlayerStats) {
+					float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
+					int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
+					receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[difficulty][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[difficulty][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[difficulty][i]), (i == rankingRank), scale);
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScorePlayer[difficulty][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLinesPlayer[difficulty][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[difficulty][i]), (i == rankingRankPlayer), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+				} else {
+					float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
+					int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
+					receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
+
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[difficulty][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[difficulty][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[difficulty][i]), (i == rankingRank), scale);
+					}
+
+					receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+					if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+					if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			if (restrictionViolationFrame > 0 && bonusFrame <= 0) {
 				int xx = receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (engine.field.getWidth() / 2) * 16;
@@ -523,6 +614,11 @@ public class Constantris extends MarathonModeBase {
 				}
 			} else if (restriction == RESTRICTION_NO_NEXT_VIEW) {
 				receiver.drawScoreFont(engine, playerID, 0, 17, "INVISIBLE PREVIEWS", EventReceiver.COLOR_ORANGE);
+			}
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 0, 19, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, 20, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
 			}
 
 			if((lastevent != EVENT_NONE) && (scgettime < 120)) {
@@ -807,9 +903,18 @@ public class Constantris extends MarathonModeBase {
 		if((!owner.replayMode) && (!big) && (engine.ai == null)) {
 			updateRanking(engine.statistics.score, engine.statistics.lines, engine.statistics.time, difficulty);
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("constantris.playerName", playerProperties.getNameDisplay());
+			}
+
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -851,6 +956,40 @@ public class Constantris extends MarathonModeBase {
 	}
 
 	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		tspinEnableType = prop.getProperty("constantris.tspinEnableType", 1);
+		enableTSpin = prop.getProperty("constantris.enableTSpin", true);
+		enableTSpinKick = prop.getProperty("constantris.enableTSpinKick", true);
+		spinCheckType = prop.getProperty("constantris.spinCheckType", 0);
+		tspinEnableEZ = prop.getProperty("constantris.tspinEnableEZ", false);
+		enableB2B = prop.getProperty("constantris.enableB2B", true);
+		enableCombo = prop.getProperty("constantris.enableCombo", true);
+		goaltype = prop.getProperty("constantris.gametype", 0);
+		big = prop.getProperty("constantris.big", false);
+		difficulty = prop.getProperty("constantris.difficulty", DIFFICULTY_EASY);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		prop.setProperty("constantris.tspinEnableType", tspinEnableType);
+		prop.setProperty("constantris.enableTSpin", enableTSpin);
+		prop.setProperty("constantris.enableTSpinKick", enableTSpinKick);
+		prop.setProperty("constantris.spinCheckType", spinCheckType);
+		prop.setProperty("constantris.tspinEnableEZ", tspinEnableEZ);
+		prop.setProperty("constantris.enableB2B", enableB2B);
+		prop.setProperty("constantris.enableCombo", enableCombo);
+		prop.setProperty("constantris.gametype", goaltype);
+		prop.setProperty("constantris.big", big);
+		prop.setProperty("constantris.difficulty", difficulty);
+	}
+
+	/**
 	 * Read rankings from property file
 	 * @param prop Property file
 	 * @param ruleName Rule name
@@ -882,6 +1021,36 @@ public class Constantris extends MarathonModeBase {
 	}
 
 	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	protected void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < DIFFICULTIES; j++) {
+				rankingScorePlayer[j][i] = prop.getProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".score." + i, 0);
+				rankingLinesPlayer[j][i] = prop.getProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".lines." + i, 0);
+				rankingTimePlayer[j][i] = prop.getProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".time." + i, 0);
+			}
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < DIFFICULTIES; j++) {
+				prop.setProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
+				prop.setProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
+				prop.setProperty("constantris.ranking." + version + "." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
+			}
+		}
+	}
+
+	/**
 	 * Update rankings
 	 * @param sc Score
 	 * @param li Lines
@@ -902,6 +1071,24 @@ public class Constantris extends MarathonModeBase {
 			rankingScore[type][rankingRank] = sc;
 			rankingLines[type][rankingRank] = li;
 			rankingTime[type][rankingRank] = time;
+		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(sc, li, time, type);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingScorePlayer[type][i] = rankingScorePlayer[type][i - 1];
+					rankingLinesPlayer[type][i] = rankingLinesPlayer[type][i - 1];
+					rankingTimePlayer[type][i] = rankingTimePlayer[type][i - 1];
+				}
+
+				// Add new data
+				rankingScorePlayer[type][rankingRankPlayer] = sc;
+				rankingLinesPlayer[type][rankingRankPlayer] = li;
+				rankingTimePlayer[type][rankingRankPlayer] = time;
+			}
 		}
 	}
 
@@ -926,6 +1113,27 @@ public class Constantris extends MarathonModeBase {
 		return -1;
 	}
 
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param li Lines
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(int sc, int li, int time, int type) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if(sc > rankingScorePlayer[type][i]) {
+				return i;
+			} else if((sc == rankingScorePlayer[type][i]) && (li > rankingLinesPlayer[type][i])) {
+				return i;
+			} else if((sc == rankingScorePlayer[type][i]) && (li == rankingLinesPlayer[type][i]) && (time < rankingTimePlayer[type][i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
 	// endregion
 
 	// region Misc Block
@@ -942,7 +1150,7 @@ public class Constantris extends MarathonModeBase {
 				timeLimit -= 60 * 5;
 				break;
 			case DIFFICULTY_VERY_HARD:
-				timeLimit -= 60 * 10;
+				timeLimit -= 60 * 7.5;
 				break;
 			default:
 				break;
