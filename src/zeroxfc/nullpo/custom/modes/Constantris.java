@@ -79,6 +79,7 @@ public class Constantris extends MarathonModeBase {
 	private int lastChange;
 	private int changeFrame;
 	private boolean hasPenalised;
+	private boolean unfair;
 	private int streak;
 	private int spareTime;
 	private int restriction;
@@ -150,6 +151,8 @@ public class Constantris extends MarathonModeBase {
 		rankingLinesPlayer = new int[DIFFICULTIES][RANKING_MAX];
 		rankingTimePlayer = new int[DIFFICULTIES][RANKING_MAX];
 
+		unfair = false;
+
 		showPlayerStats = false;
 
 		netPlayerInit(engine, playerID);
@@ -193,7 +196,7 @@ public class Constantris extends MarathonModeBase {
 		// Menu
 		else if(!engine.owner.replayMode) {
 			// Configuration changes
-			int change = updateCursor(engine, 7, playerID);
+			int change = updateCursor(engine, 8, playerID);
 
 			if(change != 0) {
 				engine.playSE("change");
@@ -229,6 +232,9 @@ public class Constantris extends MarathonModeBase {
 						break;
 					case 7:
 						big = !big;
+						break;
+					case 8:
+						unfair = !unfair;
 						break;
 				}
 
@@ -316,6 +322,8 @@ public class Constantris extends MarathonModeBase {
 					"B2B", GeneralUtil.getONorOFF(enableB2B),
 					"COMBO",  GeneralUtil.getONorOFF(enableCombo),
 					"BIG", GeneralUtil.getONorOFF(big));
+			drawMenu(engine, playerID, receiver, 16, EventReceiver.COLOR_RED, 8,
+					"MODIFIER", unfair ? "UNFAIR" : "FAIR");
 		}
 	}
 
@@ -354,6 +362,7 @@ public class Constantris extends MarathonModeBase {
 		engine.tspinEnableEZ = tspinEnableEZ;
 
 		spareTime = STARTING_SPARE_TIME[difficulty];
+		if (unfair && difficulty != DIFFICULTY_VERY_HARD) spareTime /= 2;
 		setSpeed(engine);
 
 		if(netIsWatch) {
@@ -386,7 +395,7 @@ public class Constantris extends MarathonModeBase {
 	}
 
 	private void addTimeReduceQueue(int time) {
-		timeReduceQueue += time;
+		timeReduceQueue += ((unfair && difficulty != DIFFICULTY_VERY_HARD) ? time * 2 : time);
 		timeReduceDelay = 0;
 		lastChange = -time;
 		changeFrame = 60;
@@ -442,6 +451,7 @@ public class Constantris extends MarathonModeBase {
 		}
 
 		if((engine.statc[0] >= 600) && (engine.statc[1] == 0) && (timeReduceQueue == 0 && timeIncreaseQueue == 0)) {
+			if (unfair) spareTime *= 1.5;
 			engine.statistics.score = spareTime;
 			engine.resetStatc();
 			engine.stat = GameEngine.STAT_GAMEOVER;
@@ -537,7 +547,7 @@ public class Constantris extends MarathonModeBase {
 	public void renderLast(GameEngine engine, int playerID) {
 		if(owner.menuOnly) return;
 
-		receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_YELLOW);
+		receiver.drawScoreFont(engine, playerID, 0, 0, getName() + (unfair ? " (UNFAIR)" : ""), EventReceiver.COLOR_YELLOW);
 		receiver.drawScoreFont(engine, playerID, 0, 1, "(" + DIFFICULTY_NAMES[difficulty] + " GAME)", difficulty == DIFFICULTY_VERY_HARD ? EventReceiver.COLOR_RED : EventReceiver.COLOR_YELLOW);
 
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
@@ -844,7 +854,9 @@ public class Constantris extends MarathonModeBase {
 						break;
 				}
 
-				addTimeIncreaseQueue(bonus + 3 + streak);
+				if (unfair) bonus *= 1.5;
+
+				addTimeIncreaseQueue(bonus + (unfair ? 1 : 3) + streak);
 				bonusFrame = 120;
 			}
 
@@ -860,7 +872,7 @@ public class Constantris extends MarathonModeBase {
 
 			int diff = engine.statistics.time - currentTimeTarget;
 			if (diff >= -60 && diff < 60) {
-				addTimeIncreaseQueue(3 + streak);
+				addTimeIncreaseQueue((unfair ? 1 : 3) + streak);
 				bonusFrame = 120;
 				++streak;
 			} else {
@@ -951,6 +963,7 @@ public class Constantris extends MarathonModeBase {
 		big = prop.getProperty("constantris.big", false);
 		version = prop.getProperty("constantris.version", 0);
 		difficulty = prop.getProperty("constantris.difficulty", DIFFICULTY_EASY);
+		unfair = prop.getProperty("constantris.unfair", false);
 	}
 
 	/**
@@ -969,6 +982,7 @@ public class Constantris extends MarathonModeBase {
 		prop.setProperty("constantris.big", big);
 		prop.setProperty("constantris.version", version);
 		prop.setProperty("constantris.difficulty", difficulty);
+		prop.setProperty("constantris.unfair", unfair);
 	}
 
 	/**
@@ -986,6 +1000,7 @@ public class Constantris extends MarathonModeBase {
 		goaltype = prop.getProperty("constantris.gametype", 0);
 		big = prop.getProperty("constantris.big", false);
 		difficulty = prop.getProperty("constantris.difficulty", DIFFICULTY_EASY);
+		unfair = prop.getProperty("constantris.unfair", false);
 	}
 
 	/**
@@ -1003,6 +1018,7 @@ public class Constantris extends MarathonModeBase {
 		prop.setProperty("constantris.gametype", goaltype);
 		prop.setProperty("constantris.big", big);
 		prop.setProperty("constantris.difficulty", difficulty);
+		prop.setProperty("constantris.unfair", unfair);
 	}
 
 	/**
@@ -1161,12 +1177,18 @@ public class Constantris extends MarathonModeBase {
 		switch (difficulty) {
 			case DIFFICULTY_EASY:
 				timeLimit += 60 * 5;
+				if (unfair) timeLimit += localRandom.nextInt(2) * 60;
+				break;
+			case DIFFICULTY_NORMAL:
+				if (unfair) timeLimit += localRandom.nextInt(2) * 60;
 				break;
 			case DIFFICULTY_HARD:
 				timeLimit -= 60 * 5;
+				if (unfair) timeLimit -= localRandom.nextInt(2) * 60;
 				break;
 			case DIFFICULTY_VERY_HARD:
 				timeLimit -= 60 * 7.5;
+				if (!unfair) timeLimit += localRandom.nextInt(2) * 60;
 				break;
 			default:
 				break;
@@ -1176,11 +1198,11 @@ public class Constantris extends MarathonModeBase {
 		int t = (int)(timeLimit * multiplier);
 
 		if (engine.statistics.level >= 20) {
-			double extraMultiplier = 1 - (0.25 * ((engine.statistics.level - 19d) / 60d));
+			double extraMultiplier = 1 - ((unfair ? 0.25 : 0.18) * ((engine.statistics.level - 19d) / 60d));
 			t *= extraMultiplier;
 		}
 
-		return t + (60 - (t % 60)) + (localRandom.nextInt(5) * 60);
+		return t + (60 - (t % 60)) + (localRandom.nextInt(unfair ? 4 : 5) * 60);
 	}
 
 	// endregion
