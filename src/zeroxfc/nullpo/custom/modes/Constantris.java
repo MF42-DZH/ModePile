@@ -429,7 +429,6 @@ public class Constantris extends MarathonModeBase {
 	@Override
 	public boolean onExcellent(GameEngine engine, int playerID) {
 		if(engine.statc[0] == 0) {
-			engine.statistics.score = spareTime;
 			engine.gameEnded();
 			owner.bgmStatus.fadesw = true;
 
@@ -443,6 +442,7 @@ public class Constantris extends MarathonModeBase {
 		}
 
 		if((engine.statc[0] >= 600) && (engine.statc[1] == 0) && (timeReduceQueue == 0 && timeIncreaseQueue == 0)) {
+			engine.statistics.score = spareTime;
 			engine.resetStatc();
 			engine.stat = GameEngine.STAT_GAMEOVER;
 		} else {
@@ -593,7 +593,7 @@ public class Constantris extends MarathonModeBase {
 			}
 
 			receiver.drawScoreFont(engine, playerID, 0, 3, "SPARE TIME", EventReceiver.COLOR_BLUE);
-			String timeVal = (engine.ending == 0 ? spareTime : engine.statistics.score) + " SECONDS ";
+			String timeVal = ((engine.stat == GameEngine.STAT_GAMEOVER || engine.stat == GameEngine.STAT_RESULT) ? engine.statistics.score : spareTime) + " SECONDS ";
 			if (timeReduceQueue > 0 || timeIncreaseQueue > 0 || changeFrame > 0) {
 				timeVal += "(";
 				if (lastChange > 0) timeVal += "+";
@@ -761,12 +761,14 @@ public class Constantris extends MarathonModeBase {
 					lastevent = EVENT_TSPIN_DOUBLE_MINI;
 				} else {
 					pts = 1;
+					if (engine.b2b) pts = 2;
 					lastevent = EVENT_TSPIN_DOUBLE;
 				}
 			}
 			// T-Spin 3 lines
 			else if(lines >= 3) {
 				pts = 4;
+				if (engine.b2b) pts = 8;
 				lastevent = EVENT_TSPIN_TRIPLE;
 			}
 		} else {
@@ -779,6 +781,7 @@ public class Constantris extends MarathonModeBase {
 			} else if(lines >= 4) {
 				// 4 lines
 				pts = 1;
+				if (engine.b2b) pts = 2;
 				lastevent = EVENT_FOUR;
 			}
 		}
@@ -794,7 +797,7 @@ public class Constantris extends MarathonModeBase {
 		// All clear
 		if((lines >= 1) && (engine.field.isEmpty())) {
 			engine.playSE("bravo");
-			pts += 10;
+			pts += 10 * lines;
 		}
 
 		// Add to score
