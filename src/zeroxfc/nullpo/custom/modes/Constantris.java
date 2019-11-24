@@ -465,6 +465,9 @@ public class Constantris extends MarathonModeBase {
 			}
 		}
 
+		int diff = currentTimeTarget - engine.statistics.time;
+		if (currentTimeTarget > 0 && diff < 300 && diff >= 0 && (diff % 60 == 0)) engine.playSE("countdown");
+
 		if (restriction == RESTRICTION_NO_NEXT_VIEW) {
 			engine.isNextVisible = false;
 			engine.isHoldVisible = false;
@@ -508,6 +511,14 @@ public class Constantris extends MarathonModeBase {
 		if (changeFrame > 0) --changeFrame;
 		else {
 			if (lastChange != 0 && timeIncreaseQueue <= 0 && timeReduceQueue <= 0) lastChange = 0;
+		}
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
 		}
 
 		if (engine.quitflag) {
