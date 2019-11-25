@@ -1078,9 +1078,9 @@ public class Constantris extends MarathonModeBase {
 	private void saveRanking(CustomProperties prop, String ruleName) {
 		for(int i = 0; i < RANKING_MAX; i++) {
 			for(int j = 0; j < DIFFICULTIES; j++) {
-				prop.setProperty("constantris.ranking." + version + "." + CURRENT_VERSION + "." + j + ".score." + i, rankingScore[j][i]);
-				prop.setProperty("constantris.ranking." + version + "." + CURRENT_VERSION + "." + j + ".lines." + i, rankingLines[j][i]);
-				prop.setProperty("constantris.ranking." + version + "." + CURRENT_VERSION + "." + j + ".time." + i, rankingTime[j][i]);
+				prop.setProperty("constantris.ranking." + CURRENT_VERSION + "." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
+				prop.setProperty("constantris.ranking." + CURRENT_VERSION + "." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
+				prop.setProperty("constantris.ranking." + CURRENT_VERSION + "." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
 			}
 		}
 	}
@@ -1108,9 +1108,9 @@ public class Constantris extends MarathonModeBase {
 	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
 		for(int i = 0; i < RANKING_MAX; i++) {
 			for(int j = 0; j < DIFFICULTIES; j++) {
-				prop.setProperty("constantris.ranking." + version + "." + CURRENT_VERSION + "." + j + ".score." + i, rankingScore[j][i]);
-				prop.setProperty("constantris.ranking." + version + "." + CURRENT_VERSION + "." + j + ".lines." + i, rankingLines[j][i]);
-				prop.setProperty("constantris.ranking." + version + "." + CURRENT_VERSION + "." + j + ".time." + i, rankingTime[j][i]);
+				prop.setProperty("constantris.ranking." + CURRENT_VERSION + "." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
+				prop.setProperty("constantris.ranking." + CURRENT_VERSION + "." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
+				prop.setProperty("constantris.ranking." + CURRENT_VERSION + "." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
 			}
 		}
 	}
