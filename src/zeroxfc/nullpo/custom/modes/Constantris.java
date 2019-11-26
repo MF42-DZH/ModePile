@@ -912,14 +912,14 @@ public class Constantris extends MarathonModeBase {
 				streak = 0;
 			}
 
-			if (diff <= -getMaxDiff() - 900) {
+			if (diff <= -900) {
 				restriction = RESTRICTION_NO_NEXT_VIEW;
-			} else if (diff <= -getMaxDiff() - 450) {
+			} else if (diff <= -450) {
 				restriction = RESTRICTION_NO_HARD_DROP;
-			} else if (diff >= getMaxDiff() + 600) {
+			} else if (diff >= 900) {
 				restriction = RESTRICTION_NO_STALLING;
 				currentStallRestriction = STALLING_LIMITS[0];
-			} else if (diff >= getMaxDiff() + 300) {
+			} else if (diff >= 450) {
 				restriction = RESTRICTION_NO_STALLING;
 				currentStallRestriction = STALLING_LIMITS[1];
 			} else {
