@@ -649,7 +649,7 @@ public class Constantris extends MarathonModeBase {
 
 			receiver.drawScoreFont(engine, playerID, 0, 12, "TIME / TARGET", EventReceiver.COLOR_BLUE);
 			int diff = engine.statistics.time - currentTimeTarget;
-			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time), engine.statistics.time > currentTimeTarget + 60, (diff >= -60 && diff < 60 && honkTimer > 0) ? EventReceiver.COLOR_CYAN : EventReceiver.COLOR_WHITE, EventReceiver.COLOR_RED);
+			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time), engine.statistics.time > currentTimeTarget + getMaxDiff(), (diff >= -getMaxDiff() && diff < getMaxDiff() && honkTimer > 0) ? EventReceiver.COLOR_CYAN : EventReceiver.COLOR_WHITE, EventReceiver.COLOR_RED);
 			receiver.drawScoreFont(engine, playerID, 0, 14, GeneralUtil.getTime(currentTimeTarget), EventReceiver.COLOR_GREEN);
 
 			receiver.drawScoreFont(engine, playerID, 0, 16, "RESTRICTION", EventReceiver.COLOR_RED);
@@ -1224,10 +1224,10 @@ public class Constantris extends MarathonModeBase {
 		switch (difficulty) {
 			case DIFFICULTY_EASY:
 				timeLimit += 60 * 2;
-				if (unfair) timeLimit += localRandom.nextInt(2) * 60;
+				if (unfair) timeLimit -= localRandom.nextInt(2) * 60;
 				break;
 			case DIFFICULTY_NORMAL:
-				if (unfair) timeLimit += localRandom.nextInt(2) * 60;
+				if (unfair) timeLimit -= localRandom.nextInt(2) * 60;
 				break;
 			case DIFFICULTY_HARD:
 				timeLimit -= 60 * 5;
