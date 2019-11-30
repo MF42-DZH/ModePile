@@ -1488,9 +1488,9 @@ public class EXReborn extends DummyMode {
 	private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
 		if (!prop.isLoggedIn()) return;
 		for(int i = 0; i < RANKING_MAX; i++) {
-			rankingScorePlayer[i] = prop.getProperty("exreborn.ranking." + ruleName + ".score." + i, 0);
-			rankingLevelPlayer[i] = prop.getProperty("exreborn.ranking." + ruleName + ".lines." + i, 0);
-			rankingTimePlayer[i] = prop.getProperty("exreborn.ranking." + ruleName + ".time." + i, 0);
+			rankingScorePlayer[i] = prop.getProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".score." + i, 0);
+			rankingLevelPlayer[i] = prop.getProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".lines." + i, 0);
+			rankingTimePlayer[i] = prop.getProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".time." + i, 0);
 		}
 	}
 
@@ -1502,9 +1502,9 @@ public class EXReborn extends DummyMode {
 	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
 		if (!prop.isLoggedIn()) return;
 		for(int i = 0; i < RANKING_MAX; i++) {
-			prop.setProperty("exreborn.ranking." + ruleName + ".score." + i, rankingScorePlayer[i]);
-			prop.setProperty("exreborn.ranking." + ruleName + ".lines." + i, rankingLevelPlayer[i]);
-			prop.setProperty("exreborn.ranking." + ruleName + ".time." + i, rankingTimePlayer[i]);
+			prop.setProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".score." + i, rankingScorePlayer[i]);
+			prop.setProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".lines." + i, rankingLevelPlayer[i]);
+			prop.setProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".time." + i, rankingTimePlayer[i]);
 		}
 	}
 
