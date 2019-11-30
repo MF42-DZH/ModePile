@@ -50,6 +50,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _RendererExtension_ - Extra drawing methods.
 * _ResourceHolderCustomAssetExtension_ - Allows the use of custom images and BGM in a mode.
 * _ScrollingMarqueeText_ - Horizontal scrolling text.
+* _ShakingText_ - Text that vibrates around a fixed point.
 * _SideWaveText_ - _Super Collapse II_-styled text popups.
 * _SoundLoader_ - Allows the use of custom SFX.
 * _StaticFlyInText_ - Similar to _FlyInOutText_, but the text does not fly back out.
