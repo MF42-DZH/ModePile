@@ -1024,7 +1024,7 @@ public class EXReborn extends DummyMode {
 	public void calcScore(GameEngine engine, int playerID, int lines) {
 		if(engine.ending != 0) return;
 
-		int effectiveSection = (engine.statistics.level / 100);
+		double effectiveSection = (engine.statistics.level / 100d);
 
 		// Combo
 		if(lines == 0) {
@@ -1053,7 +1053,7 @@ public class EXReborn extends DummyMode {
 				engine.playSE("bravo");
 			}
 
-			if (version < 2) lastscore = ( ((effectiveSection + lines) / 4) + engine.softdropFall + engine.harddropFall + manuallock ) * lines * comboValue * bravo;  // TGM1 scoring
+			if (version < 2) lastscore = ( ((engine.statistics.level + lines) / 4) + engine.softdropFall + engine.harddropFall + manuallock ) * lines * comboValue * bravo;  // TGM1 scoring
 			else {
 				// T-EX scoring: refer to https://github.com/farteryhr/labs/blob/master/t-ex_core.as in the killline() function
 				int scoreBase = (int) (lines * Math.pow(2, effectiveSection / 5d) * 150);
