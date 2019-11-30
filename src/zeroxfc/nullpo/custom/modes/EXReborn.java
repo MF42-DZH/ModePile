@@ -10,6 +10,7 @@ import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
+import zeroxfc.nullpo.custom.wallkick.TetrisEXWallkick;
 
 import java.util.ArrayList;
 
@@ -54,6 +55,8 @@ public class EXReborn extends DummyMode {
 
 	private static final int RANKING_MAX = 10;
 
+	private static final int CURRENT_VERSION = 2;
+
 	/** Rankings' scores */
 	private int[] rankingScore;
 
@@ -71,9 +74,11 @@ public class EXReborn extends DummyMode {
 	private EventReceiver receiver;
 	private int rankingRank;
 	private int comboValue;
-	private boolean lvstopse, big, lvupflag, alwaysghost;
+	private boolean lvstopse, big, lvupflag, alwaysghost, greying;
 	private int lastscore, previousscore, scgettime, bgmlv;
 	private int nextseclv;
+	private int version;
+	// private int totalFall;
 
 	private static final int headerColour = EventReceiver.COLOR_BLUE;
 	private ProfileProperties playerProperties;
@@ -122,9 +127,11 @@ public class EXReborn extends DummyMode {
 		lvstopse = true;
 		big = false;
 		lvupflag = false;
+		greying = false;
 		nextseclv = 0;
 		comboValue = 1;
 		bgmlv = 0;
+		// totalFall = 0;
 
 		pCoordList = new ArrayList<>();
 		cPiece = null;
@@ -141,6 +148,7 @@ public class EXReborn extends DummyMode {
 				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
 			}
 
+			version = CURRENT_VERSION;
 			PLAYER_NAME = "";
 		} else {
 			loadSetting(owner.replayProp);
@@ -237,6 +245,7 @@ public class EXReborn extends DummyMode {
 	@Override
 	public void startGame(GameEngine engine, int playerID) {
 		nextseclv = engine.statistics.level + 100;
+		greying = false;
 
 		owner.backgroundStatus.bg = engine.statistics.level / 100;
 
@@ -274,6 +283,8 @@ public class EXReborn extends DummyMode {
 	 * T-EX-CLASSIC
 	 * T-EX-MODERN
 	 */
+
+	// NOTE: above comment is void as a replacement detection will be made using the wallkick class name.
 	@Override
 	public boolean onMove(GameEngine engine, int playerID) {
 		if((engine.ending == 0) && (engine.statc[0] == 0) && (engine.holdDisable == false) && (!lvupflag)) {
@@ -318,7 +329,10 @@ public class EXReborn extends DummyMode {
 						engine.nextPieceCount++;
 						if(engine.nextPieceCount < 0) engine.nextPieceCount = 0;
 
-						if(engine.bone == true) engine.getNextObject(engine.nextPieceCount + engine.ruleopt.nextDisplay - 1).setAttribute(Block.BLOCK_ATTRIBUTE_BONE, true);
+						if(engine.bone) engine.getNextObject(engine.nextPieceCount + engine.ruleopt.nextDisplay - 1).setAttribute(Block.BLOCK_ATTRIBUTE_BONE, true);
+
+						// New code to replace [] blocks
+						if(greying) engine.getNextObject(engine.nextPieceCount + engine.ruleopt.nextDisplay - 1).setColor(Block.BLOCK_COLOR_GRAY);
 
 						engine.nowPieceObject = engine.getNextObjectCopy(engine.nextPieceCount);
 						engine.nextPieceCount++;
@@ -479,7 +493,7 @@ public class EXReborn extends DummyMode {
 				int rt = engine.getRotateDirection(move);
 
 				// rotationできるか判定
-				if((!engine.ruleopt.strRuleName.contains("T-EX") || engine.initialRotateDirection != 0) && engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY, rt, engine.field) == false)
+				if((!(engine.wallkick.getClass().getCanonicalName().contains("TetrisEXWallkick")) || engine.initialRotateDirection != 0) && engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY, rt, engine.field) == false)
 				{
 					// Wallkickなしでrotationできるとき
 					rotated = true;
@@ -491,6 +505,12 @@ public class EXReborn extends DummyMode {
 						   ((engine.initialRotateDirection == 0) || (engine.ruleopt.rotateInitialWallkick == true)) &&
 						   ((engine.ruleopt.lockresetLimitOver != RuleOptions.LOCKRESET_LIMIT_OVER_NOWALLKICK) || (engine.isRotateCountExceed() == false)) )
 				{
+					if (engine.wallkick instanceof TetrisEXWallkick) {
+						((TetrisEXWallkick)engine.wallkick).currentDASCharge = engine.dasCount;
+						((TetrisEXWallkick)engine.wallkick).maxDASCharge = engine.getDAS();
+						((TetrisEXWallkick)engine.wallkick).dasDirection = engine.dasDirection;
+					}
+
 					// Wallkickを試みる
 					boolean allowUpward = (engine.ruleopt.rotateMaxUpwardWallkick < 0) || (engine.nowUpwardWallkickCount < engine.ruleopt.rotateMaxUpwardWallkick);
 					WallkickResult kick = engine.wallkick.executeWallkick(engine.nowPieceX, engine.nowPieceY, move, engine.nowPieceObject.direction, rt,
@@ -1004,12 +1024,22 @@ public class EXReborn extends DummyMode {
 	public void calcScore(GameEngine engine, int playerID, int lines) {
 		if(engine.ending != 0) return;
 
+		int effectiveSection = (engine.statistics.level / 100);
+
 		// Combo
 		if(lines == 0) {
 			comboValue = 1;
 		} else {
 			comboValue = comboValue + (2 * lines) - 2;
 			if(comboValue < 1) comboValue = 1;
+		}
+
+		int s = (int) (Math.pow(2, (20d - engine.nowPieceY) / 20d) * Math.pow(2, effectiveSection / 5d) * 25);
+		if (version >= 2) {
+			// if (totalFall <= 0) s = 0;
+			engine.statistics.score += s;
+			engine.statistics.scoreFromOtherBonus += s;
+			// totalFall = 0;
 		}
 
 		if(lines >= 1) {
@@ -1023,9 +1053,16 @@ public class EXReborn extends DummyMode {
 				engine.playSE("bravo");
 			}
 
+			if (version < 2) lastscore = ( ((effectiveSection + lines) / 4) + engine.softdropFall + engine.harddropFall + manuallock ) * lines * comboValue * bravo;  // TGM1 scoring
+			else {
+				// T-EX scoring: refer to https://github.com/farteryhr/labs/blob/master/t-ex_core.as in the killline() function
+				int scoreBase = (int) (lines * Math.pow(2, effectiveSection / 5d) * 150);
+				lastscore = scoreBase * lines;
+			}
+
 			previousscore = engine.statistics.score;
-			lastscore = ( ((engine.statistics.level + lines) / 4) + engine.softdropFall + engine.harddropFall + manuallock ) * lines * comboValue * bravo;
 			engine.statistics.score += lastscore;
+			lastscore += s;
 			scgettime = 120;
 
 			int lvbefore = engine.statistics.level;
@@ -1070,7 +1107,8 @@ public class EXReborn extends DummyMode {
 				}
 
 				if (engine.statistics.level >= 1500) {
-					engine.bone = true;
+					if (version < 2) engine.bone = true;
+					else greying = false;
 				}
 			} else if((engine.statistics.level == nextseclv - 1) && (lvstopse)) {
 				engine.playSE("levelstop");
@@ -1262,8 +1300,10 @@ public class EXReborn extends DummyMode {
 	 */
 	@Override
 	public void afterSoftDropFall(GameEngine engine, int playerID, int fall) {
-		engine.statistics.scoreFromSoftDrop += fall;
-		engine.statistics.score += fall;
+		if (version < 2) {
+			engine.statistics.scoreFromSoftDrop += fall;
+			engine.statistics.score += fall;
+		}
 	}
 
 	/*
@@ -1271,8 +1311,10 @@ public class EXReborn extends DummyMode {
 	 */
 	@Override
 	public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
-		engine.statistics.scoreFromHardDrop += fall * 2;
-		engine.statistics.score += fall * 2;
+		if (version < 2) {
+			engine.statistics.scoreFromHardDrop += fall * 2;
+			engine.statistics.score += fall * 2;
+		}
 
 		int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
 		int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
@@ -1374,6 +1416,7 @@ public class EXReborn extends DummyMode {
 		lvstopse = prop.getProperty("exreborn.lvstopse", true);
 		big = prop.getProperty("exreborn.big", false);
 		alwaysghost = prop.getProperty("exreborn.alwaysghost", false);
+		version = prop.getProperty("exreborn.version", 1);
 	}
 
 	/**
@@ -1384,6 +1427,7 @@ public class EXReborn extends DummyMode {
 		prop.setProperty("exreborn.lvstopse", lvstopse);
 		prop.setProperty("exreborn.big", big);
 		prop.setProperty("exreborn.alwaysghost", alwaysghost);
+		prop.setProperty("exreborn.version", version);
 	}
 
 	/**
@@ -1415,9 +1459,9 @@ public class EXReborn extends DummyMode {
 	 */
 	protected void loadRanking(CustomProperties prop, String ruleName) {
 		for(int i = 0; i < RANKING_MAX; i++) {
-			rankingScore[i] = prop.getProperty("exreborn.ranking." + ruleName + ".score." + i, 0);
-			rankingLevel[i] = prop.getProperty("exreborn.ranking." + ruleName + ".lines." + i, 0);
-			rankingTime[i] = prop.getProperty("exreborn.ranking." + ruleName + ".time." + i, 0);
+			rankingScore[i] = prop.getProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".score." + i, 0);
+			rankingLevel[i] = prop.getProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".lines." + i, 0);
+			rankingTime[i] = prop.getProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".time." + i, 0);
 		}
 	}
 
@@ -1428,9 +1472,9 @@ public class EXReborn extends DummyMode {
 	 */
 	private void saveRanking(CustomProperties prop, String ruleName) {
 		for(int i = 0; i < RANKING_MAX; i++) {
-			prop.setProperty("exreborn.ranking." + ruleName + ".score." + i, rankingScore[i]);
-			prop.setProperty("exreborn.ranking." + ruleName + ".lines." + i, rankingLevel[i]);
-			prop.setProperty("exreborn.ranking." + ruleName + ".time." + i, rankingTime[i]);
+			prop.setProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".score." + i, rankingScore[i]);
+			prop.setProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".lines." + i, rankingLevel[i]);
+			prop.setProperty("exreborn.ranking." + CURRENT_VERSION + "." + ruleName + ".time." + i, rankingTime[i]);
 		}
 	}
 
