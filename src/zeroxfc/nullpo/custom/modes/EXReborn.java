@@ -427,6 +427,8 @@ public class EXReborn extends DummyMode {
 			engine.tspinez = false;
 
 			engine.getNextObject(engine.nextPieceCount + engine.ruleopt.nextDisplay - 1).setAttribute(Block.BLOCK_ATTRIBUTE_BONE, engine.bone);
+			// New code to replace [] blocks
+			if(greying) engine.getNextObject(engine.nextPieceCount + engine.ruleopt.nextDisplay - 1).setColor(Block.BLOCK_COLOR_GRAY);
 
 			if(engine.ending == 0) engine.timerActive = true;
 
