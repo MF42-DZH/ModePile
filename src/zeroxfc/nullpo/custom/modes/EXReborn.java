@@ -1108,7 +1108,7 @@ public class EXReborn extends DummyMode {
 
 				if (engine.statistics.level >= 1500) {
 					if (version < 2) engine.bone = true;
-					else greying = false;
+					else greying = true;
 				}
 			} else if((engine.statistics.level == nextseclv - 1) && (lvstopse)) {
 				engine.playSE("levelstop");
