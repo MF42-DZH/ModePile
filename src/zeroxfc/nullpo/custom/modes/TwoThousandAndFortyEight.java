@@ -549,7 +549,7 @@ public class TwoThousandAndFortyEight extends DummyMode {
 
 			int sc;
 			if (lastScoreTime <= 8) {
-				sc = Interpolation.lerp(lastScore, engine.statistics.score, (double)lastScoreTime / 8.0);
+				sc = (int) Interpolation.sineStep(lastScore, engine.statistics.score, (double)lastScoreTime / 8.0);
 			} else {
 				sc = engine.statistics.score;
 			}

@@ -1211,7 +1211,7 @@ public class Collapse extends DummyMode {
 	}
 	
 	private void incrementScore(GameEngine engine) {
-		scoreToDisplay = Interpolation.lerp(lastScore, engine.statistics.score, (float)scGetTime / 60);
+		scoreToDisplay = (int)Interpolation.sineStep(lastScore, engine.statistics.score, scGetTime / 60d);
 	}
 	
 	private void setNewLowerScore(GameEngine engine) {

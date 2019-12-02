@@ -1175,7 +1175,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 			}
 
 			receiver.drawMenuFont(engine, playerID, 0, 21, "SCORE", EventReceiver.COLOR_PINK);
-			receiver.drawMenuFont(engine, playerID, 0, 22, String.valueOf(Interpolation.lerp(lastScore, engine.statistics.score, (double)scGetTime/60.0)));
+			receiver.drawMenuFont(engine, playerID, 0, 22, String.valueOf((int)Interpolation.sineStep(lastScore, engine.statistics.score, (double)scGetTime/60.0)));
 
 			receiver.drawMenuFont(engine, playerID, 10, 21, "TIME", EventReceiver.COLOR_PINK);
 			receiver.drawMenuFont(engine, playerID, 10, 22, GeneralUtil.getTime(engine.statistics.time));

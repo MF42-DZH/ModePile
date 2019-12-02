@@ -922,7 +922,7 @@ public class MarathonTwo extends MarathonModeBase {
 			if((lastscore == 0) || (scgettime >= 120)) {
 				strScore = String.valueOf(engine.statistics.score);
 			} else {
-				strScore = Interpolation.lerp(prevScore, engine.statistics.score, scgettime / 120d) + "(+" + lastscore + ")";
+				strScore = (int)Interpolation.sineStep(prevScore, engine.statistics.score, scgettime / 120d) + "(+" + lastscore + ")";
 			}
 			if (glitchTimer > 0) {
 				GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 4, GameTextUtilities.randomString(strScore.length(), renderRandomiser), renderRandomiser, 1f);

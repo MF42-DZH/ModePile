@@ -1266,7 +1266,7 @@ public class EXReborn extends DummyMode {
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 2, "SCORE", EventReceiver.COLOR_BLUE);
 			String strScore;
-			int sc = Interpolation.lerp(previousscore, engine.statistics.score, (double)(120 - scgettime) / 120.0);
+			int sc = (int)Interpolation.sineStep(previousscore, engine.statistics.score, (double)(120 - scgettime) / 120.0);
 			if((lastscore == 0) || (scgettime <= 0)) {
 				strScore = String.valueOf(sc);
 			} else {

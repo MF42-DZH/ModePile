@@ -162,7 +162,7 @@ public class GemField {
 	
 	public int possibleMatches() {
 		int patternMatches = 0;
-		
+
 		int[][][] testLocationPairs = {
 			{
 				{-2, 0},

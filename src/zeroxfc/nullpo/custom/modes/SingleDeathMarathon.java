@@ -507,8 +507,8 @@ public class SingleDeathMarathon extends MarathonModeBase {
 			if((lastscore == 0) || (scgettime >= 120)) {
 				strScore = String.valueOf(engine.statistics.score);
 			} else {
-				int cScore = Interpolation.lerp(previousScore, engine.statistics.score, (double)scgettime / 120.0);
-				strScore = String.valueOf(cScore) + "(+" + String.valueOf(lastscore) + ")";
+				int cScore = (int) Interpolation.sineStep(previousScore, engine.statistics.score, (double)scgettime / 120.0);
+				strScore = cScore + "(+" + lastscore + ")";
 			}
 			receiver.drawScoreFont(engine, playerID, 0, 4, strScore);
 

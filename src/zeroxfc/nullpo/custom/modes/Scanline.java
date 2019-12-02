@@ -318,7 +318,7 @@ public class Scanline extends MarathonModeBase {
 			if((lastscore == 0) || (scgettime >= 120)) {
 				strScore = String.valueOf(engine.statistics.score);
 			} else {
-				strScore = String.valueOf(Interpolation.lerp(scoreBeforeIncrease, engine.statistics.score, (scgettime / 120.0)) + "(+" + String.valueOf(lastscore) + ")");
+				strScore = String.valueOf((int)Interpolation.sineStep(scoreBeforeIncrease, engine.statistics.score, (scgettime / 120.0)) + "(+" + String.valueOf(lastscore) + ")");
 			}
 			receiver.drawScoreFont(engine, playerID, 0, 4, strScore);
 
