@@ -32,6 +32,7 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import mu.nu.nullpo.game.component.Block;
@@ -59,9 +60,7 @@ public class BlockParticleCollection {
 	public BlockParticleCollection(int length, int animType) {
 		collectionBlockParticles = new BlockParticle[length];
 		animationType = animType;
-		for (int i = 0; i < collectionBlockParticles.length; i++) {
-			collectionBlockParticles[i] = null;
-		}
+		Arrays.fill(collectionBlockParticles, null);
 	}
 	
 	public void update() {
@@ -77,9 +76,9 @@ public class BlockParticleCollection {
 	}
 	
 	public void drawAll(GameEngine engine, EventReceiver receiver, int playerID) {
-		for (int i = 0; i < collectionBlockParticles.length; i++) {
-			if (collectionBlockParticles[i] != null) {
-				collectionBlockParticles[i].draw(engine, receiver, playerID, animationType);
+		for (BlockParticle collectionBlockParticle : collectionBlockParticles) {
+			if (collectionBlockParticle != null) {
+				collectionBlockParticle.draw(engine, receiver, playerID, animationType);
 			}
 		}
 	}
@@ -119,7 +118,7 @@ public class BlockParticleCollection {
 		int v2 = receiver.getFieldDisplayPositionY(engine, playerID) + (engine.displaysize == 0 ? 52 : 104) + (y * (engine.displaysize == 0 ? 16 : 32));
 		DoubleVector position = new DoubleVector(v1, v2, false);
 		
-		double xU = (x - (maxX / 2));
+		double xU = (x - (maxX / 2d));
 		if (maxX % 2 == 0) xU += 0.5;
 		double mod = (1.0 / 3.0) * xU;
 		DoubleVector velocity = new DoubleVector(mod, -3.2 * (0.5 + (0.5 * ((double)(maxYMod - yMod) / maxYMod))), false);
@@ -129,8 +128,8 @@ public class BlockParticleCollection {
 	
 	public int getCount() {
 		int g = 0;
-		for (int i = 0; i < collectionBlockParticles.length; i++) {
-			if (collectionBlockParticles[i] != null) g++;
+		for (BlockParticle collectionBlockParticle : collectionBlockParticles) {
+			if (collectionBlockParticle != null) g++;
 		}
 		return g;
 	}

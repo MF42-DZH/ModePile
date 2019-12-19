@@ -47,6 +47,9 @@ public class BlockParticle {
 	
 	// Velocity
 	private DoubleVector velocity;
+
+	// Size
+	private float size;
 	
 	// Lifetime
 	private int maxLifetime;
@@ -77,6 +80,7 @@ public class BlockParticle {
 		
 		maxLifetime = timeToLive;
 		currentLifetime = 0;
+		size = 1;
 	}
 	
 	public BlockParticle(Block block, DoubleVector position, DoubleVector velocity, int timeToLive) {
@@ -88,6 +92,7 @@ public class BlockParticle {
 		
 		maxLifetime = timeToLive;
 		currentLifetime = 0;
+		size = 1;
 	}
 	
 	/**
@@ -104,6 +109,7 @@ public class BlockParticle {
 			break;
 		case BlockParticleCollection.ANIMATION_TGM:
 			velocity = DoubleVector.add(velocity, new DoubleVector(0, 0.980665 / 2.25, false));
+			size += 0.01f;
 			break;
 		}
 		
@@ -117,17 +123,25 @@ public class BlockParticle {
 	public void draw(GameEngine engine, EventReceiver receiver, int playerID, int animType) {
 		if (engine.displaysize != -1) {			
 			if (animType == BlockParticleCollection.ANIMATION_TGM) {
-				receiver.drawSingleBlock(engine, playerID,
-		                (int)position.getX() + ((engine.displaysize == 0) ? 2 : 4), (int)position.getY() + ((engine.displaysize == 0) ? 2 : 4),
-		                objectTexture.color, objectTexture.skin,
-		                objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0.5f, 1f,
-		                (engine.displaysize == 0) ? 1f : 2f);
+				RendererExtension.drawScaledBlock(receiver, (int)position.getX() + ((engine.displaysize == 0) ? 2 : 4), (int)position.getY() + ((engine.displaysize == 0) ? 2 : 4),
+						objectTexture.color, objectTexture.skin,
+						objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0.5f, 1f,
+						((engine.displaysize == 0) ? 1f : 2f) * size, 0);
+//				receiver.drawSingleBlock(engine, playerID,
+//		                (int)position.getX() + ((engine.displaysize == 0) ? 2 : 4), (int)position.getY() + ((engine.displaysize == 0) ? 2 : 4),
+//		                objectTexture.color, objectTexture.skin,
+//		                objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0.5f, 1f,
+//		                (engine.displaysize == 0) ? 1f : 2f);
 			}
-			receiver.drawSingleBlock(engine, playerID,
-	                (int)position.getX(), (int)position.getY(),
-	                objectTexture.color, objectTexture.skin,
-	                objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), (isFlashing && ((currentLifetime / 2) % 2 == 0)) ? -0.8f : 0f, (animType == BlockParticleCollection.ANIMATION_DTET) ? 0.667f : 1f,
-	                (engine.displaysize == 0) ? 1f : 2f);
+			RendererExtension.drawScaledBlock(receiver, (int)position.getX(), (int)position.getY(),
+					objectTexture.color, objectTexture.skin,
+					objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), (isFlashing && ((currentLifetime / 2) % 2 == 0)) ? -0.8f : 0f, (animType == BlockParticleCollection.ANIMATION_DTET) ? 0.667f : 1f,
+					((engine.displaysize == 0) ? 1f : 2f) * size, 0);
+//			receiver.drawSingleBlock(engine, playerID,
+//	                (int)position.getX(), (int)position.getY(),
+//	                objectTexture.color, objectTexture.skin,
+//	                objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), (isFlashing && ((currentLifetime / 2) % 2 == 0)) ? -0.8f : 0f, (animType == BlockParticleCollection.ANIMATION_DTET) ? 0.667f : 1f,
+//	                (engine.displaysize == 0) ? 1f : 2f);
 		}
 	}
 

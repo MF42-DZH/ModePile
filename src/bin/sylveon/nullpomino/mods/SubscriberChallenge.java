@@ -447,7 +447,7 @@ public class SubscriberChallenge extends NetDummyMode {
 			if (subscriber - lastValue != 0) a.append("("+ (subscriber - lastValue > 0 ? "+" : "") + (subscriber - lastValue) + ")");
 			if (scgettime < 120) {
 				if ((subscriber - lastValue) > 0) {
-					GameTextUtilities.drawRainbowScoreString(receiver, engine, playerID, 0, 4, a.toString(), (int)GameTextUtilities.RAINBOW_ORDER[(scgettime/4) % GameTextUtilities.RAINBOW_ORDER.length], 1f);
+					GameTextUtilities.drawRainbowScoreString(receiver, engine, playerID, 0, 4, a.toString(), GameTextUtilities.RAINBOW_ORDER[(scgettime/4) % GameTextUtilities.RAINBOW_ORDER.length], 1f);
 				} else {
 					receiver.drawScoreFont(engine, playerID, 0, 4, a.toString(), subscriber - lastValue < 0);
 				}
