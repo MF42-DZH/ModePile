@@ -52,7 +52,7 @@ public class BlockParticle {
 	private float size;
 	
 	// Lifetime
-	private int maxLifetime;
+	private final int maxLifetime;
 		
 	// Current time alive
 	private int currentLifetime;
@@ -109,7 +109,7 @@ public class BlockParticle {
 			break;
 		case BlockParticleCollection.ANIMATION_TGM:
 			velocity = DoubleVector.add(velocity, new DoubleVector(0, 0.980665 / 2.25, false));
-			size += 0.01f;
+			size += (1f / 60f);
 			break;
 		}
 		
