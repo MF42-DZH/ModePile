@@ -123,7 +123,7 @@ public class BlockParticle {
 	public void draw(GameEngine engine, EventReceiver receiver, int playerID, int animType) {
 		if (engine.displaysize != -1) {			
 			if (animType == BlockParticleCollection.ANIMATION_TGM) {
-				RendererExtension.drawScaledBlock(receiver, (int)position.getX() + ((engine.displaysize == 0) ? 2 : 4), (int)position.getY() + ((engine.displaysize == 0) ? 2 : 4),
+				RendererExtension.drawScaledBlock(receiver, (int)position.getX() + (int)(((engine.displaysize == 0) ? 2 : 4) * size), (int)position.getY() + ((engine.displaysize == 0) ? 2 : 4),
 						objectTexture.color, objectTexture.skin,
 						objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0.5f, 1f,
 						((engine.displaysize == 0) ? 1f : 2f) * size, 0);
