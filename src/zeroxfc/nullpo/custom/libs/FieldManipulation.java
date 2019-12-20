@@ -32,6 +32,7 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import mu.nu.nullpo.game.component.Block;
@@ -172,6 +173,62 @@ public class FieldManipulation {
 				field.setBlock(x, yMax, temp1);
 			}
 		}
+	}
+
+	/**
+	 * Remove an amount of hurry-up lines.
+	 * @param lines Amount of lines to remove
+	 */
+	public static void removeHurryUpLines(Field field, int lines) {
+		try {
+			// This will complain about an unchecked cast but nothing should go wrong.
+			Class<Field> fld = (Class<Field>)field.getClass();
+			java.lang.reflect.Field localField;
+			localField = fld.getDeclaredField("hurryupFloorLines");
+			localField.setAccessible(true);
+
+			// sum = new amount of lines, difference = how much to push down
+			int sum = field.getHurryupFloorLines() - lines;
+			if (sum < 0) sum = 0;
+
+			int difference = field.getHurryupFloorLines() - sum;
+
+			localField.set(field, sum);  // Put new number in
+			field.pushDown(difference);  // Push down the field to simulate the removal
+		} catch (Exception e) {
+			// Do nothing.
+		}
+	}
+
+	/**
+	 * Negates all the blocks in the field up to the current stack height.
+	 * @param field Field to negate
+	 */
+	public static void negaFieldFix(Field field) {
+		for (int y = field.getHighestBlockY(); y < field.getHeight(); y++)
+			for (int x = 0; x < field.getWidth(); x++)
+			{
+				if (field.getBlockEmpty(x, y))
+					field.garbageDropPlace(x, y, false, 0); // TODO: Set color
+				else
+					field.setBlockColor(x, y, Block.BLOCK_COLOR_NONE);
+			}
+	}
+
+	/**
+	 * Mirrors the current field. Essentially the same as horizontal flip.
+	 * @param field
+	 */
+	public static void mirrorFix(Field field) {
+		Block temp;
+
+		for (int y = field.getHighestBlockY(); y < field.getHeight(); y--)
+			for (int xMin = 0, xMax = field.getWidth()-1; xMin < xMax; xMin++, xMax--)
+			{
+				temp = field.getBlock(xMin, y);
+				field.setBlock(xMin, y, field.getBlock(xMax, y));
+				field.setBlock(xMax, y, temp);
+			}
 	}
 
 	/**

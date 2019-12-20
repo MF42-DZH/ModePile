@@ -121,7 +121,7 @@ public class BlockParticleCollection {
 		double xU = (x - (maxX / 2d));
 		if (maxX % 2 == 0) xU += 0.5;
 		double mod = (1.0 / 3.0) * xU;
-		DoubleVector velocity = new DoubleVector(mod, -3.2 * (0.5 + (0.5 * ((double)(maxYMod - yMod) / maxYMod))), false);
+		DoubleVector velocity = new DoubleVector(mod * 1.1d, -4.8 * (0.5 + (0.5 * ((double)(maxYMod - yMod) / maxYMod))), false);
 		
 		collectionBlockParticles[i] = new BlockParticle(k, position, velocity, timeToLive);
 	}
