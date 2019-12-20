@@ -194,7 +194,7 @@ public class FieldManipulation {
 			int difference = field.getHurryupFloorLines() - sum;
 
 			localField.set(field, sum);  // Put new number in
-			field.cutLine(field.getHeight(), difference);  // Push down the field to simulate the removal
+			field.cutLine(field.getHeight() - 1, difference);  // Push down the field to simulate the removal
 		} catch (Exception e) {
 			// Do nothing.
 		}
