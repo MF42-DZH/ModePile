@@ -114,7 +114,7 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 			this.pulseBaseScale = pulseBaseScale;
 			this.pulseScaleVariance = pulseScaleVariance;
 
-			chunks = new ImageChunk[AMT];
+			chunks = new ImageChunk[sliceSize];
 			for (int i = 0; i < chunks.length; i++) {
 				chunks[i] = new ImageChunk(ImageChunk.ANCHOR_POINT_TM, new int[] { ((640 / sliceSize) * i) + ((640 / sliceSize) / 2), 0 }, new int[] { (640 / sliceSize) * i, 0 }, new int[] { (640 / sliceSize), 480 }, new float[] { pulseBaseScale, 1f } );
 			}

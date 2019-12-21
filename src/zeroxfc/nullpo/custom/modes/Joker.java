@@ -13,6 +13,10 @@ import zeroxfc.nullpo.custom.libs.BlockParticleCollection;
 import zeroxfc.nullpo.custom.libs.FlyInOutText;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
+import zeroxfc.nullpo.custom.libs.backgroundtypes.BackgroundDiagonalRipple;
+import zeroxfc.nullpo.custom.libs.backgroundtypes.BackgroundHorizontalBars;
+import zeroxfc.nullpo.custom.libs.backgroundtypes.BackgroundVerticalBars;
 
 public class Joker extends MarathonModeBase {
 	// Speed Tables
@@ -104,6 +108,10 @@ public class Joker extends MarathonModeBase {
 	
 	// Last amount of lines cleared;
 	private int lastLine;
+
+	// Animated backgrounds
+	private boolean useAnimBG;
+	private AnimatedBackgroundHook[] ANIMATED_BACKGROUNDS;
 	
 	@Override
 	public String getName() {
@@ -115,6 +123,13 @@ public class Joker extends MarathonModeBase {
 	 */
 	@Override
 	public void playerInit(GameEngine engine, int playerID) {
+		if (ANIMATED_BACKGROUNDS == null) {
+			ANIMATED_BACKGROUNDS = new AnimatedBackgroundHook[] {
+					new BackgroundVerticalBars(18, 60, 160, 1f, 4f, false),
+					new BackgroundDiagonalRipple(19, 8, 8, 60, 1f, 2f, false, false)
+			};
+		}
+
 		jevilTimer = 0;
 		efficiency = 0f;
 		efficiencyGrade = 0;
@@ -133,6 +148,7 @@ public class Joker extends MarathonModeBase {
 		stock = 0;
 		startingStock = 0;
 		lastLine = 0;
+		useAnimBG = false;
 		
 		mainTimer = 0;
 		warningText = null;
@@ -156,7 +172,7 @@ public class Joker extends MarathonModeBase {
 
 		netPlayerInit(engine, playerID);
 
-		if(owner.replayMode == false) {
+		if(!owner.replayMode) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 
@@ -169,7 +185,7 @@ public class Joker extends MarathonModeBase {
 			PLAYER_NAME = "";
 		} else {
 			loadSetting(owner.replayProp);
-			if((version == 0) && (owner.replayProp.getProperty("joker.endless", false) == true)) goaltype = 2;
+			if((version == 0) && (owner.replayProp.getProperty("joker.endless", false))) goaltype = 2;
 
 			// NET: Load name
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -236,9 +252,9 @@ public class Joker extends MarathonModeBase {
 			netOnUpdateNetPlayRanking(engine, goaltype);
 		}
 		// Menu
-		else if(engine.owner.replayMode == false) {
+		else if(!engine.owner.replayMode) {
 			// Configuration changes
-			int change = updateCursor(engine, 3, playerID);
+			int change = updateCursor(engine, 4, playerID);
 
 			if(change != 0) {
 				engine.playSE("change");
@@ -259,6 +275,9 @@ public class Joker extends MarathonModeBase {
 					break;
 				case 3:
 					drawJevil = !drawJevil;
+					break;
+				case 4:
+					useAnimBG = !useAnimBG;
 					break;
 				}
 
@@ -315,9 +334,7 @@ public class Joker extends MarathonModeBase {
 			engine.statc[3]++;
 			engine.statc[2] = -1;
 
-			if(engine.statc[3] >= 60) {
-				return false;
-			}
+			return engine.statc[3] < 60;
 		}
 
 		return true;
@@ -346,7 +363,8 @@ public class Joker extends MarathonModeBase {
 			drawMenu(engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE, 1,
 					"BIG", GeneralUtil.getONorOFF(big),
 					"L.C. ANIM.", lc,
-					"DRAW JEVIL", GeneralUtil.getONorOFF(drawJevil));
+					"DRAW JEVIL", GeneralUtil.getONorOFF(drawJevil),
+					"ANIM. BGS.", GeneralUtil.getONorOFF(useAnimBG));
 		}
 	}
 	
@@ -364,6 +382,13 @@ public class Joker extends MarathonModeBase {
 		
 		if (blockParticles != null) {
 			blockParticles = null;
+		}
+
+		if (engine.statc[0] == 0 && useAnimBG) {
+			engine.owner.backgroundStatus.bg = -2;
+			for (AnimatedBackgroundHook bg : ANIMATED_BACKGROUNDS) {
+				bg.reset();
+			}
 		}
 		
 		if (engine.statc[0] == 0 && drawJevil) {
@@ -404,7 +429,6 @@ public class Joker extends MarathonModeBase {
 		engine.speed.denominator = 256;
 		engine.speed.are = 15;
 		engine.speed.areLine = 15;
-		engine.speed.lineDelay = 0;
 		engine.blockShowOutlineOnly = true;
 		
 		engine.blockOutlineType = GameEngine.BLOCK_OUTLINE_NORMAL;
@@ -425,18 +449,24 @@ public class Joker extends MarathonModeBase {
 		
 		if (drawJevil) {
 			owner.bgmStatus.bgm = 16;
-			owner.bgmStatus.fadesw = false;
 			// customHolder.playCustomBGM(0, false);
 		} else {
 			owner.bgmStatus.bgm = 15;
-			owner.bgmStatus.fadesw = false;
 		}
+		owner.bgmStatus.fadesw = false;
 
 		if(netIsWatch) {
 			owner.bgmStatus.bgm = BGMStatus.BGM_NOTHING;
 		}
 	}
-	
+
+	@Override
+	public void renderFirst(GameEngine engine, int playerID) {
+		if (useAnimBG && engine.owner.backgroundStatus.bg < 0) {
+			ANIMATED_BACKGROUNDS[engine.owner.backgroundStatus.bg + 2].draw(engine, playerID);
+		}
+	}
+
 	/*
 	 * Render score
 	 */
@@ -447,8 +477,8 @@ public class Joker extends MarathonModeBase {
 		receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_RED);
 		receiver.drawScoreFont(engine, playerID, 0, 1, "(FINAL TIER)", EventReceiver.COLOR_RED);
 
-		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false)) ) {
-			if((owner.replayMode == false) && (big == false) && (engine.ai == null) && (startingStock == 0)) {
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
+			if((!owner.replayMode) && (!big) && (engine.ai == null) && (startingStock == 0)) {
 				float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
 				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
 				receiver.drawScoreFont(engine, playerID, 3, topY-1, "LEVEL  LINE TIME", EventReceiver.COLOR_BLUE, scale);
@@ -505,7 +535,7 @@ public class Joker extends MarathonModeBase {
 				}
 			}
 			receiver.drawScoreFont(engine, playerID, 0, 12, "STOCK", EventReceiver.COLOR_GREEN);
-			receiver.drawScoreFont(engine, playerID, 0, 13, String.valueOf(stock) + b, stock <= 2);
+			receiver.drawScoreFont(engine, playerID, 0, 13, stock + b, stock <= 2);
 			
 			receiver.drawScoreFont(engine, playerID, 0, 15, "EFFICIENCY", EventReceiver.COLOR_GREEN);
 			receiver.drawScoreFont(engine, playerID, 0, 16, String.format("%.2f", efficiency * 100) + "%", engine.statistics.level >= 300, EventReceiver.COLOR_WHITE, EventReceiver.COLOR_PINK);
@@ -577,6 +607,10 @@ public class Joker extends MarathonModeBase {
 	public void onLast(GameEngine engine, int playerID) {
 		scgettime++;
 		jevilTimer = (jevilTimer + 1) % 27;
+
+		if (useAnimBG && engine.owner.backgroundStatus.bg < 0) {
+			ANIMATED_BACKGROUNDS[engine.owner.backgroundStatus.bg + 2].update();
+		}
 		
 		if (engine.gameStarted && engine.ending == 0) {
 			jSpeed = engine.field.getHighestBlockY() < 4;
@@ -595,9 +629,8 @@ public class Joker extends MarathonModeBase {
 			
 			// Meter - use as timer.
 			if (engine.statistics.level < 200) {
-				int timerMax = TIMER_MAX;
-				
-				engine.meterValue = (int)((mainTimer / (double)timerMax) * receiver.getMeterMax(engine));
+
+				engine.meterValue = (int)((mainTimer / (double) TIMER_MAX) * receiver.getMeterMax(engine));
 				engine.meterColor = GameEngine.METER_COLOR_GREEN;
 				if(mainTimer > 3600 && mainTimer < 5400) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
 				if(mainTimer <= 3600 && mainTimer > 1800) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
@@ -900,7 +933,7 @@ public class Joker extends MarathonModeBase {
 				}
 			}
 
-			boolean skip = false;
+			boolean skip;
 			skip = lineClearEnd(engine, playerID);
 			owner.receiver.lineClearEnd(engine, playerID);
 
@@ -948,8 +981,7 @@ public class Joker extends MarathonModeBase {
 	@Override
 	public void calcScore(GameEngine engine, int playerID, int lines) {
 		// Line clear bonus
-		int linesUsed = lines;
-		if (linesUsed > 4) linesUsed = 4;
+		// if (linesUsed > 4) linesUsed = 4;
 		
 		if (lines > 0) {
 			int pts = engine.statistics.time - timeScore;
@@ -976,7 +1008,7 @@ public class Joker extends MarathonModeBase {
 			if (engine.statistics.level == 200) {
 				shouldUseTimer = false;
 				engine.playSE("medal");
-				engine.owner.backgroundStatus.bg = 19;
+				++engine.owner.backgroundStatus.bg;
 				
 				int destinationX = receiver.getScoreDisplayPositionX(engine, playerID);
 				int destinationY = receiver.getScoreDisplayPositionY(engine, playerID) + (18 * (engine.displaysize == 0 ? 16 : 32));
@@ -1080,7 +1112,7 @@ public class Joker extends MarathonModeBase {
 		}
 
 		// Update rankings
-		if((owner.replayMode == false) && (big == false) && (engine.ai == null) && (startingStock == 0)) {
+		if((!owner.replayMode) && (!big) && (engine.ai == null) && (startingStock == 0)) {
 			updateRanking(engine.statistics.level, engine.statistics.lines, timeScore);
 
 			if (playerProperties.isLoggedIn()) {
@@ -1110,6 +1142,7 @@ public class Joker extends MarathonModeBase {
 		version = prop.getProperty("joker.version", 0);
 		lineClearAnimType = prop.getProperty("joker.lcat", 0);
 		drawJevil = prop.getProperty("joker.drawjevil", false);
+		useAnimBG = prop.getProperty("joker.animatedBG", false);
 	}
 
 	/**
@@ -1123,6 +1156,7 @@ public class Joker extends MarathonModeBase {
 		prop.setProperty("joker.version", version);
 		prop.setProperty("joker.lcat", lineClearAnimType);
 		prop.setProperty("joker.drawjevil", drawJevil);
+		prop.setProperty("joker.animatedBG", useAnimBG);
 	}
 
 	/**
@@ -1136,6 +1170,7 @@ public class Joker extends MarathonModeBase {
 		startingStock = prop.getProperty("joker.extrastock", 0);
 		lineClearAnimType = prop.getProperty("joker.lcat", 0);
 		drawJevil = prop.getProperty("joker.drawjevil", false);
+		useAnimBG = prop.getProperty("joker.animatedBG", false);
 	}
 
 	/**
@@ -1149,6 +1184,7 @@ public class Joker extends MarathonModeBase {
 		prop.setProperty("joker.extrastock", startingStock);
 		prop.setProperty("joker.lcat", lineClearAnimType);
 		prop.setProperty("joker.drawjevil", drawJevil);
+		prop.setProperty("joker.animatedBG", useAnimBG);
 	}
 
 	/**
