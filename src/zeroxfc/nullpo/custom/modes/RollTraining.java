@@ -281,7 +281,7 @@ public class RollTraining extends MarathonModeBase {
 		setSpeed(engine);
 		timer = TIME_LIMITS[usedSpeed];
 		engine.blockHidden = useMRoll ? engine.ruleopt.lockflash : FADING_FRAMES;
-		engine.blockHiddenAnim = useMRoll;
+		engine.blockHiddenAnim = !useMRoll;
 		engine.blockOutlineType = useMRoll ? GameEngine.BLOCK_OUTLINE_NORMAL : GameEngine.BLOCK_OUTLINE_NONE;
 		owner.bgmStatus.bgm = BGMStatus.BGM_ENDING1;
 
@@ -325,7 +325,7 @@ public class RollTraining extends MarathonModeBase {
 					if (rankingRank == i) color = EventReceiver.COLOR_RED;
 					else {
 						if (usedSpeed == SPEED_TAP) {
-							color = rankingLines[endless ? usedSpeed + 2 : usedSpeed][i] >= 32 ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+							color = ((!useMRoll && rankingTime[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[0]) || rankingLines[endless ? usedSpeed + 2 : usedSpeed][i] >= 32) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 						} else {
 							color = rankingTime[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 						}
@@ -333,9 +333,9 @@ public class RollTraining extends MarathonModeBase {
 
 					String gText;
 					if (usedSpeed == SPEED_TAP) {
-						gText = rankingGrade[endless ? usedSpeed + 2 : usedSpeed][i] >= 1.0 ? "GM" : "M";
+						gText = !useMRoll ? "S9" : (rankingGrade[endless ? usedSpeed + 2 : usedSpeed][i] >= 1.0 ? "GM" : "M");
 					} else {
-						gText = "+" + rankingGrade[endless ? usedSpeed + 2 : usedSpeed][i];
+						gText = "+" + String.format("%.2f", rankingGrade[endless ? usedSpeed + 2 : usedSpeed][i]);
 					}
 
 					receiver.drawScoreFont(engine, playerID,  3, topY+i, gText, color, scale);
@@ -349,10 +349,10 @@ public class RollTraining extends MarathonModeBase {
 			int gc;
 
 			if (usedSpeed == SPEED_TAP) {
-				grade = tapGrade >= 1.0 ? "GM" : "M";
-				gc = engine.statistics.lines >= 32 ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+				grade = !useMRoll ? "S9" : (tapGrade >= 1.0 ? "GM" : "M");
+				gc = ((!useMRoll && engine.statistics.time >= TIME_LIMITS[0]) || engine.statistics.lines >= 32) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 			} else {
-				grade = "+" + tiGrade;
+				grade = "+" + String.format("%.2f", tiGrade);
 				gc = engine.statistics.time >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 			}
 
@@ -366,7 +366,7 @@ public class RollTraining extends MarathonModeBase {
 
 			if (!endless) {
 				receiver.drawScoreFont(engine, playerID, 0, 12, "REMAINING", EventReceiver.COLOR_YELLOW);
-				receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(timer), timer <= 600 && (timer / 2 % 2 == 0));
+				receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(Math.max(timer, 0)), timer <= 600 && (timer / 2 % 2 == 0));
 			}
 
 			if((lastevent != EVENT_NONE) && (scgettime < 120)) {
@@ -458,6 +458,7 @@ public class RollTraining extends MarathonModeBase {
 				}
 			}
 			if (timer > -1) --timer;
+			if (!endless && timer <= 600 && timer > 0 && timer % 60 == 0) engine.playSE("countdown");
 		}
 
 		int cg = usedSpeed == SPEED_TAP ? (int)tapGrade : (int)tiGrade;
@@ -535,14 +536,14 @@ public class RollTraining extends MarathonModeBase {
 
 		if (usedSpeed == SPEED_TAP) {
 			grade = tapGrade >= 1.0 ? "GM" : "M";
-			gc = engine.statistics.lines >= 32 ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+			gc = ((!useMRoll && engine.statistics.time >= TIME_LIMITS[0]) || engine.statistics.lines >= 32) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 		} else {
-			grade = "+" + tiGrade;
+			grade = "+" + String.format("%.2f", tiGrade);
 			gc = engine.statistics.time >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 		}
 
-		receiver.drawMenuFont(engine, playerID, 0, 0,usedSpeed == SPEED_TAP ? "GRADE" : "BONUS", EventReceiver.COLOR_BLUE);
-		receiver.drawMenuFont(engine, playerID, 0, 0,String.format("%10s", grade), gc);
+		receiver.drawMenuFont(engine, playerID, 0, 0, usedSpeed == SPEED_TAP ? "GRADE" : "BONUS", EventReceiver.COLOR_BLUE);
+		receiver.drawMenuFont(engine, playerID, 0, 1, String.format("%10s", grade), gc);
 
 		drawResultStats(engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE,
 				STAT_LINES, STAT_TIME, STAT_LPM);
@@ -617,7 +618,7 @@ public class RollTraining extends MarathonModeBase {
 	protected void loadRanking(CustomProperties prop, String ruleName) {
 		for(int i = 0; i < RANKING_MAX; i++) {
 			for(int j = 0; j < GAMETYPE_MAX; j++) {
-				rankingGrade[j][i] = prop.getProperty("rollTraining.ranking." + ruleName + "." + j + ".grade." + i, 0);
+				rankingGrade[j][i] = prop.getProperty("rollTraining.ranking." + ruleName + "." + j + ".grade." + i, 0.0);
 				rankingLines[j][i] = prop.getProperty("rollTraining.ranking." + ruleName + "." + j + ".lines." + i, 0);
 				rankingTime[j][i] = prop.getProperty("rollTraining.ranking." + ruleName + "." + j + ".time." + i, 0);
 			}
@@ -663,6 +664,11 @@ public class RollTraining extends MarathonModeBase {
 		}
 	}
 
+	private int getClear(int type, int time, int lines) {
+		if (!useMRoll || (type & 1) == 1) return (time >= TIME_LIMITS[type & 1]) ? 1 : 0;
+		else return lines >= 32 ? 1 : 0;
+	}
+
 	/**
 	 * Calculate ranking position
 	 * @param sc Score
@@ -672,11 +678,13 @@ public class RollTraining extends MarathonModeBase {
 	 */
 	private int checkRanking(double sc, int li, int time, int type) {
 		for(int i = 0; i < RANKING_MAX; i++) {
-			if(sc > rankingGrade[type][i]) {
+			if (getClear(type, time, li) > getClear(type, rankingTime[type][i], rankingLines[type][i])) {
 				return i;
-			} else if((sc == rankingGrade[type][i]) && (time > rankingTime[type][i])) {
+			} else if(getClear(type, time, li) == getClear(type, rankingTime[type][i], rankingLines[type][i]) && sc > rankingGrade[type][i]) {
 				return i;
-			} else if((sc == rankingGrade[type][i]) && (time == rankingTime[type][i]) && (li > rankingLines[type][i])) {
+			} else if(getClear(type, time, li) == getClear(type, rankingTime[type][i], rankingLines[type][i]) && (sc == rankingGrade[type][i]) && (time > rankingTime[type][i])) {
+				return i;
+			} else if(getClear(type, time, li) == getClear(type, rankingTime[type][i], rankingLines[type][i]) && (sc == rankingGrade[type][i]) && (time == rankingTime[type][i]) && (li > rankingLines[type][i])) {
 				return i;
 			}
 		}
