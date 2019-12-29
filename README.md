@@ -23,6 +23,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Mission Mode_ - Play a marathon mode, but it asks you to clear Puyo-Puyo-styled missions.
 * _Pong_ - A single-player Pong clone.
 * _Retro Mania 2_ - A mode based on *Sega \*\*\*ris '99*
+* _Roll Training_ - Practice your credit roll plays here.
 * _Scanline_ - Inspired by Scanner mode on [\*\*\*ris for the PSP Mini](https://harddrop.com/wiki/Tetris_(PSP_Mini)) and [\*\*\*ris Pop](https://harddrop.com/wiki/Tetris_Pop).
 * _Score Trial_ - An approximation of the SCORE ATTACK modes in DTET.
 * _Shadow Marahton_ - Build your own pieces in this extended Marathon.
