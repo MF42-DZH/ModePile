@@ -723,10 +723,10 @@ public class RollTraining extends MarathonModeBase {
 	 * @param prop Property file
 	 */
 	private void loadSetting(CustomProperties prop) {
-		startlevel = prop.getProperty("rollTraining.startlevel", startlevel);
-		usedSpeed = prop.getProperty("rollTraining.usedSpeed", usedSpeed);
-		useMRoll = prop.getProperty("rollTraining.useMRoll", useMRoll);
-		endless = prop.getProperty("rollTraining.endlessMode", endless);
+		startlevel = prop.getProperty("rollTraining.startlevel", 0);
+		usedSpeed = prop.getProperty("rollTraining.usedSpeed", SPEED_TI);
+		useMRoll = prop.getProperty("rollTraining.useMRoll", true);
+		endless = prop.getProperty("rollTraining.endlessMode", false);
 		version = prop.getProperty("rollTraining.version", 0);
 	}
 
@@ -747,10 +747,10 @@ public class RollTraining extends MarathonModeBase {
 	 * @param prop Property file
 	 */
 	private void loadSettingPlayer(ProfileProperties prop) {
-		startlevel = prop.getProperty("rollTraining.startlevel", startlevel);
-		usedSpeed = prop.getProperty("rollTraining.usedSpeed", usedSpeed);
-		useMRoll = prop.getProperty("rollTraining.useMRoll", useMRoll);
-		endless = prop.getProperty("rollTraining.endlessMode", endless);
+		startlevel = prop.getProperty("rollTraining.startlevel", 0);
+		usedSpeed = prop.getProperty("rollTraining.usedSpeed", SPEED_TI);
+		useMRoll = prop.getProperty("rollTraining.useMRoll", true);
+		endless = prop.getProperty("rollTraining.endlessMode", false);
 	}
 
 	/**
