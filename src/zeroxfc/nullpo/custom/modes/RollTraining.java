@@ -466,7 +466,7 @@ public class RollTraining extends MarathonModeBase {
 
 			if (usedSpeed == SPEED_TAP) {
 				grade = !useMRoll ? "S9" : (tapGrade >= 1.0 ? "GM" : "M");
-				gc = ((!useMRoll && engine.statistics.time >= TIME_LIMITS[0]) || engine.statistics.lines >= 32) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+				gc = ((!useMRoll && engine.statistics.time >= TIME_LIMITS[0]) || (useMRoll && engine.statistics.lines >= 32)) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 			} else {
 				grade = "+" + String.format("%.2f", tiGrade);
 				gc = engine.statistics.time >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
@@ -670,7 +670,7 @@ public class RollTraining extends MarathonModeBase {
 		if (usedSpeed == SPEED_TAP) {
 			grade = tapGrade >= 1.0 ? "GM" : "M";
 			if (!useMRoll) grade = "S9";
-			gc = ((!useMRoll && engine.statistics.time >= TIME_LIMITS[0]) || engine.statistics.lines >= 32) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+			gc = ((!useMRoll && engine.statistics.time >= TIME_LIMITS[0]) || (useMRoll && engine.statistics.lines >= 32)) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 		} else {
 			grade = "+" + String.format("%.2f", tiGrade);
 			gc = engine.statistics.time >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
