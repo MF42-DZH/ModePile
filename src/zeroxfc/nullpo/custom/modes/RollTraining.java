@@ -348,6 +348,8 @@ public class RollTraining extends MarathonModeBase {
 		if (playerProperties.isLoggedIn()) {
 			loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
 			loadSettingPlayer(playerProperties);
+
+			engine.owner.backgroundStatus.bg = startlevel;
 		}
 
 		if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
