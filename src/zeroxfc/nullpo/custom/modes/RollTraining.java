@@ -8,6 +8,7 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.ProfileProperties;
 
 public class RollTraining extends MarathonModeBase {
 	private static final int SPEED_TAP = 0,
@@ -82,6 +83,15 @@ public class RollTraining extends MarathonModeBase {
 	private int lastGrade;
 	private int timer;
 
+	private ProfileProperties playerProperties;
+	private double[][] rankingGradePlayer;
+	private int[][] rankingLinesPlayer;
+	private int[][] rankingTimePlayer;
+	private int rankingRankPlayer;
+	private boolean showPlayerStats;
+	private String PLAYER_NAME;
+	private static final int HEADER = EventReceiver.COLOR_YELLOW;
+
 	/*
 	 * Mode name
 	 */
@@ -97,6 +107,12 @@ public class RollTraining extends MarathonModeBase {
 	public void playerInit(GameEngine engine, int playerID) {
 		owner = engine.owner;
 		receiver = engine.owner.receiver;
+
+		if (playerProperties == null) {
+			showPlayerStats = false;
+			playerProperties = new ProfileProperties(HEADER);
+		}
+
 		scgettime = 0;
 		lastevent = EVENT_NONE;
 		lastb2b = false;
@@ -116,6 +132,13 @@ public class RollTraining extends MarathonModeBase {
 		rankingLines = new int[RANKING_TYPE][RANKING_MAX];
 		rankingTime = new int[RANKING_TYPE][RANKING_MAX];
 
+		rankingRankPlayer = -1;
+		rankingGradePlayer = new double[RANKING_TYPE][RANKING_MAX];
+		rankingLinesPlayer = new int[RANKING_TYPE][RANKING_MAX];
+		rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
+
+		showPlayerStats = false;
+
 		enableB2B = true;
 		enableCombo = false;
 		enableTSpin = false;
@@ -127,10 +150,19 @@ public class RollTraining extends MarathonModeBase {
 		if(!owner.replayMode) {
 			loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+
+			if (playerProperties.isLoggedIn()) {
+				loadSettingPlayer(playerProperties);
+				loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			}
+
 			version = CURRENT_VERSION;
+			PLAYER_NAME = "";
 		} else {
 			loadSetting(owner.replayProp);
 			if((version == 0) && (owner.replayProp.getProperty("rollTraining.endless", false))) goaltype = 2;
+
+			PLAYER_NAME = owner.replayProp.getProperty("rollTraining.playerName", "");
 
 			// NET: Load name
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -197,8 +229,13 @@ public class RollTraining extends MarathonModeBase {
 			// Confirm
 			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
 				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
+				if (playerProperties.isLoggedIn()) {
+					saveSettingPlayer(playerProperties);
+					playerProperties.saveProfileConfig();
+				} else {
+					saveSetting(owner.modeConfig);
+					receiver.saveModeConfig(owner.modeConfig);
+				}
 
 				// NET: Signal start of the game
 				if(netIsNetPlay) netLobby.netPlayerClient.send("start1p\n");
@@ -209,6 +246,17 @@ public class RollTraining extends MarathonModeBase {
 			// Cancel
 			if(engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
 				engine.quitflag = true;
+				playerProperties = new ProfileProperties(HEADER);
+			}
+
+			// New acc
+			if(engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
+				playerProperties = new ProfileProperties(HEADER);
+				engine.playSE("decide");
+
+				engine.stat = GameEngine.STAT_CUSTOM;
+				engine.resetStatc();
+				return true;
 			}
 
 			// NET: Netplay Ranking
@@ -290,6 +338,23 @@ public class RollTraining extends MarathonModeBase {
 		}
 	}
 
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		showPlayerStats = false;
+
+		engine.isInGame = true;
+
+		boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+		if (playerProperties.isLoggedIn()) {
+			loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+			loadSettingPlayer(playerProperties);
+		}
+
+		if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+		return s;
+	}
+
 	/*
 	 * Render score
 	 */
@@ -314,35 +379,72 @@ public class RollTraining extends MarathonModeBase {
 
 		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) ) {
 			if((!owner.replayMode) && (!big) && (engine.ai == null)) {
-				float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
-				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
-				receiver.drawScoreFont(engine, playerID, 3, topY-1, "GRADE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
+				if (showPlayerStats) {
+					float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
+					int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
+					receiver.drawScoreFont(engine, playerID, 3, topY-1, "GRADE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
 
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
 
-					int color;
-					if (rankingRank == i) color = EventReceiver.COLOR_RED;
-					else {
-						if (usedSpeed == SPEED_TAP) {
-							color = ((!useMRoll && rankingTime[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[0]) || rankingLines[endless ? usedSpeed + 2 : usedSpeed][i] >= 32) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
-						} else {
-							color = rankingTime[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+						int color;
+						if (rankingRankPlayer == i) color = EventReceiver.COLOR_RED;
+						else {
+							if (usedSpeed == SPEED_TAP) {
+								color = ((!useMRoll && rankingTimePlayer[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[0]) || (useMRoll && rankingLinesPlayer[endless ? usedSpeed + 2 : usedSpeed][i] >= 32)) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+							} else {
+								color = rankingTimePlayer[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+							}
 						}
-					}
 
-					String gText;
-					if (usedSpeed == SPEED_TAP) {
-						gText = !useMRoll ? "S9" : (rankingGrade[endless ? usedSpeed + 2 : usedSpeed][i] >= 1.0 ? "GM" : "M");
-					} else {
-						gText = "+" + String.format("%.2f", rankingGrade[endless ? usedSpeed + 2 : usedSpeed][i]);
-					}
+						String gText;
+						if (usedSpeed == SPEED_TAP) {
+							gText = !useMRoll ? "S9" : (rankingGradePlayer[endless ? usedSpeed + 2 : usedSpeed][i] >= 1.0 ? "GM" : "M");
+						} else {
+							gText = "+" + String.format("%.2f", rankingGradePlayer[endless ? usedSpeed + 2 : usedSpeed][i]);
+						}
 
-					receiver.drawScoreFont(engine, playerID,  3, topY+i, gText, color, scale);
-					receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, gText, color, scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLinesPlayer[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRankPlayer), scale);
+
+						receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+					}
+				} else {
+					float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
+					int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
+					receiver.drawScoreFont(engine, playerID, 3, topY-1, "GRADE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
+
+					for(int i = 0; i < RANKING_MAX; i++) {
+						receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+
+						int color;
+						if (rankingRank == i) color = EventReceiver.COLOR_RED;
+						else {
+							if (usedSpeed == SPEED_TAP) {
+								color = ((!useMRoll && rankingTime[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[0]) || (useMRoll && rankingLines[endless ? usedSpeed + 2 : usedSpeed][i] >= 32)) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+							} else {
+								color = rankingTime[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+							}
+						}
+
+						String gText;
+						if (usedSpeed == SPEED_TAP) {
+							gText = !useMRoll ? "S9" : (rankingGrade[endless ? usedSpeed + 2 : usedSpeed][i] >= 1.0 ? "GM" : "M");
+						} else {
+							gText = "+" + String.format("%.2f", rankingGrade[endless ? usedSpeed + 2 : usedSpeed][i]);
+						}
+
+						receiver.drawScoreFont(engine, playerID,  3, topY+i, gText, color, scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRank), scale);
+
+						receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+					}
 				}
 			}
+		} else if (engine.stat == GameEngine.STAT_CUSTOM) {
+			playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
 		} else {
 			receiver.drawScoreFont(engine, playerID, 0, 3, usedSpeed == SPEED_TAP ? "GRADE" : "BONUS", EventReceiver.COLOR_BLUE);
 			String grade;
@@ -367,6 +469,11 @@ public class RollTraining extends MarathonModeBase {
 			if (!endless) {
 				receiver.drawScoreFont(engine, playerID, 0, 12, "REMAINING", EventReceiver.COLOR_YELLOW);
 				receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(Math.max(timer, 0)), timer <= 600 && (timer / 2 % 2 == 0));
+			}
+
+			if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+				receiver.drawScoreFont(engine, playerID, 0, endless ? 12 : 15, "PLAYER", EventReceiver.COLOR_BLUE);
+				receiver.drawScoreFont(engine, playerID, 0, endless ? 13 : 16, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
 			}
 
 			if((lastevent != EVENT_NONE) && (scgettime < 120)) {
@@ -474,6 +581,18 @@ public class RollTraining extends MarathonModeBase {
 		if(factor >= 0.25 && !endless) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
 		if(factor >= 0.5 && !endless) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
 		if(factor >= 0.75 && !endless) engine.meterColor = GameEngine.METER_COLOR_RED;
+
+		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM ) {
+			// Show rank
+			if(engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+				showPlayerStats = !showPlayerStats;
+				engine.playSE("change");
+			}
+		}
+
+		if (engine.quitflag) {
+			playerProperties = new ProfileProperties(HEADER);
+		}
 	}
 
 	/*
@@ -523,7 +642,7 @@ public class RollTraining extends MarathonModeBase {
 	 */
 	@Override
 	public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
-		// NOTHING ...yet
+		// NOTHING
 	}
 
 	/*
@@ -578,9 +697,18 @@ public class RollTraining extends MarathonModeBase {
 		if((!owner.replayMode) && (!big) && (engine.ai == null)) {
 			updateRanking(usedSpeed == SPEED_TAP ? tapGrade : tiGrade, engine.statistics.lines, engine.statistics.time, endless ? usedSpeed + 2 : usedSpeed);
 
+			if (playerProperties.isLoggedIn()) {
+				prop.setProperty("rollTraining.playerName", playerProperties.getNameDisplay());
+			}
+
 			if(rankingRank != -1) {
 				saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 				receiver.saveModeConfig(owner.modeConfig);
+			}
+
+			if(rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+				saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+				playerProperties.saveProfileConfig();
 			}
 		}
 	}
@@ -607,6 +735,28 @@ public class RollTraining extends MarathonModeBase {
 		prop.setProperty("rollTraining.useMRoll", useMRoll);
 		prop.setProperty("rollTraining.endlessMode", endless);
 		prop.setProperty("rollTraining.version", version);
+	}
+
+	/**
+	 * Load settings from property file
+	 * @param prop Property file
+	 */
+	private void loadSettingPlayer(ProfileProperties prop) {
+		startlevel = prop.getProperty("rollTraining.startlevel", startlevel);
+		usedSpeed = prop.getProperty("rollTraining.usedSpeed", usedSpeed);
+		useMRoll = prop.getProperty("rollTraining.useMRoll", useMRoll);
+		endless = prop.getProperty("rollTraining.endlessMode", endless);
+	}
+
+	/**
+	 * Save settings to property file
+	 * @param prop Property file
+	 */
+	private void saveSettingPlayer(ProfileProperties prop) {
+		prop.setProperty("rollTraining.startlevel", startlevel);
+		prop.setProperty("rollTraining.usedSpeed", usedSpeed);
+		prop.setProperty("rollTraining.useMRoll", useMRoll);
+		prop.setProperty("rollTraining.endlessMode", endless);
 	}
 
 	/**
@@ -641,6 +791,36 @@ public class RollTraining extends MarathonModeBase {
 	}
 
 	/**
+	 * Read rankings from property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	protected void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < GAMETYPE_MAX; j++) {
+				rankingGradePlayer[j][i] = prop.getProperty("rollTraining.ranking." + ruleName + "." + j + ".grade." + i, 0.0);
+				rankingLinesPlayer[j][i] = prop.getProperty("rollTraining.ranking." + ruleName + "." + j + ".lines." + i, 0);
+				rankingTimePlayer[j][i] = prop.getProperty("rollTraining.ranking." + ruleName + "." + j + ".time." + i, 0);
+			}
+		}
+	}
+
+	/**
+	 * Save rankings to property file
+	 * @param prop Property file
+	 * @param ruleName Rule name
+	 */
+	private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			for(int j = 0; j < GAMETYPE_MAX; j++) {
+				prop.setProperty("rollTraining.ranking." + ruleName + "." + j + ".grade." + i, rankingGradePlayer[j][i]);
+				prop.setProperty("rollTraining.ranking." + ruleName + "." + j + ".lines." + i, rankingLinesPlayer[j][i]);
+				prop.setProperty("rollTraining.ranking." + ruleName + "." + j + ".time." + i, rankingTimePlayer[j][i]);
+			}
+		}
+	}
+
+	/**
 	 * Update rankings
 	 * @param sc Score
 	 * @param li Lines
@@ -661,6 +841,24 @@ public class RollTraining extends MarathonModeBase {
 			rankingGrade[type][rankingRank] = sc;
 			rankingLines[type][rankingRank] = li;
 			rankingTime[type][rankingRank] = time;
+		}
+
+		if (playerProperties.isLoggedIn()) {
+			rankingRankPlayer = checkRankingPlayer(sc, li, time, type);
+
+			if(rankingRankPlayer != -1) {
+				// Shift down ranking entries
+				for(int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+					rankingGradePlayer[type][i] = rankingGradePlayer[type][i - 1];
+					rankingLinesPlayer[type][i] = rankingLinesPlayer[type][i - 1];
+					rankingTimePlayer[type][i] = rankingTimePlayer[type][i - 1];
+				}
+
+				// Add new data
+				rankingGradePlayer[type][rankingRankPlayer] = sc;
+				rankingLinesPlayer[type][rankingRankPlayer] = li;
+				rankingTimePlayer[type][rankingRankPlayer] = time;
+			}
 		}
 	}
 
@@ -685,6 +883,29 @@ public class RollTraining extends MarathonModeBase {
 			} else if(getClear(type, time, li) == getClear(type, rankingTime[type][i], rankingLines[type][i]) && (sc == rankingGrade[type][i]) && (time > rankingTime[type][i])) {
 				return i;
 			} else if(getClear(type, time, li) == getClear(type, rankingTime[type][i], rankingLines[type][i]) && (sc == rankingGrade[type][i]) && (time == rankingTime[type][i]) && (li > rankingLines[type][i])) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * Calculate ranking position
+	 * @param sc Score
+	 * @param li Lines
+	 * @param time Time
+	 * @return Position (-1 if unranked)
+	 */
+	private int checkRankingPlayer(double sc, int li, int time, int type) {
+		for(int i = 0; i < RANKING_MAX; i++) {
+			if (getClear(type, time, li) > getClear(type, rankingTimePlayer[type][i], rankingLinesPlayer[type][i])) {
+				return i;
+			} else if(getClear(type, time, li) == getClear(type, rankingTimePlayer[type][i], rankingLinesPlayer[type][i]) && sc > rankingGradePlayer[type][i]) {
+				return i;
+			} else if(getClear(type, time, li) == getClear(type, rankingTimePlayer[type][i], rankingLinesPlayer[type][i]) && (sc == rankingGradePlayer[type][i]) && (time > rankingTimePlayer[type][i])) {
+				return i;
+			} else if(getClear(type, time, li) == getClear(type, rankingTimePlayer[type][i], rankingLinesPlayer[type][i]) && (sc == rankingGradePlayer[type][i]) && (time == rankingTimePlayer[type][i]) && (li > rankingLinesPlayer[type][i])) {
 				return i;
 			}
 		}
