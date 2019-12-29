@@ -90,7 +90,7 @@ public class RollTraining extends MarathonModeBase {
 	private int rankingRankPlayer;
 	private boolean showPlayerStats;
 	private String PLAYER_NAME;
-	private static final int HEADER = EventReceiver.COLOR_YELLOW;
+	private static final int HEADER = EventReceiver.COLOR_RED;
 
 	/*
 	 * Mode name
@@ -408,6 +408,9 @@ public class RollTraining extends MarathonModeBase {
 						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLinesPlayer[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRankPlayer), scale);
 						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRankPlayer), scale);
 
+						receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+						receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+
 						receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 					}
 				} else {
@@ -439,7 +442,9 @@ public class RollTraining extends MarathonModeBase {
 						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRank), scale);
 						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRank), scale);
 
-						receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+						receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+						if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+						if (playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 					}
 				}
 			}
