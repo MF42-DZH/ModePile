@@ -44,10 +44,10 @@ public class RollTraining extends MarathonModeBase {
 	public static final int RANKING_MAX = 10;
 
 	/** Number of ranking types */
-	public static final int RANKING_TYPE = 4;
+	public static final int RANKING_TYPE = 8;
 
 	/** Number of game types */
-	public static final int GAMETYPE_MAX = 4;
+	public static final int GAMETYPE_MAX = 8;
 
 	private static final double[][] GRADE_INCREASES = {
 		new double[] {
@@ -91,6 +91,13 @@ public class RollTraining extends MarathonModeBase {
 	private boolean showPlayerStats;
 	private String PLAYER_NAME;
 	private static final int HEADER = EventReceiver.COLOR_RED;
+
+	private int getRankIndex() {
+		int raw = usedSpeed;
+		if (endless) raw += 2;
+		if (!useMRoll) raw += 4;
+		return raw;
+	}
 
 	/*
 	 * Mode name
@@ -393,22 +400,22 @@ public class RollTraining extends MarathonModeBase {
 						if (rankingRankPlayer == i) color = EventReceiver.COLOR_RED;
 						else {
 							if (usedSpeed == SPEED_TAP) {
-								color = ((!useMRoll && rankingTimePlayer[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[0]) || (useMRoll && rankingLinesPlayer[endless ? usedSpeed + 2 : usedSpeed][i] >= 32)) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+								color = ((!useMRoll && rankingTimePlayer[getRankIndex()][i] >= TIME_LIMITS[0]) || (useMRoll && rankingLinesPlayer[getRankIndex()][i] >= 32)) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 							} else {
-								color = rankingTimePlayer[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+								color = rankingTimePlayer[getRankIndex()][i] >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 							}
 						}
 
 						String gText;
 						if (usedSpeed == SPEED_TAP) {
-							gText = !useMRoll ? "S9" : (rankingGradePlayer[endless ? usedSpeed + 2 : usedSpeed][i] >= 1.0 ? "GM" : "M");
+							gText = !useMRoll ? "S9" : (rankingGradePlayer[getRankIndex()][i] >= 1.0 ? "GM" : "M");
 						} else {
-							gText = "+" + String.format("%.2f", rankingGradePlayer[endless ? usedSpeed + 2 : usedSpeed][i]);
+							gText = "+" + String.format("%.2f", rankingGradePlayer[getRankIndex()][i]);
 						}
 
 						receiver.drawScoreFont(engine, playerID,  3, topY+i, gText, color, scale);
-						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLinesPlayer[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRankPlayer), scale);
-						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLinesPlayer[getRankIndex()][i]), (i == rankingRankPlayer), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTimePlayer[getRankIndex()][i]), (i == rankingRankPlayer), scale);
 
 						receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
 						receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
@@ -427,22 +434,22 @@ public class RollTraining extends MarathonModeBase {
 						if (rankingRank == i) color = EventReceiver.COLOR_RED;
 						else {
 							if (usedSpeed == SPEED_TAP) {
-								color = ((!useMRoll && rankingTime[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[0]) || (useMRoll && rankingLines[endless ? usedSpeed + 2 : usedSpeed][i] >= 32)) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+								color = ((!useMRoll && rankingTime[getRankIndex()][i] >= TIME_LIMITS[0]) || (useMRoll && rankingLines[getRankIndex()][i] >= 32)) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 							} else {
-								color = rankingTime[endless ? usedSpeed + 2 : usedSpeed][i] >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+								color = rankingTime[getRankIndex()][i] >= TIME_LIMITS[1] ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 							}
 						}
 
 						String gText;
 						if (usedSpeed == SPEED_TAP) {
-							gText = !useMRoll ? "S9" : (rankingGrade[endless ? usedSpeed + 2 : usedSpeed][i] >= 1.0 ? "GM" : "M");
+							gText = !useMRoll ? "S9" : (rankingGrade[getRankIndex()][i] >= 1.0 ? "GM" : "M");
 						} else {
-							gText = "+" + String.format("%.2f", rankingGrade[endless ? usedSpeed + 2 : usedSpeed][i]);
+							gText = "+" + String.format("%.2f", rankingGrade[getRankIndex()][i]);
 						}
 
 						receiver.drawScoreFont(engine, playerID,  3, topY+i, gText, color, scale);
-						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRank), scale);
-						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[endless ? usedSpeed + 2 : usedSpeed][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[getRankIndex()][i]), (i == rankingRank), scale);
+						receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[getRankIndex()][i]), (i == rankingRank), scale);
 
 						receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
 						if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
@@ -702,7 +709,7 @@ public class RollTraining extends MarathonModeBase {
 
 		// Update rankings
 		if((!owner.replayMode) && (!big) && (engine.ai == null)) {
-			updateRanking(usedSpeed == SPEED_TAP ? tapGrade : tiGrade, engine.statistics.lines, engine.statistics.time, endless ? usedSpeed + 2 : usedSpeed);
+			updateRanking(usedSpeed == SPEED_TAP ? tapGrade : tiGrade, engine.statistics.lines, engine.statistics.time, getRankIndex());
 
 			if (playerProperties.isLoggedIn()) {
 				prop.setProperty("rollTraining.playerName", playerProperties.getNameDisplay());
