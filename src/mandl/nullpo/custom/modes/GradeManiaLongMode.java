@@ -253,14 +253,12 @@ public class GradeManiaLongMode extends DummyMode {
 	/** 直前のSection Time */
 	private int sectionlasttime;
 
-	/** 消えRoll  flag１ (Section Time) */
-	private boolean mrollSectiontime;
-
-	/** 消えRoll  flag２ (4-line clear) */
-	private boolean mrollFourline;
-
 	/** 消えRoll started flag */
 	private boolean mrollFlag;
+
+	/** Roll grade points */
+	private int rollPoints;
+	private int rollPointsTotal;
 
 	/** 消えRoll 中に消したline count */
 	private int mrollLines;
@@ -364,9 +362,9 @@ public class GradeManiaLongMode extends DummyMode {
 		sectionscomp = 0;
 		sectionavgtime = 0;
 		sectionlasttime = 0;
-		mrollSectiontime = true;
-		mrollFourline = true;
 		mrollFlag = false;
+		rollPoints = 0;
+		rollPointsTotal = 0;
 		mrollLines = 0;
 		medalAC = 0;
 		medalST = 0;
@@ -954,11 +952,9 @@ public class GradeManiaLongMode extends DummyMode {
 
 				if((tableGradeChange[grade] != -1) && (gradeInternal >= tableGradeChange[grade])) {
 					grade++;
+					gradeflash = 180;
 					lastGradeTime = engine.statistics.time;
-					if (gradedisp) {
-						engine.playSE("gradeup");
-						gradeflash = 180;
-					}
+					if (gradedisp) engine.playSE("gradeup");
 				}
 			}
 
@@ -982,7 +978,7 @@ public class GradeManiaLongMode extends DummyMode {
 			}
 
 			// CO medal
-			if((engine.combo >= 4) && (medalCO < 1)) {
+			if((engine.combo >= 3) && (medalCO < 1)) {
 				engine.playSE("medal");
 				medalCO = 1;
 			} else if((engine.combo >= 5) && (medalCO < 2)) {
@@ -1016,8 +1012,12 @@ public class GradeManiaLongMode extends DummyMode {
 				stMedalCheck(engine, levelb / 100);
 
 				// M-Roll (invisible roll) criteria
-				if((engine.statistics.time <= M_ROLL_TIME_REQUIRE) && (grade >= 34))
+				if((engine.statistics.time <= M_ROLL_TIME_REQUIRE) && (grade >= 34)) {
 					mrollFlag = true;
+					grade = 35;
+					gradeflash = 180;
+					if (gradedisp) engine.playSE("gradeup");
+				}
 			} else if(engine.statistics.level >= nextseclv) {
 				// Next Section
 				engine.playSE("levelup");
@@ -1070,9 +1070,29 @@ public class GradeManiaLongMode extends DummyMode {
 						(engine.statistics.level / 2) + (speedBonus * 7);
 			engine.statistics.score += lastscore;
 			scgettime = 120;
-		} else if((lines >= 1) && (mrollFlag == true) && (engine.ending == 2)) {
+		} else if((lines >= 1) && (engine.ending == 2)) {
 			// 消えRoll 中のLine clear
-			mrollLines += lines;
+			int points = 0;
+			if (mrollFlag) {
+				mrollLines += lines;
+				if (lines == 1) points = 10;
+				if (lines == 2) points = 20;
+				if (lines == 3) points = 30;
+				if (lines == 4) points = 100;
+			} else {
+				if (lines == 1) points = 4;
+				if (lines == 2) points = 8;
+				if (lines == 3) points = 12;
+				if (lines == 4) points = 26;
+			}
+			rollPoints += points;
+			rollPointsTotal += points;
+			while (rollPoints > 100 && grade < 34) {
+				rollPoints -= 100;
+				grade++;
+				gradeflash = 180;
+				if (gradedisp) engine.playSE("gradeup");
+			}
 		}
 	}
 
@@ -1124,8 +1144,21 @@ public class GradeManiaLongMode extends DummyMode {
 			// Roll 終了
 			if(rolltime >= ROLLTIMELIMIT) {
 				rollclear = 2;
+				if (mrollFlag) {
+					rollPoints += 160;
+					rollPointsTotal += 160;
+				} else {
+					rollPoints += 50;
+					rollPointsTotal += 50;
+				}
+				while (rollPoints > 100 && grade < 34) {
+					rollPoints -= 100;
+					grade++;
+					gradeflash = 180;
+					if (gradedisp) engine.playSE("gradeup");
+				}
 
-				if(mrollFlag == true) {
+				if(mrollFlag && rollPointsTotal >= 600) {
 					grade = 36;
 					gradeflash = 180;
 					lastGradeTime = engine.statistics.time;
@@ -1149,13 +1182,6 @@ public class GradeManiaLongMode extends DummyMode {
 	 */
 	@Override
 	public boolean onGameOver(GameEngine engine, int playerID) {
-		// 段位M
-		if((mrollFlag == true) && (grade < 35) && (engine.ending == 2) && (engine.statc[0] == 0)) {
-			grade = 35;
-			gradeflash = 180;
-			lastGradeTime = engine.statistics.time;
-			engine.playSE("gradeup");
-		}
 
 		if(engine.statc[0] == 0) {
 			// Blockの表示を元に戻す
