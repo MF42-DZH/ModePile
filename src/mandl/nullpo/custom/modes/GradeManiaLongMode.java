@@ -163,8 +163,8 @@ public class GradeManiaLongMode extends DummyMode {
 	/** LV999 roll time */
 	private static final int ROLLTIMELIMIT = 3694;
 
-	/** 消えRoll に必要なLV999到達時のTime */
-	private static final int M_ROLL_TIME_REQUIRE = 74160;
+	/** M-Roll time requirement (by level 3000) */
+	private static final int M_ROLL_TIME_REQUIRE = 81000;
 
 	/** Number of entries in rankings */
 	private static final int RANKING_MAX = 10;
@@ -1021,6 +1021,11 @@ public class GradeManiaLongMode extends DummyMode {
 			} else if(engine.statistics.level >= nextseclv) {
 				// Next Section
 				engine.playSE("levelup");
+
+				// Bone blocks
+				if (engine.statistics.level >= 2500) {
+					engine.bone = true;
+				}
 
 				// Background切り替え
 				if (owner.backgroundStatus.bg < 19) {
