@@ -978,7 +978,7 @@ public class GradeManiaLongMode extends DummyMode {
 			}
 
 			// CO medal
-			if((engine.combo >= 3) && (medalCO < 1)) {
+			if((engine.combo >= 4) && (medalCO < 1)) {
 				engine.playSE("medal");
 				medalCO = 1;
 			} else if((engine.combo >= 5) && (medalCO < 2)) {
