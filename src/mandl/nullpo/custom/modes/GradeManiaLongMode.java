@@ -40,7 +40,7 @@ public class GradeManiaLongMode extends DummyMode {
 		20, 20, 16, 16, 16,
 		12, 12, 12,  6,  5,
 		 4,  4,  4,  4,  4,
-		 4,  4,  4,  4,  4
+		 4,  4,  4,  4,  4,  5
 	};
 
 	/** ARE after line clear table */
@@ -51,7 +51,7 @@ public class GradeManiaLongMode extends DummyMode {
 		16, 16, 12, 12, 12,
 		 6,  6,  6,  6,  5,
 		 3,  3,  3,  3,  3,
-		 3,  3,  3,  3,  3
+		 3,  3,  3,  3,  3,  5
 	};
 
 	/** Line delay table */
@@ -62,7 +62,7 @@ public class GradeManiaLongMode extends DummyMode {
 		16, 16, 12, 12, 12,
 		 6,  6,  6,  6,  5,
 		 3,  3,  3,  3,  3,
-		 3,  3,  3,  3,  3
+		 3,  3,  3,  3,  3,  5
 	};
 
 	/** Lock delay table */
@@ -73,7 +73,7 @@ public class GradeManiaLongMode extends DummyMode {
 		30, 30, 30, 25, 25,
 		20, 20, 20, 17, 17,
 		15, 15, 13, 13, 12,
-		12, 12, 10, 10,  8
+		12, 12, 10, 10,  8, 17
 	};
 
 	/** DAS table */
@@ -84,7 +84,7 @@ public class GradeManiaLongMode extends DummyMode {
 		 8,  8,  8,  8,  8,
 		 6,  6,  6,  6,  4,
 		 4,  4,  4,  4,  4,
-		 4,  4,  4,  4,  4
+		 4,  4,  4,  4,  4,  4
 	};
 
 	/** Garbage line speed table */
@@ -95,7 +95,7 @@ public class GradeManiaLongMode extends DummyMode {
 		 0,  0,  0,  0,  0,
 		20, 18, 16, 14, 12,
 		10,  9,  9,  8,  8,
-		 8,  8,  8,  8,  8
+		 8,  8,  8,  8,  8,  0
 	};
 
 	/** BGM fadeout levels */
@@ -128,7 +128,7 @@ public class GradeManiaLongMode extends DummyMode {
 		 1,  2,  3,  4,  5,  7,  9, 12, 15,
 		18, 19, 20, 23, 25, 27, 29, 31, 33,
 		35, 37, 40, 43, 46, 49, 52, 55, 59,
-		63, 67, 72, 77, 82, 87, 92, -1, -1
+		64, 70, 77, 85, 95,107,122, -1, -1
 	};
 
 	/** Grade point decay time */
@@ -161,10 +161,10 @@ public class GradeManiaLongMode extends DummyMode {
 	};
 
 	/** LV999 roll time */
-	private static final int ROLLTIMELIMIT = 3694;
+	private static final int ROLLTIMELIMIT = 3238;
 
 	/** M-Roll time requirement (by level 3000) */
-	private static final int M_ROLL_TIME_REQUIRE = 81000;
+	private static final int M_ROLL_TIME_REQUIRE = 73800;
 
 	/** Number of entries in rankings */
 	private static final int RANKING_MAX = 10;
