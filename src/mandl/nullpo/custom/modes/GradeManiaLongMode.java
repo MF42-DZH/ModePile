@@ -73,7 +73,7 @@ public class GradeManiaLongMode extends DummyMode {
 		30, 30, 30, 25, 25,
 		20, 20, 20, 17, 17,
 		15, 15, 13, 13, 12,
-		12, 12, 10, 10, 30
+		12, 12, 10, 10,  8
 	};
 
 	/** DAS table */
