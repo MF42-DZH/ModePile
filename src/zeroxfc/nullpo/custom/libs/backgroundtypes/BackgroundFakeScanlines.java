@@ -80,7 +80,7 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
 	public void update() {
 		if (colourRandom == null) return;
 		for (ImageChunk chunk : chunks) {
-			float newScale = (float) (0.02f * colourRandom.nextDouble()) + 0.099f;
+			float newScale = (float) (0.02f * colourRandom.nextDouble()) + 0.99f;
 			chunk.setScale(new float[]{newScale, 1f});
 		}
 
