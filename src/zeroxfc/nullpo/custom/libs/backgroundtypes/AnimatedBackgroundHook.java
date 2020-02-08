@@ -65,7 +65,8 @@ public abstract class AnimatedBackgroundHook {
 	                        ANIMATION_SLIDING_TILES = 7,          // NOTE: SDL window handling is gross.
 	                        ANIMATION_TGM3TI_STYLE = 8,           // NOTE: Swing and SDL will not be able to use rotations.
 	                        ANIMATION_INTERLACE_HORIZONTAL = 9,   // I hope you like Earthbound.
-	                        ANIMATION_INTERLACE_VERTICAL = 10;    // I hope you like Earthbound.
+	                        ANIMATION_INTERLACE_VERTICAL = 10,    // I hope you like Earthbound.
+	                        ANIMATION_FAKE_SCANLINES = 11;        // Fake CRT Scanlines.
 
 	/** ResourceHolder--- types */
 	public static final int HOLDER_SLICK = 0,
