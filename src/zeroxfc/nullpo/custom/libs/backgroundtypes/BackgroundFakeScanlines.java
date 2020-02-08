@@ -8,7 +8,7 @@ import java.util.Random;
 public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
 	private static final int AMT = 480 / 2;
 	private static final int PERIOD = 480;  // Frames
-	private static final float BASE_LUMINANCE_OFFSET = 0.15f;
+	private static final float BASE_LUMINANCE_OFFSET = 0.25f;
 
 	// private ResourceHolderCustomAssetExtension customHolder;
 	private Random colourRandom;
@@ -70,7 +70,7 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
 		// Generate chunks
 		chunks = new ImageChunk[AMT];
 		for (int i = 0; i < chunks.length; i++) {
-			chunks[i] = new ImageChunk(ImageChunk.ANCHOR_POINT_TM, new int[] { 0, ((480 / AMT) * i) + ((480 / AMT) / 2) }, new int[] { 0, (480 / AMT) * i }, new int[] { 640, (480 / AMT) }, new float[] { 1f, 1f } );
+			chunks[i] = new ImageChunk(ImageChunk.ANCHOR_POINT_TL, new int[] { 0, ((480 / AMT) * i) + ((480 / AMT) / 2) }, new int[] { 0, (480 / AMT) * i }, new int[] { 640, (480 / AMT) }, new float[] { 1f, 1f } );
 		}
 
 		phase = 0;
@@ -80,7 +80,7 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
 	public void update() {
 		if (colourRandom == null) return;
 		for (ImageChunk chunk : chunks) {
-			float newScale = (float) (0.02f * colourRandom.nextDouble()) + 0.99f;
+			float newScale = (float) (0.01f * colourRandom.nextDouble()) + 0.995f;
 			chunk.setScale(new float[]{newScale, 1f});
 		}
 
