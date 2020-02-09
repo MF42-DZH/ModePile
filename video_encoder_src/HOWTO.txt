@@ -1,0 +1,2 @@
+Currently requries manual hardcoding of the input and output files.
+Requires imageio_ffmpeg to run.
