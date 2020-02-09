@@ -26,7 +26,7 @@
     ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
     POSSIBILITY OF SUCH DAMAGE.
 */
-package bin.sylveon.nullpomino.mods;
+package uwu.sylveon.nullpomino.mods;
 
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
@@ -36,23 +36,15 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.net.NetUtil;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.subsystem.mode.NetDummyMode;
-import mu.nu.nullpo.gui.sdl.ResourceHolderSDL;
-import mu.nu.nullpo.gui.slick.ResourceHolder;
-import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
-import zeroxfc.nullpo.custom.libs.GameTextUtilities;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
-import zeroxfc.nullpo.custom.libs.Interpolation;
-import java.util.Random;
+import uwu.sylveon.nullpomino.mods.lib.ByteArrayToBitArray;
 
 /**
- * SUBSCRIBER CHALLENGE Mode
- * Author ry00001
- *
- * Someone take IDEA away from me.
+ * - Video Player -
+ * by ry00001 with help from 0xFC963F18DC21
  */
-public class SubscriberChallenge extends NetDummyMode {
+public class VideoPlayer extends NetDummyMode {
 	/** Current version */
 	public static final int CURRENT_VERSION = 2;
 
@@ -125,11 +117,6 @@ public class SubscriberChallenge extends NetDummyMode {
 	/** Old flag for allowing T-Spins */
 	public boolean enableTSpin;
 
-	public int subscriber; // BRO! YOU JUST POSTED T-SPIN! YOU ARE GOING TO GAIN SUBSCRIBER!
-	public Random subscriberRNG = new Random();
-
-	public int lastValue;
-
 	/** Flag for enabling wallkick T-Spins */
 	public boolean enableTSpinKick;
 
@@ -166,12 +153,16 @@ public class SubscriberChallenge extends NetDummyMode {
 	/** Rankings' times */
 	public int[][] rankingTime;
 
+	public int currentFrame = 0;
+	public String path;
+	public byte[] data;
+
 	/*
 	 * Mode name
 	 */
 	@Override
 	public String getName() {
-		return "SUBSCRIBER CHALLENGE";
+		return "VIDEO PLAYER";
 	}
 
 	/*
@@ -188,11 +179,6 @@ public class SubscriberChallenge extends NetDummyMode {
 		lastcombo = 0;
 		lastpiece = 0;
 		bgmlv = 0;
-		lastValue = 0;
-		scgettime = 120;
-
-		subscriber = 0;
-		lastValue = 0;
 
 		rankingRank = -1;
 		rankingScore = new int[RANKING_TYPE][RANKING_MAX];
@@ -207,7 +193,7 @@ public class SubscriberChallenge extends NetDummyMode {
 			version = CURRENT_VERSION;
 		} else {
 			loadSetting(owner.replayProp);
-			if((version == 0) && (owner.replayProp.getProperty("subscriberchallenge.endless", false) == true)) goaltype = 2;
+			if((version == 0) && (owner.replayProp.getProperty("marathon.endless", false) == true)) goaltype = 2;
 
 			// NET: Load name
 			netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -215,6 +201,10 @@ public class SubscriberChallenge extends NetDummyMode {
 
 		engine.owner.backgroundStatus.bg = startlevel;
 		engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
+
+		currentFrame = 0;
+		path = ByteArrayToBitArray.getPath("graphics/video.bin");
+		if (data == null) data = ByteArrayToBitArray.getFileBytes(path);
 	}
 
 	/**
@@ -236,110 +226,7 @@ public class SubscriberChallenge extends NetDummyMode {
 	 */
 	@Override
 	public boolean onSetting(GameEngine engine, int playerID) {
-		// NET: Net Ranking
-		if(netIsNetRankingDisplayMode) {
-			netOnUpdateNetPlayRanking(engine, goaltype);
-		}
-		// Menu
-		else if(engine.owner.replayMode == false) {
-			// Configuration changes
-			int change = updateCursor(engine, 8, playerID);
-
-			if(change != 0) {
-				engine.playSE("change");
-
-				switch(engine.statc[2]) {
-				case 0:
-					startlevel += change;
-					if(tableGameClearLines[goaltype] >= 0) {
-						if(startlevel < 0) startlevel = (tableGameClearLines[goaltype] - 1) / 10;
-						if(startlevel > (tableGameClearLines[goaltype] - 1) / 10) startlevel = 0;
-					} else {
-						if(startlevel < 0) startlevel = 19;
-						if(startlevel > 19) startlevel = 0;
-					}
-					engine.owner.backgroundStatus.bg = startlevel;
-					break;
-				case 1:
-					//enableTSpin = !enableTSpin;
-					tspinEnableType += change;
-					if(tspinEnableType < 0) tspinEnableType = 2;
-					if(tspinEnableType > 2) tspinEnableType = 0;
-					break;
-				case 2:
-					enableTSpinKick = !enableTSpinKick;
-					break;
-				case 3:
-					spinCheckType += change;
-					if(spinCheckType < 0) spinCheckType = 1;
-					if(spinCheckType > 1) spinCheckType = 0;
-					break;
-				case 4:
-					tspinEnableEZ = !tspinEnableEZ;
-					break;
-				case 5:
-					enableB2B = !enableB2B;
-					break;
-				case 6:
-					enableCombo = !enableCombo;
-					break;
-				case 7:
-					goaltype += change;
-					if(goaltype < 0) goaltype = GAMETYPE_MAX - 1;
-					if(goaltype > GAMETYPE_MAX - 1) goaltype = 0;
-
-					if((startlevel > (tableGameClearLines[goaltype] - 1) / 10) && (tableGameClearLines[goaltype] >= 0)) {
-						startlevel = (tableGameClearLines[goaltype] - 1) / 10;
-						engine.owner.backgroundStatus.bg = startlevel;
-					}
-					break;
-				case 8:
-					big = !big;
-					break;
-				}
-
-				// NET: Signal options change
-				if(netIsNetPlay && (netNumSpectators > 0)) {
-					netSendOptions(engine);
-				}
-			}
-
-			// Confirm
-			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
-				engine.playSE("decide");
-				saveSetting(owner.modeConfig);
-				receiver.saveModeConfig(owner.modeConfig);
-
-				// NET: Signal start of the game
-				if(netIsNetPlay) netLobby.netPlayerClient.send("start1p\n");
-
-				return false;
-			}
-
-			// Cancel
-			if(engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
-				engine.quitflag = true;
-			}
-
-			// NET: Netplay Ranking
-			if(engine.ctrl.isPush(Controller.BUTTON_D) && netIsNetPlay && startlevel == 0 && !big &&
-					engine.ai == null) {
-				netEnterNetPlayRankingScreen(engine, playerID, goaltype);
-			}
-
-			engine.statc[3]++;
-		}
-		// Replay
-		else {
-			engine.statc[3]++;
-			engine.statc[2] = -1;
-
-			if(engine.statc[3] >= 60) {
-				return false;
-			}
-		}
-
-		return true;
+		return false;
 	}
 
 	/*
@@ -376,41 +263,23 @@ public class SubscriberChallenge extends NetDummyMode {
 	 * Called for initialization during "Ready" screen
 	 */
 	@Override
-	public void startGame(GameEngine engine, int playerID) {
-		engine.statistics.level = startlevel;
-		scgettime = 120;
-		lastValue = 0;
-		engine.statistics.levelDispAdd = 1;
-		engine.b2bEnable = enableB2B;
-		if(enableCombo == true) {
-			engine.comboType = GameEngine.COMBO_TYPE_NORMAL;
-		} else {
-			engine.comboType = GameEngine.COMBO_TYPE_DISABLE;
+	public boolean onReady(GameEngine engine, int playerID) {
+		engine.resetStatc();
+		engine.gameActive = true;
+		engine.gameStarted = true;
+		engine.isInGame = true;
+		engine.stat = GameEngine.STAT_CUSTOM;
+		return true;
+	}
+
+	@Override
+	public boolean onCustom(GameEngine engine, int playerID) {
+		if (engine.statc[0] == 0) {
+			owner.bgmStatus.bgm = 0;
+			owner.bgmStatus.fadesw = false;
 		}
-		engine.big = big;
-
-		if(version >= 2) {
-			engine.tspinAllowKick = enableTSpinKick;
-			if(tspinEnableType == 0) {
-				engine.tspinEnable = false;
-			} else if(tspinEnableType == 1) {
-				engine.tspinEnable = true;
-			} else {
-				engine.tspinEnable = true;
-				engine.useAllSpinBonus = true;
-			}
-		} else {
-			engine.tspinEnable = enableTSpin;
-		}
-
-		engine.spinCheckType = spinCheckType;
-		engine.tspinEnableEZ = tspinEnableEZ;
-
-		setSpeed(engine);
-
-		if(netIsWatch) {
-			owner.bgmStatus.bgm = BGMStatus.BGM_NOTHING;
-		}
+		engine.statc[0]++;
+		return true;
 	}
 
 	/*
@@ -419,118 +288,30 @@ public class SubscriberChallenge extends NetDummyMode {
 	@Override
 	public void renderLast(GameEngine engine, int playerID) {
 		if(owner.menuOnly) return;
+		int skin = engine.getSkin();
+		if (currentFrame > 7776) return;
+		try {
+			int place = 0;  // Out of 4800
+			for (int i = 0; i < 600; i++) {
+				int[] arr = ByteArrayToBitArray.convertByte(data[(currentFrame * 600) + i]);
+				for (int b : arr) {
+					int y = 8 * (place / 80);
+					int x = 8 * (place % 80);
 
-		receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_GREEN);
+					// drawing calls go here.
+					// check if b == 0 for black or b == 1 for white.
+					receiver.drawSingleBlock(engine, playerID, x, y, Block.BLOCK_COLOR_GRAY, skin, false, (b == 0 ? 1.0f : 0.25f), 1.0f, 0.5f);
 
-		if(tableGameClearLines[goaltype] == -1) {
-			receiver.drawScoreFont(engine, playerID, 0, 1, "(ENDLESS GAME)", EventReceiver.COLOR_GREEN);
-		} else {
-			receiver.drawScoreFont(engine, playerID, 0, 1, "(" + tableGameClearLines[goaltype] + " LINES GAME)", EventReceiver.COLOR_GREEN);
-		}
-
-		if( (engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false)) ) {
-			if((owner.replayMode == false) && (big == false) && (engine.ai == null)) {
-				float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
-				int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
-				receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE  LINE TIME", EventReceiver.COLOR_BLUE, scale);
-
-				for(int i = 0; i < RANKING_MAX; i++) {
-					receiver.drawScoreFont(engine, playerID,  0, topY+i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-					receiver.drawScoreFont(engine, playerID,  3, topY+i, String.valueOf(rankingScore[goaltype][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 10, topY+i, String.valueOf(rankingLines[goaltype][i]), (i == rankingRank), scale);
-					receiver.drawScoreFont(engine, playerID, 15, topY+i, GeneralUtil.getTime(rankingTime[goaltype][i]), (i == rankingRank), scale);
+					place++;
 				}
 			}
-		} else {
-			receiver.drawScoreFont(engine, playerID, 0, 3, "SUBSCRIBER", EventReceiver.COLOR_BLUE);
-			StringBuilder a = new StringBuilder(String.valueOf((subscriber != lastValue) ? Interpolation.lerp(lastValue, subscriber, scgettime/120d) : subscriber));
-			if (subscriber - lastValue != 0) a.append("("+ (subscriber - lastValue > 0 ? "+" : "") + (subscriber - lastValue) + ")");
-			if (scgettime < 120) {
-				if ((subscriber - lastValue) > 0) {
-					GameTextUtilities.drawRainbowScoreString(receiver, engine, playerID, 0, 4, a.toString(), GameTextUtilities.RAINBOW_ORDER[(scgettime/4) % GameTextUtilities.RAINBOW_ORDER.length], 1f);
-				} else {
-					receiver.drawScoreFont(engine, playerID, 0, 4, a.toString(), subscriber - lastValue < 0);
-				}
-			} else {
-				receiver.drawScoreFont(engine, playerID, 0, 4, String.valueOf(subscriber));
-			}
-
-			receiver.drawScoreFont(engine, playerID, 0, 6, "LINE", EventReceiver.COLOR_BLUE);
-			if((engine.statistics.level >= 19) && (tableGameClearLines[goaltype] < 0))
-				receiver.drawScoreFont(engine, playerID, 0, 7, engine.statistics.lines + "");
-			else
-				receiver.drawScoreFont(engine, playerID, 0, 7, engine.statistics.lines + "/" + ((engine.statistics.level + 1) * 10));
-
-			receiver.drawScoreFont(engine, playerID, 0, 9, "LEVEL", EventReceiver.COLOR_BLUE);
-			receiver.drawScoreFont(engine, playerID, 0, 10, String.valueOf(engine.statistics.level + 1));
-
-
-			receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
-			receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
-
-			if((lastevent != EVENT_NONE) && (scgettime < 120)) {
-				String strPieceName = Piece.getPieceName(lastpiece);
-
-				switch(lastevent) {
-				case EVENT_SINGLE:
-					receiver.drawMenuFont(engine, playerID, 2, 21, "SINGLE", EventReceiver.COLOR_DARKBLUE);
-					break;
-				case EVENT_DOUBLE:
-					receiver.drawMenuFont(engine, playerID, 2, 21, "DOUBLE", EventReceiver.COLOR_BLUE);
-					break;
-				case EVENT_TRIPLE:
-					receiver.drawMenuFont(engine, playerID, 2, 21, "TRIPLE", EventReceiver.COLOR_GREEN);
-					break;
-				case EVENT_FOUR:
-					if(lastb2b) receiver.drawMenuFont(engine, playerID, 3, 21, "FOUR", EventReceiver.COLOR_RED);
-					else receiver.drawMenuFont(engine, playerID, 3, 21, "FOUR", EventReceiver.COLOR_ORANGE);
-					break;
-				case EVENT_TSPIN_ZERO_MINI:
-					receiver.drawMenuFont(engine, playerID, 2, 21, strPieceName + "-SPIN", EventReceiver.COLOR_PURPLE);
-					break;
-				case EVENT_TSPIN_ZERO:
-					receiver.drawMenuFont(engine, playerID, 2, 21, strPieceName + "-SPIN", EventReceiver.COLOR_PINK);
-					break;
-				case EVENT_TSPIN_SINGLE_MINI:
-					if(lastb2b) receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-S", EventReceiver.COLOR_RED);
-					else receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-S", EventReceiver.COLOR_ORANGE);
-					break;
-				case EVENT_TSPIN_SINGLE:
-					if(lastb2b) receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-SINGLE", EventReceiver.COLOR_RED);
-					else receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-SINGLE", EventReceiver.COLOR_ORANGE);
-					break;
-				case EVENT_TSPIN_DOUBLE_MINI:
-					if(lastb2b) receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-D", EventReceiver.COLOR_RED);
-					else receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-D", EventReceiver.COLOR_ORANGE);
-					break;
-				case EVENT_TSPIN_DOUBLE:
-					if(lastb2b) receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-DOUBLE", EventReceiver.COLOR_RED);
-					else receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-DOUBLE", EventReceiver.COLOR_ORANGE);
-					break;
-				case EVENT_TSPIN_TRIPLE:
-					if(lastb2b) receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-TRIPLE", EventReceiver.COLOR_RED);
-					else receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-TRIPLE", EventReceiver.COLOR_ORANGE);
-					break;
-				case EVENT_TSPIN_EZ:
-					if(lastb2b) receiver.drawMenuFont(engine, playerID, 3, 21, "EZ-" + strPieceName, EventReceiver.COLOR_RED);
-					else receiver.drawMenuFont(engine, playerID, 3, 21, "EZ-" + strPieceName, EventReceiver.COLOR_ORANGE);
-					break;
-				}
-
-				if((lastcombo >= 2) && (lastevent != EVENT_TSPIN_ZERO_MINI) && (lastevent != EVENT_TSPIN_ZERO))
-					receiver.drawMenuFont(engine, playerID, 2, 22, (lastcombo - 1) + "COMBO", EventReceiver.COLOR_CYAN);
-			}
+		} catch(Exception e) {
+			e.printStackTrace();
+			engine.stat = GameEngine.STAT_GAMEOVER;
 		}
 
-		// NET: Number of spectators
-		netDrawSpectatorsCount(engine, 0, 18);
-		// NET: All number of players
-		if(playerID == getPlayers() - 1) {
-			netDrawAllPlayersCount(engine);
-			netDrawGameRate(engine);
-		}
-		// NET: Player name (It may also appear in offline replay)
-		netDrawPlayerName(engine);
+		receiver.drawDirectFont(engine, playerID, 0, 0, String.format("%d", currentFrame));
+
 	}
 
 	/*
@@ -539,31 +320,7 @@ public class SubscriberChallenge extends NetDummyMode {
 	@Override
 	public void onLast(GameEngine engine, int playerID) {
 		scgettime++;
-
-		if (engine.gameStarted && (engine.stat == engine.STAT_ARE || engine.stat == engine.STAT_LINECLEAR)) {
-			for (int i=0; i<engine.field.getWidth(); i++) {
-				for (int j=engine.field.getHiddenHeight() * -1; j<engine.field.getHeight(); j++) {
-					Block h = engine.field.getBlock(i, j);
-					if (h != null) {
-						h.skin = (++h.skin)%getSkinCount();
-					}
-				}
-			}
-		}
-	}
-
-	public int getSkinCount() {
-		final int holder = AnimatedBackgroundHook.getResourceHook();
-		switch (holder) {
-			case AnimatedBackgroundHook.HOLDER_SLICK:
-				return ResourceHolder.imgNormalBlockList.size();
-			case AnimatedBackgroundHook.HOLDER_SWING:
-				return ResourceHolderSwing.imgNormalBlockList.size();
-			case AnimatedBackgroundHook.HOLDER_SDL:
-				return ResourceHolderSDL.imgNormalBlockList.size();
-			default:
-				return 0;
-		}
+		++currentFrame;
 	}
 
 	/*
@@ -573,8 +330,6 @@ public class SubscriberChallenge extends NetDummyMode {
 	public void calcScore(GameEngine engine, int playerID, int lines) {
 		// Line clear bonus
 		int pts = 0;
-
-		if (lines > 0) lastValue = subscriber;
 
 		if(engine.tspin) {
 			// T-Spin 0 lines
@@ -605,16 +360,12 @@ public class SubscriberChallenge extends NetDummyMode {
 						pts += 200 * (engine.statistics.level + 1);
 					}
 					lastevent = EVENT_TSPIN_SINGLE_MINI;
-
-					subscriber += subscriberRNG.nextInt(200)+3000;
 				} else {
 					if(engine.b2b) {
 						pts += 1200 * (engine.statistics.level + 1);
 					} else {
 						pts += 800 * (engine.statistics.level + 1);
 					}
-
-					subscriber += subscriberRNG.nextInt(700)+6000;
 					lastevent = EVENT_TSPIN_SINGLE;
 				}
 			}
@@ -635,7 +386,6 @@ public class SubscriberChallenge extends NetDummyMode {
 					}
 					lastevent = EVENT_TSPIN_DOUBLE;
 				}
-				subscriber += subscriberRNG.nextInt(2300)+6000;
 			}
 			// T-Spin 3 lines
 			else if(lines >= 3) {
@@ -645,13 +395,11 @@ public class SubscriberChallenge extends NetDummyMode {
 					pts += 1600 * (engine.statistics.level + 1);
 				}
 				lastevent = EVENT_TSPIN_TRIPLE;
-				subscriber += subscriberRNG.nextInt(5000)+9000;
 			}
 		} else {
 			if(lines == 1) {
 				pts += 100 * (engine.statistics.level + 1); // 1列
 				lastevent = EVENT_SINGLE;
-				subscriber -= subscriberRNG.nextInt(1000)+500;
 			} else if(lines == 2) {
 				pts += 300 * (engine.statistics.level + 1); // 2列
 				lastevent = EVENT_DOUBLE;
@@ -666,7 +414,6 @@ public class SubscriberChallenge extends NetDummyMode {
 					pts += 800 * (engine.statistics.level + 1);
 				}
 				lastevent = EVENT_FOUR;
-				subscriber += subscriberRNG.nextInt(2300)+6000;
 			}
 		}
 
@@ -799,17 +546,17 @@ public class SubscriberChallenge extends NetDummyMode {
 	 * @param prop Property file
 	 */
 	private void loadSetting(CustomProperties prop) {
-		startlevel = prop.getProperty("subscriberchallenge.startlevel", 0);
-		tspinEnableType = prop.getProperty("subscriberchallenge.tspinEnableType", 1);
-		enableTSpin = prop.getProperty("subscriberchallenge.enableTSpin", true);
-		enableTSpinKick = prop.getProperty("subscriberchallenge.enableTSpinKick", true);
-		spinCheckType = prop.getProperty("subscriberchallenge.spinCheckType", 0);
-		tspinEnableEZ = prop.getProperty("subscriberchallenge.tspinEnableEZ", false);
-		enableB2B = prop.getProperty("subscriberchallenge.enableB2B", true);
-		enableCombo = prop.getProperty("subscriberchallenge.enableCombo", true);
-		goaltype = prop.getProperty("subscriberchallenge.gametype", 0);
-		big = prop.getProperty("subscriberchallenge.big", false);
-		version = prop.getProperty("subscriberchallenge.version", 0);
+		startlevel = prop.getProperty("marathon.startlevel", 0);
+		tspinEnableType = prop.getProperty("marathon.tspinEnableType", 1);
+		enableTSpin = prop.getProperty("marathon.enableTSpin", true);
+		enableTSpinKick = prop.getProperty("marathon.enableTSpinKick", true);
+		spinCheckType = prop.getProperty("marathon.spinCheckType", 0);
+		tspinEnableEZ = prop.getProperty("marathon.tspinEnableEZ", false);
+		enableB2B = prop.getProperty("marathon.enableB2B", true);
+		enableCombo = prop.getProperty("marathon.enableCombo", true);
+		goaltype = prop.getProperty("marathon.gametype", 0);
+		big = prop.getProperty("marathon.big", false);
+		version = prop.getProperty("marathon.version", 0);
 	}
 
 	/**
@@ -817,17 +564,17 @@ public class SubscriberChallenge extends NetDummyMode {
 	 * @param prop Property file
 	 */
 	private void saveSetting(CustomProperties prop) {
-		prop.setProperty("subscriberchallenge.startlevel", startlevel);
-		prop.setProperty("subscriberchallenge.tspinEnableType", tspinEnableType);
-		prop.setProperty("subscriberchallenge.enableTSpin", enableTSpin);
-		prop.setProperty("subscriberchallenge.enableTSpinKick", enableTSpinKick);
-		prop.setProperty("subscriberchallenge.spinCheckType", spinCheckType);
-		prop.setProperty("subscriberchallenge.tspinEnableEZ", tspinEnableEZ);
-		prop.setProperty("subscriberchallenge.enableB2B", enableB2B);
-		prop.setProperty("subscriberchallenge.enableCombo", enableCombo);
-		prop.setProperty("subscriberchallenge.gametype", goaltype);
-		prop.setProperty("subscriberchallenge.big", big);
-		prop.setProperty("subscriberchallenge.version", version);
+		prop.setProperty("marathon.startlevel", startlevel);
+		prop.setProperty("marathon.tspinEnableType", tspinEnableType);
+		prop.setProperty("marathon.enableTSpin", enableTSpin);
+		prop.setProperty("marathon.enableTSpinKick", enableTSpinKick);
+		prop.setProperty("marathon.spinCheckType", spinCheckType);
+		prop.setProperty("marathon.tspinEnableEZ", tspinEnableEZ);
+		prop.setProperty("marathon.enableB2B", enableB2B);
+		prop.setProperty("marathon.enableCombo", enableCombo);
+		prop.setProperty("marathon.gametype", goaltype);
+		prop.setProperty("marathon.big", big);
+		prop.setProperty("marathon.version", version);
 	}
 
 	/**
@@ -839,9 +586,9 @@ public class SubscriberChallenge extends NetDummyMode {
 	protected void loadRanking(CustomProperties prop, String ruleName) {
 		for(int i = 0; i < RANKING_MAX; i++) {
 			for(int j = 0; j < GAMETYPE_MAX; j++) {
-				rankingScore[j][i] = prop.getProperty("subscriberchallenge.ranking." + ruleName + "." + j + ".score." + i, 0);
-				rankingLines[j][i] = prop.getProperty("subscriberchallenge.ranking." + ruleName + "." + j + ".lines." + i, 0);
-				rankingTime[j][i] = prop.getProperty("subscriberchallenge.ranking." + ruleName + "." + j + ".time." + i, 0);
+				rankingScore[j][i] = prop.getProperty("marathon.ranking." + ruleName + "." + j + ".score." + i, 0);
+				rankingLines[j][i] = prop.getProperty("marathon.ranking." + ruleName + "." + j + ".lines." + i, 0);
+				rankingTime[j][i] = prop.getProperty("marathon.ranking." + ruleName + "." + j + ".time." + i, 0);
 			}
 		}
 	}
@@ -854,9 +601,9 @@ public class SubscriberChallenge extends NetDummyMode {
 	private void saveRanking(CustomProperties prop, String ruleName) {
 		for(int i = 0; i < RANKING_MAX; i++) {
 			for(int j = 0; j < GAMETYPE_MAX; j++) {
-				prop.setProperty("subscriberchallenge.ranking." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
-				prop.setProperty("subscriberchallenge.ranking." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
-				prop.setProperty("subscriberchallenge.ranking." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
+				prop.setProperty("marathon.ranking." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
+				prop.setProperty("marathon.ranking." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
+				prop.setProperty("marathon.ranking." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
 			}
 		}
 	}
