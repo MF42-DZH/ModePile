@@ -34,4 +34,9 @@ public class Deltatris extends MarathonModeBase {
 	private static final int DIFFICULTY_EASY = 0;
 	private static final int DIFFICULTY_NORMAL = 1;
 	private static final int DIFFICULTY_HARD = 2;
+
+	@Override
+	public String getName() {
+		return "DELTATRIS";
+	}
 }
