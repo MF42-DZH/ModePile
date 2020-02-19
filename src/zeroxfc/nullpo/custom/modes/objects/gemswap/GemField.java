@@ -119,7 +119,7 @@ public class GemField {
 			}
 		}
 	}
-	
+
 	public int getSurrounding(int x, int y) {
 		int amt = 0;
 		int[][] testLocations = {
