@@ -9,6 +9,7 @@ import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.*;
 import zeroxfc.nullpo.custom.modes.objects.gemswap.*;
 
@@ -18,6 +19,8 @@ import zeroxfc.nullpo.custom.modes.objects.gemswap.*;
  */
 
 public class GemSwap extends DummyMode {
+	private static final Logger log = Logger.getLogger(GemSwap.class);
+
 	private static final int FIELD_DIMENSION = 8;
 
 	private static final int CUSTOMSTATE_IDLE = 0;
@@ -47,12 +50,13 @@ public class GemSwap extends DummyMode {
 	private GemField mainField;
 	private GemField oldField;
 	private int localState;
-	private Effect[] scorePopups;
+	// private Effect[] scorePopups;
 	private Effect[] lightningChains;
 	private ArrayList<ScoreEvent> events;
 	private ResourceHolderCustomAssetExtension customHolder;
 	private int bgm;
-	
+	private int combo;
+
 	@Override
 	public String getName() {
 		return "GEM SWAP";
@@ -90,7 +94,7 @@ public class GemSwap extends DummyMode {
 		localState = CUSTOMSTATE_IDLE;
 
 		lightningChains = new Effect[96];
-		scorePopups = new Effect[128];
+		// scorePopups = new Effect[128];
 
 		if (createField) {
 			mainField = new GemField(FIELD_DIMENSION, FIELD_DIMENSION, engine.randSeed);
@@ -115,19 +119,20 @@ public class GemSwap extends DummyMode {
 	
 	private void clearEffects() {
 		lightningChains = new Effect[96];
-		scorePopups = new Effect[128];
+		// scorePopups = new Effect[128];
 	}
 	
 	@Override
 	public boolean onSetting(GameEngine engine, int playerID) {
 		// Menu
-		if(engine.owner.replayMode == false) {
+		if(!engine.owner.replayMode) {
 			// Configuration changes
 			int change = updateCursor(engine, 0, playerID);
 
 			if(change != 0) {
 				engine.playSE("change");
 
+				// TODO: more settings
 				switch(engine.statc[2]) {
 				case 0:
 					bgm += change;
@@ -157,9 +162,7 @@ public class GemSwap extends DummyMode {
 			engine.statc[3]++;
 			engine.statc[2] = -1;
 
-			if(engine.statc[3] >= 60) {
-				return false;
-			}
+			return engine.statc[3] < 60;
 		}
 
 		return true;
@@ -360,6 +363,7 @@ public class GemSwap extends DummyMode {
 
 	private boolean statSwap(GameEngine engine, int playerID) {
 		if (engine.statc[0] == 0) {
+			combo = 0;
 			mainField.resetFallStatus();
 			mainField.resetSwapStatus();
 			mainField.resetMatchArrays();
@@ -476,8 +480,8 @@ public class GemSwap extends DummyMode {
 						mainField.getCell(x, y).conductAction(mainField, new int[] { mainField.getCell(x, y).getColour() }, events);
 					}
 				} else if (mainField.getCellAttribute(x, y, GemField.ATTRIBUTE_DESTROY) && mainField.getCellAttribute(x, y, GemField.ATTRIBUTE_RECENTSWAP)) {
-					events.add(new ScoreEvent(getScore(mainField.getFieldHorizontalMatchValues()[y][x] + mainField.getFieldVerticalMatchValues()[y][x], engine),
-							   x, y, mainField.getCell(x, y).getID(), EventReceiver.COLOR_ORANGE));
+					// events.add(new ScoreEvent(getScore(mainField.getFieldHorizontalMatchValues()[y][x] + mainField.getFieldVerticalMatchValues()[y][x], engine),
+					// 		   x, y, mainField.getCell(x, y).getID(), EventReceiver.COLOR_ORANGE));
 				
 					// SPECIAL GEM PARSING GOES HERE LATER.
 				}
@@ -487,8 +491,8 @@ public class GemSwap extends DummyMode {
 		for (int y = mainField.getHeight() - 1; y >= 0; y--) {
 			for (int x = 0; x < mainField.getWidth(); x++) {
 				if (mainField.getCellAttribute(x, y, GemField.ATTRIBUTE_DESTROY) && mainField.getCellAttribute(x, y, GemField.ATTRIBUTE_RECENTFALL)) {
-					events.add(new ScoreEvent(getScore(mainField.getFieldHorizontalMatchValues()[y][x] + mainField.getFieldVerticalMatchValues()[y][x], engine),
-							   x, y, mainField.getCell(x, y).getID(), EventReceiver.COLOR_YELLOW));
+					// events.add(new ScoreEvent(getScore(mainField.getFieldHorizontalMatchValues()[y][x] + mainField.getFieldVerticalMatchValues()[y][x], engine),
+					// 		   x, y, mainField.getCell(x, y).getID(), EventReceiver.COLOR_YELLOW));
 					
 					int colour =  mainField.getCell(x, y).getColour();
 					
@@ -567,7 +571,7 @@ public class GemSwap extends DummyMode {
 //					}
 //				}
 //			}
-			
+			log.info("NO ANIMS YET.");
 		} else if (engine.statc[0] > 0) {
 			engine.resetStatc();
 			localState = CUSTOMSTATE_CLEAR;
@@ -577,15 +581,18 @@ public class GemSwap extends DummyMode {
 	}
 	
 	private boolean statClear(GameEngine engine, int playerID) {
-		for (ScoreEvent scoreEvent : events) {
-			int locationX = receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (scoreEvent.getX() * 32) + 16;
-			int locationY = receiver.getFieldDisplayPositionY(engine, playerID) + 52 + (scoreEvent.getY() * 32) + 16;
-			
-			addEffectToArray(new ScorePopup(getScore(scoreEvent.getScoreValue(), engine), new int[] { locationX, locationY }, scoreEvent.getColour(), 1f), 1);
-			engine.statistics.score += getScore(scoreEvent.getScoreValue(), engine);
-		}
-		
+		// for (ScoreEvent scoreEvent : events) {
+		// 	int locationX = receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (scoreEvent.getX() * 32) + 16;
+		// 	int locationY = receiver.getFieldDisplayPositionY(engine, playerID) + 52 + (scoreEvent.getY() * 32) + 16;
+		//
+		// 	// addEffectToArray(new ScorePopup(getScore(scoreEvent.getScoreValue(), engine), new int[] { locationX, locationY }, scoreEvent.getColour(), 1f), 1);
+		// 	// TODO: -- MOVE THIS -- engine.statistics.score += getScore(scoreEvent.getScoreValue(), engine);
+		// }
+
+		engine.statistics.score += getScore(engine.field.checkLineColor(3, false, false, true), combo, engine);
+
 		mainField.destroyGems();
+		combo += 1;
 		
 		engine.resetStatc();
 		localState = CUSTOMSTATE_DROP;
@@ -593,7 +600,7 @@ public class GemSwap extends DummyMode {
 	}
 	
 	private boolean statDrop(GameEngine engine, int playerID) {
-		if (engine.statc[0] % 6 == 0) {
+		if (engine.statc[0] % 5 == 0) {
 			boolean dropped = mainField.dropAllGemsOnce();
 			mainField.createGemsOnTopRow();
 			if (!dropped) {
@@ -635,16 +642,16 @@ public class GemSwap extends DummyMode {
 			}
 		}
 
-		for (int i = 0; i < scorePopups.length; i++) {
-			if (scorePopups[i] != null) {
-				if (scorePopups[i].shouldNull()) {
-					scorePopups[i] = null;
-					continue;
-				}
-				
-				scorePopups[i].update();
-			}
-		}
+		// for (int i = 0; i < scorePopups.length; i++) {
+		// 	if (scorePopups[i] != null) {
+		// 		if (scorePopups[i].shouldNull()) {
+		// 			scorePopups[i] = null;
+		// 			continue;
+		// 		}
+		//
+		// 		scorePopups[i].update();
+		// 	}
+		// }
 	}
 
 	/**
@@ -662,28 +669,29 @@ public class GemSwap extends DummyMode {
 					}
 				}
 				break;
-			case 1:
-				for (int i = 0; i < scorePopups.length; i++) {
-					if (scorePopups[i] == null) {
-						scorePopups[i] = effect;
-						return;
-					}
-				}
-				break;
+			// case 1:
+			// 	for (int i = 0; i < scorePopups.length; i++) {
+			// 		if (scorePopups[i] == null) {
+			// 			scorePopups[i] = effect;
+			// 			return;
+			// 		}
+			// 	}
+			// 	break;
 			default:
+				log.info("ARRAY ID NOT FOUND " + destination);
 				break;
 		}
 	}
 	
-	private int getScore(int gems, GameEngine engine) {
+	private int getScore(int gems, int combo, GameEngine engine) {
 		int h = gems - 2;
 		
 		int x = 1;
 		for (int i = 0; i < h; i++) {
 			x++;
 		}
-		
-		return x * 5 * (engine.statistics.level + 1);
+
+		return (int)(x * 5 * (engine.statistics.level + 1) * Math.pow(1.1, combo));
 	}
 
 	@Override
@@ -711,6 +719,22 @@ public class GemSwap extends DummyMode {
 //				}
 //			}
 		} else {
+			if (localState == CUSTOMSTATE_CHECK || localState == CUSTOMSTATE_SWAP) {
+				if (fieldSelection1[0] != -1) {
+					int locationX = receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (fieldSelection1[0] * 32) + 8;
+					int locationY = receiver.getFieldDisplayPositionY(engine, playerID) + 52 + (fieldSelection1[1] * 32) + 8;
+
+					receiver.drawDirectFont(engine, playerID, locationX, locationY, "X", EventReceiver.COLOR_ORANGE);
+				}
+
+				if (fieldSelection2[0] != -1) {
+					int locationX = receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (fieldSelection2[0] * 32) + 8;
+					int locationY = receiver.getFieldDisplayPositionY(engine, playerID) + 52 + (fieldSelection2[1] * 32) + 8;
+
+					receiver.drawDirectFont(engine, playerID, locationX, locationY, "X", EventReceiver.COLOR_ORANGE);
+				}
+			}
+
 			receiver.drawScoreFont(engine, playerID, 3, 3, "SCORE", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 3, 4, String.valueOf(engine.statistics.score));
 			
@@ -726,9 +750,9 @@ public class GemSwap extends DummyMode {
 			receiver.drawScoreFont(engine, playerID, 3, 15, "CUSTOM STATE", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 3, 16, stateNames[localState]);
 			
-			for (Effect effect : scorePopups) {
-				if (effect != null) effect.draw(engine, receiver, playerID, new int[] { 0 }, null);
-			}
+			// for (Effect effect : scorePopups) {
+			// 	if (effect != null) effect.draw(engine, receiver, playerID, new int[] { 0 }, null);
+			// }
 			
 			for (Effect effect : lightningChains) {
 				if (effect != null) effect.draw(engine, receiver, playerID, new int[] { 4 }, customHolder);
