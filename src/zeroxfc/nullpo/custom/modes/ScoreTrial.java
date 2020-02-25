@@ -12,6 +12,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.*;
+import zeroxfc.nullpo.custom.libs.particles.BlockParticleCollection;
 
 public class ScoreTrial extends MarathonModeBase {
 	// Speed tables

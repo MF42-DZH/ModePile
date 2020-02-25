@@ -21,6 +21,7 @@ import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
 import mu.nu.nullpo.game.component.Piece;
+import zeroxfc.nullpo.custom.libs.particles.BlockParticleCollection;
 
 public class FireworkChallenge extends DummyMode {
 	private static final Logger log = Logger.getLogger(FireworkChallenge.class);

@@ -9,13 +9,12 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
-import zeroxfc.nullpo.custom.libs.BlockParticleCollection;
+import zeroxfc.nullpo.custom.libs.particles.BlockParticleCollection;
 import zeroxfc.nullpo.custom.libs.FlyInOutText;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.BackgroundDiagonalRipple;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.BackgroundHorizontalBars;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.BackgroundVerticalBars;
 
 public class Joker extends MarathonModeBase {

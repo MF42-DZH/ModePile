@@ -17,15 +17,6 @@ public class PrimitiveDrawingHook {
 	// Log object for debugging
 	private static final Logger log = Logger.getLogger(PrimitiveDrawingHook.class);
 
-	private final int RENDERER_HOOK;   // Current renderer ID
-
-	/**
-	 * Constructor method. Need this to hook into the renderer.
-	 */
-	public PrimitiveDrawingHook() {
-		RENDERER_HOOK = AnimatedBackgroundHook.getResourceHook();
-	}
-
 	/**
 	 * Draws a rectangle using a set of coordinates and its dimensions.
 	 * @param receiver Renderer to use
@@ -39,8 +30,8 @@ public class PrimitiveDrawingHook {
 	 * @param alpha Alpha component of colour
 	 * @param fill Fill rectangle?
 	 */
-	public void drawRectangle(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int red, int green, int blue, int alpha, boolean fill) {
-		switch (RENDERER_HOOK) {
+	public static void drawRectangle(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int red, int green, int blue, int alpha, boolean fill) {
+		switch (AnimatedBackgroundHook.getResourceHook()) {
 			case AnimatedBackgroundHook.HOLDER_SLICK:
 				// Slick graphics object
 				Graphics graphicsSlick = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
@@ -102,8 +93,8 @@ public class PrimitiveDrawingHook {
 	 * @param alpha Alpha component of colour
 	 * @param fill Fill arc?
 	 */
-	public void drawArc(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int angleStart, int angleSize, int red, int green, int blue, int alpha, boolean fill) {
-		switch (RENDERER_HOOK) {
+	public static void drawArc(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int angleStart, int angleSize, int red, int green, int blue, int alpha, boolean fill) {
+		switch (AnimatedBackgroundHook.getResourceHook()) {
 			case AnimatedBackgroundHook.HOLDER_SLICK:
 				// Slick graphics object
 				Graphics graphicsSlick = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
@@ -148,8 +139,8 @@ public class PrimitiveDrawingHook {
 	 * @param alpha Alpha component of colour
 	 * @param fill Fill oval?
 	 */
-	public void drawOval(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int red, int green, int blue, int alpha, boolean fill) {
-		switch (RENDERER_HOOK) {
+	public static void drawOval(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int red, int green, int blue, int alpha, boolean fill) {
+		switch (AnimatedBackgroundHook.getResourceHook()) {
 			case AnimatedBackgroundHook.HOLDER_SLICK:
 				// Slick graphics object
 				Graphics graphicsSlick = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);

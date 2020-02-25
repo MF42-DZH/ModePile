@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package zeroxfc.nullpo.custom.libs;
+package zeroxfc.nullpo.custom.libs.particles;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -38,6 +38,7 @@ import java.util.Random;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
+import zeroxfc.nullpo.custom.libs.DoubleVector;
 
 public class BlockParticleCollection {
 	// Block particles in collection
