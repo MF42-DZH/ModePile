@@ -1221,6 +1221,7 @@ public class MarathonTwo extends MarathonModeBase {
 									if (blk.color > Block.BLOCK_COLOR_NONE) {
 										receiver.blockBreak(engine, playerID, x, y, blk);
 										blk.color = Block.BLOCK_COLOR_NONE;
+										blk.hard = 0;  // Fix bug with hard-block shotguns.
 										break;
 									}
 								}
