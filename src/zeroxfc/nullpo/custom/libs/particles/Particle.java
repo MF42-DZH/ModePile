@@ -1,6 +1,7 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
 import mu.nu.nullpo.game.event.EventReceiver;
+import zeroxfc.nullpo.custom.libs.BufferedPrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
@@ -157,17 +158,17 @@ public class Particle {
 
 	/**
 	 * Draw the particle.
-	 * @param receiver Renderer to draw with.
+	 * @param buffer Drawing buffer to use
 	 */
-	public void draw(EventReceiver receiver) {
+	public void draw(BufferedPrimitiveDrawingHook buffer) {
 		if (particleLifetime > particleMaxLifetime) return;
 
 		switch (shape) {
 			case Rectangle:
-				PrimitiveDrawingHook.drawRectangle(receiver, (int)position.getX() - (sizeX / 2), (int)position.getY() - (sizeY / 2), sizeX, sizeY, ur, ug, ub, ua, true);
+				buffer.drawRectangle((int)position.getX() - (sizeX / 2), (int)position.getY() - (sizeY / 2), sizeX, sizeY, ur, ug, ub, ua, true);
 				break;
 			case Circle:
-				PrimitiveDrawingHook.drawOval(receiver, (int)position.getX() - (sizeX / 2), (int)position.getY() - (sizeY / 2), sizeX, sizeY, ur, ug, ub, ua, true);
+				buffer.drawOval((int)position.getX() - (sizeX / 2), (int)position.getY() - (sizeY / 2), sizeX, sizeY, ur, ug, ub, ua, true);
 				break;
 			default:
 				break;

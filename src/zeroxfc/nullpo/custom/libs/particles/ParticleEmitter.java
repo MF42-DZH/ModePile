@@ -1,12 +1,24 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
 import mu.nu.nullpo.game.event.EventReceiver;
+import org.apache.log4j.Logger;
+import zeroxfc.nullpo.custom.libs.BufferedPrimitiveDrawingHook;
 
 import java.util.ArrayList;
 
 public abstract class ParticleEmitter {
-	/** Particle container */
-	ArrayList<Particle> particles = new ArrayList<>();
+	/** Debug logger */
+	protected static final Logger log = Logger.getLogger(ParticleEmitter.class);
+
+	/**
+	 * Particle container
+	 */
+	protected ArrayList<Particle> particles = new ArrayList<>();
+
+	/**
+	 * Drawing buffer
+	 */
+	protected BufferedPrimitiveDrawingHook drawingQueue = new BufferedPrimitiveDrawingHook();
 
 	/**
 	 * Update method. Used to update all partcles.
@@ -22,16 +34,17 @@ public abstract class ParticleEmitter {
 
 	/**
 	 * Draw the particles to the current renderer.
+	 *
 	 * @param receiver Renderer to use
 	 */
-	void draw(EventReceiver receiver) {
-		for (Particle p : particles) {
-			p.draw(receiver);
-		}
+	public void draw(EventReceiver receiver) {
+		for (Particle p : particles) p.draw(drawingQueue);
+		drawingQueue.renderAll(receiver);
 	}
 
 	/**
 	 * Add particles directly to the collection.
+	 *
 	 * @param particle Particle to add
 	 */
 	public void addSpecific(Particle particle) {
@@ -41,8 +54,9 @@ public abstract class ParticleEmitter {
 	/**
 	 * Add some number of particles or particle groups.
 	 * Varies upon child class.
-	 * @param num Number of particles / particle groups.
+	 *
+	 * @param num    Number of particles / particle groups.
 	 * @param params Parameters to pass onto the particles.
 	 */
-	abstract void addNumber(int num, Object[] params);
+	public abstract void addNumber(int num, Object[] params);
 }
