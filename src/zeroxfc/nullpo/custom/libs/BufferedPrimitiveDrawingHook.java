@@ -67,6 +67,8 @@ public class BufferedPrimitiveDrawingHook {
 	 * @param receiver Renderer to use
 	 */
 	public void renderAll(EventReceiver receiver) {
+		if (commandBuffer.size() <= 0) return;
+
 		Object graphicsObject = null;
 		switch (AnimatedBackgroundHook.getResourceHook()) {
 			case AnimatedBackgroundHook.HOLDER_SLICK:
@@ -87,70 +89,63 @@ public class BufferedPrimitiveDrawingHook {
 		}
 
 		if (graphicsObject == null) return;
-
-		while (true) {
+		for (RenderCommand cmd : commandBuffer) {
 			try {
-				if (commandBuffer.size() <= 0) break;
-				else {
-					RenderCommand cmd = commandBuffer.get(0);
-
-					switch (cmd.renderType) {
-						case Rectangle:
-							PrimitiveDrawingHook.drawRectangleFast(
-									graphicsObject,
-									(int)cmd.args[0],
-									(int)cmd.args[1],
-									(int)cmd.args[2],
-									(int)cmd.args[3],
-									(int)cmd.args[4],
-									(int)cmd.args[5],
-									(int)cmd.args[6],
-									(int)cmd.args[7],
-									(boolean)cmd.args[8]
-							);
-							break;
-						case Arc:
-							PrimitiveDrawingHook.drawArcFast(
-									graphicsObject,
-									(int)cmd.args[0],
-									(int)cmd.args[1],
-									(int)cmd.args[2],
-									(int)cmd.args[3],
-									(int)cmd.args[4],
-									(int)cmd.args[5],
-									(int)cmd.args[6],
-									(int)cmd.args[7],
-									(int)cmd.args[8],
-									(int)cmd.args[9],
-									(boolean)cmd.args[10]
-							);
-							break;
-						case Oval:
-							PrimitiveDrawingHook.drawOvalFast(
-									graphicsObject,
-									(int)cmd.args[0],
-									(int)cmd.args[1],
-									(int)cmd.args[2],
-									(int)cmd.args[3],
-									(int)cmd.args[4],
-									(int)cmd.args[5],
-									(int)cmd.args[6],
-									(int)cmd.args[7],
-									(boolean)cmd.args[8]
-							);
-							break;
-						default:
-							log.error("Invalid render type.");
-							break;
-					}
-
-					commandBuffer.remove(0);
+				switch (cmd.renderType) {
+					case Rectangle:
+						PrimitiveDrawingHook.drawRectangleFast(
+								graphicsObject,
+								(int)cmd.args[0],
+								(int)cmd.args[1],
+								(int)cmd.args[2],
+								(int)cmd.args[3],
+								(int)cmd.args[4],
+								(int)cmd.args[5],
+								(int)cmd.args[6],
+								(int)cmd.args[7],
+								(boolean)cmd.args[8]
+						);
+						break;
+					case Arc:
+						PrimitiveDrawingHook.drawArcFast(
+								graphicsObject,
+								(int)cmd.args[0],
+								(int)cmd.args[1],
+								(int)cmd.args[2],
+								(int)cmd.args[3],
+								(int)cmd.args[4],
+								(int)cmd.args[5],
+								(int)cmd.args[6],
+								(int)cmd.args[7],
+								(int)cmd.args[8],
+								(int)cmd.args[9],
+								(boolean)cmd.args[10]
+						);
+						break;
+					case Oval:
+						PrimitiveDrawingHook.drawOvalFast(
+								graphicsObject,
+								(int)cmd.args[0],
+								(int)cmd.args[1],
+								(int)cmd.args[2],
+								(int)cmd.args[3],
+								(int)cmd.args[4],
+								(int)cmd.args[5],
+								(int)cmd.args[6],
+								(int)cmd.args[7],
+								(boolean)cmd.args[8]
+						);
+						break;
+					default:
+						log.error("Invalid render type.");
+						break;
 				}
 			} catch (Exception e) {
 				log.error("Error encountered.", e);
 				break;
 			}
 		}
+		commandBuffer.clear();
 
 		switch (AnimatedBackgroundHook.getResourceHook()) {
 			case AnimatedBackgroundHook.HOLDER_SLICK:
@@ -171,25 +166,6 @@ public class BufferedPrimitiveDrawingHook {
 			default:
 				log.error("Invalid renderer. Cannot replace graphics object.");
 				break;
-		}
-	}
-
-	/** Storage type for enqueued commands. */
-	private static class RenderCommand {
-		public RenderType renderType;
-		public Object[] args;
-
-		private RenderCommand() {
-			// Use other constructor.
-		}
-
-		public RenderCommand(RenderType renderType, Object[] args) {
-		    this.renderType = renderType;
-		    this.args = args;
-		}
-
-		public enum RenderType {
-			Rectangle, Arc, Oval
 		}
 	}
 }
