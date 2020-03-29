@@ -9,6 +9,22 @@ public class Fireworks extends ParticleEmitter {
 	/** Gravity */
 	private static final double GRAVITY = 4.9 / 60;
 
+	/**
+	 * Default colour set.<br />
+	 * In order: Gray, Red, Orange, Yellow, Green, Cyan, Blue, Purple<br />
+	 * Parameters: Red, Green, Blue, Alpha, Variance
+	 */
+	public static final int[][] DEF_COLOURS = {
+			new int[] { 240, 240, 240, 223, 15 },
+			new int[] { 240,  30,   0, 223, 15 },
+			new int[] { 240, 130,   0, 223, 15 },
+			new int[] { 240, 240,   0, 223, 15 },
+			new int[] {  30, 240,   0, 223, 15 },
+			new int[] {   0, 240, 240, 223, 15 },
+			new int[] {   0,  30, 240, 223, 15 },
+			new int[] { 210,   0, 210, 223, 15 }
+	};
+
 	/** Randomiser */
 	private Random randomiser;
 

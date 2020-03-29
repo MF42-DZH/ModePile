@@ -24,6 +24,7 @@ public abstract class ParticleEmitter {
 	 * Update method. Used to update all partcles.
 	 */
 	public void update() {
+		if (particles.size() <= 0) return;
 		for (int i = particles.size() - 1; i >= 0; i--) {
 			boolean res = particles.get(i).update();
 			if (res) {
@@ -38,6 +39,7 @@ public abstract class ParticleEmitter {
 	 * @param receiver Renderer to use
 	 */
 	public void draw(EventReceiver receiver) {
+		if (particles.size() <= 0) return;
 		for (Particle p : particles) p.draw(drawingQueue);
 		drawingQueue.renderAll(receiver);
 	}
