@@ -116,6 +116,22 @@ public class Fireworks extends ParticleEmitter {
 					);
 
 					particles.add(particle);
+
+					Particle particle2 = new Particle(
+							Particle.ParticleShape.Rectangle,
+							Interpolation.lerp(minLifeTime, maxLifeTime, randomiser.nextDouble()),
+							origin,
+							v,
+							new DoubleVector(0, GRAVITY, false),
+							1, 1,
+							Interpolation.lerp(ured, 255, 0.9),
+							Interpolation.lerp(ugreen, 255, 0.9),
+							Interpolation.lerp(ublue, 255, 0.9),
+							Interpolation.lerp(ualpha, 255, 0.9),
+							(int)(ured / 1.25), (int)(ugreen / 1.25), (int)(ublue / 1.25), 64
+					);
+
+					particles.add(particle2);
 				}
 			}
 		} catch (ClassCastException ce) {

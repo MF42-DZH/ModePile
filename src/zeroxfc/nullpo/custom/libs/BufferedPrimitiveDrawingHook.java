@@ -69,103 +69,107 @@ public class BufferedPrimitiveDrawingHook {
 	public void renderAll(EventReceiver receiver) {
 		if (commandBuffer.size() <= 0) return;
 
-		Object graphicsObject = null;
-		switch (AnimatedBackgroundHook.getResourceHook()) {
-			case AnimatedBackgroundHook.HOLDER_SLICK:
-				// Slick graphics object
-				graphicsObject = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
-				break;
-			case AnimatedBackgroundHook.HOLDER_SWING:
-				// Swing graphics object
-				graphicsObject = ResourceHolderCustomAssetExtension.getGraphicsSwing((RendererSwing) receiver);
-			break;
-			case AnimatedBackgroundHook.HOLDER_SDL:
-				// SDL graphics object
-				graphicsObject = ResourceHolderCustomAssetExtension.getGraphicsSDL((RendererSDL) receiver);
-				break;
-			default:
-				log.error("Could not extract renderer.");
-				break;
-		}
-
-		if (graphicsObject == null) return;
-		for (RenderCommand cmd : commandBuffer) {
-			try {
-				switch (cmd.renderType) {
-					case Rectangle:
-						PrimitiveDrawingHook.drawRectangleFast(
-								graphicsObject,
-								(int)cmd.args[0],
-								(int)cmd.args[1],
-								(int)cmd.args[2],
-								(int)cmd.args[3],
-								(int)cmd.args[4],
-								(int)cmd.args[5],
-								(int)cmd.args[6],
-								(int)cmd.args[7],
-								(boolean)cmd.args[8]
-						);
-						break;
-					case Arc:
-						PrimitiveDrawingHook.drawArcFast(
-								graphicsObject,
-								(int)cmd.args[0],
-								(int)cmd.args[1],
-								(int)cmd.args[2],
-								(int)cmd.args[3],
-								(int)cmd.args[4],
-								(int)cmd.args[5],
-								(int)cmd.args[6],
-								(int)cmd.args[7],
-								(int)cmd.args[8],
-								(int)cmd.args[9],
-								(boolean)cmd.args[10]
-						);
-						break;
-					case Oval:
-						PrimitiveDrawingHook.drawOvalFast(
-								graphicsObject,
-								(int)cmd.args[0],
-								(int)cmd.args[1],
-								(int)cmd.args[2],
-								(int)cmd.args[3],
-								(int)cmd.args[4],
-								(int)cmd.args[5],
-								(int)cmd.args[6],
-								(int)cmd.args[7],
-								(boolean)cmd.args[8]
-						);
-						break;
-					default:
-						log.error("Invalid render type.");
-						break;
-				}
-			} catch (Exception e) {
-				log.error("Error encountered.", e);
-				break;
+		try {
+			Object graphicsObject = null;
+			switch (AnimatedBackgroundHook.getResourceHook()) {
+				case AnimatedBackgroundHook.HOLDER_SLICK:
+					// Slick graphics object
+					graphicsObject = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
+					break;
+				case AnimatedBackgroundHook.HOLDER_SWING:
+					// Swing graphics object
+					graphicsObject = ResourceHolderCustomAssetExtension.getGraphicsSwing((RendererSwing) receiver);
+					break;
+				case AnimatedBackgroundHook.HOLDER_SDL:
+					// SDL graphics object
+					graphicsObject = ResourceHolderCustomAssetExtension.getGraphicsSDL((RendererSDL) receiver);
+					break;
+				default:
+					log.error("Could not extract renderer.");
+					break;
 			}
-		}
-		commandBuffer.clear();
 
-		switch (AnimatedBackgroundHook.getResourceHook()) {
-			case AnimatedBackgroundHook.HOLDER_SLICK:
-				// Slick graphics object
-				assert receiver instanceof RendererSlick;
-				ResourceHolderCustomAssetExtension.setGraphicsSlick((RendererSlick) receiver, (Graphics) graphicsObject);
-				break;
-			case AnimatedBackgroundHook.HOLDER_SWING:
-				// Swing graphics object
-				assert receiver instanceof RendererSwing;
-				ResourceHolderCustomAssetExtension.setGraphicsSwing((RendererSwing) receiver, (Graphics2D) graphicsObject);
-				break;
-			case AnimatedBackgroundHook.HOLDER_SDL:
-				// SDL graphics object
-				assert receiver instanceof RendererSDL;
-				ResourceHolderCustomAssetExtension.setGraphicsSDL((RendererSDL) receiver, (SDLSurface) graphicsObject);
-				break;
-			default:
-				log.error("Invalid renderer. Cannot replace graphics object.");
-				break;
+			if (graphicsObject == null) return;
+			for (RenderCommand cmd : commandBuffer) {
+				try {
+					switch (cmd.renderType) {
+						case Rectangle:
+							PrimitiveDrawingHook.drawRectangleFast(
+									graphicsObject,
+									(int) cmd.args[0],
+									(int) cmd.args[1],
+									(int) cmd.args[2],
+									(int) cmd.args[3],
+									(int) cmd.args[4],
+									(int) cmd.args[5],
+									(int) cmd.args[6],
+									(int) cmd.args[7],
+									(boolean) cmd.args[8]
+							);
+							break;
+						case Arc:
+							PrimitiveDrawingHook.drawArcFast(
+									graphicsObject,
+									(int) cmd.args[0],
+									(int) cmd.args[1],
+									(int) cmd.args[2],
+									(int) cmd.args[3],
+									(int) cmd.args[4],
+									(int) cmd.args[5],
+									(int) cmd.args[6],
+									(int) cmd.args[7],
+									(int) cmd.args[8],
+									(int) cmd.args[9],
+									(boolean) cmd.args[10]
+							);
+							break;
+						case Oval:
+							PrimitiveDrawingHook.drawOvalFast(
+									graphicsObject,
+									(int) cmd.args[0],
+									(int) cmd.args[1],
+									(int) cmd.args[2],
+									(int) cmd.args[3],
+									(int) cmd.args[4],
+									(int) cmd.args[5],
+									(int) cmd.args[6],
+									(int) cmd.args[7],
+									(boolean) cmd.args[8]
+							);
+							break;
+						default:
+							log.error("Invalid render type.");
+							break;
+					}
+				} catch (Exception e) {
+					log.error("Error encountered.", e);
+					break;
+				}
+			}
+			commandBuffer.clear();
+
+			switch (AnimatedBackgroundHook.getResourceHook()) {
+				case AnimatedBackgroundHook.HOLDER_SLICK:
+					// Slick graphics object
+					assert receiver instanceof RendererSlick;
+					ResourceHolderCustomAssetExtension.setGraphicsSlick((RendererSlick) receiver, (Graphics) graphicsObject);
+					break;
+				case AnimatedBackgroundHook.HOLDER_SWING:
+					// Swing graphics object
+					assert receiver instanceof RendererSwing;
+					ResourceHolderCustomAssetExtension.setGraphicsSwing((RendererSwing) receiver, (Graphics2D) graphicsObject);
+					break;
+				case AnimatedBackgroundHook.HOLDER_SDL:
+					// SDL graphics object
+					assert receiver instanceof RendererSDL;
+					ResourceHolderCustomAssetExtension.setGraphicsSDL((RendererSDL) receiver, (SDLSurface) graphicsObject);
+					break;
+				default:
+					log.error("Invalid renderer. Cannot replace graphics object.");
+					break;
+			}
+		} catch (Exception e) {
+			log.error("Something went wrong.", e);
 		}
 	}
 }

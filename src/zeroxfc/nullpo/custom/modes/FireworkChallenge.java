@@ -22,6 +22,7 @@ import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
 import mu.nu.nullpo.game.component.Piece;
 import zeroxfc.nullpo.custom.libs.particles.BlockParticleCollection;
+import zeroxfc.nullpo.custom.libs.particles.Fireworks;
 
 public class FireworkChallenge extends DummyMode {
 	private static final Logger log = Logger.getLogger(FireworkChallenge.class);
@@ -234,6 +235,9 @@ public class FireworkChallenge extends DummyMode {
 	
 	// current EventReceiver;
 	private EventReceiver receiver;
+
+	// Firework system
+	private Fireworks fireworkEmitter;
 	
 	// private randomiser for firework function - clone the game's randomiser to this.
 	// engine.randSeed ???
@@ -252,6 +256,8 @@ public class FireworkChallenge extends DummyMode {
 	private static final int headerColour = EventReceiver.COLOR_GREEN;
 	private int rankingRankPlayer;
 	private int[] rankingFireworksPlayer, rankingLevelPlayer, rankingTimePlayer;
+
+	private boolean killed;
 
 	// Get mode name
 	@Override
@@ -334,6 +340,8 @@ public class FireworkChallenge extends DummyMode {
 			showPlayerStats = false;
 		}
 
+		killed = false;
+
 		rankingRankPlayer = -1;
 		rankingFireworksPlayer = new int[RANKING_MAX];
 		rankingLevelPlayer = new int[RANKING_MAX];
@@ -349,7 +357,7 @@ public class FireworkChallenge extends DummyMode {
 		// Constant non-gravity speeds.
 		engine.speed.are = 25;
 		engine.speed.areLine = 25;
-		engine.speed.das = 15;
+		engine.speed.das = 14;
 		engine.speed.lineDelay = 40;
 		engine.speed.lockDelay = 30;
 
@@ -534,6 +542,8 @@ public class FireworkChallenge extends DummyMode {
 	// called onStart
 	@Override
 	public void startGame(GameEngine engine, int playerID) {
+		killed = false;
+		fireworkEmitter = new Fireworks(engine.randSeed + 31415L);
 		fireworkRandomiser = new Random(engine.randSeed);
 		
 		ArrayRandomiser creditScrambler = new ArrayRandomiser(engine.randSeed);
@@ -785,6 +795,8 @@ public class FireworkChallenge extends DummyMode {
 			
 			if (blockParticles != null) blockParticles.drawAll(engine, receiver, playerID);
 		}
+
+		if (fireworkEmitter != null) fireworkEmitter.draw(receiver);
 	}
 	
 	/*
@@ -804,9 +816,18 @@ public class FireworkChallenge extends DummyMode {
 		if( (engine.ending == 0) && (engine.statc[0] > 0) ) {
 			levelUpFlag = false;
 		}
+
+		// "Killscreen" at 15 minutes
+		if (engine.ending == 0 && engine.statistics.time >= (15 * 3600) && !killed) {
+			engine.speed.lineDelay = 4;
+			engine.speed.are = 6;
+			engine.speed.areLine = 6;
+			engine.speed.lockDelay = 15;
+			killed = true;
+		}
 		
 		// Endingスタート
-		if((engine.ending == 2) && (rollStarted == false)) {
+		if((engine.ending == 2) && (!rollStarted)) {
 			rollStarted = true;
 			owner.bgmStatus.fadesw = false;
 			owner.bgmStatus.bgm = BGMStatus.BGM_ENDING2;
@@ -1320,6 +1341,8 @@ public class FireworkChallenge extends DummyMode {
 		if (engine.quitflag) {
 			playerProperties = new ProfileProperties(headerColour);
 		}
+
+		if (fireworkEmitter != null) fireworkEmitter.update();
 	}
 	
 	/*
@@ -1483,13 +1506,26 @@ public class FireworkChallenge extends DummyMode {
 	 * Maybe it works???
 	 */
 	private void launchFirework(GameEngine engine, int playerID) {
-		int blockCol = fireworkRandomiser.nextInt(7) + 1;
-		Block dummyBlock = new Block(blockCol);
+		int[] colour = Fireworks.DEF_COLOURS[fireworkRandomiser.nextInt(Fireworks.DEF_COLOURS.length)];
+//		Block dummyBlock = new Block(blockCol);
 		
-		int x = fireworkRandomiser.nextInt(17) - 3;
-		int y = 3 + (fireworkRandomiser.nextInt(7) - 3);
-		
-		receiver.blockBreak(engine, playerID, x, y, dummyBlock);
+//		int x = fireworkRandomiser.nextInt(17) - 3;
+//		int y = 3 + (fireworkRandomiser.nextInt(7) - 3);
+//
+//		receiver.blockBreak(engine, playerID, x, y, dummyBlock);
+
+		int minx = receiver.getFieldDisplayPositionX(engine, playerID) - 48;
+		int maxx = receiver.getFieldDisplayPositionX(engine, playerID) + (engine.field.getWidth() * 16) + 48;
+		int miny = receiver.getFieldDisplayPositionY(engine, playerID) - 48;
+		int maxy = receiver.getFieldDisplayPositionY(engine, playerID) + (16 * 7);
+
+		fireworkEmitter.addNumber(1,
+				new Object[] {
+						minx, maxx, miny, maxy,
+						colour[0], colour[1], colour[2], colour[3], colour[4],
+						Fireworks.DEF_MAX_VEL,
+						45, 75
+				});
 
 		lastFireworkTimer = 100;
 		scoreColorTimer = 2;
