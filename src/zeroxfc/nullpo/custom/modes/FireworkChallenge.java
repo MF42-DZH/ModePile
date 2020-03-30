@@ -543,6 +543,7 @@ public class FireworkChallenge extends DummyMode {
 	@Override
 	public void startGame(GameEngine engine, int playerID) {
 		killed = false;
+		addedCompletionFireworks = false;
 		fireworkEmitter = new Fireworks(engine.randSeed + 31415L);
 		fireworkRandomiser = new Random(engine.randSeed);
 		
@@ -1406,6 +1407,7 @@ public class FireworkChallenge extends DummyMode {
 	public boolean onExcellent(GameEngine engine, int playerID) {
 		if (!addedCompletionFireworks) {
 			genericFireworkQueue += COMPLETION_FIREWORK_REWARD;
+			if (totalFireworkQueue == 0) totalFireworkQueue += COMPLETION_FIREWORK_REWARD;
 			addedCompletionFireworks = true;
 		}
 		

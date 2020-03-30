@@ -76,11 +76,11 @@ public class Deltatris extends MarathonModeBase {
 		netPlayerInit(engine, playerID);
 
 		if(!owner.replayMode) {
-			loadSetting(owner.modeConfig);
+			// loadSetting(owner.modeConfig);
 			loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 			version = CURRENT_VERSION;
 		} else {
-			loadSetting(owner.replayProp);
+			// loadSetting(owner.replayProp);
 			if((version == 0) && (owner.replayProp.getProperty("deltatris.endless", false))) goaltype = 2;
 
 			// NET: Load name
