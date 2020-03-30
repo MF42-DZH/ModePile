@@ -7,7 +7,16 @@ import java.util.Random;
 
 public class Fireworks extends ParticleEmitter {
 	/** Gravity */
-	private static final double GRAVITY = 4.9 / 60;
+	private static final double GRAVITY = 2.4d / 30d;
+
+	/** Default max velocity */
+	public static final double DEF_MAX_VEL = 3.2;
+
+	/** Default min lifetime */
+	public static final int DEF_MIN_LIFE = 60;
+
+	/** Default max lifetime */
+	public static final int DEF_MAX_LIFE = 120;
 
 	/**
 	 * Default colour set.<br />
@@ -15,14 +24,14 @@ public class Fireworks extends ParticleEmitter {
 	 * Parameters: Red, Green, Blue, Alpha, Variance
 	 */
 	public static final int[][] DEF_COLOURS = {
-			new int[] { 240, 240, 240, 223, 15 },
-			new int[] { 240,  30,   0, 223, 15 },
-			new int[] { 240, 130,   0, 223, 15 },
-			new int[] { 240, 240,   0, 223, 15 },
-			new int[] {  30, 240,   0, 223, 15 },
-			new int[] {   0, 240, 240, 223, 15 },
-			new int[] {   0,  30, 240, 223, 15 },
-			new int[] { 210,   0, 210, 223, 15 }
+			new int[] { 240, 240, 240, 235, 20 },
+			new int[] { 240,  30,   0, 235, 20 },
+			new int[] { 240, 130,   0, 235, 20 },
+			new int[] { 240, 240,   0, 235, 20 },
+			new int[] {  30, 240,   0, 235, 20 },
+			new int[] {   0, 240, 240, 235, 20 },
+			new int[] {   0,  30, 240, 235, 20 },
+			new int[] { 210,   0, 210, 235, 20 }
 	};
 
 	/** Randomiser */
@@ -53,16 +62,17 @@ public class Fireworks extends ParticleEmitter {
 
 	/**
 	 * Add some number of fireworks.
-	 * <code>params</code> are min start X location, max start X location, min start Y location, max start Y location
+	 * <code>params</code> are min start X location, max start X location, min start Y location, max start Y location,
 	 * red, green, blue, alpha, max colour variance (all <code>int</code> type),
-	 * max velocity (velocity is a <code>double</code>) in that order.
+	 * max velocity (velocity is a <code>double</code>),
+	 * min lifetime, max lifetime (both <code>int</code>) in that order.
 	 *
 	 * @param num    Number of particles / particle groups.
 	 * @param params Parameters to pass onto the particles.
 	 */
 	@Override
 	public void addNumber(int num, Object[] params) {
-		int minX, maxX, minY, maxY, red, green, blue, alpha, variance;
+		int minX, maxX, minY, maxY, red, green, blue, alpha, variance, minLifeTime, maxLifeTime;
 		double maxVelocity;
 
 		try {
@@ -79,6 +89,9 @@ public class Fireworks extends ParticleEmitter {
 
 			maxVelocity = (double)params[9];
 
+			minLifeTime = (int)params[10];
+			maxLifeTime = (int)params[11];
+
 			int ured, ugreen, ublue, ualpha;
 			ured = red + (int)(2 * randomiser.nextDouble() * variance - variance);
 			ugreen = green + (int)(2 * randomiser.nextDouble() * variance - variance);
@@ -86,18 +99,24 @@ public class Fireworks extends ParticleEmitter {
 			ualpha = alpha + (int)(2 * randomiser.nextDouble() * variance - variance);
 
 			for (int i = 0; i < num; ++i) {
-				Particle particle = new Particle(
-						Particle.ParticleShape.Rectangle,
-						120 + (int)(2 * randomiser.nextDouble() * 30 - 30),
-						new DoubleVector(Interpolation.lerp(minX, maxX, randomiser.nextDouble()),Interpolation.lerp(minY, maxY, randomiser.nextDouble()),false),
-						new DoubleVector(2 * randomiser.nextDouble() - maxVelocity, 2 * randomiser.nextDouble() - maxVelocity,false),
-						new DoubleVector(0, GRAVITY, false),
-						2, 2,
-						ured, ugreen, ublue, ualpha,
-						(int)(ured / 1.5), (int)(ugreen / 1.5), (int)(ublue / 1.5), 0
-				);
+				DoubleVector origin = new DoubleVector(Interpolation.lerp(minX, maxX, randomiser.nextDouble()),Interpolation.lerp(minY, maxY, randomiser.nextDouble()),false);
+				for (int j = 0; j < randomiser.nextInt(121) + 120; ++j) {
+					int s = 1 + randomiser.nextInt(3);
+					DoubleVector v = new DoubleVector(2 * randomiser.nextDouble() * maxVelocity - maxVelocity, 2 * randomiser.nextDouble() * Math.PI, true);
 
-				particles.add(particle);
+					Particle particle = new Particle(
+							Particle.ParticleShape.Rectangle,
+							Interpolation.lerp(minLifeTime, maxLifeTime, randomiser.nextDouble()),
+							origin,
+							v,
+							new DoubleVector(0, GRAVITY, false),
+							s, s,
+							ured, ugreen, ublue, ualpha,
+							(int)(ured / 1.5), (int)(ugreen / 1.5), (int)(ublue / 1.5), 64
+					);
+
+					particles.add(particle);
+				}
 			}
 		} catch (ClassCastException ce) {
 			log.error("Fireworks.addNumber: Invalid argument in params.", ce);

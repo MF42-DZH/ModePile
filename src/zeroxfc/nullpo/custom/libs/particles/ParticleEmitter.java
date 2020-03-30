@@ -40,7 +40,12 @@ public abstract class ParticleEmitter {
 	 */
 	public void draw(EventReceiver receiver) {
 		if (particles.size() <= 0) return;
-		for (Particle p : particles) p.draw(drawingQueue);
+		for (Particle p : particles) {
+			if (p.position.getX() < 0 || p.position.getX() > 640) continue;
+			if (p.position.getY() < 0 || p.position.getY() > 480) continue;
+
+			p.draw(drawingQueue);
+		}
 		drawingQueue.renderAll(receiver);
 	}
 

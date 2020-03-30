@@ -20,13 +20,13 @@ public class Particle {
 	private int particleLifetime;
 
 	/** Position vector */
-	private DoubleVector position;
+	public DoubleVector position;
 
 	/** Velocity vector */
-	private DoubleVector velocity;
+	public DoubleVector velocity;
 
 	/** Acceleration vector */
-	private DoubleVector acceleration;
+	public DoubleVector acceleration;
 
 	/** X size */
 	private int sizeX;
