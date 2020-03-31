@@ -5,7 +5,7 @@ import zeroxfc.nullpo.custom.libs.Interpolation;
 
 import java.util.Random;
 
-public class Fireworks extends ParticleEmitter {
+public class Fireworks extends ParticleEmitterBase {
 	/** Gravity */
 	private static final double GRAVITY = 2.4d / 30d;
 
@@ -17,22 +17,6 @@ public class Fireworks extends ParticleEmitter {
 
 	/** Default max lifetime */
 	public static final int DEF_MAX_LIFE = 120;
-
-	/**
-	 * Default colour set.<br />
-	 * In order: Gray, Red, Orange, Yellow, Green, Cyan, Blue, Purple<br />
-	 * Parameters: Red, Green, Blue, Alpha, Variance
-	 */
-	public static final int[][] DEF_COLOURS = {
-			new int[] { 240, 240, 240, 235, 20 },
-			new int[] { 240,  30,   0, 235, 20 },
-			new int[] { 240, 130,   0, 235, 20 },
-			new int[] { 240, 240,   0, 235, 20 },
-			new int[] {  30, 240,   0, 235, 20 },
-			new int[] {   0, 240, 240, 235, 20 },
-			new int[] {   0,  30, 240, 235, 20 },
-			new int[] { 210,   0, 210, 235, 20 }
-	};
 
 	/** Randomiser */
 	private Random randomiser;
@@ -92,15 +76,15 @@ public class Fireworks extends ParticleEmitter {
 			minLifeTime = (int)params[10];
 			maxLifeTime = (int)params[11];
 
-			int ured, ugreen, ublue, ualpha;
-			ured = red + (int)(2 * randomiser.nextDouble() * variance - variance);
-			ugreen = green + (int)(2 * randomiser.nextDouble() * variance - variance);
-			ublue = blue + (int)(2 * randomiser.nextDouble() * variance - variance);
-			ualpha = alpha + (int)(2 * randomiser.nextDouble() * variance - variance);
-
 			for (int i = 0; i < num; ++i) {
 				DoubleVector origin = new DoubleVector(Interpolation.lerp(minX, maxX, randomiser.nextDouble()),Interpolation.lerp(minY, maxY, randomiser.nextDouble()),false);
 				for (int j = 0; j < randomiser.nextInt(121) + 120; ++j) {
+					int ured, ugreen, ublue, ualpha;
+					ured = red + (int)(2 * randomiser.nextDouble() * variance - variance);
+					ugreen = green + (int)(2 * randomiser.nextDouble() * variance - variance);
+					ublue = blue + (int)(2 * randomiser.nextDouble() * variance - variance);
+					ualpha = alpha + (int)(2 * randomiser.nextDouble() * variance - variance);
+
 					int s = 1 + randomiser.nextInt(3);
 					DoubleVector v = new DoubleVector(2 * randomiser.nextDouble() * maxVelocity - maxVelocity, 2 * randomiser.nextDouble() * Math.PI, true);
 

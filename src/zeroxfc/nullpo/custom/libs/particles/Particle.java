@@ -1,10 +1,8 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
-import mu.nu.nullpo.game.event.EventReceiver;
 import zeroxfc.nullpo.custom.libs.BufferedPrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.Interpolation;
-import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
 
 public class Particle {
 	/** Default colour */

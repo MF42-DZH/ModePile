@@ -6,9 +6,25 @@ import zeroxfc.nullpo.custom.libs.BufferedPrimitiveDrawingHook;
 
 import java.util.ArrayList;
 
-public abstract class ParticleEmitter {
+public abstract class ParticleEmitterBase {
 	/** Debug logger */
-	protected static final Logger log = Logger.getLogger(ParticleEmitter.class);
+	protected static final Logger log = Logger.getLogger(ParticleEmitterBase.class);
+
+	/**
+	 * Default colour set shared by all emitters.<br />
+	 * In order: Gray, Red, Orange, Yellow, Green, Cyan, Blue, Purple<br />
+	 * Parameters: Red, Green, Blue, Alpha, Variance
+	 */
+	public static final int[][] DEF_COLOURS = {
+			new int[] { 240, 240, 240, 235, 20 },
+			new int[] { 240,  30,   0, 235, 20 },
+			new int[] { 240, 130,   0, 235, 20 },
+			new int[] { 240, 240,   0, 235, 20 },
+			new int[] {  30, 240,   0, 235, 20 },
+			new int[] {   0, 240, 240, 235, 20 },
+			new int[] {   0,  30, 240, 235, 20 },
+			new int[] { 210,   0, 210, 235, 20 }
+	};
 
 	/**
 	 * Particle container
