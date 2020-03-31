@@ -55,31 +55,19 @@ public class LandingParticles extends ParticleEmitterBase {
 		int minX, maxX, startY, yVar, red, green, blue, alpha, variance;
 		double maxVel, upChance;
 
-		minX = (int) params[0];
-		maxX = (int) params[1];
-		startY = (int) params[2];
-		yVar = (int) params[3];
-		red = (int) params[4];
-		green = (int) params[5];
-		blue = (int) params[6];
-		alpha = (int) params[7];
-		variance = (int) params[8];
-
-		maxVel = (double) params[9];
-		upChance = (double) params[10];
-
 		try {
 			minX = (int) params[0];
 			maxX = (int) params[1];
-			yVar = (int) params[2];
-			red = (int) params[3];
-			green = (int) params[4];
-			blue = (int) params[5];
-			alpha = (int) params[6];
-			variance = (int) params[7];
+			startY = (int) params[2];
+			yVar = (int) params[3];
+			red = (int) params[4];
+			green = (int) params[5];
+			blue = (int) params[6];
+			alpha = (int) params[7];
+			variance = (int) params[8];
 
-			maxVel = (double) params[8];
-			upChance = (double) params[9];
+			maxVel = (double) params[9];
+			upChance = (double) params[10];
 
 			for (int i = 0; i < num; i++) {
 				int ured, ugreen, ublue, ualpha;

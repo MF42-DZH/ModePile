@@ -1,6 +1,9 @@
 package zeroxfc.nullpo.custom.modes;
 
+import mu.nu.nullpo.game.component.Controller;
+import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
+import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 
 public class Deltatris extends MarathonModeBase {
@@ -106,5 +109,121 @@ public class Deltatris extends MarathonModeBase {
 		engine.speed.das = (int) Math.floor(Interpolation.smoothStep(START_DAS, END_DAS[difficulty], percentage));
 		engine.speed.lockDelay = (int) Math.ceil(Interpolation.smoothStep(START_LOCK_DELAY, END_LOCK_DELAY[difficulty], percentage));
 		engine.speed.denominator = GRAVITY_DENOMINATOR;
+	}
+
+	/*
+	 * Called at settings screen
+	 */
+	@Override
+	public boolean onSetting(GameEngine engine, int playerID) {
+		// NET: Net Ranking
+		if(netIsNetRankingDisplayMode) {
+			netOnUpdateNetPlayRanking(engine, goaltype);
+		}
+		// Menu
+		else if(engine.owner.replayMode == false) {
+			// Configuration changes
+			int change = updateCursor(engine, 6, playerID);
+
+			if(change != 0) {
+				engine.playSE("change");
+
+				switch(engine.statc[2]) {
+					case 0:
+						//enableTSpin = !enableTSpin;
+						tspinEnableType += change;
+						if(tspinEnableType < 0) tspinEnableType = 2;
+						if(tspinEnableType > 2) tspinEnableType = 0;
+						break;
+					case 1:
+						enableTSpinKick = !enableTSpinKick;
+						break;
+					case 2:
+						spinCheckType += change;
+						if(spinCheckType < 0) spinCheckType = 1;
+						if(spinCheckType > 1) spinCheckType = 0;
+						break;
+					case 3:
+						tspinEnableEZ = !tspinEnableEZ;
+						break;
+					case 4:
+						enableB2B = !enableB2B;
+						break;
+					case 5:
+						enableCombo = !enableCombo;
+						break;
+					case 6:
+						big = !big;
+						break;
+				}
+
+				// NET: Signal options change
+				if(netIsNetPlay && (netNumSpectators > 0)) {
+					netSendOptions(engine);
+				}
+			}
+
+			// Confirm
+			if(engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
+				engine.playSE("decide");
+				// saveSetting(owner.modeConfig);
+				receiver.saveModeConfig(owner.modeConfig);
+
+				// NET: Signal start of the game
+				if(netIsNetPlay) netLobby.netPlayerClient.send("start1p\n");
+
+				return false;
+			}
+
+			// Cancel
+			if(engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
+				engine.quitflag = true;
+			}
+
+			// NET: Netplay Ranking
+			if(engine.ctrl.isPush(Controller.BUTTON_D) && netIsNetPlay && startlevel == 0 && !big &&
+					engine.ai == null) {
+				netEnterNetPlayRankingScreen(engine, playerID, goaltype);
+			}
+
+			engine.statc[3]++;
+		}
+		// Replay
+		else {
+			engine.statc[3]++;
+			engine.statc[2] = -1;
+
+			return engine.statc[3] < 60;
+		}
+
+		return true;
+	}
+
+	/*
+	 * Render the settings screen
+	 */
+	@Override
+	public void renderSetting(GameEngine engine, int playerID) {
+		if(netIsNetRankingDisplayMode) {
+			// NET: Netplay Ranking
+			netOnRenderNetPlayRanking(engine, playerID, receiver);
+		} else {
+			String strTSpinEnable = "";
+			if(version >= 2) {
+				if(tspinEnableType == 0) strTSpinEnable = "OFF";
+				if(tspinEnableType == 1) strTSpinEnable = "T-ONLY";
+				if(tspinEnableType == 2) strTSpinEnable = "ALL";
+			} else {
+				strTSpinEnable = GeneralUtil.getONorOFF(enableTSpin);
+			}
+			drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE, 0,
+					"SPIN BONUS", strTSpinEnable,
+					"EZ SPIN", GeneralUtil.getONorOFF(enableTSpinKick),
+					"SPIN TYPE", (spinCheckType == 0) ? "4POINT" : "IMMOBILE",
+					"EZIMMOBILE", GeneralUtil.getONorOFF(tspinEnableEZ),
+					"B2B", GeneralUtil.getONorOFF(enableB2B),
+					"COMBO",  GeneralUtil.getONorOFF(enableCombo),
+					"BIG", GeneralUtil.getONorOFF(big));
+		}
 	}
 }
