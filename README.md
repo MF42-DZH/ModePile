@@ -36,6 +36,7 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _ArrayRandomiser_ - Generates a permutation of an array.
 * _BlockParticle_ - Animated block particle for line clear effects.
 * _BlockParticleCollection_ - Collection class for easy generation, update and drawing of block particles.
+* _BufferedPrimitiveDrawingHook_ - For fast primitive drawing.
 * _DoubleVector_ - 2D vector type that uses doubles for more precision.
 * _DynamicReactiveSound_ (incomplete; on hold) - Generates and plays PCM samples on the fly.
 * _ExamSpinner_ - TI-style spinner like the one used during Promotion Exam results.
@@ -46,7 +47,10 @@ Requires the above to compile and run. The "res" directory in the "required file
 * _Interpolation_ - Linear interpolation functions.
 * _MathHelper_ - A few extra mathematical functions such as LCM or GCD.
 * _MouseParser_ - Allows the use of mouse inside a mode.
+* _Particle_ - Particles for the particle engine.
+* _ParticleEmitterBase_ - Particle emitter engine. Used for holding and drawing particles.
 * _PhysicsObject_ - Allows the use of basic frictionless rigid body physics with square objects.
+* _PrimitiveDrawingHook_ - For normal primitive drawing.
 * _ProfileProperties_ - Allows the use of TI-styled profiles.
 * _RendererExtension_ - Extra drawing methods.
 * _ResourceHolderCustomAssetExtension_ - Allows the use of custom images and BGM in a mode.
