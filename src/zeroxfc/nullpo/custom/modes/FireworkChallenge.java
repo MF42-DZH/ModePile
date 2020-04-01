@@ -116,6 +116,15 @@ public class FireworkChallenge extends DummyMode {
 		"GLITCHYPSI, OSHISAURE, RY00001, AKARI, THE DRAGON GOD NERROTH.",
 		"YOU HAVE COMPLETED THE FIREWORK CHALLENGE!"
 	};
+
+	private static final int[] INPUT_SEQUENCE = {
+		Controller.BUTTON_DOWN, Controller.BUTTON_DOWN,
+		Controller.BUTTON_UP, Controller.BUTTON_UP,
+		Controller.BUTTON_RIGHT, Controller.BUTTON_LEFT,
+		Controller.BUTTON_RIGHT, Controller.BUTTON_LEFT,
+	};
+
+	private boolean[] presses;
 	
 	// Staff roll object
 	private ScrollingMarqueeText creditObject;
@@ -258,6 +267,7 @@ public class FireworkChallenge extends DummyMode {
 	private int[] rankingFireworksPlayer, rankingLevelPlayer, rankingTimePlayer;
 
 	private boolean killed;
+	// TODO: debug mode meme
 
 	// Get mode name
 	@Override
@@ -268,6 +278,8 @@ public class FireworkChallenge extends DummyMode {
 	// Initialise everything.
 	@Override
 	public void playerInit(GameEngine engine, int playerID) {
+		presses = new boolean[] { false, false, false, false, false, false, false, false, false, false };
+
 		SoundLoader.loadSoundset(SoundLoader.LOADTYPE_FIREWORKS);
 		
 		creditObject = new ScrollingMarqueeText(CREDIT_HEADINGS, CREDIT_TEXTS, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);

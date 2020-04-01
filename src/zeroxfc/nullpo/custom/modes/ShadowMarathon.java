@@ -1819,7 +1819,8 @@ public class ShadowMarathon extends MarathonModeBase {
 		}
 
 		if (engine.gameActive && (engine.stat == GameEngine.STAT_MOVE || engine.stat == GameEngine.STAT_ARE)) {
-			if (engine.ctrl.isPush(Controller.BUTTON_F) && onShadow && currentMaxMatchValue >= 0.75) {
+			// Sometimes engine.nowPieceObject is null?
+			if (engine.nowPieceObject != null && engine.ctrl.isPush(Controller.BUTTON_F) && onShadow && currentMaxMatchValue >= 0.75) {
 				fallPieceDraw = new Piece(engine.nowPieceObject);
 
 				int bX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
