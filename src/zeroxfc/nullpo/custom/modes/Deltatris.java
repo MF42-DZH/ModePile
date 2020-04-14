@@ -10,6 +10,9 @@ import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
+import zeroxfc.nullpo.custom.libs.ShakingText;
+
+import java.util.Random;
 
 public class Deltatris extends MarathonModeBase {
 	/** Gravity denominator for G calculation */
@@ -52,6 +55,8 @@ public class Deltatris extends MarathonModeBase {
 	private static final int[] PIECES_MAX = { 1000, 800, 600 };
 
 	private static final double[] GRAVITY_MULTIPLIERS = { 1.014412098, 1.018047461, 1.024135373 };
+
+	private ShakingText stext;
 
 	/** Difficulties */
 	private static final int DIFFICULTIES = 3;
@@ -287,6 +292,8 @@ public class Deltatris extends MarathonModeBase {
 		engine.b2bEnable = enableB2B;
 		scorebefore = 0;
 
+		stext = new ShakingText(new Random(engine.randSeed));
+
 		multiplier = MULTIPLIER_MINIMUM;
 
 		if(enableCombo) {
@@ -391,7 +398,7 @@ public class Deltatris extends MarathonModeBase {
 			iy = receiver.getScoreDisplayPositionY(engine, playerID) + 18 * 16 + 2;
 			RendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
 					RendererExtension.ALIGN_TOP_LEFT,
-					(float) Math.min(1, engine.statistics.totalPieceLocked / (double)PIECES_MAX[difficulty]),
+					engine.statistics.totalPieceLocked < PIECES_MAX[difficulty] ? (float) Math.min(1, engine.statistics.totalPieceLocked / (double)PIECES_MAX[difficulty]) : (engine.statistics.time / 12 % 2 == 0 ? 1f : 0f),
 					2f);
 
 			if((lastevent != EVENT_NONE) && (scgettime < 120)) {
@@ -445,6 +452,10 @@ public class Deltatris extends MarathonModeBase {
 
 				if((lastcombo >= 2) && (lastevent != EVENT_TSPIN_ZERO_MINI) && (lastevent != EVENT_TSPIN_ZERO))
 					receiver.drawMenuFont(engine, playerID, 2, 22, (lastcombo - 1) + "COMBO", EventReceiver.COLOR_CYAN);
+			}
+
+			if (engine.statistics.totalPieceLocked >= PIECES_MAX[difficulty]) {
+				stext.drawScoreText(receiver, engine, playerID, 0, 20,4, 4, "MAXIMUM VELOCITY", EventReceiver.COLOR_ORANGE, 1f);
 			}
 		}
 
