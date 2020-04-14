@@ -11,8 +11,6 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 
-import java.text.DecimalFormat;
-
 public class Deltatris extends MarathonModeBase {
 	/** Gravity denominator for G calculation */
 	private static final int GRAVITY_DENOMINATOR = 256;
