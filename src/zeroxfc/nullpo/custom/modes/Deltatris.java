@@ -650,7 +650,7 @@ public class Deltatris extends MarathonModeBase {
 
 		if ((pieces - (PIECES_MAX[difficulty] / 20)) % (PIECES_MAX[difficulty] / 5) >= ((PIECES_MAX[difficulty] / 5) - 10) && engine.statistics.totalPieceLocked <= PIECES_MAX[difficulty]) {
 			owner.bgmStatus.fadesw = true;
-		} else if ((0 == (pieces - (PIECES_MAX[difficulty] / 20)) % (PIECES_MAX[difficulty] / 5)) && engine.statistics.totalPieceLocked <= PIECES_MAX[difficulty]) {
+		} else if ((0 == (pieces - (PIECES_MAX[difficulty] / 20)) % (PIECES_MAX[difficulty] / 5)) && engine.statistics.totalPieceLocked <= PIECES_MAX[difficulty] && (pieces - (PIECES_MAX[difficulty] / 20)) > 0) {
 			bgmlv++;
 			owner.bgmStatus.bgm = bgmlv;
 			owner.bgmStatus.fadesw = false;
