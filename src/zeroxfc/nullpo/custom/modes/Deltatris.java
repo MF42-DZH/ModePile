@@ -34,10 +34,10 @@ public class Deltatris extends MarathonModeBase {
 
 	/** Score multipliers */
 	private static final double MULTIPLIER_MINIMUM = 1.0,
-	                            MULTIPLIER_SINGLE = 0.10,
-	                            MULTIPLIER_DOUBLE = 0.25,
-	                            MULTIPLIER_TRIPLE = 0.50,
-	                            MULTIPLIER_TETRIS = 1.0,
+	                            MULTIPLIER_SINGLE = 0.05,
+	                            MULTIPLIER_DOUBLE = 0.125,
+	                            MULTIPLIER_TRIPLE = 0.25,
+	                            MULTIPLIER_TETRIS = 0.5,
 	                            MULTIPLIER_B2B = 1.5,
 	                            MULTIPLIER_COMBO = 0.025,
 	                            MULTIPLIER_SPIN = 5.0,
@@ -51,7 +51,9 @@ public class Deltatris extends MarathonModeBase {
 	 *  GRAVITY, ARE, LINE ARE: Linear
 	 *  DAS, LOCK DELAY, LINE DELAY: Ease-in-ease-out
 	 */
-	private static final int[] PIECES_MAX = { 1000, 800, 600 };
+	private static final int[] PIECES_MAX = { 950, 760, 570 };
+
+	private static final double[] GRAVITY_MULTIPLIERS = { 1.015176537, 1.019006298, 1.02542167 };
 
 	/** Difficulties */
 	private static final int DIFFICULTIES = 3;
@@ -128,7 +130,10 @@ public class Deltatris extends MarathonModeBase {
 		double percentage = engine.statistics.totalPieceLocked / (double)PIECES_MAX[difficulty];
 		if (percentage > 1d) percentage = 1d;
 
-		grav *= 1.024135373;
+		if (engine.speed.gravity < GRAVITY_DENOMINATOR * 20) {
+			grav *= GRAVITY_MULTIPLIERS[difficulty];
+			grav = Math.min(grav, GRAVITY_DENOMINATOR * 20);
+		}
 		engine.speed.gravity = (int)grav;
 		engine.speed.are = (int) Math.ceil(Interpolation.lerp((double)START_ARE, END_ARE[difficulty], percentage));
 		engine.speed.areLine = (int) Math.ceil(Interpolation.lerp((double)START_LINE_ARE, END_LINE_ARE[difficulty], percentage));
@@ -320,8 +325,8 @@ public class Deltatris extends MarathonModeBase {
 
 	@Override
 	public boolean onMove(GameEngine engine, int playerID) {
-		if (engine.statc[0] > (126 - engine.statistics.level * 6)) {
-			multiplier = Math.max(1, multiplier - 0.005);
+		if (engine.statc[0] > engine.speed.lockDelay * 10) {
+			multiplier = Math.max(1, multiplier * 0.99225);
 		}
 		return false;
 	}
@@ -462,7 +467,7 @@ public class Deltatris extends MarathonModeBase {
 	@Override
 	public void onLast(GameEngine engine, int playerID) {
 		scgettime++;
-		mScale = Math.max(1, mScale * 0.9f);
+		mScale = Math.max(1, mScale * 0.98f);
 
 		// Meter
 		engine.meterValue = (int)(multiplier * receiver.getMeterMax(engine));
@@ -652,7 +657,7 @@ public class Deltatris extends MarathonModeBase {
 		}
 
 		// Level up
-		engine.statistics.level = Math.min(19, pieces / (PIECES_MAX[difficulty] / 20));
+		engine.statistics.level = Math.min(19, pieces / (PIECES_MAX[difficulty] / 19));
 
 		if (engine.statistics.level > lastLevel) {
 			owner.backgroundStatus.fadesw = true;

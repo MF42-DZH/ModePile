@@ -785,7 +785,7 @@ public class RendererExtension {
 
 			if(tempSpeedMeter > 0) {
 				graphics.setColor(Color.red);
-				graphics.fillRect(x + 1, y + 1, tempSpeedMeter, baseHeight - 1);
+				graphics.fillRect(x + 1, y + 1, tempSpeedMeter, baseHeight - 2);
 			}
 
 			graphics.setColor(Color.white);
