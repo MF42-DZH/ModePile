@@ -373,10 +373,7 @@ public class Deltatris extends MarathonModeBase {
 					mScale);
 
 			receiver.drawScoreFont(engine, playerID, 0, 6, "LINE", EventReceiver.COLOR_BLUE);
-			if((engine.statistics.level >= 19) && (tableGameClearLines[goaltype] < 0))
 				receiver.drawScoreFont(engine, playerID, 0, 7, engine.statistics.lines + "");
-			else
-				receiver.drawScoreFont(engine, playerID, 0, 7, engine.statistics.lines + "/" + ((engine.statistics.level + 1) * 10));
 
 			receiver.drawScoreFont(engine, playerID, 0, 9, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 10, GeneralUtil.getTime(engine.statistics.time));
@@ -465,7 +462,7 @@ public class Deltatris extends MarathonModeBase {
 	@Override
 	public void onLast(GameEngine engine, int playerID) {
 		scgettime++;
-		mScale = Math.max(1, mScale - 0.025f);
+		mScale = Math.max(1, mScale * 0.9f);
 
 		// Meter
 		engine.meterValue = (int)(multiplier * receiver.getMeterMax(engine));
@@ -604,7 +601,7 @@ public class Deltatris extends MarathonModeBase {
 				lastevent = EVENT_FOUR;
 			}
 
-			if (lines > 0) mScale += 1 + 0.25f * lines;
+			if (lines > 0) mScale += 0.25f * lines;
 		}
 
 		lastb2b = engine.b2b;
