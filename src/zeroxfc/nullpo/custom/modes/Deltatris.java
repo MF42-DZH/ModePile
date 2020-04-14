@@ -379,7 +379,7 @@ public class Deltatris extends MarathonModeBase {
 			GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, rix, riy,
 					GameTextUtilities.ALIGN_TOP_LEFT,
 					String.format("%.4f", multiplier) + "X",
-					mScale > 1 ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_WHITE,
+					(engine.stat == GameEngine.STAT_MOVE && engine.statc[0] > engine.speed.lockDelay * 3) ? EventReceiver.COLOR_RED : (mScale > 1 ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_WHITE),
 					mScale);
 
 			receiver.drawScoreFont(engine, playerID, 0, 6, "LINE", EventReceiver.COLOR_BLUE);
@@ -669,7 +669,7 @@ public class Deltatris extends MarathonModeBase {
 		engine.statistics.level = Math.min(19, pieces / (PIECES_MAX[difficulty] / 20));
 		double levelDec = (double) pieces / PIECES_MAX[difficulty] / 20d;
 
-		if ((levelDec - (int)levelDec) >= 0.95 && pieces < PIECES_MAX[difficulty]) {
+		if ((levelDec - (int)levelDec) >= 0.85 && pieces < PIECES_MAX[difficulty]) {
 			if (
 					engine.statistics.level == 3 ||
 					engine.statistics.level == 7 ||
