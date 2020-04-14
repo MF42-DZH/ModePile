@@ -363,11 +363,11 @@ public class Deltatris extends MarathonModeBase {
 			receiver.drawScoreFont(engine, playerID, 0, 4, strScore);
 
 			int rix, riy;
-			rix = receiver.getScoreDisplayPositionX(engine, playerID) + 16 * Math.max(6, strScore.length() + 1);
-			riy = receiver.getScoreDisplayPositionY(engine, playerID) + 5 * 16;
+			rix = receiver.getScoreDisplayPositionX(engine, playerID);
+			riy = receiver.getScoreDisplayPositionY(engine, playerID) + 13 * 16;
 
 			GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, rix, riy,
-					GameTextUtilities.ALIGN_BOTTOM_LEFT,
+					GameTextUtilities.ALIGN_TOP_LEFT,
 					String.format("%.4f", multiplier) + "X",
 					mScale > 1 ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_WHITE,
 					mScale);
@@ -381,11 +381,14 @@ public class Deltatris extends MarathonModeBase {
 			receiver.drawScoreFont(engine, playerID, 0, 9, "TIME", EventReceiver.COLOR_BLUE);
 			receiver.drawScoreFont(engine, playerID, 0, 10, GeneralUtil.getTime(engine.statistics.time));
 
-			receiver.drawScoreFont(engine, playerID, 0, 12, "SPEED", EventReceiver.COLOR_RED);
+			receiver.drawScoreFont(engine, playerID, 0, 12, "MULTIPLIER", EventReceiver.COLOR_GREEN);
+
+
+			receiver.drawScoreFont(engine, playerID, 0, 17, "SPEED", EventReceiver.COLOR_RED);
 
 			int ix, iy;
 			ix = receiver.getScoreDisplayPositionX(engine, playerID);
-			iy = receiver.getScoreDisplayPositionY(engine, playerID) + 13 * 16 + 2;
+			iy = receiver.getScoreDisplayPositionY(engine, playerID) + 18 * 16 + 2;
 			RendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
 					RendererExtension.ALIGN_TOP_LEFT,
 					(float) Math.min(1, engine.statistics.totalPieceLocked / (double)PIECES_MAX[difficulty]),
@@ -624,6 +627,7 @@ public class Deltatris extends MarathonModeBase {
 			mScale += 0.5;
 		}
 
+		multiplier = Math.min(MULTIPLIER_MAXIMUM, multiplier);
 		pts *= multiplier;
 
 		// Add to score
