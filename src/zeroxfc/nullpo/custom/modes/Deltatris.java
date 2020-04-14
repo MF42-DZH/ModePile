@@ -395,7 +395,7 @@ public class Deltatris extends MarathonModeBase {
 
 			int ix, iy;
 			ix = receiver.getScoreDisplayPositionX(engine, playerID);
-			iy = receiver.getScoreDisplayPositionY(engine, playerID) + 18 * 16 + 2;
+			iy = receiver.getScoreDisplayPositionY(engine, playerID) + 18 * 16 + 4;
 			RendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
 					RendererExtension.ALIGN_TOP_LEFT,
 					engine.statistics.totalPieceLocked < PIECES_MAX[difficulty] ? (float) Math.min(1, engine.statistics.totalPieceLocked / (double)PIECES_MAX[difficulty]) : (engine.statistics.time / 12 % 2 == 0 ? 1f : 0f),
@@ -455,7 +455,7 @@ public class Deltatris extends MarathonModeBase {
 			}
 
 			if (engine.statistics.totalPieceLocked >= PIECES_MAX[difficulty]) {
-				stext.drawScoreText(receiver, engine, playerID, 0, 20,4, 4, "MAXIMUM VELOCITY", EventReceiver.COLOR_ORANGE, 1f);
+				stext.drawScoreText(receiver, engine, playerID, 0, 20,4, 2, "MAXIMUM VELOCITY", (engine.statistics.time / 3 % 3 == 0) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_YELLOW, 1.25f);
 			}
 		}
 
@@ -657,26 +657,54 @@ public class Deltatris extends MarathonModeBase {
 		int pieces = Math.min(PIECES_MAX[difficulty] + (PIECES_MAX[difficulty] / 20), engine.statistics.totalPieceLocked);
 		int lastLevel = engine.statistics.level;
 
-		if ((pieces - (PIECES_MAX[difficulty] / 20)) % (PIECES_MAX[difficulty] / 5) >= ((PIECES_MAX[difficulty] / 5) - 10) && engine.statistics.totalPieceLocked - (PIECES_MAX[difficulty] / 20) <= PIECES_MAX[difficulty]) {
-			owner.bgmStatus.fadesw = true;
-		} else if ((0 == (pieces - (PIECES_MAX[difficulty] / 20)) % (PIECES_MAX[difficulty] / 5)) && engine.statistics.totalPieceLocked - (PIECES_MAX[difficulty] / 20) <= PIECES_MAX[difficulty] && (pieces - (PIECES_MAX[difficulty] / 20)) > 0) {
-			bgmlv++;
-			owner.bgmStatus.bgm = bgmlv;
-			owner.bgmStatus.fadesw = false;
-		}
+//		if ((pieces - (PIECES_MAX[difficulty] / 20)) % (PIECES_MAX[difficulty] / 5) >= ((PIECES_MAX[difficulty] / 5) - 10) && engine.statistics.totalPieceLocked - (PIECES_MAX[difficulty] / 20) <= PIECES_MAX[difficulty]) {
+//			owner.bgmStatus.fadesw = true;
+//		} else if ((0 == pieces % (PIECES_MAX[difficulty] / 5)) && engine.statistics.totalPieceLocked - (PIECES_MAX[difficulty] / 20) <= PIECES_MAX[difficulty] && (pieces - (PIECES_MAX[difficulty] / 20)) > 0) {
+//			bgmlv++;
+//			owner.bgmStatus.bgm = bgmlv;
+//			owner.bgmStatus.fadesw = false;
+//		}
 
 		// Level up
 		engine.statistics.level = Math.min(19, pieces / (PIECES_MAX[difficulty] / 20));
+		double levelDec = (double) pieces / PIECES_MAX[difficulty] / 20d;
+
+		if ((levelDec - (int)levelDec) >= 0.95 && pieces < PIECES_MAX[difficulty]) {
+			if (
+					engine.statistics.level == 3 ||
+					engine.statistics.level == 7 ||
+					engine.statistics.level == 11 ||
+					engine.statistics.level == 15 ||
+					engine.statistics.level == 19
+			) owner.bgmStatus.fadesw = true;
+		}
 
 		if (engine.statistics.level > lastLevel) {
 			owner.backgroundStatus.fadesw = true;
 			owner.backgroundStatus.fadecount = 0;
 			owner.backgroundStatus.fadebg = engine.statistics.level;
 
+			if (
+					engine.statistics.level == 4 ||
+					engine.statistics.level == 8 ||
+					engine.statistics.level == 12 ||
+					engine.statistics.level == 16
+			) {
+				bgmlv++;
+  			    owner.bgmStatus.bgm = bgmlv;
+  			    owner.bgmStatus.fadesw = false;
+			}
+
 			engine.playSE("levelup");
 		}
 
-		if (engine.statistics.totalPieceLocked == PIECES_MAX[difficulty]) engine.playSE("levelup");
+		if (engine.statistics.totalPieceLocked == PIECES_MAX[difficulty]) {
+			engine.playSE("hurryup");
+
+			bgmlv++;
+  			owner.bgmStatus.bgm = bgmlv;
+  			owner.bgmStatus.fadesw = false;
+		}
 
 		setSpeed(engine);
 	}
