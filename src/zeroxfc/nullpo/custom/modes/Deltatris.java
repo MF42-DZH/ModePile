@@ -325,7 +325,7 @@ public class Deltatris extends MarathonModeBase {
 
 	@Override
 	public boolean onMove(GameEngine engine, int playerID) {
-		if (engine.statc[0] > engine.speed.lockDelay * 10) {
+		if (engine.statc[0] > engine.speed.lockDelay * 5) {
 			multiplier = Math.max(1, multiplier * 0.99225);
 		}
 		return false;
@@ -645,7 +645,7 @@ public class Deltatris extends MarathonModeBase {
 		}
 
 		// BGM fade-out effects and BGM changes
-		int pieces = Math.min(PIECES_MAX[difficulty], engine.statistics.totalPieceLocked);
+		int pieces = Math.min(PIECES_MAX[difficulty] + (PIECES_MAX[difficulty] / 20), engine.statistics.totalPieceLocked);
 		int lastLevel = engine.statistics.level;
 
 		if ((pieces - (PIECES_MAX[difficulty] / 20)) % (PIECES_MAX[difficulty] / 5) >= ((PIECES_MAX[difficulty] / 5) - 10) && engine.statistics.totalPieceLocked <= PIECES_MAX[difficulty]) {
