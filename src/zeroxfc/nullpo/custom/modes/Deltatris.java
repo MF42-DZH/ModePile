@@ -667,7 +667,7 @@ public class Deltatris extends MarathonModeBase {
 
 		// Level up
 		engine.statistics.level = Math.min(19, pieces / (PIECES_MAX[difficulty] / 20));
-		double levelDec = (double) pieces / PIECES_MAX[difficulty] / 20d;
+		double levelDec = (double) pieces / ((double) PIECES_MAX[difficulty] / 20d);
 
 		if ((levelDec - (int)levelDec) >= 0.85 && pieces < PIECES_MAX[difficulty]) {
 			if (
