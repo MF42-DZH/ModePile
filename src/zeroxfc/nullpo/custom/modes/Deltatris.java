@@ -784,7 +784,7 @@ public class Deltatris extends MarathonModeBase {
 		tspinEnableEZ = prop.getProperty("deltatris.tspinEnableEZ", false);
 		enableB2B = prop.getProperty("deltatris.enableB2B", true);
 		enableCombo = prop.getProperty("deltatris.enableCombo", true);
-		goaltype = prop.getProperty("deltatris.difficulty", 0);
+		difficulty = prop.getProperty("deltatris.difficulty", 1);
 		big = prop.getProperty("deltatris.big", false);
 		version = prop.getProperty("deltatris.version", 0);
 	}
