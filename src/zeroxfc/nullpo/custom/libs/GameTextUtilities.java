@@ -204,19 +204,37 @@ public class GameTextUtilities {
 			case ALIGN_TOP_MIDDLE:
 			case ALIGN_MIDDLE_MIDDLE:
 			case ALIGN_BOTTOM_MIDDLE:
-				offsetX = (int)(str.length() * scale / 2);
+				offsetX = str.length() / 2;
 				break;
 			case ALIGN_TOP_RIGHT:
 			case ALIGN_MIDDLE_RIGHT:
 			case ALIGN_BOTTOM_RIGHT:
-				offsetX = (int)(str.length() * scale);
+				offsetX = str.length();
 				break;
 			default:
 				offsetX = 0;
 				break;
 		}
 
-		receiver.drawScoreFont(engine, playerID, x - offsetX, y, str, color, scale);
+		int offsetY;
+
+		switch (alignment) {
+			case ALIGN_MIDDLE_LEFT:
+			case ALIGN_MIDDLE_MIDDLE:
+			case ALIGN_MIDDLE_RIGHT:
+				offsetY = (int) (scale / 2);
+				break;
+			case ALIGN_BOTTOM_LEFT:
+			case ALIGN_BOTTOM_MIDDLE:
+			case ALIGN_BOTTOM_RIGHT:
+				offsetY = (int) (scale * 1);
+				break;
+			default:
+				offsetY = 0;
+				break;
+		}
+
+		receiver.drawScoreFont(engine, playerID, x - offsetX, y - offsetY, str, color, scale);
 	}
 
 	/**
