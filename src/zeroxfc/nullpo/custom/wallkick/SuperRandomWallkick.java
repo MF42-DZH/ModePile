@@ -7,7 +7,7 @@ import mu.nu.nullpo.game.component.WallkickResult;
 import mu.nu.nullpo.game.subsystem.wallkick.StandardWallkick;
 import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
 
-public class ErrorRiddenRandomObsoleteRotationSystem extends StandardWallkick {
+public class SuperRandomWallkick extends StandardWallkick {
 	/*
 	 * Wallkick
 	 */
@@ -27,20 +27,18 @@ public class ErrorRiddenRandomObsoleteRotationSystem extends StandardWallkick {
 		ArrayRandomiser randomiser = new ArrayRandomiser(rtOld + rtNew + piece.id + field.getHighestBlockY() + v);
 		arr = randomiser.permute(arr);
 
-		if(kicktable != null) {
-			for (int i : arr) {
-				int x2 = kicktable[rtOld][i][0];
-				int y2 = kicktable[rtOld][i][1];
+		for (int i : arr) {
+			int x2 = kicktable[rtOld][i][0];
+			int y2 = kicktable[rtOld][i][1];
 
-				if (piece.big == true) {
-					x2 *= 2;
-					y2 *= 2;
-				}
+			if (piece.big) {
+				x2 *= 2;
+				y2 *= 2;
+			}
 
-				if ((y2 >= 0) || (allowUpward)) {
-					if (piece.checkCollision(x + x2, y + y2, rtNew, field) == false) {
-						return new WallkickResult(x2, y2, rtNew);
-					}
+			if ((y2 >= 0) || (allowUpward)) {
+				if (!piece.checkCollision(x + x2, y + y2, rtNew, field)) {
+					return new WallkickResult(x2, y2, rtNew);
 				}
 			}
 		}
