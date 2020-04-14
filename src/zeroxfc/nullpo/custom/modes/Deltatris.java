@@ -51,9 +51,9 @@ public class Deltatris extends MarathonModeBase {
 	 *  GRAVITY, ARE, LINE ARE: Linear
 	 *  DAS, LOCK DELAY, LINE DELAY: Ease-in-ease-out
 	 */
-	private static final int[] PIECES_MAX = { 950, 760, 570 };
+	private static final int[] PIECES_MAX = { 1000, 800, 600 };
 
-	private static final double[] GRAVITY_MULTIPLIERS = { 1.015176537, 1.019006298, 1.02542167 };
+	private static final double[] GRAVITY_MULTIPLIERS = { 1.014412098, 1.018047461, 1.024135373 };
 
 	/** Difficulties */
 	private static final int DIFFICULTIES = 3;
@@ -648,16 +648,16 @@ public class Deltatris extends MarathonModeBase {
 		int pieces = Math.min(PIECES_MAX[difficulty], engine.statistics.totalPieceLocked);
 		int lastLevel = engine.statistics.level;
 
-		if (pieces % (PIECES_MAX[difficulty] / 5) >= ((PIECES_MAX[difficulty] / 5) - 10) && engine.statistics.totalPieceLocked <= PIECES_MAX[difficulty]) {
+		if ((pieces - (PIECES_MAX[difficulty] / 20)) % (PIECES_MAX[difficulty] / 5) >= ((PIECES_MAX[difficulty] / 5) - 10) && engine.statistics.totalPieceLocked <= PIECES_MAX[difficulty]) {
 			owner.bgmStatus.fadesw = true;
-		} else if ((0 == pieces % (PIECES_MAX[difficulty] / 5)) && engine.statistics.totalPieceLocked <= PIECES_MAX[difficulty]) {
+		} else if ((0 == (pieces - (PIECES_MAX[difficulty] / 20)) % (PIECES_MAX[difficulty] / 5)) && engine.statistics.totalPieceLocked <= PIECES_MAX[difficulty]) {
 			bgmlv++;
 			owner.bgmStatus.bgm = bgmlv;
 			owner.bgmStatus.fadesw = false;
 		}
 
 		// Level up
-		engine.statistics.level = Math.min(19, pieces / (PIECES_MAX[difficulty] / 19));
+		engine.statistics.level = Math.min(19, pieces / (PIECES_MAX[difficulty] / 20));
 
 		if (engine.statistics.level > lastLevel) {
 			owner.backgroundStatus.fadesw = true;
@@ -666,6 +666,8 @@ public class Deltatris extends MarathonModeBase {
 
 			engine.playSE("levelup");
 		}
+
+		if (engine.statistics.totalPieceLocked == PIECES_MAX[difficulty]) engine.playSE("levelup");
 
 		setSpeed(engine);
 	}
