@@ -470,7 +470,7 @@ public class Deltatris extends MarathonModeBase {
 		mScale = Math.max(1, mScale * 0.98f);
 
 		// Meter
-		engine.meterValue = (int)(multiplier * receiver.getMeterMax(engine));
+		engine.meterValue = (int)((multiplier / 20d) * receiver.getMeterMax(engine));
 		engine.meterColor = GameEngine.METER_COLOR_GREEN;
 		if(multiplier < 15) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
 		if(multiplier < 10) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
