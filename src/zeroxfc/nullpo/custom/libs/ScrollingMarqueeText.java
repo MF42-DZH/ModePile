@@ -90,7 +90,16 @@ public class ScrollingMarqueeText {
 		mainHeadingString = mHS.toString();
 		mainTextString = mTS.toString();
 	}
-	
+
+	/**
+	 * Automatically draw the roll at a certain Y value.
+	 * @param engine   Current GameEngine instance
+	 * @param receiver Current renderer
+	 * @param playerID Current player ID
+	 * @param y        Y-coordinate to draw on
+	 * @param size     Size of text to draw with
+	 * @param progress Progress of the roll (0: start, 1: end)
+	 */
 	public void drawAtY(GameEngine engine, EventReceiver receiver, int playerID, double y, int size, double progress) {
 		int mainOffset1 = (int)(40 * SIZES[size] / SCALES_FLOAT[size]) - (int)((progress) * ((40 * SIZES[size]) + ((mainHeadingString.length() + EXCESS_LENGTH) * SIZES[size])));
 		int mainOffset2 = (int)(40 * SIZES[size] / SCALES_FLOAT[size]) - (int)((progress) * ((40 * SIZES[size]) + ((mainTextString.length() + EXCESS_LENGTH) * SIZES[size])));

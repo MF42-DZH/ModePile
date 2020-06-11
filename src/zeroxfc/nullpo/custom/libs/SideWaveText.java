@@ -73,7 +73,10 @@ public class SideWaveText {
 		xOffset = 0;
 		lifeTime = 0;
 	}
-	
+
+	/**
+	 * Updates the instance to a new position.
+	 */
 	public void update() {
 		sinPhase += sinFrequency * ((Math.PI * 2) / 60);
 		
@@ -83,11 +86,22 @@ public class SideWaveText {
 		
 		lifeTime++;
 	}
-	
+
+	/**
+	 * Gets the current location of the text for manual drawing.
+	 * @return A 2-long int[] in the format { x, y }
+	 */
 	public int[] getLocation() {
 		return new int[] { (int)(position.getX() + xOffset), (int)position.getY() };
 	}
 
+	/**
+	 * Automatic drawing of the text object.
+	 * @param receiver Renderer to draw on
+	 * @param engine   Current GameEngine instance
+	 * @param playerID Current player ID
+	 * @param flag     true ? orange : yellow
+	 */
 	public void drawCentral(EventReceiver receiver, GameEngine engine, int playerID, boolean flag) {
 		int[] location = getLocation();
 		final int x = location[0];
