@@ -39,153 +39,162 @@ import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 public class MouseParser {
-	/** Debug Log */
-	private static final Logger log = Logger.getLogger(MouseParser.class);
+    /**
+     * Debug Log
+     */
+    private static final Logger log = Logger.getLogger( MouseParser.class );
 
-	/** Mouse Button IDs */
-	public static final int BUTTON_LEFT = 0,
-			 			    BUTTON_RIGHT = 1,
-			 			    BUTTON_MIDDLE = 2;
-	
-	private int holderType;
+    /**
+     * Mouse Button IDs
+     */
+    public static final int BUTTON_LEFT = 0,
+            BUTTON_RIGHT = 1,
+            BUTTON_MIDDLE = 2;
 
-	/**
-	 * Creates a new instance. All methods are instance methods since
-	 * they are dependent on which renderer is being used.
-	 */
-	public MouseParser() {
-		holderType = AnimatedBackgroundHook.getResourceHook();
-	}
+    private int holderType;
 
-	/**
-	 * Updates current mouse input handler.
-	 */
-	public void update() {
-		switch (holderType) {
-		case AnimatedBackgroundHook.HOLDER_SLICK:
-			MouseInput.mouseInput.update(NullpoMinoSlick.appGameContainer.getInput());
-			break;
-		case AnimatedBackgroundHook.HOLDER_SDL:
-			try {
-				MouseInputSDL.mouseInput.update();
-			} catch (Exception e) {
-				log.debug("Failed to update SDL's mouse input:\n", e);
-			}
-			break;
-		default:
-			break;
-		}
-	}
+    /**
+     * Creates a new instance. All methods are instance methods since
+     * they are dependent on which renderer is being used.
+     */
+    public MouseParser() {
+        holderType = AnimatedBackgroundHook.getResourceHook();
+    }
 
-	/**
-	 * Gets the current coordinates of the mouse.
-	 * @return <code>int[2] = { x, y }</code> or <code>int[2] = { -1, -1 }</code> if the current handler does not support mouse
-	 */
-	public int[] getMouseCoordinates() {
-		switch (holderType) {
-		case AnimatedBackgroundHook.HOLDER_SLICK:
-		case AnimatedBackgroundHook.HOLDER_SDL:
-			return new int[] { getMouseX(), getMouseY() };
-		default:
-			return new int[] { -1, -1 };
-		}
-	}
+    /**
+     * Updates current mouse input handler.
+     */
+    public void update() {
+        switch ( holderType ) {
+            case AnimatedBackgroundHook.HOLDER_SLICK:
+                MouseInput.mouseInput.update( NullpoMinoSlick.appGameContainer.getInput() );
+                break;
+            case AnimatedBackgroundHook.HOLDER_SDL:
+                try {
+                    MouseInputSDL.mouseInput.update();
+                } catch ( Exception e ) {
+                    log.debug( "Failed to update SDL's mouse input:\n", e );
+                }
+                break;
+            default:
+                break;
+        }
+    }
 
-	/**
-	 * Gets the X-coordinate of the mouse position.
-	 * @return int
-	 */
-	public int getMouseX() {
-		switch (holderType) {
-		case AnimatedBackgroundHook.HOLDER_SLICK:
-			return MouseInput.mouseInput.getMouseX();
-		case AnimatedBackgroundHook.HOLDER_SDL:
-			return MouseInputSDL.mouseInput.getMouseX();
-		default:
-			return -1;
-		}
-	}
+    /**
+     * Gets the current coordinates of the mouse.
+     *
+     * @return <code>int[2] = { x, y }</code> or <code>int[2] = { -1, -1 }</code> if the current handler does not support mouse
+     */
+    public int[] getMouseCoordinates() {
+        switch ( holderType ) {
+            case AnimatedBackgroundHook.HOLDER_SLICK:
+            case AnimatedBackgroundHook.HOLDER_SDL:
+                return new int[] { getMouseX(), getMouseY() };
+            default:
+                return new int[] { -1, -1 };
+        }
+    }
 
-	/**
-	 * Gets the Y-coordinate of the moust position.
-	 * @return int
-	 */
-	public int getMouseY() {
-		switch (holderType) {
-		case AnimatedBackgroundHook.HOLDER_SLICK:
-			return MouseInput.mouseInput.getMouseY();
-		case AnimatedBackgroundHook.HOLDER_SDL:
-			return MouseInputSDL.mouseInput.getMouseY();
-		default:
-			return -1;
-		}
-	}
+    /**
+     * Gets the X-coordinate of the mouse position.
+     *
+     * @return int
+     */
+    public int getMouseX() {
+        switch ( holderType ) {
+            case AnimatedBackgroundHook.HOLDER_SLICK:
+                return MouseInput.mouseInput.getMouseX();
+            case AnimatedBackgroundHook.HOLDER_SDL:
+                return MouseInputSDL.mouseInput.getMouseX();
+            default:
+                return -1;
+        }
+    }
 
-	/**
-	 * Has the mouse been clicked on the updated frame?
-	 * @param button Button ID (use the IDs in this class)
-	 * @return <code>boolean</code>; <code>true</code> = clicked, <code>false</code> = not clicked or was held before
-	 */
-	public boolean getMouseClick(int button) {
-		switch (holderType) {
-		case AnimatedBackgroundHook.HOLDER_SLICK:
-			switch (button) {
-			case BUTTON_LEFT:
-				return MouseInput.mouseInput.isMouseClicked();
-			case BUTTON_RIGHT:
-				return MouseInput.mouseInput.isMouseRightClicked();
-			case BUTTON_MIDDLE:
-				return MouseInput.mouseInput.isMouseMiddleClicked();
-			default:
-				return false;
-			}
-		case AnimatedBackgroundHook.HOLDER_SDL:
-			switch (button) {
-			case BUTTON_LEFT:
-				return MouseInputSDL.mouseInput.isMouseClicked();
-			case BUTTON_RIGHT:
-				return MouseInputSDL.mouseInput.isMouseRightClicked();
-			case BUTTON_MIDDLE:
-				return MouseInputSDL.mouseInput.isMouseMiddleClicked();
-			default:
-				return false;
-			}
-		default:
-			return false;
-		}
-	}
+    /**
+     * Gets the Y-coordinate of the moust position.
+     *
+     * @return int
+     */
+    public int getMouseY() {
+        switch ( holderType ) {
+            case AnimatedBackgroundHook.HOLDER_SLICK:
+                return MouseInput.mouseInput.getMouseY();
+            case AnimatedBackgroundHook.HOLDER_SDL:
+                return MouseInputSDL.mouseInput.getMouseY();
+            default:
+                return -1;
+        }
+    }
 
-	/**
-	 * Has the mouse been clicked or held on the updated frame?
-	 * @param button Button ID (use the IDs in this class)
-	 * @return <code>boolean</code>; <code>true</code> = clicked or held, <code>false</code> = not clicked nor held
-	 */
-	public boolean getMousePressed(int button) {
-		switch (holderType) {
-		case AnimatedBackgroundHook.HOLDER_SLICK:
-			switch (button) {
-			case BUTTON_LEFT:
-				return MouseInput.mouseInput.isMousePressed();
-			case BUTTON_RIGHT:
-				return MouseInput.mouseInput.isMouseRightPressed();
-			case BUTTON_MIDDLE:
-				return MouseInput.mouseInput.isMouseMiddlePressed();
-			default:
-				return false;
-			}
-		case AnimatedBackgroundHook.HOLDER_SDL:
-			switch (button) {
-			case BUTTON_LEFT:
-				return MouseInputSDL.mouseInput.isMousePressed();
-			case BUTTON_RIGHT:
-				return MouseInputSDL.mouseInput.isMouseRightPressed();
-			case BUTTON_MIDDLE:
-				return MouseInputSDL.mouseInput.isMouseMiddlePressed();
-			default:
-				return false;
-			}
-		default:
-			return false;
-		}
-	}
+    /**
+     * Has the mouse been clicked on the updated frame?
+     *
+     * @param button Button ID (use the IDs in this class)
+     * @return <code>boolean</code>; <code>true</code> = clicked, <code>false</code> = not clicked or was held before
+     */
+    public boolean getMouseClick( int button ) {
+        switch ( holderType ) {
+            case AnimatedBackgroundHook.HOLDER_SLICK:
+                switch ( button ) {
+                    case BUTTON_LEFT:
+                        return MouseInput.mouseInput.isMouseClicked();
+                    case BUTTON_RIGHT:
+                        return MouseInput.mouseInput.isMouseRightClicked();
+                    case BUTTON_MIDDLE:
+                        return MouseInput.mouseInput.isMouseMiddleClicked();
+                    default:
+                        return false;
+                }
+            case AnimatedBackgroundHook.HOLDER_SDL:
+                switch ( button ) {
+                    case BUTTON_LEFT:
+                        return MouseInputSDL.mouseInput.isMouseClicked();
+                    case BUTTON_RIGHT:
+                        return MouseInputSDL.mouseInput.isMouseRightClicked();
+                    case BUTTON_MIDDLE:
+                        return MouseInputSDL.mouseInput.isMouseMiddleClicked();
+                    default:
+                        return false;
+                }
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Has the mouse been clicked or held on the updated frame?
+     *
+     * @param button Button ID (use the IDs in this class)
+     * @return <code>boolean</code>; <code>true</code> = clicked or held, <code>false</code> = not clicked nor held
+     */
+    public boolean getMousePressed( int button ) {
+        switch ( holderType ) {
+            case AnimatedBackgroundHook.HOLDER_SLICK:
+                switch ( button ) {
+                    case BUTTON_LEFT:
+                        return MouseInput.mouseInput.isMousePressed();
+                    case BUTTON_RIGHT:
+                        return MouseInput.mouseInput.isMouseRightPressed();
+                    case BUTTON_MIDDLE:
+                        return MouseInput.mouseInput.isMouseMiddlePressed();
+                    default:
+                        return false;
+                }
+            case AnimatedBackgroundHook.HOLDER_SDL:
+                switch ( button ) {
+                    case BUTTON_LEFT:
+                        return MouseInputSDL.mouseInput.isMousePressed();
+                    case BUTTON_RIGHT:
+                        return MouseInputSDL.mouseInput.isMouseRightPressed();
+                    case BUTTON_MIDDLE:
+                        return MouseInputSDL.mouseInput.isMouseMiddlePressed();
+                    default:
+                        return false;
+                }
+            default:
+                return false;
+        }
+    }
 }

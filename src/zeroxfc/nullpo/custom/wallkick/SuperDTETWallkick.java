@@ -39,36 +39,34 @@ import mu.nu.nullpo.game.subsystem.wallkick.Wallkick;
  * Modified by 0xFC963F18DC21 to add a 1 up floorkick
  */
 public class SuperDTETWallkick implements Wallkick {
-	/** Wallkick table */
-	private static final int[][] WALLKICK = new int[][] {{-1,0},{1,0},{0,1},{-1,1},{1,1},{0,-1}};
+    /**
+     * Wallkick table
+     */
+    private static final int[][] WALLKICK = new int[][] { { -1, 0 }, { 1, 0 }, { 0, 1 }, { -1, 1 }, { 1, 1 }, { 0, -1 } };
 
-	/*
-	 * Wallkick main method
-	 */
-	public WallkickResult executeWallkick(int x, int y, int rtDir, int rtOld, int rtNew, boolean allowUpward, Piece piece, Field field, Controller ctrl) {
-		int x2, y2;
+    /*
+     * Wallkick main method
+     */
+    public WallkickResult executeWallkick( int x, int y, int rtDir, int rtOld, int rtNew, boolean allowUpward, Piece piece, Field field, Controller ctrl ) {
+        int x2, y2;
 
-		for (int i = 0; i < WALLKICK.length; i++)
-		{
-			if (rtDir < 0 || rtDir == 2)
-			{
-				x2 = WALLKICK[i][0];
-			}
-			else
-			{
-				x2 = -WALLKICK[i][0];
-			}
-			y2 = WALLKICK[i][1];
+        for ( int i = 0; i < WALLKICK.length; i++ ) {
+            if ( rtDir < 0 || rtDir == 2 ) {
+                x2 = WALLKICK[ i ][ 0 ];
+            } else {
+                x2 = -WALLKICK[ i ][ 0 ];
+            }
+            y2 = WALLKICK[ i ][ 1 ];
 
-			if (piece.big)
-			{
-				x2 *= 2; y2 *= 2;
-			}
+            if ( piece.big ) {
+                x2 *= 2;
+                y2 *= 2;
+            }
 
-			if(piece.checkCollision(x + x2, y + y2, rtNew, field) == false) {
-				return new WallkickResult(x2, y2, rtNew);
-			}
-		}
-		return null;
-	}
+            if ( piece.checkCollision( x + x2, y + y2, rtNew, field ) == false ) {
+                return new WallkickResult( x2, y2, rtNew );
+            }
+        }
+        return null;
+    }
 }

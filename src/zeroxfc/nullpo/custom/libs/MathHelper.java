@@ -33,160 +33,172 @@
 package zeroxfc.nullpo.custom.libs;
 
 public class MathHelper {
-	/**
-	 * Modulo operator that functions similarly to Python's % operator.
-	 * @param value Number
-	 * @param divisor Divisor
-	 * @return Remainder after division
-	 */
-	public static int pythonModulo(int value, int divisor) {
-		int dividend = value % divisor;
-		if (dividend < 0) dividend = divisor + dividend;
-		return dividend;
-	}
+    /**
+     * Modulo operator that functions similarly to Python's % operator.
+     *
+     * @param value   Number
+     * @param divisor Divisor
+     * @return Remainder after division
+     */
+    public static int pythonModulo( int value, int divisor ) {
+        int dividend = value % divisor;
+        if ( dividend < 0 ) dividend = divisor + dividend;
+        return dividend;
+    }
 
-	/**
-	 * Modulo operator that functions similarly to Python's % operator.
-	 * @param value Number
-	 * @param divisor Divisor
-	 * @return Remainder after division
-	 */
-	public static long pythonModulo(long value, long divisor) {
-		long dividend = value % divisor;
-		if (dividend < 0) dividend = divisor + dividend;
-		return dividend;
-	}
+    /**
+     * Modulo operator that functions similarly to Python's % operator.
+     *
+     * @param value   Number
+     * @param divisor Divisor
+     * @return Remainder after division
+     */
+    public static long pythonModulo( long value, long divisor ) {
+        long dividend = value % divisor;
+        if ( dividend < 0 ) dividend = divisor + dividend;
+        return dividend;
+    }
 
-	/**
-	 * Clamps a value to within a range.
-	 * @param value Value to clamp
-	 * @param min Min value
-	 * @param max Max value
-	 * @return Clamped value
-	 */
-	public static int clamp(int value, int min, int max) {
-		if (min <= value && value <= max) {
-			return value;
-		} else if (value < min) {
-			return min;
-		} else {
-			return max;
-		}
-	}
+    /**
+     * Clamps a value to within a range.
+     *
+     * @param value Value to clamp
+     * @param min   Min value
+     * @param max   Max value
+     * @return Clamped value
+     */
+    public static int clamp( int value, int min, int max ) {
+        if ( min <= value && value <= max ) {
+            return value;
+        } else if ( value < min ) {
+            return min;
+        } else {
+            return max;
+        }
+    }
 
-	/**
-	 * Clamps a value to within a range.
-	 * @param value Value to clamp
-	 * @param min Min value
-	 * @param max Max value
-	 * @return Clamped value
-	 */
-	public static long clamp(long value, long min, long max) {
-		if (min <= value && value <= max) {
-			return value;
-		} else if (value < min) {
-			return min;
-		} else {
-			return max;
-		}
-	}
+    /**
+     * Clamps a value to within a range.
+     *
+     * @param value Value to clamp
+     * @param min   Min value
+     * @param max   Max value
+     * @return Clamped value
+     */
+    public static long clamp( long value, long min, long max ) {
+        if ( min <= value && value <= max ) {
+            return value;
+        } else if ( value < min ) {
+            return min;
+        } else {
+            return max;
+        }
+    }
 
-	/**
-	 * Clamps a value to within a range.
-	 * @param value Value to clamp
-	 * @param min Min value
-	 * @param max Max value
-	 * @return Clamped value
-	 */
-	public static float clamp(float value, float min, float max) {
-		if (min <= value && value <= max) {
-			return value;
-		} else if (value < min) {
-			return min;
-		} else {
-			return max;
-		}
-	}
+    /**
+     * Clamps a value to within a range.
+     *
+     * @param value Value to clamp
+     * @param min   Min value
+     * @param max   Max value
+     * @return Clamped value
+     */
+    public static float clamp( float value, float min, float max ) {
+        if ( min <= value && value <= max ) {
+            return value;
+        } else if ( value < min ) {
+            return min;
+        } else {
+            return max;
+        }
+    }
 
-	/**
-	 * Clamps a value to within a range.
-	 * @param value Value to clamp
-	 * @param min Min value
-	 * @param max Max value
-	 * @return Clamped value
-	 */
-	public static double clamp(double value, double min, double max) {
-		if (min <= value && value <= max) {
-			return value;
-		} else if (value < min) {
-			return min;
-		} else {
-			return max;
-		}
-	}
+    /**
+     * Clamps a value to within a range.
+     *
+     * @param value Value to clamp
+     * @param min   Min value
+     * @param max   Max value
+     * @return Clamped value
+     */
+    public static double clamp( double value, double min, double max ) {
+        if ( min <= value && value <= max ) {
+            return value;
+        } else if ( value < min ) {
+            return min;
+        } else {
+            return max;
+        }
+    }
 
-	/**
-	 * Gets the greatest common divisor between two integers.<br />
-	 * Recursive function.
-	 * @param a int
-	 * @param b int
-	 * @return GCD of the two integers
-	 */
-	public static int gcd(int a, int b) {
-		if (a == 0) return b;
-		else return gcd(b % a, a);
-	}
+    /**
+     * Gets the greatest common divisor between two integers.<br />
+     * Recursive function.
+     *
+     * @param a int
+     * @param b int
+     * @return GCD of the two integers
+     */
+    public static int gcd( int a, int b ) {
+        if ( a == 0 ) return b;
+        else return gcd( b % a, a );
+    }
 
-	/**
-	 * Gets the lowest common multiple between two integers.<br />
-	 * Calls <code>gcd(a, b)</code>, a recursive function.
-	 * @param a int
-	 * @param b int
-	 * @return LCM of the two integers
-	 */
-	public static int lcm(int a, int b) {
-		return (a * b) / gcd(a, b);
-	}
+    /**
+     * Gets the lowest common multiple between two integers.<br />
+     * Calls <code>gcd(a, b)</code>, a recursive function.
+     *
+     * @param a int
+     * @param b int
+     * @return LCM of the two integers
+     */
+    public static int lcm( int a, int b ) {
+        return ( a * b ) / gcd( a, b );
+    }
 
-	/**
-	 * Is almost equal to.
-	 * @param a Value
-	 * @param b Value
-	 * @param eps Exclusive maximum difference
-	 * @return Is the difference <= eps?
-	 */
-	public static boolean almostEqual(double a, double b, double eps){
-		return Math.abs(a - b) < eps;
-	}
+    /**
+     * Is almost equal to.
+     *
+     * @param a   Value
+     * @param b   Value
+     * @param eps Exclusive maximum difference
+     * @return Is the difference <= eps?
+     */
+    public static boolean almostEqual( double a, double b, double eps ) {
+        return Math.abs( a - b ) < eps;
+    }
 
-	/**
-	 * Checks if a coordinate is within a certain radius.
-	 * @param x X-coordinate of circle's centre.
-	 * @param y Y-coordinate of circle's centre.
-	 * @param xTest X-coordinate of test square.
-	 * @param yTest Y-coordinate of test square.
-	 * @param radius The testing radius
-	 * @return The result of the check. true: within. false: not within.
-	 */
-	public boolean isCoordWithinRadius(int x, int y, int xTest, int yTest, double radius) {
-		int dX = xTest - x;
-		int dY = yTest - y;
+    /**
+     * Checks if a coordinate is within a certain radius.
+     *
+     * @param x      X-coordinate of circle's centre.
+     * @param y      Y-coordinate of circle's centre.
+     * @param xTest  X-coordinate of test square.
+     * @param yTest  Y-coordinate of test square.
+     * @param radius The testing radius
+     * @return The result of the check. true: within. false: not within.
+     */
+    public boolean isCoordWithinRadius( int x, int y, int xTest, int yTest, double radius ) {
+        int dX = xTest - x;
+        int dY = yTest - y;
 
-		double distance = Math.sqrt((dX * dX) + (dY * dY));
-		return (distance <= radius);
-	}
+        double distance = Math.sqrt( ( dX * dX ) + ( dY * dY ) );
+        return ( distance <= radius );
+    }
 
-	/**
-	 * Gets the direct distance between two coordinate points.
-	 * @param x0 X-coordinate of the first point
-	 * @param y0 Y-coordinate of the first point
-	 * @param x1 X-coordinate of the second point
-	 * @param y1 Y-coordinate of the second point
-	 * @return Direct distance between the two points.
-	 */
-	public double distanceBetween(int x0, int y0, int x1, int y1) {
-		int dX, dY;
-		dX = x1 - x0; dY = y1 - y0;
-		return Math.sqrt((dX * dX) + (dY * dY));
-	}
+    /**
+     * Gets the direct distance between two coordinate points.
+     *
+     * @param x0 X-coordinate of the first point
+     * @param y0 Y-coordinate of the first point
+     * @param x1 X-coordinate of the second point
+     * @param y1 Y-coordinate of the second point
+     * @return Direct distance between the two points.
+     */
+    public double distanceBetween( int x0, int y0, int x1, int y1 ) {
+        int dX, dY;
+        dX = x1 - x0;
+        dY = y1 - y0;
+        return Math.sqrt( ( dX * dX ) + ( dY * dY ) );
+    }
 }
