@@ -5,6 +5,8 @@ A set of gameplay mods for [NullpoMino](https://github.com/nullpomino/nullpomino
 
 Requires the above to compile and run. The "res" directory in the "required files" needs to be merged with the one in the NullpoMino folder.
 
+Please note that development for this pack has completely ceased. There are no more updates coming out from any of the developers. You may try and carry on development from whatever state of disarray we left this in.
+
 ## Modes Available:
 
 Click the links that are available in the mode names to get a YouTube video demonstration.
