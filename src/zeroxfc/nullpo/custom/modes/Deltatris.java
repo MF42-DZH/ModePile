@@ -165,6 +165,7 @@ public class Deltatris extends MarathonModeBase {
             }
 
             version = CURRENT_VERSION;
+            PLAYER_NAME = null;
         } else {
             loadSetting( owner.replayProp );
             if ( ( version == 0 ) && ( owner.replayProp.getProperty( "deltatris.endless", false ) ) ) goaltype = 2;
@@ -520,7 +521,7 @@ public class Deltatris extends MarathonModeBase {
 
             receiver.drawScoreFont( engine, playerID, 0, 17, "SPEED", EventReceiver.COLOR_RED );
 
-            if ( ( playerProperties != null && playerProperties.isLoggedIn() ) || PLAYER_NAME.length() > 0 ) {
+            if ( ( playerProperties != null && playerProperties.isLoggedIn() ) || ( PLAYER_NAME != null && PLAYER_NAME.length() > 0 ) ) {
                 receiver.drawScoreFont( engine, playerID, 8, 17, "PLAYER", EventReceiver.COLOR_BLUE );
                 receiver.drawScoreFont( engine, playerID, 8, 18, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f );
             }
