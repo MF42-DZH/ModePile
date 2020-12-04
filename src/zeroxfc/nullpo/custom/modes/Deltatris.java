@@ -86,7 +86,7 @@ public class Deltatris extends MarathonModeBase {
     private int[][] rankingLines;
 
     // PROFILE
-    private ProfileProperties playerProperties;
+    private ProfileProperties playerProperties = null;
     private boolean showPlayerStats;
     private static final int headerColour = EventReceiver.COLOR_RED;
     private int rankingRankPlayer;
@@ -139,7 +139,7 @@ public class Deltatris extends MarathonModeBase {
         rankingLines = new int[ RANKING_TYPE ][ RANKING_MAX ];
         rankingTime = new int[ RANKING_TYPE ][ RANKING_MAX ];
 
-        if ( playerProperties == null ) {
+        while ( playerProperties == null ) {
             playerProperties = new ProfileProperties( headerColour );
 
             showPlayerStats = false;
@@ -212,12 +212,6 @@ public class Deltatris extends MarathonModeBase {
         }
         // Menu
         else if ( !engine.owner.replayMode ) {
-            if ( playerProperties == null ) {
-                playerProperties = new ProfileProperties( headerColour );
-
-                showPlayerStats = false;
-            }
-
             // Configuration changes
             int change = updateCursor( engine, 7, playerID );
 
@@ -526,7 +520,7 @@ public class Deltatris extends MarathonModeBase {
 
             receiver.drawScoreFont( engine, playerID, 0, 17, "SPEED", EventReceiver.COLOR_RED );
 
-            if ( playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0 ) {
+            if ( ( playerProperties != null && playerProperties.isLoggedIn() ) || PLAYER_NAME.length() > 0 ) {
                 receiver.drawScoreFont( engine, playerID, 8, 17, "PLAYER", EventReceiver.COLOR_BLUE );
                 receiver.drawScoreFont( engine, playerID, 8, 18, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f );
             }
