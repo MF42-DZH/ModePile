@@ -212,6 +212,12 @@ public class Deltatris extends MarathonModeBase {
         }
         // Menu
         else if ( !engine.owner.replayMode ) {
+            if ( playerProperties == null ) {
+                playerProperties = new ProfileProperties( headerColour );
+
+                showPlayerStats = false;
+            }
+
             // Configuration changes
             int change = updateCursor( engine, 7, playerID );
 
