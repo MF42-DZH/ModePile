@@ -1,34 +1,33 @@
 package zeroxfc.nullpo.custom.modes.objects.expressshipping;
 
+import java.util.ArrayList;
 import mu.nu.nullpo.game.component.Block;
 
-import java.util.ArrayList;
-
 public class L3 implements GamePiece {
-    private static int[][][] contents = {
-            new int[][] {
-                    new int[] { 1, 0 },
-                    new int[] { 1, 1 }
-            },
-            new int[][] {
-                    new int[] { 1, 1 },
-                    new int[] { 1, 0 }
-            },
-            new int[][] {
-                    new int[] { 1, 1 },
-                    new int[] { 0, 1 }
-            },
-            new int[][] {
-                    new int[] { 0, 1 },
-                    new int[] { 1, 1 }
-            },
+    private static final int[][][] contents = {
+        new int[][] {
+            new int[] { 1, 0 },
+            new int[] { 1, 1 }
+        },
+        new int[][] {
+            new int[] { 1, 1 },
+            new int[] { 1, 0 }
+        },
+        new int[][] {
+            new int[] { 1, 1 },
+            new int[] { 0, 1 }
+        },
+        new int[][] {
+            new int[] { 0, 1 },
+            new int[] { 1, 1 }
+        },
     };
 
     private int[] location;
     private int state;
     private int powerup;
 
-    public L3( int x, int y ) {
+    public L3(int x, int y) {
         location = new int[] { x, y };
         state = 0;
         powerup = 0;
@@ -40,7 +39,7 @@ public class L3 implements GamePiece {
     }
 
     @Override
-    public void setPowerup( int powerup ) {
+    public void setPowerup(int powerup) {
         this.powerup = powerup;
     }
 
@@ -61,12 +60,12 @@ public class L3 implements GamePiece {
 
     @Override
     public int getX() {
-        return location[ 0 ];
+        return location[0];
     }
 
     @Override
     public int getY() {
-        return location[ 1 ];
+        return location[1];
     }
 
     @Override
@@ -76,7 +75,7 @@ public class L3 implements GamePiece {
 
     @Override
     public int[][] getContents() {
-        return contents[ state ];
+        return contents[state];
     }
 
     @Override
@@ -103,18 +102,18 @@ public class L3 implements GamePiece {
     public int[][] getConveyorBoundingBox() {
         int minX, minY, maxX, maxY;
 
-        minX = contents[ 0 ][ 0 ].length - 1;
-        minY = contents[ 0 ].length - 1;
+        minX = contents[0][0].length - 1;
+        minY = contents[0].length - 1;
         maxX = 0;
         maxY = 0;
 
-        for ( int y = 0; y < contents[ 0 ].length; y++ ) {
-            for ( int x = 0; x < contents[ 0 ][ 0 ].length; x++ ) {
-                if ( contents[ state ][ y ][ x ] != 0 ) {
-                    if ( x < minX ) minX = x;
-                    if ( y < minY ) minY = y;
-                    if ( x > maxX ) maxX = x;
-                    if ( y > maxY ) maxY = y;
+        for (int y = 0; y < contents[0].length; y++) {
+            for (int x = 0; x < contents[0][0].length; x++) {
+                if (contents[state][y][x] != 0) {
+                    if (x < minX) minX = x;
+                    if (y < minY) minY = y;
+                    if (x > maxX) maxX = x;
+                    if (y > maxY) maxY = y;
                 }
             }
         }
@@ -124,12 +123,12 @@ public class L3 implements GamePiece {
 
         int[] tlc, brc;
         tlc = new int[] {
-                location[ 0 ] + ( minX * 16 ),
-                location[ 1 ] + ( minY * 16 )
+            location[0] + (minX * 16),
+            location[1] + (minY * 16)
         };
         brc = new int[] {
-                location[ 0 ] + ( maxX * 16 ),
-                location[ 1 ] + ( maxY * 16 )
+            location[0] + (maxX * 16),
+            location[1] + (maxY * 16)
         };
 
         return new int[][] { tlc, brc };
@@ -137,32 +136,32 @@ public class L3 implements GamePiece {
 
     @Override
     public int[][][] getCursorBoundingBox() {
-        ArrayList< int[][] > boxes = new ArrayList<>();
+        ArrayList<int[][]> boxes = new ArrayList<>();
 
-        for ( int y = 0; y < contents[ state ].length; y++ ) {
-            for ( int x = 0; x < contents[ state ][ 0 ].length; x++ ) {
-                if ( contents[ state ][ y ][ x ] != 0 ) {
+        for (int y = 0; y < contents[state].length; y++) {
+            for (int x = 0; x < contents[state][0].length; x++) {
+                if (contents[state][y][x] != 0) {
                     boxes.add(
-                            new int[][] {
-                                    new int[] {
-                                            location[ 0 ] + ( x * 16 ),
-                                            location[ 1 ] + ( y * 16 )
-                                    },
-                                    new int[] {
-                                            location[ 0 ] + ( ( x + 1 ) * 16 ),
-                                            location[ 1 ] + ( ( y + 1 ) * 16 )
-                                    }
+                        new int[][] {
+                            new int[] {
+                                location[0] + (x * 16),
+                                location[1] + (y * 16)
+                            },
+                            new int[] {
+                                location[0] + ((x + 1) * 16),
+                                location[1] + ((y + 1) * 16)
                             }
+                        }
                     );
                 }
             }
         }
 
-        int[][][] arr = new int[ boxes.size() ][][];
+        int[][][] arr = new int[boxes.size()][][];
 
         int i = 0;
-        for ( int[][] iss : boxes ) {
-            arr[ i ] = iss.clone();
+        for (int[][] iss : boxes) {
+            arr[i] = iss.clone();
             i++;
         }
 
@@ -171,11 +170,11 @@ public class L3 implements GamePiece {
 
     @Override
     public void rotate() {
-        state = ( state + 1 ) % 4;
+        state = (state + 1) % 4;
     }
 
     @Override
-    public void setLocation( int x, int y ) {
+    public void setLocation(int x, int y) {
         location = new int[] { x, y };
     }
 }

@@ -1,5 +1,8 @@
 package zeroxfc.nullpo.custom.modes;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Field;
 import mu.nu.nullpo.game.component.Piece;
@@ -8,15 +11,11 @@ import mu.nu.nullpo.util.CustomProperties;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Random;
-
 public class DrawMode extends MarathonModeBase {
     /**
      * Debug logger
      */
-    private static final Logger log = Logger.getLogger( DrawMode.class );
+    private static final Logger log = Logger.getLogger(DrawMode.class);
 
     /**
      * This mode always has 0G gravity
@@ -58,116 +57,112 @@ public class DrawMode extends MarathonModeBase {
     /**
      * Blocks for placement in field
      */
-    private static final Block BLOCK_FILLED = new Block( Block.BLOCK_COLOR_GRAY, 0, Block.BLOCK_ATTRIBUTE_VISIBLE ),
-            BLOCK_EMPTY;
-
-    static {
-        BLOCK_EMPTY = new Block( BLOCK_FILLED );
-        BLOCK_EMPTY.setAttribute( Block.BLOCK_ATTRIBUTE_VISIBLE, false );
-    }
+    private static final Block BLOCK_FILLED = new Block(Block.BLOCK_COLOR_GRAY, 0, Block.BLOCK_ATTRIBUTE_VISIBLE),
+        BLOCK_EMPTY;
+    private static final int[][][] SHAPES = {
+        //region Shape Outlines
+        new int[][] {
+            new int[] { 1, 1, 1, 1 }
+        },
+        new int[][] {
+            new int[] { 1 },
+            new int[] { 1 },
+            new int[] { 1 },
+            new int[] { 1 }
+        },  // I-PIECE
+        new int[][] {
+            new int[] { 0, 0, 1 },
+            new int[] { 1, 1, 1 },
+        },
+        new int[][] {
+            new int[] { 1, 0 },
+            new int[] { 1, 0 },
+            new int[] { 1, 1 }
+        },
+        new int[][] {
+            new int[] { 1, 1, 1 },
+            new int[] { 1, 0, 0 },
+        },
+        new int[][] {
+            new int[] { 1, 1 },
+            new int[] { 0, 1 },
+            new int[] { 0, 1 }
+        },  // L-PIECE
+        new int[][] {
+            new int[] { 1, 1 },
+            new int[] { 1, 1 }
+        },  // O-PIECE
+        new int[][] {
+            new int[] { 1, 1, 0 },
+            new int[] { 0, 1, 1 },
+        },
+        new int[][] {
+            new int[] { 0, 1 },
+            new int[] { 1, 1 },
+            new int[] { 1, 0 }
+        },  // Z-PIECE
+        new int[][] {
+            new int[] { 0, 1, 0 },
+            new int[] { 1, 1, 1 },
+        },
+        new int[][] {
+            new int[] { 1, 0 },
+            new int[] { 1, 1 },
+            new int[] { 1, 0 }
+        },
+        new int[][] {
+            new int[] { 1, 1, 1 },
+            new int[] { 0, 1, 0 },
+        },
+        new int[][] {
+            new int[] { 0, 1 },
+            new int[] { 1, 1 },
+            new int[] { 0, 1 }
+        },  // T-PIECE
+        new int[][] {
+            new int[] { 1, 0, 0 },
+            new int[] { 1, 1, 1 },
+        },
+        new int[][] {
+            new int[] { 1, 1 },
+            new int[] { 1, 0 },
+            new int[] { 1, 0 }
+        },
+        new int[][] {
+            new int[] { 1, 1, 1 },
+            new int[] { 0, 0, 1 },
+        },
+        new int[][] {
+            new int[] { 0, 1 },
+            new int[] { 0, 1 },
+            new int[] { 1, 1 }
+        },  // J-PIECE
+        new int[][] {
+            new int[] { 0, 1, 1 },
+            new int[] { 1, 1, 0 },
+        },
+        new int[][] {
+            new int[] { 1, 0 },
+            new int[] { 1, 1 },
+            new int[] { 0, 1 }
+        }   // S-PIECE
+        //endregion
+    };
 
     // region SHAPES
     // Aww s#/t! Here we go again...
-
-    private static final int[][][] SHAPES = {
-            //region Shape Outlines
-            new int[][] {
-                    new int[] { 1, 1, 1, 1 }
-            },
-            new int[][] {
-                    new int[] { 1 },
-                    new int[] { 1 },
-                    new int[] { 1 },
-                    new int[] { 1 }
-            },  // I-PIECE
-            new int[][] {
-                    new int[] { 0, 0, 1 },
-                    new int[] { 1, 1, 1 },
-            },
-            new int[][] {
-                    new int[] { 1, 0 },
-                    new int[] { 1, 0 },
-                    new int[] { 1, 1 }
-            },
-            new int[][] {
-                    new int[] { 1, 1, 1 },
-                    new int[] { 1, 0, 0 },
-            },
-            new int[][] {
-                    new int[] { 1, 1 },
-                    new int[] { 0, 1 },
-                    new int[] { 0, 1 }
-            },  // L-PIECE
-            new int[][] {
-                    new int[] { 1, 1 },
-                    new int[] { 1, 1 }
-            },  // O-PIECE
-            new int[][] {
-                    new int[] { 1, 1, 0 },
-                    new int[] { 0, 1, 1 },
-            },
-            new int[][] {
-                    new int[] { 0, 1 },
-                    new int[] { 1, 1 },
-                    new int[] { 1, 0 }
-            },  // Z-PIECE
-            new int[][] {
-                    new int[] { 0, 1, 0 },
-                    new int[] { 1, 1, 1 },
-            },
-            new int[][] {
-                    new int[] { 1, 0 },
-                    new int[] { 1, 1 },
-                    new int[] { 1, 0 }
-            },
-            new int[][] {
-                    new int[] { 1, 1, 1 },
-                    new int[] { 0, 1, 0 },
-            },
-            new int[][] {
-                    new int[] { 0, 1 },
-                    new int[] { 1, 1 },
-                    new int[] { 0, 1 }
-            },  // T-PIECE
-            new int[][] {
-                    new int[] { 1, 0, 0 },
-                    new int[] { 1, 1, 1 },
-            },
-            new int[][] {
-                    new int[] { 1, 1 },
-                    new int[] { 1, 0 },
-                    new int[] { 1, 0 }
-            },
-            new int[][] {
-                    new int[] { 1, 1, 1 },
-                    new int[] { 0, 0, 1 },
-            },
-            new int[][] {
-                    new int[] { 0, 1 },
-                    new int[] { 0, 1 },
-                    new int[] { 1, 1 }
-            },  // J-PIECE
-            new int[][] {
-                    new int[] { 0, 1, 1 },
-                    new int[] { 1, 1, 0 },
-            },
-            new int[][] {
-                    new int[] { 1, 0 },
-                    new int[] { 1, 1 },
-                    new int[] { 0, 1 }
-            }   // S-PIECE
-            //endregion
-    };
-
-    private static final ArrayList< Field > SHAPE_FIELDS = new ArrayList<>();
-
+    private static final ArrayList<Field> SHAPE_FIELDS = new ArrayList<>();
     private static final int[] SHAPE_TO_PIECE_ID = {
-            0, 0, 1, 1, 1, 1, 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6
+        0, 0, 1, 1, 1, 1, 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6
+    };
+    private static final int[] SHAPE_TO_PIECE_DIRECTION = {
+        0, 1, 0, 1, 2, 3, 0, 2, 1, 0, 1, 2, 3, 0, 1, 2, 3, 2, 3
     };
 
-    private static final int[] SHAPE_TO_PIECE_DIRECTION = {
-            0, 1, 0, 1, 2, 3, 0, 2, 1, 0, 1, 2, 3, 0, 1, 2, 3, 2, 3
-    };
+    static {
+        BLOCK_EMPTY = new Block(BLOCK_FILLED);
+        BLOCK_EMPTY.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, false);
+    }
 
 //	private static final int[][] PIECE_ID_TO_OFFSET = {
 //			null,
@@ -177,16 +172,16 @@ public class DrawMode extends MarathonModeBase {
 //	};
 
     static {
-        for ( int i = 0; i < SHAPES.length; i++ ) {
-            int[][] shape = SHAPES[ i ];
-            int dimX = shape[ 0 ].length;
+        for (int i = 0; i < SHAPES.length; i++) {
+            int[][] shape = SHAPES[i];
+            int dimX = shape[0].length;
             int dimY = shape.length;
 
-            SHAPE_FIELDS.add( new Field( dimX, dimY, 0 ) );
+            SHAPE_FIELDS.add(new Field(dimX, dimY, 0));
 
-            for ( int y = 0; y < dimY; y++ ) {
-                for ( int x = 0; x < dimX; x++ ) {
-                    SHAPE_FIELDS.get( i ).getBlock( x, y ).copy( new Block( shape[ y ][ x ], 0 ) );
+            for (int y = 0; y < dimY; y++) {
+                for (int x = 0; x < dimX; x++) {
+                    SHAPE_FIELDS.get(i).getBlock(x, y).copy(new Block(shape[y][x], 0));
                 }
             }
         }
@@ -197,12 +192,12 @@ public class DrawMode extends MarathonModeBase {
     /**
      * The match confidence of the field to each piece.
      */
-    private ArrayList< Double > matchConfidences;
+    private ArrayList<Double> matchConfidences;
 
     /**
      * Default Pieces
      */
-    private ArrayList< Piece > pieceSet;
+    private ArrayList<Piece> pieceSet;
 
     /**
      * Current location in draw field
@@ -241,7 +236,7 @@ public class DrawMode extends MarathonModeBase {
     }
 
     @Override
-    public void playerInit( GameEngine engine, int playerID ) {
+    public void playerInit(GameEngine engine, int playerID) {
         owner = engine.owner;
         receiver = engine.owner.receiver;
         lastscore = 0;
@@ -261,24 +256,24 @@ public class DrawMode extends MarathonModeBase {
         pieceStartX = 0;
 
         rankingRank = -1;
-        rankingScore = new int[ RANKING_TYPE ][ RANKING_MAX ];
-        rankingLines = new int[ RANKING_TYPE ][ RANKING_MAX ];
-        rankingTime = new int[ RANKING_TYPE ][ RANKING_MAX ];
+        rankingScore = new int[RANKING_TYPE][RANKING_MAX];
+        rankingLines = new int[RANKING_TYPE][RANKING_MAX];
+        rankingTime = new int[RANKING_TYPE][RANKING_MAX];
 
         placementRandomiser = null;
 
-        netPlayerInit( engine, playerID );
+        netPlayerInit(engine, playerID);
 
-        if ( !owner.replayMode ) {
-            loadSetting( owner.modeConfig );
-            loadRanking( owner.modeConfig, engine.ruleopt.strRuleName );
+        if (!owner.replayMode) {
+            loadSetting(owner.modeConfig);
+            loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
             version = CURRENT_VERSION;
         } else {
-            loadSetting( owner.replayProp );
-            if ( ( version == 0 ) && owner.replayProp.getProperty( "drawMode.endless", false ) ) goaltype = 2;
+            loadSetting(owner.replayProp);
+            if ((version == 0) && owner.replayProp.getProperty("drawMode.endless", false)) goaltype = 2;
 
             // NET: Load name
-            netPlayerName = engine.owner.replayProp.getProperty( playerID + ".net.netPlayerName", "" );
+            netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
         }
 
         engine.owner.backgroundStatus.bg = startlevel;
@@ -286,29 +281,29 @@ public class DrawMode extends MarathonModeBase {
     }
 
     @Override
-    public void onFirst( GameEngine engine, int playerID ) {
+    public void onFirst(GameEngine engine, int playerID) {
         engine.holdPieceObject = null;
         engine.holdDisable = true;
     }
 
-    private void generateNewPlacementX( GameEngine engine ) {
-        if ( placementRandomiser != null ) {
-            pieceStartX = placementRandomiser.nextInt( engine.field.getWidth() );
+    private void generateNewPlacementX(GameEngine engine) {
+        if (placementRandomiser != null) {
+            pieceStartX = placementRandomiser.nextInt(engine.field.getWidth());
 
             int widthExtraLeft = 3;
             int widthExtraRight = 3;
 
-            if ( pieceStartX < 3 ) widthExtraLeft = pieceStartX;
-            if ( pieceStartX >= engine.field.getWidth() - 3 )
+            if (pieceStartX < 3) widthExtraLeft = pieceStartX;
+            if (pieceStartX >= engine.field.getWidth() - 3)
                 widthExtraLeft = engine.field.getWidth() - pieceStartX - 1;
 
             int height = 7;
-            if ( engine.field.getHeight() < 4 || engine.field.getHiddenHeight() < 3 ) {
+            if (engine.field.getHeight() < 4 || engine.field.getHiddenHeight() < 3) {
                 // Field size is too small, log error into log file and end game.
                 engine.gameEnded();
                 engine.stat = GameEngine.STAT_GAMEOVER;
 
-                log.error( "The field is not large enough to play this mode.\nPlease use a field with height >= 4 and hidden height >= 3.", new IllegalArgumentException( "Field size is too small." ) );
+                log.error("The field is not large enough to play this mode.\nPlease use a field with height >= 4 and hidden height >= 3.", new IllegalArgumentException("Field size is too small."));
 
                 engine.resetStatc();
             }
@@ -316,15 +311,15 @@ public class DrawMode extends MarathonModeBase {
     }
 
     @Override
-    public boolean onReady( GameEngine engine, int playerID ) {
+    public boolean onReady(GameEngine engine, int playerID) {
         // 横溜め
-        if ( engine.ruleopt.dasInReady && engine.gameActive ) engine.padRepeat();
-        else if ( engine.ruleopt.dasRedirectInDelay ) {
+        if (engine.ruleopt.dasInReady && engine.gameActive) engine.padRepeat();
+        else if (engine.ruleopt.dasRedirectInDelay) {
             engine.dasRedirect();
         }
 
         // Initialization
-        if ( engine.statc[ 0 ] == 0 ) {
+        if (engine.statc[0] == 0) {
             // fieldInitialization
             BLOCK_FILLED.skin = engine.getSkin();
             BLOCK_EMPTY.skin = engine.getSkin();
@@ -340,26 +335,26 @@ public class DrawMode extends MarathonModeBase {
             engine.fieldWidth = engine.ruleopt.fieldWidth;
             engine.fieldHeight = engine.ruleopt.fieldHeight;
             engine.fieldHiddenHeight = engine.ruleopt.fieldHiddenHeight;
-            engine.field = new Field( engine.fieldWidth, engine.fieldHeight, engine.fieldHiddenHeight, true );
+            engine.field = new Field(engine.fieldWidth, engine.fieldHeight, engine.fieldHiddenHeight, true);
 
-            placementRandomiser = new Random( engine.randSeed );
-            generateNewPlacementX( engine );
+            placementRandomiser = new Random(engine.randSeed);
+            generateNewPlacementX(engine);
 
             pieceSet.clear();
 
             // Generate new piece set from the stored data.
-            for ( int i = 0; i <= SHAPE_TO_PIECE_ID.length; i++ ) {
-                pieceSet.add( new Piece( SHAPE_TO_PIECE_ID[ i ] ) );
-                pieceSet.get( i ).direction = SHAPE_TO_PIECE_DIRECTION[ i ];
-                pieceSet.get( i ).connectBlocks = engine.connectBlocks;
-                pieceSet.get( i ).setColor( engine.ruleopt.pieceColor[ pieceSet.get( i ).id ] );
-                pieceSet.get( i ).setSkin( engine.getSkin() );
-                pieceSet.get( i ).updateConnectData();
-                pieceSet.get( i ).setAttribute( Block.BLOCK_ATTRIBUTE_VISIBLE, true );
-                pieceSet.get( i ).setAttribute( Block.BLOCK_ATTRIBUTE_BONE, engine.bone );
+            for (int i = 0; i <= SHAPE_TO_PIECE_ID.length; i++) {
+                pieceSet.add(new Piece(SHAPE_TO_PIECE_ID[i]));
+                pieceSet.get(i).direction = SHAPE_TO_PIECE_DIRECTION[i];
+                pieceSet.get(i).connectBlocks = engine.connectBlocks;
+                pieceSet.get(i).setColor(engine.ruleopt.pieceColor[pieceSet.get(i).id]);
+                pieceSet.get(i).setSkin(engine.getSkin());
+                pieceSet.get(i).updateConnectData();
+                pieceSet.get(i).setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                pieceSet.get(i).setAttribute(Block.BLOCK_ATTRIBUTE_BONE, engine.bone);
             }
 
-            if ( !engine.readyDone ) {
+            if (!engine.readyDone) {
                 //  button input状態リセット
                 engine.ctrl.reset();
                 // ゲーム中 flagON
@@ -372,21 +367,21 @@ public class DrawMode extends MarathonModeBase {
         }
 
         // READY音
-        if ( engine.statc[ 0 ] == engine.readyStart ) engine.playSE( "ready" );
+        if (engine.statc[0] == engine.readyStart) engine.playSE("ready");
 
         // GO音
-        if ( engine.statc[ 0 ] == engine.goStart ) engine.playSE( "go" );
+        if (engine.statc[0] == engine.goStart) engine.playSE("go");
 
         // 開始
-        if ( engine.statc[ 0 ] >= engine.goEnd ) {
-            if ( !engine.readyDone ) engine.owner.bgmStatus.bgm = 0;
-            if ( engine.owner.mode != null ) engine.owner.mode.startGame( engine, playerID );
-            engine.owner.receiver.startGame( engine, playerID );
+        if (engine.statc[0] >= engine.goEnd) {
+            if (!engine.readyDone) engine.owner.bgmStatus.bgm = 0;
+            if (engine.owner.mode != null) engine.owner.mode.startGame(engine, playerID);
+            engine.owner.receiver.startGame(engine, playerID);
             engine.stat = GameEngine.STAT_MOVE;
             // localState = 0;
             engine.timerActive = true;
             engine.resetStatc();
-            if ( !engine.readyDone ) {
+            if (!engine.readyDone) {
                 engine.startTime = System.nanoTime();
                 //startTime = System.nanoTime()/1000000L;
             }
@@ -394,7 +389,7 @@ public class DrawMode extends MarathonModeBase {
             return true;
         }
 
-        engine.statc[ 0 ]++;
+        engine.statc[0]++;
 
         return true;
     }
@@ -405,21 +400,21 @@ public class DrawMode extends MarathonModeBase {
      * Called when saving replay
      */
     @Override
-    public void saveReplay( GameEngine engine, int playerID, CustomProperties prop ) {
-        saveSetting( prop );
+    public void saveReplay(GameEngine engine, int playerID, CustomProperties prop) {
+        saveSetting(prop);
 
         // NET: Save name
-        if ( ( netPlayerName != null ) && ( netPlayerName.length() > 0 ) ) {
-            prop.setProperty( playerID + ".net.netPlayerName", netPlayerName );
+        if ((netPlayerName != null) && (netPlayerName.length() > 0)) {
+            prop.setProperty(playerID + ".net.netPlayerName", netPlayerName);
         }
 
         // Update rankings
-        if ( ( owner.replayMode == false ) && ( big == false ) && ( engine.ai == null ) ) {
-            updateRanking( engine.statistics.score, engine.statistics.lines, engine.statistics.time, goaltype );
+        if ((owner.replayMode == false) && (big == false) && (engine.ai == null)) {
+            updateRanking(engine.statistics.score, engine.statistics.lines, engine.statistics.time, goaltype);
 
-            if ( rankingRank != -1 ) {
-                saveRanking( owner.modeConfig, engine.ruleopt.strRuleName );
-                receiver.saveModeConfig( owner.modeConfig );
+            if (rankingRank != -1) {
+                saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+                receiver.saveModeConfig(owner.modeConfig);
             }
         }
     }
@@ -429,18 +424,18 @@ public class DrawMode extends MarathonModeBase {
      *
      * @param prop Property file
      */
-    private void loadSetting( CustomProperties prop ) {
-        startlevel = prop.getProperty( "drawMode.startlevel", 0 );
-        tspinEnableType = prop.getProperty( "drawMode.tspinEnableType", 1 );
-        enableTSpin = prop.getProperty( "drawMode.enableTSpin", true );
-        enableTSpinKick = prop.getProperty( "drawMode.enableTSpinKick", true );
-        spinCheckType = prop.getProperty( "drawMode.spinCheckType", 0 );
-        tspinEnableEZ = prop.getProperty( "drawMode.tspinEnableEZ", false );
-        enableB2B = prop.getProperty( "drawMode.enableB2B", true );
-        enableCombo = prop.getProperty( "drawMode.enableCombo", true );
-        goaltype = prop.getProperty( "drawMode.gametype", 0 );
-        big = prop.getProperty( "drawMode.big", false );
-        version = prop.getProperty( "drawMode.version", 0 );
+    private void loadSetting(CustomProperties prop) {
+        startlevel = prop.getProperty("drawMode.startlevel", 0);
+        tspinEnableType = prop.getProperty("drawMode.tspinEnableType", 1);
+        enableTSpin = prop.getProperty("drawMode.enableTSpin", true);
+        enableTSpinKick = prop.getProperty("drawMode.enableTSpinKick", true);
+        spinCheckType = prop.getProperty("drawMode.spinCheckType", 0);
+        tspinEnableEZ = prop.getProperty("drawMode.tspinEnableEZ", false);
+        enableB2B = prop.getProperty("drawMode.enableB2B", true);
+        enableCombo = prop.getProperty("drawMode.enableCombo", true);
+        goaltype = prop.getProperty("drawMode.gametype", 0);
+        big = prop.getProperty("drawMode.big", false);
+        version = prop.getProperty("drawMode.version", 0);
     }
 
     /**
@@ -448,18 +443,18 @@ public class DrawMode extends MarathonModeBase {
      *
      * @param prop Property file
      */
-    private void saveSetting( CustomProperties prop ) {
-        prop.setProperty( "drawMode.startlevel", startlevel );
-        prop.setProperty( "drawMode.tspinEnableType", tspinEnableType );
-        prop.setProperty( "drawMode.enableTSpin", enableTSpin );
-        prop.setProperty( "drawMode.enableTSpinKick", enableTSpinKick );
-        prop.setProperty( "drawMode.spinCheckType", spinCheckType );
-        prop.setProperty( "drawMode.tspinEnableEZ", tspinEnableEZ );
-        prop.setProperty( "drawMode.enableB2B", enableB2B );
-        prop.setProperty( "drawMode.enableCombo", enableCombo );
-        prop.setProperty( "drawMode.gametype", goaltype );
-        prop.setProperty( "drawMode.big", big );
-        prop.setProperty( "drawMode.version", version );
+    private void saveSetting(CustomProperties prop) {
+        prop.setProperty("drawMode.startlevel", startlevel);
+        prop.setProperty("drawMode.tspinEnableType", tspinEnableType);
+        prop.setProperty("drawMode.enableTSpin", enableTSpin);
+        prop.setProperty("drawMode.enableTSpinKick", enableTSpinKick);
+        prop.setProperty("drawMode.spinCheckType", spinCheckType);
+        prop.setProperty("drawMode.tspinEnableEZ", tspinEnableEZ);
+        prop.setProperty("drawMode.enableB2B", enableB2B);
+        prop.setProperty("drawMode.enableCombo", enableCombo);
+        prop.setProperty("drawMode.gametype", goaltype);
+        prop.setProperty("drawMode.big", big);
+        prop.setProperty("drawMode.version", version);
     }
 
     /**
@@ -469,12 +464,12 @@ public class DrawMode extends MarathonModeBase {
      * @param ruleName Rule name
      */
     @Override
-    protected void loadRanking( CustomProperties prop, String ruleName ) {
-        for ( int i = 0; i < RANKING_MAX; i++ ) {
-            for ( int j = 0; j < GAMETYPE_MAX; j++ ) {
-                rankingScore[ j ][ i ] = prop.getProperty( "drawMode.ranking." + ruleName + "." + j + ".score." + i, 0 );
-                rankingLines[ j ][ i ] = prop.getProperty( "drawMode.ranking." + ruleName + "." + j + ".lines." + i, 0 );
-                rankingTime[ j ][ i ] = prop.getProperty( "drawMode.ranking." + ruleName + "." + j + ".time." + i, 0 );
+    protected void loadRanking(CustomProperties prop, String ruleName) {
+        for (int i = 0; i < RANKING_MAX; i++) {
+            for (int j = 0; j < GAMETYPE_MAX; j++) {
+                rankingScore[j][i] = prop.getProperty("drawMode.ranking." + ruleName + "." + j + ".score." + i, 0);
+                rankingLines[j][i] = prop.getProperty("drawMode.ranking." + ruleName + "." + j + ".lines." + i, 0);
+                rankingTime[j][i] = prop.getProperty("drawMode.ranking." + ruleName + "." + j + ".time." + i, 0);
             }
         }
     }
@@ -485,12 +480,12 @@ public class DrawMode extends MarathonModeBase {
      * @param prop     Property file
      * @param ruleName Rule name
      */
-    private void saveRanking( CustomProperties prop, String ruleName ) {
-        for ( int i = 0; i < RANKING_MAX; i++ ) {
-            for ( int j = 0; j < GAMETYPE_MAX; j++ ) {
-                prop.setProperty( "drawMode.ranking." + ruleName + "." + j + ".score." + i, rankingScore[ j ][ i ] );
-                prop.setProperty( "drawMode.ranking." + ruleName + "." + j + ".lines." + i, rankingLines[ j ][ i ] );
-                prop.setProperty( "drawMode.ranking." + ruleName + "." + j + ".time." + i, rankingTime[ j ][ i ] );
+    private void saveRanking(CustomProperties prop, String ruleName) {
+        for (int i = 0; i < RANKING_MAX; i++) {
+            for (int j = 0; j < GAMETYPE_MAX; j++) {
+                prop.setProperty("drawMode.ranking." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
+                prop.setProperty("drawMode.ranking." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
+                prop.setProperty("drawMode.ranking." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
             }
         }
     }
@@ -502,21 +497,21 @@ public class DrawMode extends MarathonModeBase {
      * @param li   Lines
      * @param time Time
      */
-    private void updateRanking( int sc, int li, int time, int type ) {
-        rankingRank = checkRanking( sc, li, time, type );
+    private void updateRanking(int sc, int li, int time, int type) {
+        rankingRank = checkRanking(sc, li, time, type);
 
-        if ( rankingRank != -1 ) {
+        if (rankingRank != -1) {
             // Shift down ranking entries
-            for ( int i = RANKING_MAX - 1; i > rankingRank; i-- ) {
-                rankingScore[ type ][ i ] = rankingScore[ type ][ i - 1 ];
-                rankingLines[ type ][ i ] = rankingLines[ type ][ i - 1 ];
-                rankingTime[ type ][ i ] = rankingTime[ type ][ i - 1 ];
+            for (int i = RANKING_MAX - 1; i > rankingRank; i--) {
+                rankingScore[type][i] = rankingScore[type][i - 1];
+                rankingLines[type][i] = rankingLines[type][i - 1];
+                rankingTime[type][i] = rankingTime[type][i - 1];
             }
 
             // Add new data
-            rankingScore[ type ][ rankingRank ] = sc;
-            rankingLines[ type ][ rankingRank ] = li;
-            rankingTime[ type ][ rankingRank ] = time;
+            rankingScore[type][rankingRank] = sc;
+            rankingLines[type][rankingRank] = li;
+            rankingTime[type][rankingRank] = time;
         }
     }
 
@@ -528,13 +523,13 @@ public class DrawMode extends MarathonModeBase {
      * @param time Time
      * @return Position (-1 if unranked)
      */
-    private int checkRanking( int sc, int li, int time, int type ) {
-        for ( int i = 0; i < RANKING_MAX; i++ ) {
-            if ( sc > rankingScore[ type ][ i ] ) {
+    private int checkRanking(int sc, int li, int time, int type) {
+        for (int i = 0; i < RANKING_MAX; i++) {
+            if (sc > rankingScore[type][i]) {
                 return i;
-            } else if ( ( sc == rankingScore[ type ][ i ] ) && ( li > rankingLines[ type ][ i ] ) ) {
+            } else if ((sc == rankingScore[type][i]) && (li > rankingLines[type][i])) {
                 return i;
-            } else if ( ( sc == rankingScore[ type ][ i ] ) && ( li == rankingLines[ type ][ i ] ) && ( time < rankingTime[ type ][ i ] ) ) {
+            } else if ((sc == rankingScore[type][i]) && (li == rankingLines[type][i]) && (time < rankingTime[type][i])) {
                 return i;
             }
         }
@@ -549,17 +544,17 @@ public class DrawMode extends MarathonModeBase {
      *
      * @param engine
      */
-    private void parseMatches( GameEngine engine ) {
+    private void parseMatches(GameEngine engine) {
         matchConfidences.clear();
         int index = 0;
-        for ( Field field : SHAPE_FIELDS ) {
+        for (Field field : SHAPE_FIELDS) {
             // log.debug("INDEX " + index + ":");
-            matchConfidences.add( FieldManipulation.fieldCompare( engine.field, field ) );
+            matchConfidences.add(FieldManipulation.fieldCompare(engine.field, field));
             index++;
         }
 
-        double currentMaxMatchValue = Collections.max( matchConfidences );
-        currentMaxIndex = matchConfidences.indexOf( currentMaxMatchValue );
-        currentPieceID = SHAPE_TO_PIECE_ID[ currentMaxIndex ];
+        double currentMaxMatchValue = Collections.max(matchConfidences);
+        currentMaxIndex = matchConfidences.indexOf(currentMaxMatchValue);
+        currentPieceID = SHAPE_TO_PIECE_ID[currentMaxIndex];
     }
 }

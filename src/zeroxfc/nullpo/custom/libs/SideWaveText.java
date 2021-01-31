@@ -37,17 +37,16 @@ import mu.nu.nullpo.game.play.GameEngine;
 
 public class SideWaveText {
     public static final int MaxLifeTime = 120;
-    private static final DoubleVector VerticalVelocity = new DoubleVector( 0, -1 * ( 4.0 / 5.0 ), false );
-
+    private static final DoubleVector VerticalVelocity = new DoubleVector(0, -1 * (4.0 / 5.0), false);
+    private final String text;
+    private final double offsetMax;
+    private final double sinFrequency;
+    private final boolean big;
+    private final boolean lClear;
     private DoubleVector position;
-    private String text;
     private double xOffset;
-    private double offsetMax;
-    private double sinFrequency;
     private double sinPhase;
     private int lifeTime;
-    private boolean big;
-    private boolean lClear;
 
     /**
      * Creates a Super Collapse II-styled score popup that flies away.<br />
@@ -61,9 +60,9 @@ public class SideWaveText {
      * @param big         Should it be double size?
      * @param largeclear  Should it flash and actually wave?
      */
-    public SideWaveText( int x, int y, double frequency, double offsetWidth, String text, boolean big, boolean largeclear ) {
+    public SideWaveText(int x, int y, double frequency, double offsetWidth, String text, boolean big, boolean largeclear) {
         this.text = text;
-        position = new DoubleVector( x, y, false );
+        position = new DoubleVector(x, y, false);
 
         sinPhase = 0.0;
         sinFrequency = frequency;
@@ -79,11 +78,11 @@ public class SideWaveText {
      * Updates the instance to a new position.
      */
     public void update() {
-        sinPhase += sinFrequency * ( ( Math.PI * 2 ) / 60 );
+        sinPhase += sinFrequency * ((Math.PI * 2) / 60);
 
-        xOffset = offsetMax * Math.sin( sinPhase );
+        xOffset = offsetMax * Math.sin(sinPhase);
 
-        position = DoubleVector.add( position, VerticalVelocity );
+        position = DoubleVector.add(position, VerticalVelocity);
 
         lifeTime++;
     }
@@ -94,7 +93,7 @@ public class SideWaveText {
      * @return A 2-long int[] in the format { x, y }
      */
     public int[] getLocation() {
-        return new int[] { ( int ) ( position.getX() + xOffset ), ( int ) position.getY() };
+        return new int[] { (int) (position.getX() + xOffset), (int) position.getY() };
     }
 
     /**
@@ -105,23 +104,23 @@ public class SideWaveText {
      * @param playerID Current player ID
      * @param flag     true ? orange : yellow
      */
-    public void drawCentral( EventReceiver receiver, GameEngine engine, int playerID, boolean flag ) {
+    public void drawCentral(EventReceiver receiver, GameEngine engine, int playerID, boolean flag) {
         int[] location = getLocation();
-        final int x = location[ 0 ];
-        final int y = location[ 1 ];
+        final int x = location[0];
+        final int y = location[1];
 
         int color = EventReceiver.COLOR_ORANGE;
-        if ( flag ) color = EventReceiver.COLOR_YELLOW;
+        if (flag) color = EventReceiver.COLOR_YELLOW;
 
         float scale = 0;
         float baseScale = big ? 2 : 1;
-        if ( lifeTime < 24 ) {
+        if (lifeTime < 24) {
             scale = baseScale;
         } else {
-            scale = baseScale - ( baseScale * ( ( float ) ( lifeTime - 24 ) / 96 ) );
+            scale = baseScale - (baseScale * ((float) (lifeTime - 24) / 96));
         }
 
-        GameTextUtilities.drawDirectTextAlign( receiver, engine, playerID, x, y, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, text, color, scale );
+        GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, x, y, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, text, color, scale);
     }
 
     public int getLifeTime() {

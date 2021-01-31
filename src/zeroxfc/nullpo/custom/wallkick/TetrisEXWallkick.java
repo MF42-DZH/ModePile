@@ -9,69 +9,69 @@ import mu.nu.nullpo.game.subsystem.wallkick.Wallkick;
 public class TetrisEXWallkick implements Wallkick {
     // Mirror X to get CW table.
     private static final int[][] KickTableCCW = {
-            { 0, 0 },
-            { -1, 0 },
-            { -1, 1 },
-            { 0, 1 },
-            { 1, 1 },
-            { 1, 0 },
-            { 0, -1 }
+        { 0, 0 },
+        { -1, 0 },
+        { -1, 1 },
+        { 0, 1 },
+        { 1, 1 },
+        { 1, 0 },
+        { 0, -1 }
     };
 
     private static final int[][] KickTableCW = {
-            { 0, 0 },
-            { 1, 0 },
-            { 1, 1 },
-            { 0, 1 },
-            { -1, 1 },
-            { -1, 0 },
-            { 0, -1 }
+        { 0, 0 },
+        { 1, 0 },
+        { 1, 1 },
+        { 0, 1 },
+        { -1, 1 },
+        { -1, 0 },
+        { 0, -1 }
     };
 
     // Mirror X to get CW Right table.
     private static final int[][] KickTableLeftCCW = {
-            { -1, 0 },
-            { -1, 1 },
-            { -2, 0 },
-            { 0, 0 },
-            { 0, 1 },
-            { 0, -1 },
-            { 1, 1 },
-            { 1, 0 },
+        { -1, 0 },
+        { -1, 1 },
+        { -2, 0 },
+        { 0, 0 },
+        { 0, 1 },
+        { 0, -1 },
+        { 1, 1 },
+        { 1, 0 },
     };
 
     private static final int[][] KickTableRightCCW = {
-            { 1, 0 },
-            { 1, 1 },
-            { 0, 1 },
-            { 1, 2 },
-            { 0, 0 },
-            { 0, -1 },
-            { 0, 1 },
-            { -1, 1 },
+        { 1, 0 },
+        { 1, 1 },
+        { 0, 1 },
+        { 1, 2 },
+        { 0, 0 },
+        { 0, -1 },
+        { 0, 1 },
+        { -1, 1 },
     };
 
     // Mirror X to get CCW Right table.
     private static final int[][] KickTableLeftCW = {
-            { -1, 0 },
-            { -1, 1 },
-            { 0, 1 },
-            { -1, 2 },
-            { 0, 0 },
-            { 0, -1 },
-            { 0, 1 },
-            { 1, 1 },
+        { -1, 0 },
+        { -1, 1 },
+        { 0, 1 },
+        { -1, 2 },
+        { 0, 0 },
+        { 0, -1 },
+        { 0, 1 },
+        { 1, 1 },
     };
 
     private static final int[][] KickTableRightCW = {
-            { 1, 0 },
-            { 1, 1 },
-            { 2, 0 },
-            { 0, 0 },
-            { 0, 1 },
-            { 0, -1 },
-            { -1, 1 },
-            { -1, 0 },
+        { 1, 0 },
+        { 1, 1 },
+        { 2, 0 },
+        { 0, 0 },
+        { 0, 1 },
+        { 0, -1 },
+        { -1, 1 },
+        { -1, 0 },
     };
 
     public int currentDASCharge = 0;
@@ -79,8 +79,8 @@ public class TetrisEXWallkick implements Wallkick {
     public int dasDirection = 1;
 
     @Override
-    public WallkickResult executeWallkick( int x, int y, int rtDir, int rtOld, int rtNew, boolean allowUpward,
-                                           Piece piece, Field field, Controller ctrl ) {
+    public WallkickResult executeWallkick(int x, int y, int rtDir, int rtOld, int rtNew, boolean allowUpward,
+                                          Piece piece, Field field, Controller ctrl) {
         int[][] table;
 
         /*
@@ -119,18 +119,18 @@ public class TetrisEXWallkick implements Wallkick {
 		}
     	 */
 
-        if ( rtDir < 0 || rtDir == 2 ) {
-            if ( dasDirection == -1 && ( currentDASCharge >= maxDASCharge ) ) {
+        if (rtDir < 0 || rtDir == 2) {
+            if (dasDirection == -1 && (currentDASCharge >= maxDASCharge)) {
                 table = KickTableLeftCCW;
-            } else if ( dasDirection == 1 && ( currentDASCharge >= maxDASCharge ) ) {
+            } else if (dasDirection == 1 && (currentDASCharge >= maxDASCharge)) {
                 table = KickTableRightCCW;
             } else {
                 table = KickTableCCW;
             }
         } else {
-            if ( dasDirection == -1 && ( currentDASCharge >= maxDASCharge ) ) {
+            if (dasDirection == -1 && (currentDASCharge >= maxDASCharge)) {
                 table = KickTableLeftCW;
-            } else if ( dasDirection == 1 && ( currentDASCharge >= maxDASCharge ) ) {
+            } else if (dasDirection == 1 && (currentDASCharge >= maxDASCharge)) {
                 table = KickTableRightCW;
             } else {
                 table = KickTableCW;
@@ -141,17 +141,17 @@ public class TetrisEXWallkick implements Wallkick {
         dasDirection = 0;
         maxDASCharge = 1;
 
-        for ( int[] ints : table ) {
-            int x2 = ints[ 0 ];
-            int y2 = ints[ 1 ];
+        for (int[] ints : table) {
+            int x2 = ints[0];
+            int y2 = ints[1];
 
-            if ( piece.big ) {
+            if (piece.big) {
                 x2 *= 2;
                 y2 *= 2;
             }
 
-            if ( !piece.checkCollision( x + x2, y + y2, rtNew, field ) ) {
-                return new WallkickResult( x2, y2, rtNew );
+            if (!piece.checkCollision(x + x2, y + y2, rtNew, field)) {
+                return new WallkickResult(x2, y2, rtNew);
             }
         }
 

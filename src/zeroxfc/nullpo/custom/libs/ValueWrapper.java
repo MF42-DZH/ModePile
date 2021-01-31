@@ -41,34 +41,34 @@ public class ValueWrapper {
     public Double valueDouble;
 
     public ValueWrapper() {
-        this( ( byte ) 0, ( short ) 0, 0, 0, 0, 0 );
+        this((byte) 0, (short) 0, 0, 0, 0, 0);
     }
 
-    public ValueWrapper( byte value ) {
-        this( value, ( short ) 0, 0, 0, 0, 0 );
+    public ValueWrapper(byte value) {
+        this(value, (short) 0, 0, 0, 0, 0);
     }
 
-    public ValueWrapper( short value ) {
-        this( ( byte ) 0, value, 0, 0, 0, 0 );
+    public ValueWrapper(short value) {
+        this((byte) 0, value, 0, 0, 0, 0);
     }
 
-    public ValueWrapper( int value ) {
-        this( ( byte ) 0, ( short ) 0, value, 0, 0, 0 );
+    public ValueWrapper(int value) {
+        this((byte) 0, (short) 0, value, 0, 0, 0);
     }
 
-    public ValueWrapper( long value ) {
-        this( ( byte ) 0, ( short ) 0, 0, value, 0, 0 );
+    public ValueWrapper(long value) {
+        this((byte) 0, (short) 0, 0, value, 0, 0);
     }
 
-    public ValueWrapper( float value ) {
-        this( ( byte ) 0, ( short ) 0, 0, 0, value, 0 );
+    public ValueWrapper(float value) {
+        this((byte) 0, (short) 0, 0, 0, value, 0);
     }
 
-    public ValueWrapper( double value ) {
-        this( ( byte ) 0, ( short ) 0, 0, 0, 0, value );
+    public ValueWrapper(double value) {
+        this((byte) 0, (short) 0, 0, 0, 0, value);
     }
 
-    public ValueWrapper( byte valueByte, short valueShort, int valueInt, long valueLong, float valueFloat, double valueDouble ) {
+    public ValueWrapper(byte valueByte, short valueShort, int valueInt, long valueLong, float valueFloat, double valueDouble) {
         this.valueByte = valueByte;
         this.valueShort = valueShort;
         this.valueInt = valueInt;
@@ -77,7 +77,7 @@ public class ValueWrapper {
         this.valueFloat = valueFloat;
     }
 
-    public void copy( ValueWrapper vw ) {
+    public void copy(ValueWrapper vw) {
         this.valueByte = vw.valueByte;
         this.valueShort = vw.valueShort;
         this.valueInt = vw.valueInt;

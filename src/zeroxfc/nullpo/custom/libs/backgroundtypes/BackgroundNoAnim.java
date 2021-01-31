@@ -40,26 +40,26 @@ public class BackgroundNoAnim extends AnimatedBackgroundHook {
 
     {
         ID = AnimatedBackgroundHook.ANIMATION_NONE;
-        setImageName( "localBG" );
+        setImageName("localBG");
     }
 
     /**
      * Almost redundant background.
      */
-    public BackgroundNoAnim( int bgNumber ) {
-        if ( bgNumber < 0 || bgNumber > 19 ) bgNumber = 0;
+    public BackgroundNoAnim(int bgNumber) {
+        if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
         customHolder = new ResourceHolderCustomAssetExtension();
-        customHolder.loadImage( "res/graphics/back" + bgNumber + ".png", imageName );
+        customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
 
-        log.debug( "Non-custom static background (" + bgNumber + ") created." );
+        log.debug("Non-custom static background (" + bgNumber + ") created.");
     }
 
-    public BackgroundNoAnim( String filePath ) {
+    public BackgroundNoAnim(String filePath) {
         customHolder = new ResourceHolderCustomAssetExtension();
-        customHolder.loadImage( filePath, imageName );
+        customHolder.loadImage(filePath, imageName);
 
-        log.debug( "Custom static background created (File Path: " + filePath + ")." );
+        log.debug("Custom static background created (File Path: " + filePath + ").");
     }
 
     @Override
@@ -73,20 +73,20 @@ public class BackgroundNoAnim extends AnimatedBackgroundHook {
     }
 
     @Override
-    public void draw( GameEngine engine, int playerID ) {
-        customHolder.drawImage( engine, imageName, 0, 0 );
+    public void draw(GameEngine engine, int playerID) {
+        customHolder.drawImage(engine, imageName, 0, 0);
     }
 
     @Override
-    public void setBG( int bg ) {
-        customHolder.loadImage( "res/graphics/back" + bg + ".png", imageName );
-        log.debug( "Non-custom static background modified (New BG: " + bg + ")." );
+    public void setBG(int bg) {
+        customHolder.loadImage("res/graphics/back" + bg + ".png", imageName);
+        log.debug("Non-custom static background modified (New BG: " + bg + ").");
     }
 
     @Override
-    public void setBG( String filePath ) {
-        customHolder.loadImage( filePath, imageName );
-        log.debug( "Custom static background modified (New File Path: " + filePath + ")." );
+    public void setBG(String filePath) {
+        customHolder.loadImage(filePath, imageName);
+        log.debug("Custom static background modified (New File Path: " + filePath + ").");
     }
 
     /**
@@ -96,9 +96,9 @@ public class BackgroundNoAnim extends AnimatedBackgroundHook {
      * @param name   Image name
      */
     @Override
-    public void setBGFromHolder( ResourceHolderCustomAssetExtension holder, String name ) {
-        customHolder.putImageAt( holder.getImageAt( name ), imageName );
-        log.debug( "Custom static background modified (New Image Reference: " + name + ")." );
+    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+        customHolder.putImageAt(holder.getImageAt(name), imageName);
+        log.debug("Custom static background modified (New Image Reference: " + name + ").");
     }
 
     /**

@@ -32,46 +32,48 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
+import java.awt.*;
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.HashMap;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
-import mu.nu.nullpo.gui.sdl.*;
-import mu.nu.nullpo.gui.slick.*;
-import mu.nu.nullpo.gui.swing.*;
+import mu.nu.nullpo.gui.sdl.NullpoMinoSDL;
+import mu.nu.nullpo.gui.sdl.RendererSDL;
+import mu.nu.nullpo.gui.sdl.ResourceHolderSDL;
+import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
+import mu.nu.nullpo.gui.slick.RendererSlick;
+import mu.nu.nullpo.gui.slick.ResourceHolder;
+import mu.nu.nullpo.gui.swing.RendererSwing;
+import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
+import org.apache.log4j.Logger;
 import org.newdawn.slick.Graphics;
+import org.newdawn.slick.Music;
 import sdljava.mixer.MixMusic;
 import sdljava.mixer.SDLMixer;
 import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
-
-import java.awt.Graphics2D;
-import java.lang.reflect.Field;
-import java.util.*;
-
-import org.apache.log4j.Logger;
-import org.newdawn.slick.Music;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 public class ResourceHolderCustomAssetExtension {
-    private static Logger log = Logger.getLogger( ResourceHolderCustomAssetExtension.class );
-
     /**
      * Internal used ResourceHolder class.
      */
     private static final int HOLDER_SLICK = 0,
-            HOLDER_SWING = 1,
-            HOLDER_SDL = 2;
-
+        HOLDER_SWING = 1,
+        HOLDER_SDL = 2;
+    private static final Logger log = Logger.getLogger(ResourceHolderCustomAssetExtension.class);
     private static int bgmPrevious = -1;
 
     private static String mainClassName = "";
 
-    private HashMap< String, org.newdawn.slick.Image > slickImages;  // Slick Images
-    private HashMap< String, java.awt.Image > swingImages;           // Swing Images
-    private HashMap< String, sdljava.video.SDLSurface > sdlImages;   // SDL Images
+    private HashMap<String, org.newdawn.slick.Image> slickImages;  // Slick Images
+    private HashMap<String, java.awt.Image> swingImages;           // Swing Images
+    private HashMap<String, sdljava.video.SDLSurface> sdlImages;   // SDL Images
 
-    private HashMap< String, org.newdawn.slick.Music > slickMusic;  // Slick Music
-    private HashMap< String, sdljava.mixer.MixMusic > sdlMusic;     // SDL Music
+    private HashMap<String, org.newdawn.slick.Music> slickMusic;  // Slick Music
+    private HashMap<String, sdljava.mixer.MixMusic> sdlMusic;     // SDL Music
 
     private Graphics2D localSwingGraphics;
     private sdljava.video.SDLSurface localSDLGraphics;
@@ -82,7 +84,7 @@ public class ResourceHolderCustomAssetExtension {
      * Creates a new custom resource holder with 8 initial capacity.
      */
     public ResourceHolderCustomAssetExtension() {
-        this( 8 );
+        this(8);
     }
 
     /**
@@ -90,26 +92,26 @@ public class ResourceHolderCustomAssetExtension {
      *
      * @param initialCapacity Start capacity of the internal hashmaps.
      */
-    public ResourceHolderCustomAssetExtension( int initialCapacity ) {
+    public ResourceHolderCustomAssetExtension(int initialCapacity) {
         String mainClass = getMainClassName();
         // log.info("MAIN CLASS: " + mainClass);
 
         holderType = -1;
-        if ( mainClass.contains( "Slick" ) ) holderType = HOLDER_SLICK;
-        else if ( mainClass.contains( "Swing" ) ) holderType = HOLDER_SWING;
-        else if ( mainClass.contains( "SDL" ) ) holderType = HOLDER_SDL;
+        if (mainClass.contains("Slick")) holderType = HOLDER_SLICK;
+        else if (mainClass.contains("Swing")) holderType = HOLDER_SWING;
+        else if (mainClass.contains("SDL")) holderType = HOLDER_SDL;
 
-        switch ( holderType ) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                slickImages = new HashMap<>( initialCapacity );
-                slickMusic = new HashMap<>( initialCapacity );
+                slickImages = new HashMap<>(initialCapacity);
+                slickMusic = new HashMap<>(initialCapacity);
                 break;
             case HOLDER_SWING:
-                swingImages = new HashMap<>( initialCapacity );
+                swingImages = new HashMap<>(initialCapacity);
                 break;
             case HOLDER_SDL:
-                sdlImages = new HashMap<>( initialCapacity );
-                sdlMusic = new HashMap<>( initialCapacity );
+                sdlImages = new HashMap<>(initialCapacity);
+                sdlMusic = new HashMap<>(initialCapacity);
                 break;
         }
     }
@@ -120,22 +122,22 @@ public class ResourceHolderCustomAssetExtension {
      * @return Main class name.
      */
     public static String getMainClassName() {
-        if ( mainClassName.length() < 1 || mainClassName.equals( "Unknown" ) ) {
+        if (mainClassName.length() < 1 || mainClassName.equals("Unknown")) {
             // Thread-safe code used for when more threads are being used.
             // Warning: slower.
-            Collection< StackTraceElement[] > allStackTraces = Thread.getAllStackTraces().values();
-            for ( StackTraceElement[] traceElements : allStackTraces ) {
-                for ( StackTraceElement element : traceElements ) {
+            Collection<StackTraceElement[]> allStackTraces = Thread.getAllStackTraces().values();
+            for (StackTraceElement[] traceElements : allStackTraces) {
+                for (StackTraceElement element : traceElements) {
                     String name = element.getClassName();
-                    if ( name.contains( "NullpoMinoSlick" ) || name.contains( "NullpoMinoSwing" ) || name.contains( "NullpoMinoSDL" ) ) {
+                    if (name.contains("NullpoMinoSlick") || name.contains("NullpoMinoSwing") || name.contains("NullpoMinoSDL")) {
                         mainClassName = name;
                         break;
                     }
                 }
 
-                if ( mainClassName.length() >= 1 ) break;
+                if (mainClassName.length() >= 1) break;
             }
-            if ( mainClassName.length() < 1 ) mainClassName = "Unknown";
+            if (mainClassName.length() < 1) mainClassName = "Unknown";
         }
 
         return mainClassName;
@@ -147,7 +149,7 @@ public class ResourceHolderCustomAssetExtension {
      * @return Number of block skins.
      */
     public static int getNumberLoadedBlockSkins() {
-        switch ( AnimatedBackgroundHook.getResourceHook() ) {
+        switch (AnimatedBackgroundHook.getResourceHook()) {
             case AnimatedBackgroundHook.HOLDER_SLICK:
                 return ResourceHolder.imgNormalBlockList.size();
             case AnimatedBackgroundHook.HOLDER_SWING:
@@ -159,22 +161,97 @@ public class ResourceHolderCustomAssetExtension {
         }
     }
 
+    public static SDLSurface getGraphicsSDL(RendererSDL renderer) {
+        Class<RendererSDL> local = RendererSDL.class;
+        Field localField;
+        try {
+            localField = local.getDeclaredField("graphics");
+            localField.setAccessible(true);
+            return (SDLSurface) localField.get(renderer);
+        } catch (Exception e) {
+            log.error("Failed to extract graphics from SDL renderer.");
+            return null;
+        }
+    }
+
+    public static Graphics2D getGraphicsSwing(RendererSwing renderer) {
+        Class<RendererSwing> local = RendererSwing.class;
+        Field localField;
+        try {
+            localField = local.getDeclaredField("graphics");
+            localField.setAccessible(true);
+            return (Graphics2D) localField.get(renderer);
+        } catch (Exception e) {
+            log.error("Failed to extract graphics from Swing renderer.");
+            return null;
+        }
+    }
+
+    public static Graphics getGraphicsSlick(RendererSlick renderer) {
+        Class<RendererSlick> local = RendererSlick.class;
+        Field localField;
+        try {
+            localField = local.getDeclaredField("graphics");
+            localField.setAccessible(true);
+            return (Graphics) localField.get(renderer);
+        } catch (Exception e) {
+            log.error("Failed to extract graphics from Slick renderer.");
+            return null;
+        }
+    }
+
+    public static void setGraphicsSDL(RendererSDL renderer, SDLSurface grp) {
+        Class<RendererSDL> local = RendererSDL.class;
+        Field localField;
+        try {
+            localField = local.getDeclaredField("graphics");
+            localField.setAccessible(true);
+            localField.set(renderer, grp);
+        } catch (Exception e) {
+            log.error("Failed to extract graphics from SDL renderer.");
+        }
+    }
+
+    public static void setGraphicsSwing(RendererSwing renderer, Graphics2D grp) {
+        Class<RendererSwing> local = RendererSwing.class;
+        Field localField;
+        try {
+            localField = local.getDeclaredField("graphics");
+            localField.setAccessible(true);
+            localField.set(renderer, grp);
+        } catch (Exception e) {
+            log.error("Failed to extract graphics from Swing renderer.");
+        }
+    }
+
+    public static void setGraphicsSlick(RendererSlick renderer, Graphics grp) {
+        Class<RendererSlick> local = RendererSlick.class;
+        Field localField;
+        try {
+            localField = local.getDeclaredField("graphics");
+            localField.setAccessible(true);
+            localField.set(renderer, grp);
+        } catch (Exception e) {
+            log.error("Failed to extract graphics from Slick renderer.");
+        }
+    }
+
     /**
      * Adds an image to the custom image library
      *
      * @param filePath Path of image file
      * @param name     Identifier name
      */
-    public void loadImage( String filePath, String name ) {
-        switch ( holderType ) {
+    public void loadImage(String filePath, String name) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                slickImages.put( name, ResourceHolder.loadImage( filePath ) );
+                slickImages.put(name, ResourceHolder.loadImage(filePath));
                 break;
             case HOLDER_SWING:
-                swingImages.put( name, ResourceHolderSwing.loadImage( ResourceHolderSwing.getURL( filePath ) ) );
+                swingImages.put(name, ResourceHolderSwing.loadImage(ResourceHolderSwing.getURL(filePath)));
                 break;
             case HOLDER_SDL:
-                sdlImages.put( name, ResourceHolderSDL.loadImage( filePath ) );
+                sdlImages.put(name, ResourceHolderSDL.loadImage(filePath));
                 break;
         }
     }
@@ -185,16 +262,16 @@ public class ResourceHolderCustomAssetExtension {
      * @param source Source key
      * @param dest   Destination key
      */
-    public void copyImage( String source, String dest ) {
-        switch ( holderType ) {
+    public void copyImage(String source, String dest) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                slickImages.replace( dest, slickImages.get( source ) );
+                slickImages.replace(dest, slickImages.get(source));
                 break;
             case HOLDER_SWING:
-                swingImages.replace( dest, swingImages.get( source ) );
+                swingImages.replace(dest, swingImages.get(source));
                 break;
             case HOLDER_SDL:
-                sdlImages.replace( dest, sdlImages.get( source ) );
+                sdlImages.replace(dest, sdlImages.get(source));
                 break;
         }
     }
@@ -205,26 +282,26 @@ public class ResourceHolderCustomAssetExtension {
      * @param name Image name in holder dictionary.
      * @return int[] { width, height } (both in pixels).
      */
-    public int[] getImageDimensions( String name ) {
+    public int[] getImageDimensions(String name) {
         try {
-            int[] dim = new int[ 2 ];
-            switch ( holderType ) {
+            int[] dim = new int[2];
+            switch (holderType) {
                 case HOLDER_SLICK:
-                    dim[ 0 ] = slickImages.get( name ).getWidth();
-                    dim[ 1 ] = slickImages.get( name ).getHeight();
+                    dim[0] = slickImages.get(name).getWidth();
+                    dim[1] = slickImages.get(name).getHeight();
                     return dim;
                 case HOLDER_SWING:
-                    dim[ 0 ] = swingImages.get( name ).getWidth( null );
-                    dim[ 1 ] = swingImages.get( name ).getHeight( null );
+                    dim[0] = swingImages.get(name).getWidth(null);
+                    dim[1] = swingImages.get(name).getHeight(null);
                     return dim;
                 case HOLDER_SDL:
-                    dim[ 0 ] = sdlImages.get( name ).getWidth();
-                    dim[ 1 ] = sdlImages.get( name ).getHeight();
+                    dim[0] = sdlImages.get(name).getWidth();
+                    dim[1] = sdlImages.get(name).getHeight();
                     return dim;
                 default:
                     return new int[] { 0, 0 };
             }
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             return new int[] { 0, 0 };
         }
     }
@@ -234,24 +311,24 @@ public class ResourceHolderCustomAssetExtension {
      *
      * @param name Image name
      */
-    public void putImageAt( Object image, String name ) {
-        if ( image == null ) return;
+    public void putImageAt(Object image, String name) {
+        if (image == null) return;
         try {
-            switch ( holderType ) {
+            switch (holderType) {
                 case HOLDER_SLICK:
-                    slickImages.put( name, ( org.newdawn.slick.Image ) image );
+                    slickImages.put(name, (org.newdawn.slick.Image) image);
                     break;
                 case HOLDER_SWING:
-                    swingImages.put( name, ( java.awt.Image ) image );
+                    swingImages.put(name, (java.awt.Image) image);
                     break;
                 case HOLDER_SDL:
-                    sdlImages.put( name, ( SDLSurface ) image );
+                    sdlImages.put(name, (SDLSurface) image);
                     break;
                 default:
                     break;
             }
-        } catch ( Exception e ) {
-            log.error( "Unable to insert image " + image.toString() + " at " + name );
+        } catch (Exception e) {
+            log.error("Unable to insert image " + image.toString() + " at " + name);
         }
     }
 
@@ -262,19 +339,19 @@ public class ResourceHolderCustomAssetExtension {
      * @param name Image name
      * @return Image at name
      */
-    public Object getImageAt( String name ) {
+    public Object getImageAt(String name) {
         try {
-            switch ( holderType ) {
+            switch (holderType) {
                 case HOLDER_SLICK:
-                    return slickImages.get( name );
+                    return slickImages.get(name);
                 case HOLDER_SWING:
-                    return swingImages.get( name );
+                    return swingImages.get(name);
                 case HOLDER_SDL:
-                    return sdlImages.get( name );
+                    return sdlImages.get(name);
                 default:
                     return null;
             }
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             return null;
         }
     }
@@ -285,26 +362,26 @@ public class ResourceHolderCustomAssetExtension {
      * @param name  Key of image to replace
      * @param image Image object to replace with.
      */
-    public void setImageAt( String name, Object image ) {
+    public void setImageAt(String name, Object image) {
         try {
-            switch ( holderType ) {
+            switch (holderType) {
                 case HOLDER_SLICK:
-                    slickImages.replace( name, ( org.newdawn.slick.Image ) image );
-                    log.error( "Image " + name + " replaced." );
+                    slickImages.replace(name, (org.newdawn.slick.Image) image);
+                    log.error("Image " + name + " replaced.");
                     break;
                 case HOLDER_SWING:
-                    swingImages.replace( name, ( java.awt.Image ) image );
-                    log.error( "Image " + name + " replaced." );
+                    swingImages.replace(name, (java.awt.Image) image);
+                    log.error("Image " + name + " replaced.");
                     break;
                 case HOLDER_SDL:
-                    sdlImages.replace( name, ( sdljava.video.SDLSurface ) image );
-                    log.error( "Image " + name + " replaced." );
+                    sdlImages.replace(name, (sdljava.video.SDLSurface) image);
+                    log.error("Image " + name + " replaced.");
                     break;
                 default:
                     break;
             }
-        } catch ( Exception e ) {
-            log.error( "Image does not exist or invalid cast attempted." );
+        } catch (Exception e) {
+            log.error("Image does not exist or invalid cast attempted.");
         }
     }
 
@@ -315,9 +392,9 @@ public class ResourceHolderCustomAssetExtension {
      * @param x    X-coordinate relative to image's top-left corner
      * @param y    Y-coordinate relative to image's top-left corner
      */
-    public void setRotationCentre( String name, float x, float y ) {
-        if ( holderType == HOLDER_SLICK ) {
-            slickImages.get( name ).setCenterOfRotation( x, y );
+    public void setRotationCentre(String name, float x, float y) {
+        if (holderType == HOLDER_SLICK) {
+            slickImages.get(name).setCenterOfRotation(x, y);
         }
     }
 
@@ -327,9 +404,9 @@ public class ResourceHolderCustomAssetExtension {
      * @param name Image name
      * @param a    Angle, degrees.
      */
-    public void setRotation( String name, float a ) {
-        if ( holderType == HOLDER_SLICK ) {
-            slickImages.get( name ).setRotation( a );
+    public void setRotation(String name, float a) {
+        if (holderType == HOLDER_SLICK) {
+            slickImages.get(name).setRotation(a);
         }
     }
 
@@ -350,38 +427,38 @@ public class ResourceHolderCustomAssetExtension {
      * @param alpha    Alpha component
      * @param scale    Image scale
      */
-    public void drawImage( GameEngine engine, String name, int x, int y, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha, float scale ) {
-        switch ( holderType ) {
+    public void drawImage(GameEngine engine, String name, int x, int y, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha, float scale) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                org.newdawn.slick.Image toDraw = slickImages.get( name );
+                org.newdawn.slick.Image toDraw = slickImages.get(name);
 
-                int fx = x + ( int ) ( srcSizeX * scale );
-                int fy = y + ( int ) ( srcSizeY * scale );
+                int fx = x + (int) (srcSizeX * scale);
+                int fy = y + (int) (srcSizeY * scale);
 
-                org.newdawn.slick.Color filter = new org.newdawn.slick.Color( red, green, blue, alpha );
+                org.newdawn.slick.Color filter = new org.newdawn.slick.Color(red, green, blue, alpha);
 
-                toDraw.draw( x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter );
+                toDraw.draw(x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
 
                 break;
             case HOLDER_SWING:
-                localSwingGraphics = getGraphicsSwing( ( RendererSwing ) engine.owner.receiver );
-                java.awt.Image toDrawSwing = swingImages.get( name );
+                localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
+                java.awt.Image toDrawSwing = swingImages.get(name);
 
-                int fxSw = x + ( int ) ( srcSizeX * scale );
-                int fySw = y + ( int ) ( srcSizeY * scale );
+                int fxSw = x + (int) (srcSizeX * scale);
+                int fySw = y + (int) (srcSizeY * scale);
 
-                localSwingGraphics.setColor( new java.awt.Color( red, green, blue, alpha ) );
-                localSwingGraphics.drawImage( toDrawSwing, x, y, fxSw, fySw, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null );
-                localSwingGraphics.setColor( new java.awt.Color( 255, 255, 255, 255 ) );
+                localSwingGraphics.setColor(new java.awt.Color(red, green, blue, alpha));
+                localSwingGraphics.drawImage(toDrawSwing, x, y, fxSw, fySw, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
+                localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
                 break;
             case HOLDER_SDL:
-                localSDLGraphics = getGraphicsSDL( ( RendererSDL ) engine.owner.receiver );
-                sdljava.video.SDLSurface toDrawSDL = sdlImages.get( name );
-                int dx = ( int ) ( srcSizeX * scale );
-                int dy = ( int ) ( srcSizeY * scale );
+                localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver);
+                sdljava.video.SDLSurface toDrawSDL = sdlImages.get(name);
+                int dx = (int) (srcSizeX * scale);
+                int dy = (int) (srcSizeY * scale);
                 try {
-                    toDrawSDL.blitSurface( new SDLRect( srcX, srcY, srcSizeX, srcSizeY ), localSDLGraphics, new SDLRect( x, y, dx, dy ) );
-                } catch ( Exception e ) {
+                    toDrawSDL.blitSurface(new SDLRect(srcX, srcY, srcSizeX, srcSizeY), localSDLGraphics, new SDLRect(x, y, dx, dy));
+                } catch (Exception e) {
                     // DO NOTHING AT ALL.
                 }
                 break;
@@ -406,34 +483,34 @@ public class ResourceHolderCustomAssetExtension {
      * @param blue     Blue component
      * @param alpha    Alpha component
      */
-    public void drawImage( GameEngine engine, String name, int x, int y, int x2, int y2, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha ) {
-        if ( x < x2 || y < y2 ) return;
+    public void drawImage(GameEngine engine, String name, int x, int y, int x2, int y2, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha) {
+        if (x < x2 || y < y2) return;
 
-        switch ( holderType ) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                org.newdawn.slick.Image toDraw = slickImages.get( name );
+                org.newdawn.slick.Image toDraw = slickImages.get(name);
 
-                org.newdawn.slick.Color filter = new org.newdawn.slick.Color( red, green, blue, alpha );
+                org.newdawn.slick.Color filter = new org.newdawn.slick.Color(red, green, blue, alpha);
 
-                toDraw.draw( x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter );
+                toDraw.draw(x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
 
                 break;
             case HOLDER_SWING:
-                localSwingGraphics = getGraphicsSwing( ( RendererSwing ) engine.owner.receiver );
-                java.awt.Image toDrawSwing = swingImages.get( name );
+                localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
+                java.awt.Image toDrawSwing = swingImages.get(name);
 
-                localSwingGraphics.setColor( new java.awt.Color( red, green, blue, alpha ) );
-                localSwingGraphics.drawImage( toDrawSwing, x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null );
-                localSwingGraphics.setColor( new java.awt.Color( 255, 255, 255, 255 ) );
+                localSwingGraphics.setColor(new java.awt.Color(red, green, blue, alpha));
+                localSwingGraphics.drawImage(toDrawSwing, x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
+                localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
                 break;
             case HOLDER_SDL:
-                localSDLGraphics = getGraphicsSDL( ( RendererSDL ) engine.owner.receiver );
-                sdljava.video.SDLSurface toDrawSDL = sdlImages.get( name );
+                localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver);
+                sdljava.video.SDLSurface toDrawSDL = sdlImages.get(name);
                 int dx = x2 - x;
                 int dy = y2 - y;
                 try {
-                    toDrawSDL.blitSurface( new SDLRect( srcX, srcY, srcSizeX, srcSizeY ), localSDLGraphics, new SDLRect( x, y, dx, dy ) );
-                } catch ( Exception e ) {
+                    toDrawSDL.blitSurface(new SDLRect(srcX, srcY, srcSizeX, srcSizeY), localSDLGraphics, new SDLRect(x, y, dx, dy));
+                } catch (Exception e) {
                     // DO NOTHING AT ALL.
                 }
                 break;
@@ -459,39 +536,39 @@ public class ResourceHolderCustomAssetExtension {
      * @param alpha    Alpha component
      * @param flag     (silences the compiler)
      */
-    public void drawImage( GameEngine engine, String name, int x, int y, int sx, int sy, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha, Integer flag ) {
-        if ( flag == null ) flag = 0;
-        if ( sx <= 0 || sy <= 0 ) return;
+    public void drawImage(GameEngine engine, String name, int x, int y, int sx, int sy, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha, Integer flag) {
+        if (flag == null) flag = 0;
+        if (sx <= 0 || sy <= 0) return;
 
-        switch ( holderType ) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                org.newdawn.slick.Image toDraw = slickImages.get( name );
+                org.newdawn.slick.Image toDraw = slickImages.get(name);
 
                 int fx = x + sx;
                 int fy = y + sy;
 
-                org.newdawn.slick.Color filter = new org.newdawn.slick.Color( red, green, blue, alpha );
+                org.newdawn.slick.Color filter = new org.newdawn.slick.Color(red, green, blue, alpha);
 
-                toDraw.draw( x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter );
+                toDraw.draw(x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
 
                 break;
             case HOLDER_SWING:
-                localSwingGraphics = getGraphicsSwing( ( RendererSwing ) engine.owner.receiver );
-                java.awt.Image toDrawSwing = swingImages.get( name );
+                localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
+                java.awt.Image toDrawSwing = swingImages.get(name);
 
                 int fxSw = x + sx;
                 int fySw = y + sy;
 
-                localSwingGraphics.setColor( new java.awt.Color( red, green, blue, alpha ) );
-                localSwingGraphics.drawImage( toDrawSwing, x, y, fxSw, fySw, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null );
-                localSwingGraphics.setColor( new java.awt.Color( 255, 255, 255, 255 ) );
+                localSwingGraphics.setColor(new java.awt.Color(red, green, blue, alpha));
+                localSwingGraphics.drawImage(toDrawSwing, x, y, fxSw, fySw, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
+                localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
                 break;
             case HOLDER_SDL:
-                localSDLGraphics = getGraphicsSDL( ( RendererSDL ) engine.owner.receiver );
-                sdljava.video.SDLSurface toDrawSDL = sdlImages.get( name );
+                localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver);
+                sdljava.video.SDLSurface toDrawSDL = sdlImages.get(name);
                 try {
-                    toDrawSDL.blitSurface( new SDLRect( srcX, srcY, srcSizeX, srcSizeY ), localSDLGraphics, new SDLRect( x, y, sx, sy ) );
-                } catch ( Exception e ) {
+                    toDrawSDL.blitSurface(new SDLRect(srcX, srcY, srcSizeX, srcSizeY), localSDLGraphics, new SDLRect(x, y, sx, sy));
+                } catch (Exception e) {
                     // DO NOTHING AT ALL.
                 }
                 break;
@@ -506,33 +583,33 @@ public class ResourceHolderCustomAssetExtension {
      * @param x      X position
      * @param y      Y position
      */
-    public void drawImage( GameEngine engine, String name, int x, int y ) {
-        switch ( holderType ) {
+    public void drawImage(GameEngine engine, String name, int x, int y) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                org.newdawn.slick.Image toDraw = slickImages.get( name );
+                org.newdawn.slick.Image toDraw = slickImages.get(name);
 
                 int fx = toDraw.getWidth();
                 int fy = toDraw.getHeight();
 
-                drawImage( engine, name, x, y, 0, 0, fx, fy, 255, 255, 255, 255, 1f );
+                drawImage(engine, name, x, y, 0, 0, fx, fy, 255, 255, 255, 255, 1f);
                 break;
             case HOLDER_SWING:
-                localSwingGraphics = getGraphicsSwing( ( RendererSwing ) engine.owner.receiver );
-                java.awt.Image toDrawSwing = swingImages.get( name );
+                localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
+                java.awt.Image toDrawSwing = swingImages.get(name);
 
-                int fxSw = toDrawSwing.getWidth( null );
-                int fySw = toDrawSwing.getHeight( null );
+                int fxSw = toDrawSwing.getWidth(null);
+                int fySw = toDrawSwing.getHeight(null);
 
-                drawImage( engine, name, x, y, 0, 0, fxSw, fySw, 255, 255, 255, 255, 1f );
+                drawImage(engine, name, x, y, 0, 0, fxSw, fySw, 255, 255, 255, 255, 1f);
                 break;
             case HOLDER_SDL:
-                localSDLGraphics = getGraphicsSDL( ( RendererSDL ) engine.owner.receiver );
-                sdljava.video.SDLSurface toDrawSDL = sdlImages.get( name );
+                localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver);
+                sdljava.video.SDLSurface toDrawSDL = sdlImages.get(name);
 
                 int dx = toDrawSDL.getWidth();
                 int dy = toDrawSDL.getHeight();
 
-                drawImage( engine, name, x, y, 0, 0, dx, dy, 255, 255, 255, 255, 1f );
+                drawImage(engine, name, x, y, 0, 0, dx, dy, 255, 255, 255, 255, 1f);
                 break;
         }
     }
@@ -552,29 +629,29 @@ public class ResourceHolderCustomAssetExtension {
      * @param color    Hex. code string of colour.
      * @param scale    Image scale
      */
-    public void drawImage( GameEngine engine, String name, int x, int y, int srcX, int srcY, int srcSizeX, int srcSizeY, String color, float scale ) {
+    public void drawImage(GameEngine engine, String name, int x, int y, int srcX, int srcY, int srcSizeX, int srcSizeY, String color, float scale) {
         String lc;
-        lc = color.replace( "#", "" );
+        lc = color.replace("#", "");
         lc = lc.toLowerCase();
 
         String red, green, blue, alpha = "FF";
 
-        if ( lc.length() != 8 && lc.length() != 6 ) {
+        if (lc.length() != 8 && lc.length() != 6) {
             return;
         }
 
-        red = lc.substring( 0, 2 );
-        green = lc.substring( 2, 4 );
-        blue = lc.substring( 4, 6 );
-        if ( lc.length() == 8 ) alpha = lc.substring( 6, 8 );
+        red = lc.substring(0, 2);
+        green = lc.substring(2, 4);
+        blue = lc.substring(4, 6);
+        if (lc.length() == 8) alpha = lc.substring(6, 8);
 
         int r, g, b, a;
-        r = Integer.parseInt( red, 16 );
-        g = Integer.parseInt( green, 16 );
-        b = Integer.parseInt( blue, 16 );
-        a = Integer.parseInt( alpha, 16 );
+        r = Integer.parseInt(red, 16);
+        g = Integer.parseInt(green, 16);
+        b = Integer.parseInt(blue, 16);
+        a = Integer.parseInt(alpha, 16);
 
-        drawImage( engine, name, x, y, srcX, srcY, srcSizeX, srcSizeY, r, g, b, a, scale );
+        drawImage(engine, name, x, y, srcX, srcY, srcSizeX, srcSizeY, r, g, b, a, scale);
     }
 
     /**
@@ -583,78 +660,78 @@ public class ResourceHolderCustomAssetExtension {
      * @param filename File path of music file to import.
      * @param showerr  Show in log?
      */
-    public void loadNewBGMAppend( String filename, boolean noLoop, boolean showerr ) {
-        switch ( holderType ) {
+    public void loadNewBGMAppend(String filename, boolean noLoop, boolean showerr) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                if ( NullpoMinoSlick.propConfig.getProperty( "option.bgm", false ) == false ) return;
+                if (NullpoMinoSlick.propConfig.getProperty("option.bgm", false) == false) return;
 
                 int no = ResourceHolder.bgm.length + 1;
-                Music[] newArr = new Music[ no ];
-                for ( int i = 0; i < ResourceHolder.bgm.length; i++ ) {
-                    newArr[ i ] = ResourceHolder.bgm[ i ];
+                Music[] newArr = new Music[no];
+                for (int i = 0; i < ResourceHolder.bgm.length; i++) {
+                    newArr[i] = ResourceHolder.bgm[i];
                 }
 
-                if ( newArr[ no - 1 ] == null ) {
-                    if ( showerr ) log.info( "Loading BGM at " + filename );
+                if (newArr[no - 1] == null) {
+                    if (showerr) log.info("Loading BGM at " + filename);
 
                     try {
                         // String filename = NullpoMinoSlick.propMusic.getProperty("music.filename." + no, null);
-                        if ( ( filename == null ) || ( filename.length() < 1 ) ) {
-                            if ( showerr ) log.info( "BGM at " + filename + " not available" );
+                        if ((filename == null) || (filename.length() < 1)) {
+                            if (showerr) log.info("BGM at " + filename + " not available");
                             return;
                         }
 
-                        NullpoMinoSlick.propMusic.setProperty( "music.noloop." + no, noLoop );
+                        NullpoMinoSlick.propMusic.setProperty("music.noloop." + no, noLoop);
                         // boolean streaming = NullpoMinoSlick.propConfig.getProperty("option.bgmstreaming", true);
 
-                        newArr[ no - 1 ] = new Music( filename, true );
+                        newArr[no - 1] = new Music(filename, true);
                         ResourceHolder.bgm = newArr.clone();
 
-                        if ( !showerr ) log.info( "Loaded BGM at " + filename );
-                    } catch ( Throwable e ) {
-                        if ( showerr )
-                            log.error( "BGM at " + filename + " load failed", e );
+                        if (!showerr) log.info("Loaded BGM at " + filename);
+                    } catch (Throwable e) {
+                        if (showerr)
+                            log.error("BGM at " + filename + " load failed", e);
                         else
-                            log.warn( "BGM at " + filename + " load failed" );
+                            log.warn("BGM at " + filename + " load failed");
                     }
                 }
                 return;
             case HOLDER_SWING:
-                log.warn( "BGM is not supported on Swing." );
+                log.warn("BGM is not supported on Swing.");
                 return;
             case HOLDER_SDL:
-                if ( NullpoMinoSDL.propConfig.getProperty( "option.bgm", false ) == false ) return;
+                if (NullpoMinoSDL.propConfig.getProperty("option.bgm", false) == false) return;
 
                 int no2 = ResourceHolderSDL.bgm.length + 1;
-                MixMusic[] newArr2 = new MixMusic[ no2 ];
-                for ( int i = 0; i < ResourceHolderSDL.bgm.length; i++ ) {
-                    newArr2[ i ] = ResourceHolderSDL.bgm[ i ];
+                MixMusic[] newArr2 = new MixMusic[no2];
+                for (int i = 0; i < ResourceHolderSDL.bgm.length; i++) {
+                    newArr2[i] = ResourceHolderSDL.bgm[i];
                 }
 
-                if ( newArr2[ no2 - 1 ] == null ) {
-                    if ( showerr ) {
-                        log.info( "Loading BGM at " + filename );
+                if (newArr2[no2 - 1] == null) {
+                    if (showerr) {
+                        log.info("Loading BGM at " + filename);
                     }
 
                     try {
                         // String filename = NullpoMinoSDL.propMusic.getProperty("music.filename." + no, null);
-                        if ( ( filename == null ) || ( filename.length() < 1 ) ) {
-                            if ( showerr ) log.info( "BGM at " + filename + " not available" );
+                        if ((filename == null) || (filename.length() < 1)) {
+                            if (showerr) log.info("BGM at " + filename + " not available");
                             return;
                         }
 
-                        NullpoMinoSDL.propMusic.setProperty( "music.noloop." + no2, noLoop );
-                        newArr2[ no2 - 1 ] = SDLMixer.loadMUS( filename );
+                        NullpoMinoSDL.propMusic.setProperty("music.noloop." + no2, noLoop);
+                        newArr2[no2 - 1] = SDLMixer.loadMUS(filename);
                         ResourceHolderSDL.bgm = newArr2.clone();
 
-                        if ( !showerr ) {
-                            log.info( "Loaded BGM at " + filename );
+                        if (!showerr) {
+                            log.info("Loaded BGM at " + filename);
                         }
-                    } catch ( Throwable e ) {
-                        if ( showerr ) {
-                            log.warn( "BGM at " + filename + " load failed", e );
+                    } catch (Throwable e) {
+                        if (showerr) {
+                            log.warn("BGM at " + filename + " load failed", e);
                         } else {
-                            log.warn( "BGM at " + filename + " load failed" );
+                            log.warn("BGM at " + filename + " load failed");
                         }
                     }
                 }
@@ -667,36 +744,36 @@ public class ResourceHolderCustomAssetExtension {
      *
      * @param showerr Show in log?
      */
-    public void removeBGMFromEnd( boolean showerr ) {
-        switch ( holderType ) {
+    public void removeBGMFromEnd(boolean showerr) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                if ( NullpoMinoSlick.propConfig.getProperty( "option.bgm", false ) == false ) return;
+                if (NullpoMinoSlick.propConfig.getProperty("option.bgm", false) == false) return;
 
                 int no = ResourceHolder.bgm.length - 1;
-                Music[] newBGM = new Music[ no ];
+                Music[] newBGM = new Music[no];
 
-                for ( int i = 0; i < newBGM.length; i++ ) {
-                    newBGM[ i ] = ResourceHolder.bgm[ i ];
+                for (int i = 0; i < newBGM.length; i++) {
+                    newBGM[i] = ResourceHolder.bgm[i];
                 }
 
                 ResourceHolder.bgm = newBGM.clone();
-                if ( showerr ) log.info( "Removed BGM at " + no );
+                if (showerr) log.info("Removed BGM at " + no);
                 return;
             case HOLDER_SWING:
-                log.warn( "BGM is not supported on Swing." );
+                log.warn("BGM is not supported on Swing.");
                 return;
             case HOLDER_SDL:
-                if ( NullpoMinoSDL.propConfig.getProperty( "option.bgm", false ) == false ) return;
+                if (NullpoMinoSDL.propConfig.getProperty("option.bgm", false) == false) return;
 
                 int no2 = ResourceHolderSDL.bgm.length - 1;
-                MixMusic[] newBGM2 = new MixMusic[ no2 ];
+                MixMusic[] newBGM2 = new MixMusic[no2];
 
-                for ( int i = 0; i < newBGM2.length; i++ ) {
-                    newBGM2[ i ] = ResourceHolderSDL.bgm[ i ];
+                for (int i = 0; i < newBGM2.length; i++) {
+                    newBGM2[i] = ResourceHolderSDL.bgm[i];
                 }
 
                 ResourceHolderSDL.bgm = newBGM2.clone();
-                if ( showerr ) log.info( "Removed BGM at " + no2 );
+                if (showerr) log.info("Removed BGM at " + no2);
                 return;
         }
     }
@@ -708,43 +785,43 @@ public class ResourceHolderCustomAssetExtension {
      * @param name   Track name.
      * @param noLoop Set true if it shouldn't loop.
      */
-    public void playCustomBGM( String name, boolean noLoop ) {
-        switch ( holderType ) {
+    public void playCustomBGM(String name, boolean noLoop) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                if ( !NullpoMinoSlick.propConfig.getProperty( "option.bgm", false ) ) return;
+                if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
 
                 stopCustomBGM();
 
-                int bgmvolume = NullpoMinoSlick.propConfig.getProperty( "option.bgmvolume", 128 );
-                NullpoMinoSlick.appGameContainer.setMusicVolume( bgmvolume / ( float ) 128 );
+                int bgmvolume = NullpoMinoSlick.propConfig.getProperty("option.bgmvolume", 128);
+                NullpoMinoSlick.appGameContainer.setMusicVolume(bgmvolume / (float) 128);
 
                 try {
-                    if ( noLoop )
-                        slickMusic.get( name ).play();
+                    if (noLoop)
+                        slickMusic.get(name).play();
                     else
-                        slickMusic.get( name ).play();
-                } catch ( Throwable e ) {
-                    log.error( "Failed to play music " + name, e );
+                        slickMusic.get(name).play();
+                } catch (Throwable e) {
+                    log.error("Failed to play music " + name, e);
                 }
 
                 return;
             case HOLDER_SWING:
-                log.warn( "BGM is not supported on Swing." );
+                log.warn("BGM is not supported on Swing.");
                 return;
             case HOLDER_SDL:
-                if ( !NullpoMinoSDL.propConfig.getProperty( "option.bgm", false ) ) return;
+                if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
 
                 stopCustomBGM();
 
                 try {
-                    if ( noLoop )
-                        SDLMixer.playMusic( sdlMusic.get( name ), 1 );
+                    if (noLoop)
+                        SDLMixer.playMusic(sdlMusic.get(name), 1);
                     else
-                        SDLMixer.playMusic( sdlMusic.get( name ), -1 );
+                        SDLMixer.playMusic(sdlMusic.get(name), -1);
 
-                    SDLMixer.volumeMusic( NullpoMinoSDL.propConfig.getProperty( "option.bgmvolume", 128 ) );
-                } catch ( Exception e ) {
-                    log.warn( "BGM " + name + " start failed", e );
+                    SDLMixer.volumeMusic(NullpoMinoSDL.propConfig.getProperty("option.bgmvolume", 128));
+                } catch (Exception e) {
+                    log.warn("BGM " + name + " start failed", e);
                 }
         }
     }
@@ -754,13 +831,13 @@ public class ResourceHolderCustomAssetExtension {
      *
      * @param name BGM name
      */
-    public void removeCustomInternalBGM( String name ) {
-        switch ( holderType ) {
+    public void removeCustomInternalBGM(String name) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                slickMusic.remove( name );
+                slickMusic.remove(name);
                 break;
             case HOLDER_SDL:
-                sdlMusic.remove( name );
+                sdlMusic.remove(name);
                 break;
             default:
                 break;
@@ -773,7 +850,7 @@ public class ResourceHolderCustomAssetExtension {
      * @return Number of loaded, appended BGM files.
      */
     public int getAmountLoadedBGM() {
-        switch ( holderType ) {
+        switch (holderType) {
             case HOLDER_SLICK:
                 return ResourceHolder.bgm.length - BGMStatus.BGM_COUNT;
             case HOLDER_SDL:
@@ -789,7 +866,7 @@ public class ResourceHolderCustomAssetExtension {
      * @return Number of loaded BGM files in holder.
      */
     public int getAmountDiscreteLoadedBGM() {
-        switch ( holderType ) {
+        switch (holderType) {
             case HOLDER_SLICK:
                 return slickMusic.size();
             case HOLDER_SDL:
@@ -803,26 +880,26 @@ public class ResourceHolderCustomAssetExtension {
      * Stops all custom BGM.
      */
     public void stopCustomBGM() {
-        switch ( holderType ) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                if ( !NullpoMinoSlick.propConfig.getProperty( "option.bgm", false ) ) return;
+                if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
 
-                for ( String s : slickMusic.keySet() ) {
-                    slickMusic.get( s ).pause();
-                    slickMusic.get( s ).stop();
+                for (String s : slickMusic.keySet()) {
+                    slickMusic.get(s).pause();
+                    slickMusic.get(s).stop();
                 }
 
                 return;
             case HOLDER_SWING:
-                log.warn( "BGM is not supported on Swing." );
+                log.warn("BGM is not supported on Swing.");
                 return;
             case HOLDER_SDL:
-                if ( !NullpoMinoSDL.propConfig.getProperty( "option.bgm", false ) ) return;
+                if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
 
                 try {
                     SDLMixer.haltMusic();
-                } catch ( Exception e ) {
-                    log.debug( "BGM stop failed", e );
+                } catch (Exception e) {
+                    log.debug("BGM stop failed", e);
                 }
                 break;
         }
@@ -832,12 +909,12 @@ public class ResourceHolderCustomAssetExtension {
      * Stops custom BGM.
      */
     public void stopBGM() {
-        switch ( holderType ) {
+        switch (holderType) {
             case HOLDER_SLICK:
-                if ( !NullpoMinoSlick.propConfig.getProperty( "option.bgm", false ) ) return;
+                if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
 
-                for ( Music s : ResourceHolder.bgm ) {
-                    if ( s != null ) {
+                for (Music s : ResourceHolder.bgm) {
+                    if (s != null) {
                         s.pause();
                         s.stop();
                     }
@@ -845,15 +922,15 @@ public class ResourceHolderCustomAssetExtension {
 
                 return;
             case HOLDER_SWING:
-                log.warn( "BGM is not supported on Swing." );
+                log.warn("BGM is not supported on Swing.");
                 return;
             case HOLDER_SDL:
-                if ( !NullpoMinoSDL.propConfig.getProperty( "option.bgm", false ) ) return;
+                if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
 
                 try {
                     SDLMixer.haltMusic();
-                } catch ( Exception e ) {
-                    log.debug( "BGM stop failed", e );
+                } catch (Exception e) {
+                    log.debug("BGM stop failed", e);
                 }
                 break;
         }
@@ -864,8 +941,8 @@ public class ResourceHolderCustomAssetExtension {
      *
      * @param owner Current GameManager
      */
-    public void stopDefaultBGM( GameManager owner ) {
-        if ( owner.bgmStatus.bgm != -1 ) bgmPrevious = owner.bgmStatus.bgm;
+    public void stopDefaultBGM(GameManager owner) {
+        if (owner.bgmStatus.bgm != -1) bgmPrevious = owner.bgmStatus.bgm;
         owner.bgmStatus.bgm = -1;
     }
 
@@ -874,85 +951,10 @@ public class ResourceHolderCustomAssetExtension {
      *
      * @param owner Current GameManager
      */
-    public void restartDefaultBGM( GameManager owner ) {
-        if ( owner.bgmStatus.bgm == -1 ) {
+    public void restartDefaultBGM(GameManager owner) {
+        if (owner.bgmStatus.bgm == -1) {
             owner.bgmStatus.bgm = bgmPrevious;
             owner.bgmStatus.fadesw = false;
-        }
-    }
-
-    public static SDLSurface getGraphicsSDL( RendererSDL renderer ) {
-        Class< RendererSDL > local = RendererSDL.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField( "graphics" );
-            localField.setAccessible( true );
-            return ( SDLSurface ) localField.get( renderer );
-        } catch ( Exception e ) {
-            log.error( "Failed to extract graphics from SDL renderer." );
-            return null;
-        }
-    }
-
-    public static Graphics2D getGraphicsSwing( RendererSwing renderer ) {
-        Class< RendererSwing > local = RendererSwing.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField( "graphics" );
-            localField.setAccessible( true );
-            return ( Graphics2D ) localField.get( renderer );
-        } catch ( Exception e ) {
-            log.error( "Failed to extract graphics from Swing renderer." );
-            return null;
-        }
-    }
-
-    public static Graphics getGraphicsSlick( RendererSlick renderer ) {
-        Class< RendererSlick > local = RendererSlick.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField( "graphics" );
-            localField.setAccessible( true );
-            return ( Graphics ) localField.get( renderer );
-        } catch ( Exception e ) {
-            log.error( "Failed to extract graphics from Slick renderer." );
-            return null;
-        }
-    }
-
-    public static void setGraphicsSDL( RendererSDL renderer, SDLSurface grp ) {
-        Class< RendererSDL > local = RendererSDL.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField( "graphics" );
-            localField.setAccessible( true );
-            localField.set( renderer, grp );
-        } catch ( Exception e ) {
-            log.error( "Failed to extract graphics from SDL renderer." );
-        }
-    }
-
-    public static void setGraphicsSwing( RendererSwing renderer, Graphics2D grp ) {
-        Class< RendererSwing > local = RendererSwing.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField( "graphics" );
-            localField.setAccessible( true );
-            localField.set( renderer, grp );
-        } catch ( Exception e ) {
-            log.error( "Failed to extract graphics from Swing renderer." );
-        }
-    }
-
-    public static void setGraphicsSlick( RendererSlick renderer, Graphics grp ) {
-        Class< RendererSlick > local = RendererSlick.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField( "graphics" );
-            localField.setAccessible( true );
-            localField.set( renderer, grp );
-        } catch ( Exception e ) {
-            log.error( "Failed to extract graphics from Slick renderer." );
         }
     }
 }

@@ -8,7 +8,7 @@ class RenderCommand {
         // Use other constructor.
     }
 
-    public RenderCommand( RenderType renderType, Object[] args ) {
+    public RenderCommand(RenderType renderType, Object[] args) {
         this.renderType = renderType;
         this.args = args;
     }

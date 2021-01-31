@@ -1,9 +1,8 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
+import java.util.Random;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.Interpolation;
-
-import java.util.Random;
 
 public class LandingParticles extends ParticleEmitterBase {
     /**
@@ -24,13 +23,13 @@ public class LandingParticles extends ParticleEmitterBase {
     /**
      * Randomiser
      */
-    private Random randomiser;
+    private final Random randomiser;
 
     /**
      * Parameterless constructor. Uses time as the random seed.
      */
     public LandingParticles() {
-        this( new Random() );
+        this(new Random());
     }
 
     /**
@@ -38,8 +37,8 @@ public class LandingParticles extends ParticleEmitterBase {
      *
      * @param seed Random seed
      */
-    public LandingParticles( long seed ) {
-        randomiser = new Random( seed );
+    public LandingParticles(long seed) {
+        randomiser = new Random(seed);
     }
 
     /**
@@ -47,7 +46,7 @@ public class LandingParticles extends ParticleEmitterBase {
      *
      * @param random Random instance
      */
-    public LandingParticles( Random random ) {
+    public LandingParticles(Random random) {
         randomiser = random;
     }
 
@@ -61,60 +60,60 @@ public class LandingParticles extends ParticleEmitterBase {
      * @param params Parameters to pass onto the particles
      */
     @Override
-    public void addNumber( int num, Object[] params ) {
+    public void addNumber(int num, Object[] params) {
         int minX, maxX, startY, yVar, red, green, blue, alpha, variance;
         double maxVel, upChance;
 
         try {
-            minX = ( int ) params[ 0 ];
-            maxX = ( int ) params[ 1 ];
-            startY = ( int ) params[ 2 ];
-            yVar = ( int ) params[ 3 ];
-            red = ( int ) params[ 4 ];
-            green = ( int ) params[ 5 ];
-            blue = ( int ) params[ 6 ];
-            alpha = ( int ) params[ 7 ];
-            variance = ( int ) params[ 8 ];
+            minX = (int) params[0];
+            maxX = (int) params[1];
+            startY = (int) params[2];
+            yVar = (int) params[3];
+            red = (int) params[4];
+            green = (int) params[5];
+            blue = (int) params[6];
+            alpha = (int) params[7];
+            variance = (int) params[8];
 
-            maxVel = ( double ) params[ 9 ];
-            upChance = ( double ) params[ 10 ];
+            maxVel = (double) params[9];
+            upChance = (double) params[10];
 
-            for ( int i = 0; i < num; i++ ) {
+            for (int i = 0; i < num; i++) {
                 int ured, ugreen, ublue, ualpha;
-                ured = red + ( int ) ( 2 * randomiser.nextDouble() * variance - variance );
-                ugreen = green + ( int ) ( 2 * randomiser.nextDouble() * variance - variance );
-                ublue = blue + ( int ) ( 2 * randomiser.nextDouble() * variance - variance );
-                ualpha = alpha + ( int ) ( 2 * randomiser.nextDouble() * variance - variance );
+                ured = red + (int) (2 * randomiser.nextDouble() * variance - variance);
+                ugreen = green + (int) (2 * randomiser.nextDouble() * variance - variance);
+                ublue = blue + (int) (2 * randomiser.nextDouble() * variance - variance);
+                ualpha = alpha + (int) (2 * randomiser.nextDouble() * variance - variance);
 
                 DoubleVector p = new DoubleVector(
-                        Interpolation.lerp( minX, maxX, randomiser.nextDouble() ),
-                        Interpolation.lerp( startY - yVar, startY + yVar, randomiser.nextDouble() ),
-                        false
+                    Interpolation.lerp(minX, maxX, randomiser.nextDouble()),
+                    Interpolation.lerp(startY - yVar, startY + yVar, randomiser.nextDouble()),
+                    false
                 );
 
                 DoubleVector v = new DoubleVector(
-                        0,
-                        Interpolation.lerp( 0, maxVel, randomiser.nextDouble() ) * ( randomiser.nextDouble() < upChance ? -0.5 : 1 ),
-                        false
+                    0,
+                    Interpolation.lerp(0, maxVel, randomiser.nextDouble()) * (randomiser.nextDouble() < upChance ? -0.5 : 1),
+                    false
                 );
 
                 Particle particle = new Particle(
-                        Particle.ParticleShape.Rectangle,
-                        Interpolation.lerp( DEF_MIN_LIFE, DEF_MAX_LIFE, randomiser.nextDouble() ),
-                        p,
-                        v,
-                        DoubleVector.zero(),
-                        2, 2,
-                        ured, ugreen, ublue, ualpha,
-                        ( int ) ( ured / 1.5 ), ( int ) ( ugreen / 1.5 ), ( int ) ( ublue / 1.5 ), 64
+                    Particle.ParticleShape.Rectangle,
+                    Interpolation.lerp(DEF_MIN_LIFE, DEF_MAX_LIFE, randomiser.nextDouble()),
+                    p,
+                    v,
+                    DoubleVector.zero(),
+                    2, 2,
+                    ured, ugreen, ublue, ualpha,
+                    (int) (ured / 1.5), (int) (ugreen / 1.5), (int) (ublue / 1.5), 64
                 );
 
-                particles.add( particle );
+                particles.add(particle);
             }
-        } catch ( ClassCastException ce ) {
-            log.error( "LandingParticles.addNumber: Invalid argument in params.", ce );
-        } catch ( Exception e ) {
-            log.error( "LandingParticles.addNumber: Other exception occurred.", e );
+        } catch (ClassCastException ce) {
+            log.error("LandingParticles.addNumber: Invalid argument in params.", ce);
+        } catch (Exception e) {
+            log.error("LandingParticles.addNumber: Other exception occurred.", e);
         }
     }
 }

@@ -32,54 +32,50 @@
  */
 package zeroxfc.nullpo.custom.libs.backgroundtypes;
 
+import java.lang.reflect.Field;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.gui.sdl.NullpoMinoSDL;
-import mu.nu.nullpo.gui.sdl.ResourceHolderSDL;
 import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
-import mu.nu.nullpo.gui.slick.ResourceHolder;
 import mu.nu.nullpo.gui.swing.NullpoMinoSwing;
-import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 
-import java.lang.reflect.Field;
-
 public abstract class AnimatedBackgroundHook {
-    protected static Logger log = Logger.getLogger( AnimatedBackgroundHook.class );
-    private static int LAST_BG = -1;
-    private static int LAST_FADE_BG = -1;
-
     /**
      * Animation type ID
      * <p>
      * Please add a new one for every new background type made.
      */
     public static final int ANIMATION_NONE = 0,                   // No animation. Essentially a quick-switchable custom BG.
-            ANIMATION_FRAME_ANIM = 1,             // Full frame 640x480 animation at up to 60 FPS. Uses a single image.
-            ANIMATION_IMAGE_SEQUENCE_ANIM = 2,    // Full frame 640x480 animation at up to 60 FPS. Uses a sequence of images.
-            ANIMATION_PULSE_HORIZONTAL_BARS = 3,  // Pulsating horizontal bars, like waves across a pseudo-fluid.
-            ANIMATION_PULSE_VERTICAL_BARS = 4,    // Pulsating vertical bars, like waves across a pseudo-fluid.
-            ANIMATION_CIRCULAR_RIPPLE = 5,        // Droplets on a smooth psudo-liquid.
-            ANIMATION_DIAGONAL_RIPPLE = 6,        // Droplets on a smooth psudo-liquid.
-            ANIMATION_SLIDING_TILES = 7,          // NOTE: SDL window handling is gross.
-            ANIMATION_TGM3TI_STYLE = 8,           // NOTE: Swing and SDL will not be able to use rotations.
-            ANIMATION_INTERLACE_HORIZONTAL = 9,   // I hope you like Earthbound.
-            ANIMATION_INTERLACE_VERTICAL = 10,    // I hope you like Earthbound.
-            ANIMATION_FAKE_SCANLINES = 11;        // Fake CRT Scanlines.
-
+        ANIMATION_FRAME_ANIM = 1,             // Full frame 640x480 animation at up to 60 FPS. Uses a single image.
+        ANIMATION_IMAGE_SEQUENCE_ANIM = 2,    // Full frame 640x480 animation at up to 60 FPS. Uses a sequence of images.
+        ANIMATION_PULSE_HORIZONTAL_BARS = 3,  // Pulsating horizontal bars, like waves across a pseudo-fluid.
+        ANIMATION_PULSE_VERTICAL_BARS = 4,    // Pulsating vertical bars, like waves across a pseudo-fluid.
+        ANIMATION_CIRCULAR_RIPPLE = 5,        // Droplets on a smooth psudo-liquid.
+        ANIMATION_DIAGONAL_RIPPLE = 6,        // Droplets on a smooth psudo-liquid.
+        ANIMATION_SLIDING_TILES = 7,          // NOTE: SDL window handling is gross.
+        ANIMATION_TGM3TI_STYLE = 8,           // NOTE: Swing and SDL will not be able to use rotations.
+        ANIMATION_INTERLACE_HORIZONTAL = 9,   // I hope you like Earthbound.
+        ANIMATION_INTERLACE_VERTICAL = 10,    // I hope you like Earthbound.
+        ANIMATION_FAKE_SCANLINES = 11;        // Fake CRT Scanlines.
     /**
      * ResourceHolder--- types
      */
     public static final int HOLDER_SLICK = 0,
-            HOLDER_SWING = 1,
-            HOLDER_SDL = 2;
-
+        HOLDER_SWING = 1,
+        HOLDER_SDL = 2;
+    protected static Logger log = Logger.getLogger(AnimatedBackgroundHook.class);
+    private static int LAST_BG = -1;
+    private static int LAST_FADE_BG = -1;
     /**
      * Stored ResourceHolder--- type
      */
     private static int ResourceHolderType = -1;
+    protected int ID;
+    protected ResourceHolderCustomAssetExtension customHolder;
+    protected String imageName;
 
     /**
      * Gets the current resource holder type.<br />
@@ -88,12 +84,12 @@ public abstract class AnimatedBackgroundHook {
      * @return Integer that represents the holder type.
      */
     public static int getResourceHook() {
-        if ( ResourceHolderType < 0 ) {
+        if (ResourceHolderType < 0) {
             String mainClass = ResourceHolderCustomAssetExtension.getMainClassName();
 
-            if ( mainClass.contains( "Slick" ) ) ResourceHolderType = HOLDER_SLICK;
-            else if ( mainClass.contains( "Swing" ) ) ResourceHolderType = HOLDER_SWING;
-            else if ( mainClass.contains( "SDL" ) ) ResourceHolderType = HOLDER_SDL;
+            if (mainClass.contains("Slick")) ResourceHolderType = HOLDER_SLICK;
+            else if (mainClass.contains("Swing")) ResourceHolderType = HOLDER_SWING;
+            else if (mainClass.contains("SDL")) ResourceHolderType = HOLDER_SDL;
             else ResourceHolderType = -1;
         }
 
@@ -106,9 +102,9 @@ public abstract class AnimatedBackgroundHook {
      * @param owner GameManager instance to check
      * @return Background number (0 <= bg < 19)
      */
-    public static int getBGState( GameManager owner ) {
+    public static int getBGState(GameManager owner) {
         int bg = owner.backgroundStatus.bg;
-        if ( bg < 0 || bg > 19 ) return LAST_BG;
+        if (bg < 0 || bg > 19) return LAST_BG;
         else {
             LAST_BG = bg;
             return bg;
@@ -121,9 +117,9 @@ public abstract class AnimatedBackgroundHook {
      * @param owner GameManager instance to check
      * @return Background number (0 <= bg < 19)
      */
-    public static int getFadeBGState( GameManager owner ) {
+    public static int getFadeBGState(GameManager owner) {
         int bg = owner.backgroundStatus.fadebg;
-        if ( bg < 0 || bg > 19 ) return LAST_FADE_BG;
+        if (bg < 0 || bg > 19) return LAST_FADE_BG;
         else {
             LAST_FADE_BG = bg;
             return bg;
@@ -135,9 +131,9 @@ public abstract class AnimatedBackgroundHook {
      *
      * @param owner GameManager to disable BG in.
      */
-    public static void disableDefaultBG( GameManager owner ) {
-        getBGState( owner );
-        getFadeBGState( owner );
+    public static void disableDefaultBG(GameManager owner) {
+        getBGState(owner);
+        getFadeBGState(owner);
 
         owner.backgroundStatus.bg = -1;
         owner.backgroundStatus.fadebg = -1;
@@ -148,7 +144,7 @@ public abstract class AnimatedBackgroundHook {
      *
      * @param owner GameManager to re-enable BG in.
      */
-    public static void enableDefaultBG( GameManager owner ) {
+    public static void enableDefaultBG(GameManager owner) {
         owner.backgroundStatus.bg = LAST_BG;
         owner.backgroundStatus.fadebg = LAST_FADE_BG;
     }
@@ -160,13 +156,13 @@ public abstract class AnimatedBackgroundHook {
      */
     @Deprecated
     public static boolean getInitialBGState() {
-        switch ( getResourceHook() ) {
+        switch (getResourceHook()) {
             case HOLDER_SLICK:
-                return NullpoMinoSlick.propConfig.getProperty( "option.showbg", true );
+                return NullpoMinoSlick.propConfig.getProperty("option.showbg", true);
             case HOLDER_SWING:
-                return NullpoMinoSwing.propConfig.getProperty( "option.showbg", true );
+                return NullpoMinoSwing.propConfig.getProperty("option.showbg", true);
             case HOLDER_SDL:
-                return NullpoMinoSDL.propConfig.getProperty( "option.showbg", true );
+                return NullpoMinoSDL.propConfig.getProperty("option.showbg", true);
             default:
                 return false;
         }
@@ -179,17 +175,17 @@ public abstract class AnimatedBackgroundHook {
      * @param receiver Renderer to check
      * @return <code>boolean</code>; <code>true</code> = enabled, <code>false</code> = disabled.
      */
-    public static boolean getBGState( EventReceiver receiver ) {
+    public static boolean getBGState(EventReceiver receiver) {
         try {
-            Class< EventReceiver > renderer = EventReceiver.class;
+            Class<EventReceiver> renderer = EventReceiver.class;
             Field localField;
-            localField = renderer.getDeclaredField( "showbg" );
-            localField.setAccessible( true );
-            final boolean b = localField.getBoolean( receiver );
-            log.info( "showbg in current EventReceiver gotten successfully as " + b );
+            localField = renderer.getDeclaredField("showbg");
+            localField.setAccessible(true);
+            final boolean b = localField.getBoolean(receiver);
+            log.info("showbg in current EventReceiver gotten successfully as " + b);
             return b;
-        } catch ( Exception e ) {
-            log.error( "Access to showbg in current EventReceiver failed." );
+        } catch (Exception e) {
+            log.error("Access to showbg in current EventReceiver failed.");
             return false;
         }
     }
@@ -201,37 +197,33 @@ public abstract class AnimatedBackgroundHook {
      * @param bool     State to set it to
      */
     @Deprecated
-    public static void setBGState( EventReceiver receiver, boolean bool ) {
+    public static void setBGState(EventReceiver receiver, boolean bool) {
         try {
-            Class< EventReceiver > renderer = EventReceiver.class;
+            Class<EventReceiver> renderer = EventReceiver.class;
             Field localField;
-            localField = renderer.getDeclaredField( "showbg" );
-            localField.setAccessible( true );
-            if ( localField.getBoolean( receiver ) != bool ) {
-                localField.setBoolean( receiver, bool );
-                log.info( "showbg in current EventReceiver set successfully to " + bool );
+            localField = renderer.getDeclaredField("showbg");
+            localField.setAccessible(true);
+            if (localField.getBoolean(receiver) != bool) {
+                localField.setBoolean(receiver, bool);
+                log.info("showbg in current EventReceiver set successfully to " + bool);
             }
-        } catch ( Exception e ) {
-            log.error( "Access to showbg in current EventReceiver failed." );
+        } catch (Exception e) {
+            log.error("Access to showbg in current EventReceiver failed.");
         }
     }
 
     // Fuzzy equals.
-    protected static boolean almostEqual( double a, double b, double eps ) {
-        return Math.abs( a - b ) < eps;
+    protected static boolean almostEqual(double a, double b, double eps) {
+        return Math.abs(a - b) < eps;
     }
 
-    public void setExternalHolder( ResourceHolderCustomAssetExtension holder ) {
+    public void setExternalHolder(ResourceHolderCustomAssetExtension holder) {
         customHolder = holder;
     }
 
-    public void setImageName( String imageName ) {
+    public void setImageName(String imageName) {
         this.imageName = imageName;
     }
-
-    protected int ID;
-    protected ResourceHolderCustomAssetExtension customHolder;
-    protected String imageName;
 
     /**
      * Performs an update tick on the background. Advisably used in onLast.
@@ -249,21 +241,21 @@ public abstract class AnimatedBackgroundHook {
      * @param engine   Current GameEngine instance
      * @param playerID Current player ID (1P = 0)
      */
-    public abstract void draw( GameEngine engine, int playerID );
+    public abstract void draw(GameEngine engine, int playerID);
 
     /**
      * Change BG to one of the default ones.
      *
      * @param bg New BG number
      */
-    public abstract void setBG( int bg );
+    public abstract void setBG(int bg);
 
     /**
      * Change BG to a custom BG using its file path.
      *
      * @param filePath File path of new background
      */
-    public abstract void setBG( String filePath );
+    public abstract void setBG(String filePath);
 
     /**
      * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
@@ -271,7 +263,7 @@ public abstract class AnimatedBackgroundHook {
      * @param holder Storage instance
      * @param name   Image name
      */
-    public abstract void setBGFromHolder( ResourceHolderCustomAssetExtension holder, String name );
+    public abstract void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name);
 
     /**
      * This last one is important. In the case that any of the child types are used, it allows identification.

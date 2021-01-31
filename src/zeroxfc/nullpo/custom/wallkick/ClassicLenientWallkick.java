@@ -8,18 +8,18 @@ import mu.nu.nullpo.game.subsystem.wallkick.Wallkick;
 
 public class ClassicLenientWallkick implements Wallkick {
     private static final int[][] BASE_WALLKICK = {
-            { -1, 0 },
-            { 1, 0 },
-            { 0, 1 },
-            { 0, -1 }
+        { -1, 0 },
+        { 1, 0 },
+        { 0, 1 },
+        { 0, -1 }
     };
     private static final int[][] I_WALLKICK = {
-            { -1, 0 },
-            { 1, 0 },
-            { -2, 0 },
-            { 2, 0 },
-            { 0, 1 },
-            { 0, -1 }
+        { -1, 0 },
+        { 1, 0 },
+        { -2, 0 },
+        { 2, 0 },
+        { 0, 1 },
+        { 0, -1 }
     };
 
     /**
@@ -36,26 +36,26 @@ public class ClassicLenientWallkick implements Wallkick {
      * @param ctrl        Button input status (it may be null, when controlled by an AI)
      * @return WallkickResult object, or null if you don't want a kick
      */
-    public WallkickResult executeWallkick( int x, int y, int rtDir, int rtOld, int rtNew, boolean allowUpward, Piece piece, Field field, Controller ctrl ) {
+    public WallkickResult executeWallkick(int x, int y, int rtDir, int rtOld, int rtNew, boolean allowUpward, Piece piece, Field field, Controller ctrl) {
         int x2, y2;
 
-        int[][] WALLKICK = ( piece.id == Piece.PIECE_I ) ? I_WALLKICK : BASE_WALLKICK;
+        int[][] WALLKICK = (piece.id == Piece.PIECE_I) ? I_WALLKICK : BASE_WALLKICK;
 
-        for ( int i = 0; i < WALLKICK.length; i++ ) {
-            if ( rtDir < 0 || rtDir == 2 ) {
-                x2 = WALLKICK[ i ][ 0 ];
+        for (int i = 0; i < WALLKICK.length; i++) {
+            if (rtDir < 0 || rtDir == 2) {
+                x2 = WALLKICK[i][0];
             } else {
-                x2 = -WALLKICK[ i ][ 0 ];
+                x2 = -WALLKICK[i][0];
             }
-            y2 = WALLKICK[ i ][ 1 ];
+            y2 = WALLKICK[i][1];
 
-            if ( piece.big ) {
+            if (piece.big) {
                 x2 *= 2;
                 y2 *= 2;
             }
 
-            if ( piece.checkCollision( x + x2, y + y2, rtNew, field ) == false ) {
-                return new WallkickResult( x2, y2, rtNew );
+            if (piece.checkCollision(x + x2, y + y2, rtNew, field) == false) {
+                return new WallkickResult(x2, y2, rtNew);
             }
         }
         return null;

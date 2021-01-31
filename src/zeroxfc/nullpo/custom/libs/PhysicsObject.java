@@ -32,11 +32,10 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
+import java.util.ArrayList;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import org.apache.log4j.Logger;
-
-import java.util.ArrayList;
 
 /**
  * PhysicsObject
@@ -46,8 +45,6 @@ import java.util.ArrayList;
  * Has a bounding box collision system.
  */
 public class PhysicsObject implements Cloneable {
-    private static Logger log = Logger.getLogger( PhysicsObject.class );
-
     /**
      * Anchor points for position.
      * <p>
@@ -64,15 +61,15 @@ public class PhysicsObject implements Cloneable {
      * LR = bottom-right corner.
      */
     public static final int ANCHOR_POINT_TL = 0,
-            ANCHOR_POINT_TM = 1,
-            ANCHOR_POINT_TR = 2,
-            ANCHOR_POINT_ML = 3,
-            ANCHOR_POINT_MM = 4,
-            ANCHOR_POINT_MR = 5,
-            ANCHOR_POINT_LL = 6,
-            ANCHOR_POINT_LM = 7,
-            ANCHOR_POINT_LR = 8;
-
+        ANCHOR_POINT_TM = 1,
+        ANCHOR_POINT_TR = 2,
+        ANCHOR_POINT_ML = 3,
+        ANCHOR_POINT_MM = 4,
+        ANCHOR_POINT_MR = 5,
+        ANCHOR_POINT_LL = 6,
+        ANCHOR_POINT_LM = 7,
+        ANCHOR_POINT_LR = 8;
+    private static final Logger log = Logger.getLogger(PhysicsObject.class);
     /**
      * Property identitifiers. Is set automatically during constructions but can be overridden by external methods.
      * <p>
@@ -91,10 +88,10 @@ public class PhysicsObject implements Cloneable {
     public int blockSizeX, blockSizeY, anchorPoint, colour, bounces;
 
     public PhysicsObject() {
-        this( new DoubleVector( 0, 0, false ), new DoubleVector( 0, 0, false ), -1, 1, 1, 0, 1 );
+        this(new DoubleVector(0, 0, false), new DoubleVector(0, 0, false), -1, 1, 1, 0, 1);
     }
 
-    public PhysicsObject( DoubleVector position, DoubleVector velocity, int collisionsToDestroy, int blockSizeX, int blockSizeY, int anchorPoint, int colour ) {
+    public PhysicsObject(DoubleVector position, DoubleVector velocity, int collisionsToDestroy, int blockSizeX, int blockSizeY, int anchorPoint, int colour) {
         this.position = position;
         this.velocity = velocity;
         this.collisionsToDestroy = collisionsToDestroy;
@@ -110,6 +107,76 @@ public class PhysicsObject implements Cloneable {
     }
 
     /**
+     * Checks if two PhysicsObject instances are intersecting each other.
+     * If either instance has collisions disabled,
+     *
+     * @param a First PhysicsObject instance
+     * @param b Sirst PhysicsObject instance
+     * @return Boolean that says if the instances are intersecting.
+     */
+    public static boolean checkCollision(PhysicsObject a, PhysicsObject b) {
+        if (!a.PROPERTY_Collision) return false;
+        if (!b.PROPERTY_Collision) return false;
+
+        double[][] bboxA = a.getBoundingBox();
+        double aMinX = bboxA[0][0];
+        double aMinY = bboxA[0][1];
+        double aMaxX = bboxA[1][0];
+        double aMaxY = bboxA[1][1];
+
+        double[][] bboxB = b.getBoundingBox();
+        double bMinX = bboxB[0][0];
+        double bMinY = bboxB[0][1];
+        double bMaxX = bboxB[1][0];
+        double bMaxY = bboxB[1][1];
+
+        boolean intersection = false;
+
+        if (aMaxX >= bMinX && aMaxX <= bMaxX && aMaxY >= bMinY && aMaxY <= bMaxY) {
+            intersection = true;
+        } else if (aMinX >= bMinX && aMinX <= bMaxX && aMinY >= bMinY && aMinY <= bMaxY) {
+            intersection = true;
+        } else if (bMaxX >= aMinX && bMaxX <= aMaxX && bMaxY >= aMinY && bMaxY <= aMaxY) {
+            intersection = true;
+        } else if (bMinX >= aMinX && bMinX <= aMaxX && bMinY >= aMinY && bMinY <= aMaxY) {
+            intersection = true;
+        }
+
+        return intersection;
+    }
+
+    /**
+     * Conducts a flat-surface reflection.
+     *
+     * @param vector   Velocity vector to modify.
+     * @param vertical <code>true</code> if using a vertical mirror line. <code>false</code> if using a horizontal mirror line.
+     */
+    public static void reflectVelocity(DoubleVector vector, boolean vertical) {
+        if (vertical) {
+            vector.setY(vector.getY() * -1);
+        } else {
+            vector.setX(vector.getX() * -1);
+        }
+    }
+
+    /**
+     * Conducts a flat-surface reflection.
+     *
+     * @param vector      Velocity vector to modify.
+     * @param vertical    <code>true</code> if using a vertical mirror line. <code>false</code> if using a horizontal mirror line.
+     * @param restitution The amount of "bounce". Use a value between 0 and 1.
+     */
+    public static void reflectVelocityWithRestitution(DoubleVector vector, boolean vertical, double restitution) {
+        if (vertical) {
+            vector.setY(vector.getY() * -1);
+        } else {
+            vector.setX(vector.getX() * -1);
+        }
+
+        vector.setMagnitude(vector.getMagnitude() * restitution);
+    }
+
+    /**
      * Gets the object's physics bounding box. (Top-Left and Bottom-Right coordinate).
      * Please override this.
      *
@@ -122,7 +189,7 @@ public class PhysicsObject implements Cloneable {
         int sizeY = blockSizeY * baseSize;
 
         double[] anchor = new double[] { 0, 0 };
-        switch ( anchorPoint ) {
+        switch (anchorPoint) {
             case ANCHOR_POINT_TL:
                 anchor = new double[] { 0, 0 };
                 break;
@@ -152,7 +219,7 @@ public class PhysicsObject implements Cloneable {
                 break;
         }
 
-        return new double[][] { { position.getX() - anchor[ 0 ], position.getY() - anchor[ 1 ] }, { position.getX() + sizeX - anchor[ 0 ], position.getY() + sizeY - anchor[ 1 ] } };
+        return new double[][] { { position.getX() - anchor[0], position.getY() - anchor[1] }, { position.getX() + sizeX - anchor[0], position.getY() + sizeY - anchor[1] } };
     }
 
     /**
@@ -161,7 +228,7 @@ public class PhysicsObject implements Cloneable {
      * @return x-coordinate
      */
     public double getMinX() {
-        return getBoundingBox()[ 0 ][ 0 ];
+        return getBoundingBox()[0][0];
     }
 
     /**
@@ -170,7 +237,7 @@ public class PhysicsObject implements Cloneable {
      * @return y-coordinate
      */
     public double getMinY() {
-        return getBoundingBox()[ 0 ][ 1 ];
+        return getBoundingBox()[0][1];
     }
 
     /**
@@ -179,7 +246,7 @@ public class PhysicsObject implements Cloneable {
      * @return x-coordinate
      */
     public double getMaxX() {
-        return getBoundingBox()[ 1 ][ 0 ];
+        return getBoundingBox()[1][0];
     }
 
     /**
@@ -188,7 +255,7 @@ public class PhysicsObject implements Cloneable {
      * @return y-coordinate
      */
     public double getMaxY() {
-        return getBoundingBox()[ 1 ][ 1 ];
+        return getBoundingBox()[1][1];
     }
 
     /**
@@ -198,11 +265,11 @@ public class PhysicsObject implements Cloneable {
      * @param engine   Current GameEngine.
      * @param playerID Current player ID.
      */
-    public void draw( EventReceiver receiver, GameEngine engine, int playerID ) {
+    public void draw(EventReceiver receiver, GameEngine engine, int playerID) {
         int size = 16;
-        for ( int y = 0; y < blockSizeY; y++ ) {
-            for ( int x = 0; x < blockSizeX; x++ ) {
-                receiver.drawSingleBlock( engine, playerID, ( int ) getMinX() + ( x * size ), ( int ) getMinY() + ( y * size ), colour, engine.getSkin(), false, 0f, 1f, 1f );
+        for (int y = 0; y < blockSizeY; y++) {
+            for (int x = 0; x < blockSizeX; x++) {
+                receiver.drawSingleBlock(engine, playerID, (int) getMinX() + (x * size), (int) getMinY() + (y * size), colour, engine.getSkin(), false, 0f, 1f, 1f);
             }
         }
     }
@@ -211,7 +278,7 @@ public class PhysicsObject implements Cloneable {
      * Do one movement tick.
      */
     public void move() {
-        if ( !PROPERTY_Static ) position = DoubleVector.add( position, velocity );
+        if (!PROPERTY_Static) position = DoubleVector.add(position, velocity);
     }
 
     /**
@@ -221,16 +288,16 @@ public class PhysicsObject implements Cloneable {
      * @param obstacles All obstacles.
      * @return Did the object collide at all?
      */
-    public boolean move( int subticks, ArrayList< PhysicsObject > obstacles, boolean retract ) {
-        if ( PROPERTY_Static ) return false;
-        DoubleVector v = DoubleVector.div( velocity, subticks );
+    public boolean move(int subticks, ArrayList<PhysicsObject> obstacles, boolean retract) {
+        if (PROPERTY_Static) return false;
+        DoubleVector v = DoubleVector.div(velocity, subticks);
 
-        for ( int i = 0; i < subticks; i++ ) {
-            if ( retract ) position = DoubleVector.add( position, v );
+        for (int i = 0; i < subticks; i++) {
+            if (retract) position = DoubleVector.add(position, v);
 
-            for ( PhysicsObject obj : obstacles ) {
-                if ( checkCollision( this, obj ) ) {
-                    position = DoubleVector.sub( position, v );
+            for (PhysicsObject obj : obstacles) {
+                if (checkCollision(this, obj)) {
+                    position = DoubleVector.sub(position, v);
                     return true;
                 }
             }
@@ -246,16 +313,16 @@ public class PhysicsObject implements Cloneable {
      * @param obstacles All obstacles.
      * @return Did the object collide at all?
      */
-    public boolean move( int subticks, PhysicsObject[] obstacles, boolean retract ) {
-        if ( PROPERTY_Static ) return false;
-        DoubleVector v = DoubleVector.div( velocity, subticks );
+    public boolean move(int subticks, PhysicsObject[] obstacles, boolean retract) {
+        if (PROPERTY_Static) return false;
+        DoubleVector v = DoubleVector.div(velocity, subticks);
 
-        for ( int i = 0; i < subticks; i++ ) {
-            position = DoubleVector.add( position, v );
+        for (int i = 0; i < subticks; i++) {
+            position = DoubleVector.add(position, v);
 
-            for ( PhysicsObject obj : obstacles ) {
-                if ( checkCollision( this, obj ) ) {
-                    if ( retract ) position = DoubleVector.sub( position, v );
+            for (PhysicsObject obj : obstacles) {
+                if (checkCollision(this, obj)) {
+                    if (retract) position = DoubleVector.sub(position, v);
                     return true;
                 }
             }
@@ -267,78 +334,8 @@ public class PhysicsObject implements Cloneable {
     /**
      * Do one movement tick with a custom velocity.
      */
-    public void move( DoubleVector velocity ) {
-        if ( !PROPERTY_Static ) position = DoubleVector.add( position, velocity );
-    }
-
-    /**
-     * Checks if two PhysicsObject instances are intersecting each other.
-     * If either instance has collisions disabled,
-     *
-     * @param a First PhysicsObject instance
-     * @param b Sirst PhysicsObject instance
-     * @return Boolean that says if the instances are intersecting.
-     */
-    public static boolean checkCollision( PhysicsObject a, PhysicsObject b ) {
-        if ( !a.PROPERTY_Collision ) return false;
-        if ( !b.PROPERTY_Collision ) return false;
-
-        double[][] bboxA = a.getBoundingBox();
-        double aMinX = bboxA[ 0 ][ 0 ];
-        double aMinY = bboxA[ 0 ][ 1 ];
-        double aMaxX = bboxA[ 1 ][ 0 ];
-        double aMaxY = bboxA[ 1 ][ 1 ];
-
-        double[][] bboxB = b.getBoundingBox();
-        double bMinX = bboxB[ 0 ][ 0 ];
-        double bMinY = bboxB[ 0 ][ 1 ];
-        double bMaxX = bboxB[ 1 ][ 0 ];
-        double bMaxY = bboxB[ 1 ][ 1 ];
-
-        boolean intersection = false;
-
-        if ( aMaxX >= bMinX && aMaxX <= bMaxX && aMaxY >= bMinY && aMaxY <= bMaxY ) {
-            intersection = true;
-        } else if ( aMinX >= bMinX && aMinX <= bMaxX && aMinY >= bMinY && aMinY <= bMaxY ) {
-            intersection = true;
-        } else if ( bMaxX >= aMinX && bMaxX <= aMaxX && bMaxY >= aMinY && bMaxY <= aMaxY ) {
-            intersection = true;
-        } else if ( bMinX >= aMinX && bMinX <= aMaxX && bMinY >= aMinY && bMinY <= aMaxY ) {
-            intersection = true;
-        }
-
-        return intersection;
-    }
-
-    /**
-     * Conducts a flat-surface reflection.
-     *
-     * @param vector   Velocity vector to modify.
-     * @param vertical <code>true</code> if using a vertical mirror line. <code>false</code> if using a horizontal mirror line.
-     */
-    public static void reflectVelocity( DoubleVector vector, boolean vertical ) {
-        if ( vertical ) {
-            vector.setY( vector.getY() * -1 );
-        } else {
-            vector.setX( vector.getX() * -1 );
-        }
-    }
-
-    /**
-     * Conducts a flat-surface reflection.
-     *
-     * @param vector      Velocity vector to modify.
-     * @param vertical    <code>true</code> if using a vertical mirror line. <code>false</code> if using a horizontal mirror line.
-     * @param restitution The amount of "bounce". Use a value between 0 and 1.
-     */
-    public static void reflectVelocityWithRestitution( DoubleVector vector, boolean vertical, double restitution ) {
-        if ( vertical ) {
-            vector.setY( vector.getY() * -1 );
-        } else {
-            vector.setX( vector.getX() * -1 );
-        }
-
-        vector.setMagnitude( vector.getMagnitude() * restitution );
+    public void move(DoubleVector velocity) {
+        if (!PROPERTY_Static) position = DoubleVector.add(position, velocity);
     }
 
     /**
@@ -349,7 +346,7 @@ public class PhysicsObject implements Cloneable {
     public PhysicsObject clone() {
         PhysicsObject clone;
         try {
-            clone = ( PhysicsObject ) super.clone();
+            clone = (PhysicsObject) super.clone();
 
             clone.position = position;
             clone.velocity = velocity;
@@ -364,9 +361,9 @@ public class PhysicsObject implements Cloneable {
             clone.PROPERTY_Collision = PROPERTY_Collision;
 
             return clone;
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             // Do nothing, but log error.
-            log.error( "Failed to create clone.", e );
+            log.error("Failed to create clone.", e);
             return null;
         }
     }
@@ -376,7 +373,7 @@ public class PhysicsObject implements Cloneable {
      *
      * @param object PhysicsObject to use fields from.
      */
-    public void copy( PhysicsObject object ) {
+    public void copy(PhysicsObject object) {
         this.position = object.position;
         this.velocity = object.velocity;
         this.collisionsToDestroy = object.collisionsToDestroy;

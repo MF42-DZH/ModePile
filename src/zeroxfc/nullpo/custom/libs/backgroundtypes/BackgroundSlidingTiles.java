@@ -32,10 +32,9 @@
  */
 package zeroxfc.nullpo.custom.libs.backgroundtypes;
 
+import java.util.Random;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
-
-import java.util.Random;
 
 public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
     private static final int DIRECTION_UP = 0;
@@ -60,18 +59,18 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 
     {
         ID = AnimatedBackgroundHook.ANIMATION_SLIDING_TILES;
-        setImageName( "localSkin" );
+        setImageName("localSkin");
 
         horizontal = true;
         move = false;
         currentMovement = 0;
     }
 
-    public BackgroundSlidingTiles( int skin, Random directionRandomiser, Integer colour, int size, float darkness ) {
+    public BackgroundSlidingTiles(int skin, Random directionRandomiser, Integer colour, int size, float darkness) {
         custom = false;
         this.skin = skin;
 
-        if ( skin < 0 || skin >= ResourceHolderCustomAssetExtension.getNumberLoadedBlockSkins() ) skin = 0;
+        if (skin < 0 || skin >= ResourceHolderCustomAssetExtension.getNumberLoadedBlockSkins()) skin = 0;
 
         this.colour = colour;
         this.size = size;
@@ -80,82 +79,82 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 
         setup();
 
-        log.debug( "Non-custom sliding tiles background created (Skin: " + skin + ")." );
+        log.debug("Non-custom sliding tiles background created (Skin: " + skin + ").");
     }
 
-    public BackgroundSlidingTiles( int skin, long seed, Integer colour, int size, float darkness ) {
+    public BackgroundSlidingTiles(int skin, long seed, Integer colour, int size, float darkness) {
         custom = false;
         this.skin = skin;
 
-        if ( skin < 0 || skin >= ResourceHolderCustomAssetExtension.getNumberLoadedBlockSkins() ) skin = 0;
+        if (skin < 0 || skin >= ResourceHolderCustomAssetExtension.getNumberLoadedBlockSkins()) skin = 0;
 
         this.colour = colour;
         this.size = size;
         this.darkness = darkness;
-        this.directionRandomiser = new Random( seed );
+        this.directionRandomiser = new Random(seed);
 
         setup();
 
-        log.debug( "Non-custom sliding tiles background created (Skin: " + skin + ")." );
+        log.debug("Non-custom sliding tiles background created (Skin: " + skin + ").");
     }
 
-    public BackgroundSlidingTiles( String filePath, Random directionRandomiser ) {
+    public BackgroundSlidingTiles(String filePath, Random directionRandomiser) {
         custom = true;
         this.directionRandomiser = directionRandomiser;
 
         customHolder = new ResourceHolderCustomAssetExtension();
-        customHolder.loadImage( filePath, imageName );
+        customHolder.loadImage(filePath, imageName);
 
         setup();
 
-        log.debug( "Custom sliding tiles background created (File Path: " + filePath + ")." );
+        log.debug("Custom sliding tiles background created (File Path: " + filePath + ").");
     }
 
     private void setup() {
-        if ( customHolder == null ) customHolder = new ResourceHolderCustomAssetExtension();
-        customHolder.loadImage( "res/graphics/blank_black_24b.png", "blackBG" );
+        if (customHolder == null) customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");
 
-        direction = directionRandomiser.nextInt( DIRECTIONS );
-        if ( custom ) {
-            int[] dim = customHolder.getImageDimensions( imageName );
+        direction = directionRandomiser.nextInt(DIRECTIONS);
+        if (custom) {
+            int[] dim = customHolder.getImageDimensions(imageName);
 
-            width = dim[ 0 ];
-            height = dim[ 1 ];
+            width = dim[0];
+            height = dim[1];
 
-            int sw = 640 / dim[ 0 ];
-            if ( sw * dim[ 0 ] < 640 ) sw++;
+            int sw = 640 / dim[0];
+            if (sw * dim[0] < 640) sw++;
             sw += 2;
 
-            int sh = 480 / dim[ 1 ];
-            if ( sh * dim[ 1 ] < 480 ) sh++;
+            int sh = 480 / dim[1];
+            if (sh * dim[1] < 480) sh++;
             sh += 2;
 
-            gridChunks = new ImageChunk[ sh ][ sw ];
+            gridChunks = new ImageChunk[sh][sw];
 
-            for ( int y = 0; y < gridChunks.length; y++ ) {
-                for ( int x = 0; x < gridChunks[ y ].length; x++ ) {
-                    gridChunks[ y ][ x ] = new ImageChunk( ImageChunk.ANCHOR_POINT_TL, new int[] { ( x - 1 ) * dim[ 0 ], ( y - 1 ) * dim[ 1 ] }, new int[] { 0, 0 }, new int[] { dim[ 0 ], dim[ 1 ] }, new float[] { 1f, 1f } );
+            for (int y = 0; y < gridChunks.length; y++) {
+                for (int x = 0; x < gridChunks[y].length; x++) {
+                    gridChunks[y][x] = new ImageChunk(ImageChunk.ANCHOR_POINT_TL, new int[] { (x - 1) * dim[0], (y - 1) * dim[1] }, new int[] { 0, 0 }, new int[] { dim[0], dim[1] }, new float[] { 1f, 1f });
                 }
             }
         } else {
             int s = 16;
-            if ( size < 0 ) s = 8;
-            if ( size > 0 ) s = 32;
+            if (size < 0) s = 8;
+            if (size > 0) s = 32;
 
             width = s;
             height = s;
 
-            gridChunks = new ImageChunk[ ( 480 / s ) + 2 ][ ( 640 / s ) + 2 ];
-            colours = new int[ ( 480 / s ) + 2 ][ ( 640 / s ) + 2 ];
+            gridChunks = new ImageChunk[(480 / s) + 2][(640 / s) + 2];
+            colours = new int[(480 / s) + 2][(640 / s) + 2];
 
-            for ( int y = 0; y < gridChunks.length; y++ ) {
-                for ( int x = 0; x < gridChunks[ y ].length; x++ ) {
-                    gridChunks[ y ][ x ] = new ImageChunk( ImageChunk.ANCHOR_POINT_TL, new int[] { ( x - 1 ) * s, ( y - 1 ) * s }, new int[] { 0, 0 }, new int[] { s, s }, new float[] { 1f, 1f } );
+            for (int y = 0; y < gridChunks.length; y++) {
+                for (int x = 0; x < gridChunks[y].length; x++) {
+                    gridChunks[y][x] = new ImageChunk(ImageChunk.ANCHOR_POINT_TL, new int[] { (x - 1) * s, (y - 1) * s }, new int[] { 0, 0 }, new int[] { s, s }, new float[] { 1f, 1f });
 
-                    if ( colour != null ) {
-                        colours[ y ][ x ] = colour;
+                    if (colour != null) {
+                        colours[y][x] = colour;
                     } else {
-                        colours[ y ][ x ] = directionRandomiser.nextInt( 8 ) + 1;
+                        colours[y][x] = directionRandomiser.nextInt(8) + 1;
                     }
                 }
             }
@@ -164,26 +163,26 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 
     @Override
     public void update() {
-        if ( move ) {
+        if (move) {
             move = false;
 
-            if ( horizontal ) {
-                for ( int y = 0; y < gridChunks.length; y++ ) {
-                    for ( int x = 0; x < gridChunks[ y ].length; x++ ) {
-                        int[] locOld = gridChunks[ y ][ x ].getAnchorLocation();
-                        int yMod = Math.abs( locOld[ 1 ] / width );
-                        int dir = ( direction + yMod ) % DIRECTIONS;
+            if (horizontal) {
+                for (int y = 0; y < gridChunks.length; y++) {
+                    for (int x = 0; x < gridChunks[y].length; x++) {
+                        int[] locOld = gridChunks[y][x].getAnchorLocation();
+                        int yMod = Math.abs(locOld[1] / width);
+                        int dir = (direction + yMod) % DIRECTIONS;
                         int xNew;
-                        switch ( dir ) {
+                        switch (dir) {
                             case DIRECTION_LEFT:
-                                xNew = locOld[ 0 ] - 1;
-                                if ( xNew <= ( width * -2 ) ) xNew = ( gridChunks[ 0 ].length - 2 ) * width;
-                                gridChunks[ y ][ x ].setAnchorLocation( new int[] { xNew, locOld[ 1 ] } );
+                                xNew = locOld[0] - 1;
+                                if (xNew <= (width * -2)) xNew = (gridChunks[0].length - 2) * width;
+                                gridChunks[y][x].setAnchorLocation(new int[] { xNew, locOld[1] });
                                 break;
                             case DIRECTION_RIGHT:
-                                xNew = locOld[ 0 ] + 1;
-                                if ( xNew >= ( gridChunks[ 0 ].length - 1 ) * width ) xNew = width * -1;
-                                gridChunks[ y ][ x ].setAnchorLocation( new int[] { xNew, locOld[ 1 ] } );
+                                xNew = locOld[0] + 1;
+                                if (xNew >= (gridChunks[0].length - 1) * width) xNew = width * -1;
+                                gridChunks[y][x].setAnchorLocation(new int[] { xNew, locOld[1] });
                                 break;
                             default:
                                 break;
@@ -193,22 +192,22 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 
                 currentMovement++;
             } else {
-                for ( int x = 0; x < gridChunks[ 0 ].length; x++ ) {
-                    for ( int y = 0; y < gridChunks.length; y++ ) {
-                        int[] locOld = gridChunks[ y ][ x ].getAnchorLocation();
-                        int xMod = Math.abs( locOld[ 0 ] / width );
-                        int dir2 = ( direction + xMod ) % DIRECTIONS;
+                for (int x = 0; x < gridChunks[0].length; x++) {
+                    for (int y = 0; y < gridChunks.length; y++) {
+                        int[] locOld = gridChunks[y][x].getAnchorLocation();
+                        int xMod = Math.abs(locOld[0] / width);
+                        int dir2 = (direction + xMod) % DIRECTIONS;
                         int yNew;
-                        switch ( dir2 ) {
+                        switch (dir2) {
                             case DIRECTION_UP:
-                                yNew = locOld[ 1 ] - 1;
-                                if ( yNew <= ( height * -2 ) ) yNew = ( gridChunks.length - 2 ) * height;
-                                gridChunks[ y ][ x ].setAnchorLocation( new int[] { locOld[ 0 ], yNew } );
+                                yNew = locOld[1] - 1;
+                                if (yNew <= (height * -2)) yNew = (gridChunks.length - 2) * height;
+                                gridChunks[y][x].setAnchorLocation(new int[] { locOld[0], yNew });
                                 break;
                             case DIRECTION_DOWN:
-                                yNew = locOld[ 1 ] + 1;
-                                if ( yNew >= ( gridChunks.length - 1 ) * height ) yNew = height * -1;
-                                gridChunks[ y ][ x ].setAnchorLocation( new int[] { locOld[ 0 ], yNew } );
+                                yNew = locOld[1] + 1;
+                                if (yNew >= (gridChunks.length - 1) * height) yNew = height * -1;
+                                gridChunks[y][x].setAnchorLocation(new int[] { locOld[0], yNew });
                                 break;
                             default:
                                 break;
@@ -219,16 +218,16 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
                 currentMovement++;
             }
 
-            if ( horizontal ) {
-                if ( currentMovement >= width ) {
+            if (horizontal) {
+                if (currentMovement >= width) {
                     currentMovement = 0;
-                    direction = directionRandomiser.nextInt( DIRECTIONS );
+                    direction = directionRandomiser.nextInt(DIRECTIONS);
                     horizontal = false;
                 }
             } else {
-                if ( currentMovement >= height ) {
+                if (currentMovement >= height) {
                     currentMovement = 0;
-                    direction = directionRandomiser.nextInt( DIRECTIONS );
+                    direction = directionRandomiser.nextInt(DIRECTIONS);
                     horizontal = true;
                 }
             }
@@ -237,10 +236,10 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
         }
     }
 
-    private void swap( int x, int y, int x2, int y2 ) {
-        ImageChunk ic = gridChunks[ y ][ x ];
-        gridChunks[ y ][ x ] = gridChunks[ y2 ][ x2 ];
-        gridChunks[ y ][ x ] = ic;
+    private void swap(int x, int y, int x2, int y2) {
+        ImageChunk ic = gridChunks[y][x];
+        gridChunks[y][x] = gridChunks[y2][x2];
+        gridChunks[y][x] = ic;
     }
 
     @Override
@@ -252,40 +251,40 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
     }
 
     @Override
-    public void draw( GameEngine engine, int playerID ) {
-        customHolder.drawImage( engine, "blackBG", 0, 0 );
-        for ( int y = 0; y < gridChunks.length; y++ ) {
-            for ( int x = 0; x < gridChunks[ y ].length; x++ ) {
-                ImageChunk i = gridChunks[ y ][ x ];
+    public void draw(GameEngine engine, int playerID) {
+        customHolder.drawImage(engine, "blackBG", 0, 0);
+        for (int y = 0; y < gridChunks.length; y++) {
+            for (int x = 0; x < gridChunks[y].length; x++) {
+                ImageChunk i = gridChunks[y][x];
                 int[] pos = i.getDrawLocation();
                 int[] ddim = i.getDrawDimensions();
                 int[] sloc = i.getSourceLocation();
                 int[] sdim = i.getSourceDimensions();
 
-                if ( custom ) {
-                    customHolder.drawImage( engine, imageName, pos[ 0 ], pos[ 1 ], ddim[ 0 ], ddim[ 1 ], sloc[ 0 ], sloc[ 1 ], sdim[ 0 ], sdim[ 1 ], 255, 255, 255, 255, 0 );
+                if (custom) {
+                    customHolder.drawImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], 255, 255, 255, 255, 0);
                 } else {
                     float s = 1f;
-                    if ( size < 0 ) s = 0.5f;
-                    if ( size > 0 ) s = 2f;
-                    engine.owner.receiver.drawSingleBlock( engine, playerID, pos[ 0 ], pos[ 1 ], colours[ y ][ x ], skin, false, darkness, 1f, s );
+                    if (size < 0) s = 0.5f;
+                    if (size > 0) s = 2f;
+                    engine.owner.receiver.drawSingleBlock(engine, playerID, pos[0], pos[1], colours[y][x], skin, false, darkness, 1f, s);
                 }
             }
         }
     }
 
-    public void modifyValues( Integer colour, Integer size, Float darkness ) {
-        if ( custom ) return;
+    public void modifyValues(Integer colour, Integer size, Float darkness) {
+        if (custom) return;
 
-        if ( colour != null ) this.colour = colour;
-        if ( size != null ) this.size = size;
-        if ( darkness != null ) this.darkness = darkness;
+        if (colour != null) this.colour = colour;
+        if (size != null) this.size = size;
+        if (darkness != null) this.darkness = darkness;
 
-        if ( colour != null || size != null ) reset();
+        if (colour != null || size != null) reset();
     }
 
-    public void setSeed( long seed ) {
-        this.directionRandomiser = new Random( seed );
+    public void setSeed(long seed) {
+        this.directionRandomiser = new Random(seed);
         reset();
     }
 
@@ -295,27 +294,27 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
      * @param bg Block skin to use.
      */
     @Override
-    public void setBG( int bg ) {
+    public void setBG(int bg) {
         custom = false;
         this.skin = bg;
         this.colour = null;
         this.size = 0;
         this.darkness = 0f;
 
-        modifyValues( null, null, null );
+        modifyValues(null, null, null);
 
-        log.debug( "Non-custom sliding tiles background modified (New Skin: " + bg + ")." );
-        log.warn( "Please set up new values using modifyValues(...)" );
+        log.debug("Non-custom sliding tiles background modified (New Skin: " + bg + ").");
+        log.warn("Please set up new values using modifyValues(...)");
     }
 
     @Override
-    public void setBG( String filePath ) {
+    public void setBG(String filePath) {
         custom = true;
-        customHolder.loadImage( filePath, imageName );
+        customHolder.loadImage(filePath, imageName);
 
         reset();
 
-        log.debug( "Custom sliding tiles background modified (New File Path: " + filePath + ")." );
+        log.debug("Custom sliding tiles background modified (New File Path: " + filePath + ").");
     }
 
     /**
@@ -325,13 +324,13 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
      * @param name   Image name
      */
     @Override
-    public void setBGFromHolder( ResourceHolderCustomAssetExtension holder, String name ) {
+    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
         custom = true;
-        customHolder.putImageAt( holder.getImageAt( name ), imageName );
+        customHolder.putImageAt(holder.getImageAt(name), imageName);
 
         reset();
 
-        log.debug( "Custom sliding tiles background modified (New Image Reference: " + name + ")." );
+        log.debug("Custom sliding tiles background modified (New Image Reference: " + name + ").");
     }
 
     /**

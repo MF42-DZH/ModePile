@@ -32,11 +32,10 @@
  */
 package zeroxfc.nullpo.custom.libs.backgroundtypes;
 
-import mu.nu.nullpo.game.play.GameEngine;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
-
 import java.util.ArrayList;
 import java.util.Collections;
+import mu.nu.nullpo.game.play.GameEngine;
+import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
 
 public class BackgroundCircularRipple extends AnimatedBackgroundHook {
     private static final int DEF_FIELD_DIM = 8;
@@ -47,13 +46,13 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
     private static final int DEF_WAVESPEED = 8;
     private static final int MAX_RADIUS = 960;
     private static final float DEF_WAVELENGTH = 80;
-    private static float BASE_SCALE = 1f;
-    private static float SCALE_VARIANCE = 1f;
+    private static final float BASE_SCALE = 1f;
+    private static final float SCALE_VARIANCE = 1f;
 
     private ImageChunk[][] chunkGrid;
     private int pulseTimerMax, currentPulseTimer;
-    private ArrayList< Integer > pulseRadii;
-    private ArrayList< int[] > pulseCentres;
+    private ArrayList<Integer> pulseRadii;
+    private ArrayList<int[]> pulseCentres;
     private Float pulseBaseScale, pulseScaleVariance;
     private Float wavelength;
     private Integer centreX, centreY;
@@ -63,60 +62,60 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
         ID = AnimatedBackgroundHook.ANIMATION_CIRCULAR_RIPPLE;
         pulseRadii = new ArrayList<>();
         pulseCentres = new ArrayList<>();
-        setImageName( "localBG" );
+        setImageName("localBG");
     }
 
-    public BackgroundCircularRipple( int bgNumber, Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance ) {
-        if ( bgNumber < 0 || bgNumber > 19 ) bgNumber = 0;
+    public BackgroundCircularRipple(int bgNumber, Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance) {
+        if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
         customHolder = new ResourceHolderCustomAssetExtension();
-        customHolder.loadImage( "res/graphics/back" + bgNumber + ".png", imageName );
+        customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
 
-        setup( cellWidth, cellHeight, pulseCentreX, pulseCentreY, wavelength, waveSpeed, pulseTimerFrames, pulseBaseScale, pulseScaleVariance );
+        setup(cellWidth, cellHeight, pulseCentreX, pulseCentreY, wavelength, waveSpeed, pulseTimerFrames, pulseBaseScale, pulseScaleVariance);
 
-        log.debug( "Non-custom circular ripple background (" + bgNumber + ") created." );
+        log.debug("Non-custom circular ripple background (" + bgNumber + ") created.");
     }
 
-    public BackgroundCircularRipple( String filePath, Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance ) {
+    public BackgroundCircularRipple(String filePath, Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance) {
         customHolder = new ResourceHolderCustomAssetExtension();
-        customHolder.loadImage( filePath, imageName );
+        customHolder.loadImage(filePath, imageName);
 
-        setup( cellWidth, cellHeight, pulseCentreX, pulseCentreY, wavelength, waveSpeed, pulseTimerFrames, pulseBaseScale, pulseScaleVariance );
+        setup(cellWidth, cellHeight, pulseCentreX, pulseCentreY, wavelength, waveSpeed, pulseTimerFrames, pulseBaseScale, pulseScaleVariance);
 
-        log.debug( "Custom circular ripple background created (File Path: " + filePath + ")." );
+        log.debug("Custom circular ripple background created (File Path: " + filePath + ").");
     }
 
-    public void modifyValues( Integer waveSpeed, Integer pulseTimerFrames, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Float pulseBaseScale, Float pulseScaleVariance ) {
-        if ( pulseTimerFrames != null ) pulseTimerMax = pulseTimerFrames;
-        if ( pulseBaseScale != null ) this.pulseBaseScale = pulseBaseScale;
-        if ( pulseScaleVariance != null ) this.pulseScaleVariance = pulseScaleVariance;
-        if ( wavelength != null ) this.wavelength = wavelength;
-        if ( pulseCentreX != null ) this.centreX = pulseCentreX;
-        if ( pulseCentreY != null ) this.centreY = pulseCentreY;
-        if ( waveSpeed != null ) this.waveSpeed = waveSpeed;
+    public void modifyValues(Integer waveSpeed, Integer pulseTimerFrames, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Float pulseBaseScale, Float pulseScaleVariance) {
+        if (pulseTimerFrames != null) pulseTimerMax = pulseTimerFrames;
+        if (pulseBaseScale != null) this.pulseBaseScale = pulseBaseScale;
+        if (pulseScaleVariance != null) this.pulseScaleVariance = pulseScaleVariance;
+        if (wavelength != null) this.wavelength = wavelength;
+        if (pulseCentreX != null) this.centreX = pulseCentreX;
+        if (pulseCentreY != null) this.centreY = pulseCentreY;
+        if (waveSpeed != null) this.waveSpeed = waveSpeed;
 
-        if ( currentPulseTimer > pulseTimerMax ) currentPulseTimer = pulseTimerMax;
+        if (currentPulseTimer > pulseTimerMax) currentPulseTimer = pulseTimerMax;
     }
 
     public void resetPulseScaleValues() {
-        if ( pulseBaseScale != null ) pulseBaseScale = null;
-        if ( pulseScaleVariance != null ) pulseScaleVariance = null;
+        if (pulseBaseScale != null) pulseBaseScale = null;
+        if (pulseScaleVariance != null) pulseScaleVariance = null;
     }
 
-    private void setup( Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseFrames, Float pulseBaseScale, Float pulseScaleVariance ) {
+    private void setup(Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseFrames, Float pulseBaseScale, Float pulseScaleVariance) {
         pulseTimerMax = pulseFrames;
         currentPulseTimer = pulseTimerMax;
 
-        if ( pulseBaseScale == null || pulseScaleVariance == null || pulseCentreX == null || pulseCentreY == null || wavelength == null || waveSpeed == null || cellWidth == null || cellHeight == null ) {
-            chunkGrid = new ImageChunk[ DEF_GRID_HEIGHT ][ DEF_GRID_WIDTH ];
-            for ( int y = 0; y < DEF_GRID_HEIGHT; y++ ) {
-                for ( int x = 0; x < DEF_GRID_WIDTH; x++ ) {
-                    chunkGrid[ y ][ x ] = new ImageChunk( ImageChunk.ANCHOR_POINT_MM, new int[] { ( DEF_FIELD_DIM * x ) + ( DEF_FIELD_DIM / 2 ), ( DEF_FIELD_DIM * y ) + ( DEF_FIELD_DIM / 2 ) }, new int[] { ( DEF_FIELD_DIM * x ), ( DEF_FIELD_DIM * y ) }, new int[] { DEF_FIELD_DIM, DEF_FIELD_DIM }, new float[] { BASE_SCALE, BASE_SCALE } );
+        if (pulseBaseScale == null || pulseScaleVariance == null || pulseCentreX == null || pulseCentreY == null || wavelength == null || waveSpeed == null || cellWidth == null || cellHeight == null) {
+            chunkGrid = new ImageChunk[DEF_GRID_HEIGHT][DEF_GRID_WIDTH];
+            for (int y = 0; y < DEF_GRID_HEIGHT; y++) {
+                for (int x = 0; x < DEF_GRID_WIDTH; x++) {
+                    chunkGrid[y][x] = new ImageChunk(ImageChunk.ANCHOR_POINT_MM, new int[] { (DEF_FIELD_DIM * x) + (DEF_FIELD_DIM / 2), (DEF_FIELD_DIM * y) + (DEF_FIELD_DIM / 2) }, new int[] { (DEF_FIELD_DIM * x), (DEF_FIELD_DIM * y) }, new int[] { DEF_FIELD_DIM, DEF_FIELD_DIM }, new float[] { BASE_SCALE, BASE_SCALE });
                 }
             }
         } else {
-            if ( wavelength <= 0 ) wavelength = DEF_WAVELENGTH;
-            if ( waveSpeed <= 0 ) waveSpeed = DEF_WAVESPEED;
+            if (wavelength <= 0) wavelength = DEF_WAVELENGTH;
+            if (waveSpeed <= 0) waveSpeed = DEF_WAVESPEED;
 
             this.pulseBaseScale = pulseBaseScale;
             this.pulseScaleVariance = pulseScaleVariance;
@@ -126,17 +125,17 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
             this.waveSpeed = waveSpeed;
 
             int w;
-            if ( 640 % cellWidth != 0 ) w = 8;
+            if (640 % cellWidth != 0) w = 8;
             else w = 640 / cellWidth;
 
             int h;
-            if ( 480 % cellHeight != 0 ) h = 8;
+            if (480 % cellHeight != 0) h = 8;
             else h = 480 / cellHeight;
 
-            chunkGrid = new ImageChunk[ h ][ w ];
-            for ( int y = 0; y < h; y++ ) {
-                for ( int x = 0; x < w; x++ ) {
-                    chunkGrid[ y ][ x ] = new ImageChunk( ImageChunk.ANCHOR_POINT_MM, new int[] { ( cellWidth * x ) + ( cellWidth / 2 ), ( cellHeight * y ) + ( cellHeight / 2 ) }, new int[] { ( cellWidth * x ), ( cellHeight * y ) }, new int[] { cellWidth, cellHeight }, new float[] { pulseBaseScale, pulseBaseScale } );
+            chunkGrid = new ImageChunk[h][w];
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    chunkGrid[y][x] = new ImageChunk(ImageChunk.ANCHOR_POINT_MM, new int[] { (cellWidth * x) + (cellWidth / 2), (cellHeight * y) + (cellHeight / 2) }, new int[] { (cellWidth * x), (cellHeight * y) }, new int[] { cellWidth, cellHeight }, new float[] { pulseBaseScale, pulseBaseScale });
                 }
             }
         }
@@ -145,46 +144,46 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 
     @Override
     public void update() {
-        if ( pulseTimerMax >= 0 ) currentPulseTimer++;
-        if ( currentPulseTimer >= pulseTimerMax && pulseTimerMax >= 0 ) {
+        if (pulseTimerMax >= 0) currentPulseTimer++;
+        if (currentPulseTimer >= pulseTimerMax && pulseTimerMax >= 0) {
             currentPulseTimer = 0;
-            pulseRadii.add( 0 );
-            pulseCentres.add( new int[] { ( centreX == null ) ? DEF_PULSE_CENTRE_X : centreX, ( centreY == null ) ? DEF_PULSE_CENTRE_Y : centreY } );
+            pulseRadii.add(0);
+            pulseCentres.add(new int[] { (centreX == null) ? DEF_PULSE_CENTRE_X : centreX, (centreY == null) ? DEF_PULSE_CENTRE_Y : centreY });
         }
 
         int ws;
-        if ( waveSpeed == null ) ws = DEF_WAVESPEED;
+        if (waveSpeed == null) ws = DEF_WAVESPEED;
         else ws = waveSpeed;
 
-        float baseScale = ( pulseBaseScale == null ) ? BASE_SCALE : pulseBaseScale;
-        float scaleVariance = ( pulseScaleVariance == null ) ? SCALE_VARIANCE : pulseScaleVariance;
-        float wl = ( wavelength == null ) ? DEF_WAVELENGTH : wavelength;
+        float baseScale = (pulseBaseScale == null) ? BASE_SCALE : pulseBaseScale;
+        float scaleVariance = (pulseScaleVariance == null) ? SCALE_VARIANCE : pulseScaleVariance;
+        float wl = (wavelength == null) ? DEF_WAVELENGTH : wavelength;
 
-        if ( pulseRadii.size() > 0 ) {
-            for ( int i = 0; i < pulseRadii.size(); i++ ) {
-                pulseRadii.set( i, pulseRadii.get( i ) + ws );
-                int cx = pulseCentres.get( i )[ 0 ];
-                int cy = pulseCentres.get( i )[ 1 ];
+        if (pulseRadii.size() > 0) {
+            for (int i = 0; i < pulseRadii.size(); i++) {
+                pulseRadii.set(i, pulseRadii.get(i) + ws);
+                int cx = pulseCentres.get(i)[0];
+                int cy = pulseCentres.get(i)[1];
 
-                int cr = pulseRadii.get( i );
-                for ( ImageChunk[] imageChunks : chunkGrid ) {
-                    for ( ImageChunk imageChunk : imageChunks ) {
+                int cr = pulseRadii.get(i);
+                for (ImageChunk[] imageChunks : chunkGrid) {
+                    for (ImageChunk imageChunk : imageChunks) {
                         int[] anch = imageChunk.getAnchorLocation();
-                        int cellAnchorX = anch[ 0 ];
-                        int cellAnchorY = anch[ 1 ];
+                        int cellAnchorX = anch[0];
+                        int cellAnchorY = anch[1];
 
-                        double distanceX = Math.abs( cellAnchorX - cx );
-                        double distanceY = Math.abs( cellAnchorY - cy );
-                        double dTotal = Math.sqrt( ( distanceX * distanceX ) + ( distanceY * distanceY ) );
-                        if ( almostEqual( dTotal, cr, wl ) && dTotal >= 0 ) {
+                        double distanceX = Math.abs(cellAnchorX - cx);
+                        double distanceY = Math.abs(cellAnchorY - cy);
+                        double dTotal = Math.sqrt((distanceX * distanceX) + (distanceY * distanceY));
+                        if (almostEqual(dTotal, cr, wl) && dTotal >= 0) {
                             double usedDistance = dTotal - cr;
-                            double sinVal = Math.sin( Math.PI * ( usedDistance / wl ) );
-                            double newScale = imageChunk.getScale()[ 0 ] + ( sinVal * scaleVariance );
-                            if ( newScale < 1d ) newScale = 1d;
+                            double sinVal = Math.sin(Math.PI * (usedDistance / wl));
+                            double newScale = imageChunk.getScale()[0] + (sinVal * scaleVariance);
+                            if (newScale < 1d) newScale = 1d;
 
-                            imageChunk.setScale( new float[] { ( float ) newScale, ( float ) newScale } );
-                        } else if ( pulseRadii.size() <= 1 ) {
-                            imageChunk.setScale( new float[] { baseScale, baseScale } );
+                            imageChunk.setScale(new float[] { (float) newScale, (float) newScale });
+                        } else if (pulseRadii.size() <= 1) {
+                            imageChunk.setScale(new float[] { baseScale, baseScale });
                         }
                     }
                 }
@@ -192,17 +191,17 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
         }
 
         // pulseRadii.removeIf(integer -> (integer > MAX_RADIUS));
-        for ( int i = pulseRadii.size() - 1; i >= 0; i-- ) {
-            if ( pulseRadii.get( i ) > MAX_RADIUS ) {
-                pulseRadii.remove( i );
-                pulseCentres.remove( i );
+        for (int i = pulseRadii.size() - 1; i >= 0; i--) {
+            if (pulseRadii.get(i) > MAX_RADIUS) {
+                pulseRadii.remove(i);
+                pulseCentres.remove(i);
             }
         }
     }
 
-    public void manualRipple( int x, int y ) {
-        pulseRadii.add( 0 );
-        pulseCentres.add( new int[] { x, y } );
+    public void manualRipple(int x, int y) {
+        pulseRadii.add(0);
+        pulseCentres.add(new int[] { x, y });
     }
 
     @Override
@@ -214,37 +213,37 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
     }
 
     @Override
-    public void draw( GameEngine engine, int playerID ) {
-        ArrayList< ImageChunk > priorityList = new ArrayList<>();
-        for ( ImageChunk[] imageChunks : chunkGrid ) {
-            Collections.addAll( priorityList, imageChunks );
+    public void draw(GameEngine engine, int playerID) {
+        ArrayList<ImageChunk> priorityList = new ArrayList<>();
+        for (ImageChunk[] imageChunks : chunkGrid) {
+            Collections.addAll(priorityList, imageChunks);
         }
-        priorityList.sort( ( c1, c2 ) -> Float.compare( c1.getScale()[ 0 ], c2.getScale()[ 0 ] ) );
+        priorityList.sort((c1, c2) -> Float.compare(c1.getScale()[0], c2.getScale()[0]));
 
-        float baseScale = ( pulseBaseScale == null ) ? BASE_SCALE : pulseBaseScale;
-        if ( almostEqual( baseScale, 1, 0.005 ) ) {
-            customHolder.drawImage( engine, imageName, 0, 0 );
-            priorityList.removeIf( imageChunk -> almostEqual( imageChunk.getScale()[ 0 ], 1, 0.005 ) );
+        float baseScale = (pulseBaseScale == null) ? BASE_SCALE : pulseBaseScale;
+        if (almostEqual(baseScale, 1, 0.005)) {
+            customHolder.drawImage(engine, imageName, 0, 0);
+            priorityList.removeIf(imageChunk -> almostEqual(imageChunk.getScale()[0], 1, 0.005));
         }
-        for ( ImageChunk i : priorityList ) {
+        for (ImageChunk i : priorityList) {
             int[] pos = i.getDrawLocation();
             int[] ddim = i.getDrawDimensions();
             int[] sloc = i.getSourceLocation();
             int[] sdim = i.getSourceDimensions();
-            customHolder.drawImage( engine, imageName, pos[ 0 ], pos[ 1 ], ddim[ 0 ], ddim[ 1 ], sloc[ 0 ], sloc[ 1 ], sdim[ 0 ], sdim[ 1 ], 255, 255, 255, 255, 0 );
+            customHolder.drawImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], 255, 255, 255, 255, 0);
         }
     }
 
     @Override
-    public void setBG( int bg ) {
-        customHolder.loadImage( "res/graphics/back" + bg + ".png", imageName );
-        log.debug( "Non-custom circular ripple background modified (New BG: " + bg + ")." );
+    public void setBG(int bg) {
+        customHolder.loadImage("res/graphics/back" + bg + ".png", imageName);
+        log.debug("Non-custom circular ripple background modified (New BG: " + bg + ").");
     }
 
     @Override
-    public void setBG( String filePath ) {
-        customHolder.loadImage( filePath, imageName );
-        log.debug( "Custom circular ripple background modified (New File Path: " + filePath + ")." );
+    public void setBG(String filePath) {
+        customHolder.loadImage(filePath, imageName);
+        log.debug("Custom circular ripple background modified (New File Path: " + filePath + ").");
     }
 
     /**
@@ -254,9 +253,9 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
      * @param name   Image name
      */
     @Override
-    public void setBGFromHolder( ResourceHolderCustomAssetExtension holder, String name ) {
-        customHolder.putImageAt( holder.getImageAt( name ), imageName );
-        log.debug( "Custom circular ripple background modified (New Image Reference: " + name + ")." );
+    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+        customHolder.putImageAt(holder.getImageAt(name), imageName);
+        log.debug("Custom circular ripple background modified (New Image Reference: " + name + ").");
     }
 
     /**

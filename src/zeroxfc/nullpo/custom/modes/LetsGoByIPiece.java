@@ -1,9 +1,10 @@
 package zeroxfc.nullpo.custom.modes;
 
-import zeroxfc.nullpo.custom.libs.*;
-
 import java.util.LinkedHashMap;
 import java.util.Random;
+import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.MathHelper;
+import zeroxfc.nullpo.custom.libs.ShakingText;
 
 public class LetsGoByIPiece extends MarathonModeBase {
     private static final double FRICTION_COEFFICIENT = 0.6;
@@ -28,7 +29,7 @@ public class LetsGoByIPiece extends MarathonModeBase {
     private GameType gameType;
     private GameDifficulty difficulty;
     private GearboxGear engineState;
-    private LinkedHashMap< NavigatorMarker, Double > distancesUntilMarker;
+    private LinkedHashMap<NavigatorMarker, Double> distancesUntilMarker;
 
     // Yep. The courses will be procedurally generated. Please enjoy game.
     private Random passengerRandomiser, courseRandomiser;
@@ -41,50 +42,50 @@ public class LetsGoByIPiece extends MarathonModeBase {
      * @param velocity Current train velocity
      * @return Current acceleration.
      */
-    private double getEngineAcceleration( GearboxGear gear, double velocity ) {
+    private double getEngineAcceleration(GearboxGear gear, double velocity) {
         double acceleration;
-        int tat = MathHelper.clamp( throttleApplicationTime, 0, 600 );
-        int bat = MathHelper.clamp( brakeApplicationTime, 0, 30 );
+        int tat = MathHelper.clamp(throttleApplicationTime, 0, 600);
+        int bat = MathHelper.clamp(brakeApplicationTime, 0, 30);
 
-        switch ( gear ) {
+        switch (gear) {
             case THROTTLE_1:
-                acceleration = Interpolation.lerp( 1d, 0d, velocity / 30d );
-                if ( acceleration < 0 ) acceleration = 0;
-                return Interpolation.lerp( 0, acceleration, tat / 600d );
+                acceleration = Interpolation.lerp(1d, 0d, velocity / 30d);
+                if (acceleration < 0) acceleration = 0;
+                return Interpolation.lerp(0, acceleration, tat / 600d);
             case THROTTLE_2:
-                acceleration = Interpolation.lerp( 2d, 0d, velocity / 60d );
-                if ( acceleration < 0 ) acceleration = 0;
-                return Interpolation.lerp( 0, acceleration, tat / 600d );
+                acceleration = Interpolation.lerp(2d, 0d, velocity / 60d);
+                if (acceleration < 0) acceleration = 0;
+                return Interpolation.lerp(0, acceleration, tat / 600d);
             case THROTTLE_3:
-                acceleration = Interpolation.lerp( 4d, 0d, velocity / 90d );
-                if ( acceleration < 0 ) acceleration = 0;
-                return Interpolation.lerp( 0, acceleration, tat / 600d );
+                acceleration = Interpolation.lerp(4d, 0d, velocity / 90d);
+                if (acceleration < 0) acceleration = 0;
+                return Interpolation.lerp(0, acceleration, tat / 600d);
             case THROTTLE_4:
-                acceleration = Interpolation.lerp( 7d, 0d, velocity / 120d );
-                if ( acceleration < 0 ) acceleration = 0;
-                return Interpolation.lerp( 0, acceleration, tat / 600d );
+                acceleration = Interpolation.lerp(7d, 0d, velocity / 120d);
+                if (acceleration < 0) acceleration = 0;
+                return Interpolation.lerp(0, acceleration, tat / 600d);
             case THROTTLE_5:
-                acceleration = Interpolation.lerp( 11d, 0d, velocity / 150d );
-                if ( acceleration < 0 ) acceleration = 0;
-                return Interpolation.lerp( 0, acceleration, tat / 600d );
+                acceleration = Interpolation.lerp(11d, 0d, velocity / 150d);
+                if (acceleration < 0) acceleration = 0;
+                return Interpolation.lerp(0, acceleration, tat / 600d);
             case THROTTLE_6:
-                acceleration = Interpolation.lerp( 16d, 0d, velocity / 180d );
-                if ( acceleration < 0 ) acceleration = 0;
-                return Interpolation.lerp( 0, acceleration, tat / 600d );
+                acceleration = Interpolation.lerp(16d, 0d, velocity / 180d);
+                if (acceleration < 0) acceleration = 0;
+                return Interpolation.lerp(0, acceleration, tat / 600d);
             case BRAKE_1:
-                return Interpolation.lerp( 0d, -0.5d, bat / 30d );
+                return Interpolation.lerp(0d, -0.5d, bat / 30d);
             case BRAKE_2:
-                return Interpolation.lerp( 0d, -1.0d, bat / 30d );
+                return Interpolation.lerp(0d, -1.0d, bat / 30d);
             case BRAKE_3:
-                return Interpolation.lerp( 0d, -2.0d, bat / 30d );
+                return Interpolation.lerp(0d, -2.0d, bat / 30d);
             case BRAKE_4:
-                return Interpolation.lerp( 0d, -3.0d, bat / 30d );
+                return Interpolation.lerp(0d, -3.0d, bat / 30d);
             case BRAKE_5:
-                return Interpolation.lerp( 0d, -4.5d, bat / 30d );
+                return Interpolation.lerp(0d, -4.5d, bat / 30d);
             case BRAKE_6:
-                return Interpolation.lerp( 0d, -8.0d, bat / 30d );
+                return Interpolation.lerp(0d, -8.0d, bat / 30d);
             case BRAKE_EMERGENCY:
-                return Interpolation.lerp( 0d, -12.0d, bat / 30d );
+                return Interpolation.lerp(0d, -12.0d, bat / 30d);
             default:
                 return 0d;
         }
@@ -98,18 +99,18 @@ public class LetsGoByIPiece extends MarathonModeBase {
      * @param tspin Was it a t-spin clear?
      * @return The boost value
      */
-    private double getBoost( int lines, boolean tspin ) {
-        if ( lines <= 0 || gameType != GameType.MTD ) return 0;
+    private double getBoost(int lines, boolean tspin) {
+        if (lines <= 0 || gameType != GameType.MTD) return 0;
 
         double boostValue = 0, stbValue;
 
-        if ( lines == 1 ) {
+        if (lines == 1) {
             boostValue = 2.5;
             stbValue = 0.05;
-        } else if ( lines == 2 ) {
+        } else if (lines == 2) {
             boostValue = 5.0;
             stbValue = 0.1;
-        } else if ( lines == 3 ) {
+        } else if (lines == 3) {
             boostValue = 10.0;
             stbValue = 0.2;
         } else {
@@ -117,11 +118,11 @@ public class LetsGoByIPiece extends MarathonModeBase {
             stbValue = 0.4;
         }
 
-        for ( int i = 0; i < carriageStability.length; i++ ) {
-            carriageStability[ i ] = Interpolation.lerp( carriageStability[ i ], 100, tspin ? stbValue * 2 : stbValue );
+        for (int i = 0; i < carriageStability.length; i++) {
+            carriageStability[i] = Interpolation.lerp(carriageStability[i], 100, tspin ? stbValue * 2 : stbValue);
         }
 
-        if ( tspin ) boostValue *= 1.5;
+        if (tspin) boostValue *= 1.5;
         return boostValue;
     }
 
@@ -132,16 +133,16 @@ public class LetsGoByIPiece extends MarathonModeBase {
      * @param acceleration Current train acceleration
      * @return New train velocity.
      */
-    private double calculateNewVelocity( double oldVelocity, double acceleration ) {
-        double mass = LOCOMOTIVE_MASS + ( PASSENGER_CARRIAGE_MASS * PASSENGER_CARRIAGE_COUNT ) + ( PASSENGER_MASS * passengers );
+    private double calculateNewVelocity(double oldVelocity, double acceleration) {
+        double mass = LOCOMOTIVE_MASS + (PASSENGER_CARRIAGE_MASS * PASSENGER_CARRIAGE_COUNT) + (PASSENGER_MASS * passengers);
         double frictionForce = FRICTION_COEFFICIENT * mass * G;
-        double frictionDecel = frictionForce / mass / ( 1000d / 36d );
+        double frictionDecel = frictionForce / mass / (1000d / 36d);
 
-        double finalAcceleration = ( acceleration - frictionDecel );
+        double finalAcceleration = (acceleration - frictionDecel);
 
-        double vel = oldVelocity + ( ( 1d / 60d ) * finalAcceleration );
+        double vel = oldVelocity + ((1d / 60d) * finalAcceleration);
 
-        if ( vel < 0 ) vel = 0;
+        if (vel < 0) vel = 0;
 
         return vel;
     }
@@ -189,9 +190,13 @@ public class LetsGoByIPiece extends MarathonModeBase {
          * > MTD: speedrun mode, get to the end of the track with no regard to station timings or safety.
          */
 
-        STANDARD( 0 ), RAPID( 1 ), EXPRESS( 2 ), MTD( 3 );
+        STANDARD(0), RAPID(1), EXPRESS(2), MTD(3);
 
-        private int value;
+        private final int value;
+
+        GameType(int value) {
+            this.value = value;
+        }
 
         /**
          * Gets the underlying <code>int</code> value of the game type.
@@ -207,15 +212,11 @@ public class LetsGoByIPiece extends MarathonModeBase {
          *
          * @return Game type enum with the selected value. Returns <code>null</code> if it doesn't exist.
          */
-        public GameType getEnumFromValue( int value ) {
-            for ( GameType type : values() ) {
-                if ( type.getValue() == value ) return type;
+        public GameType getEnumFromValue(int value) {
+            for (GameType type : values()) {
+                if (type.getValue() == value) return type;
             }
             return null;
-        }
-
-        GameType( int value ) {
-            this.value = value;
         }
     }
 
@@ -247,9 +248,13 @@ public class LetsGoByIPiece extends MarathonModeBase {
          * > Stopping / Passing Too Early / Too Late: -10 LP per second out of lenience
          */
 
-        LENIENT( 0 ), FAIR( 1 ), HARSH( 2 );
+        LENIENT(0), FAIR(1), HARSH(2);
 
-        private int value;
+        private final int value;
+
+        GameDifficulty(int value) {
+            this.value = value;
+        }
 
         /**
          * Gets the underlying <code>int</code> value of the difficulty.
@@ -265,15 +270,11 @@ public class LetsGoByIPiece extends MarathonModeBase {
          *
          * @return Difficulty enum with the selected value. Returns <code>null</code> if it doesn't exist.
          */
-        public GameDifficulty getEnumFromValue( int value ) {
-            for ( GameDifficulty type : values() ) {
-                if ( type.getValue() == value ) return type;
+        public GameDifficulty getEnumFromValue(int value) {
+            for (GameDifficulty type : values()) {
+                if (type.getValue() == value) return type;
             }
             return null;
-        }
-
-        GameDifficulty( int value ) {
-            this.value = value;
         }
     }
 
@@ -283,7 +284,7 @@ public class LetsGoByIPiece extends MarathonModeBase {
         /**
          * Marker type
          */
-        private MarkerType typeOfMarker;
+        private final MarkerType typeOfMarker;
 
         /**
          * Given speed limit. If null, do not change the limit
@@ -301,7 +302,7 @@ public class LetsGoByIPiece extends MarathonModeBase {
          *                 45 on a traffic light gives a Y.<br />
          *                 0 on a traffic light gives a stop.
          */
-        public NavigatorMarker( MarkerType type, Integer newLimit ) {
+        public NavigatorMarker(MarkerType type, Integer newLimit) {
             typeOfMarker = type;
             speedLimit = newLimit;
         }
@@ -329,7 +330,7 @@ public class LetsGoByIPiece extends MarathonModeBase {
          *
          * @param speedLimit New speed limit value
          */
-        public void setSpeedLimit( Integer speedLimit ) {
+        public void setSpeedLimit(Integer speedLimit) {
             this.speedLimit = speedLimit;
         }
 
@@ -337,15 +338,15 @@ public class LetsGoByIPiece extends MarathonModeBase {
          * Possible marker types.
          */
         enum MarkerType {
-            TRAFFIC_LIGHT( new int[] { 255, 255, 255 } ),
-            SPEED_LIMIT_MARKER( new int[] { 255, 255, 0 } ),
-            STATION_PASS( new int[] { 0, 255, 0 } ),
-            STATION_STOP( new int[] { 255, 128, 0 } ),
-            CORNER_MTD( new int[] { 200, 0, 255 } );
+            TRAFFIC_LIGHT(new int[] { 255, 255, 255 }),
+            SPEED_LIMIT_MARKER(new int[] { 255, 255, 0 }),
+            STATION_PASS(new int[] { 0, 255, 0 }),
+            STATION_STOP(new int[] { 255, 128, 0 }),
+            CORNER_MTD(new int[] { 200, 0, 255 });
 
-            private int[] colour;
+            private final int[] colour;
 
-            MarkerType( int[] colour ) {
+            MarkerType(int[] colour) {
                 this.colour = colour;
             }
 

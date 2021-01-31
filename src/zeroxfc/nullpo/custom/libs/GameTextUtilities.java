@@ -32,41 +32,40 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
-import mu.nu.nullpo.game.event.EventReceiver;
-import mu.nu.nullpo.game.play.GameEngine;
-
 import java.util.Arrays;
 import java.util.Random;
+import mu.nu.nullpo.game.event.EventReceiver;
+import mu.nu.nullpo.game.play.GameEngine;
 
 public class GameTextUtilities {
     /**
      * Rainbow colour order
      */
     public static final Integer[] RAINBOW_ORDER = {
-            EventReceiver.COLOR_RED,
-            EventReceiver.COLOR_ORANGE,
-            EventReceiver.COLOR_YELLOW,
-            EventReceiver.COLOR_WHITE,
-            EventReceiver.COLOR_GREEN,
-            EventReceiver.COLOR_CYAN,
-            EventReceiver.COLOR_BLUE,
-            EventReceiver.COLOR_DARKBLUE,
-            EventReceiver.COLOR_PURPLE,
-            EventReceiver.COLOR_PINK,
+        EventReceiver.COLOR_RED,
+        EventReceiver.COLOR_ORANGE,
+        EventReceiver.COLOR_YELLOW,
+        EventReceiver.COLOR_WHITE,
+        EventReceiver.COLOR_GREEN,
+        EventReceiver.COLOR_CYAN,
+        EventReceiver.COLOR_BLUE,
+        EventReceiver.COLOR_DARKBLUE,
+        EventReceiver.COLOR_PURPLE,
+        EventReceiver.COLOR_PINK,
     };
 
     /**
      * Text alignment option
      */
     public static final int ALIGN_TOP_LEFT = 0,
-            ALIGN_TOP_MIDDLE = 1,
-            ALIGN_TOP_RIGHT = 2,
-            ALIGN_MIDDLE_LEFT = 3,
-            ALIGN_MIDDLE_MIDDLE = 4,
-            ALIGN_MIDDLE_RIGHT = 5,
-            ALIGN_BOTTOM_LEFT = 6,
-            ALIGN_BOTTOM_MIDDLE = 7,
-            ALIGN_BOTTOM_RIGHT = 8;
+        ALIGN_TOP_MIDDLE = 1,
+        ALIGN_TOP_RIGHT = 2,
+        ALIGN_MIDDLE_LEFT = 3,
+        ALIGN_MIDDLE_MIDDLE = 4,
+        ALIGN_MIDDLE_RIGHT = 5,
+        ALIGN_BOTTOM_LEFT = 6,
+        ALIGN_BOTTOM_MIDDLE = 7,
+        ALIGN_BOTTOM_RIGHT = 8;
 
     /**
      * Rainbow colour count
@@ -92,11 +91,11 @@ public class GameTextUtilities {
      * @param randomEngine Random instance to use
      * @return Random string, with all characters either being visible or a space.
      */
-    public static String randomString( int length, Random randomEngine ) {
+    public static String randomString(int length, Random randomEngine) {
         StringBuilder sb = new StringBuilder();
 
-        for ( int i = 0; i < length; i++ ) {
-            sb.append( CHARACTERS.charAt( randomEngine.nextInt( CHARACTERS.length() ) ) );
+        for (int i = 0; i < length; i++) {
+            sb.append(CHARACTERS.charAt(randomEngine.nextInt(CHARACTERS.length())));
         }
 
         return sb.toString();
@@ -109,8 +108,8 @@ public class GameTextUtilities {
      * @param randomEngine Random instance to use
      * @return Obfuscated string.
      */
-    public static String obfuscateString( String str, Random randomEngine ) {
-        return obfuscateString( str, 1d, randomEngine );
+    public static String obfuscateString(String str, Random randomEngine) {
+        return obfuscateString(str, 1d, randomEngine);
     }
 
     /**
@@ -121,15 +120,15 @@ public class GameTextUtilities {
      * @param randomEngine Random instance to use
      * @return Obfuscated string.
      */
-    public static String obfuscateString( String str, double chance, Random randomEngine ) {
-        if ( chance <= 0 ) return str;
+    public static String obfuscateString(String str, double chance, Random randomEngine) {
+        if (chance <= 0) return str;
 
-        StringBuilder sb = new StringBuilder( str );
+        StringBuilder sb = new StringBuilder(str);
 
-        for ( int i = 0; i < sb.length(); i++ ) {
+        for (int i = 0; i < sb.length(); i++) {
             double c = randomEngine.nextDouble();
-            if ( c < chance ) {
-                sb.setCharAt( i, CHARACTERS.charAt( randomEngine.nextInt( CHARACTERS.length() ) ) );
+            if (c < chance) {
+                sb.setCharAt(i, CHARACTERS.charAt(randomEngine.nextInt(CHARACTERS.length())));
             }
         }
 
@@ -153,46 +152,46 @@ public class GameTextUtilities {
      * @param color     Color of string
      * @param scale     Scale of string
      */
-    public static void drawDirectTextAlign( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int alignment, String str, Integer color, Float scale ) {
-        if ( color == null ) color = 0;
-        if ( scale == null ) scale = 1f;
-        if ( str == null ) return;
+    public static void drawDirectTextAlign(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int alignment, String str, Integer color, Float scale) {
+        if (color == null) color = 0;
+        if (scale == null) scale = 1f;
+        if (str == null) return;
 
         int offsetX, offsetY;
 
-        switch ( alignment ) {
+        switch (alignment) {
             case ALIGN_TOP_MIDDLE:
             case ALIGN_MIDDLE_MIDDLE:
             case ALIGN_BOTTOM_MIDDLE:
-                offsetX = ( int ) ( 8 * str.length() * scale );
+                offsetX = (int) (8 * str.length() * scale);
                 break;
             case ALIGN_TOP_RIGHT:
             case ALIGN_MIDDLE_RIGHT:
             case ALIGN_BOTTOM_RIGHT:
-                offsetX = ( int ) ( 16 * str.length() * scale );
+                offsetX = (int) (16 * str.length() * scale);
                 break;
             default:
                 offsetX = 0;
                 break;
         }
 
-        switch ( alignment ) {
+        switch (alignment) {
             case ALIGN_MIDDLE_LEFT:
             case ALIGN_MIDDLE_MIDDLE:
             case ALIGN_MIDDLE_RIGHT:
-                offsetY = ( int ) ( 8 * scale );
+                offsetY = (int) (8 * scale);
                 break;
             case ALIGN_BOTTOM_LEFT:
             case ALIGN_BOTTOM_MIDDLE:
             case ALIGN_BOTTOM_RIGHT:
-                offsetY = ( int ) ( 16 * scale );
+                offsetY = (int) (16 * scale);
                 break;
             default:
                 offsetY = 0;
                 break;
         }
 
-        receiver.drawDirectFont( engine, playerID, x - offsetX, y - offsetY, str, color, scale );
+        receiver.drawDirectFont(engine, playerID, x - offsetX, y - offsetY, str, color, scale);
     }
 
     /**
@@ -208,14 +207,14 @@ public class GameTextUtilities {
      * @param color     Color of string
      * @param scale     Scale of string
      */
-    public static void drawScoreTextAlign( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int alignment, String str, Integer color, Float scale ) {
-        if ( color == null ) color = 0;
-        if ( scale == null ) scale = 1f;
-        if ( str == null ) return;
+    public static void drawScoreTextAlign(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int alignment, String str, Integer color, Float scale) {
+        if (color == null) color = 0;
+        if (scale == null) scale = 1f;
+        if (str == null) return;
 
         int offsetX;
 
-        switch ( alignment ) {
+        switch (alignment) {
             case ALIGN_TOP_MIDDLE:
             case ALIGN_MIDDLE_MIDDLE:
             case ALIGN_BOTTOM_MIDDLE:
@@ -233,23 +232,23 @@ public class GameTextUtilities {
 
         int offsetY;
 
-        switch ( alignment ) {
+        switch (alignment) {
             case ALIGN_MIDDLE_LEFT:
             case ALIGN_MIDDLE_MIDDLE:
             case ALIGN_MIDDLE_RIGHT:
-                offsetY = ( int ) ( scale / 2 );
+                offsetY = (int) (scale / 2);
                 break;
             case ALIGN_BOTTOM_LEFT:
             case ALIGN_BOTTOM_MIDDLE:
             case ALIGN_BOTTOM_RIGHT:
-                offsetY = ( int ) ( scale * 1 );
+                offsetY = (int) (scale * 1);
                 break;
             default:
                 offsetY = 0;
                 break;
         }
 
-        receiver.drawScoreFont( engine, playerID, x - offsetX, y - offsetY, str, color, scale );
+        receiver.drawScoreFont(engine, playerID, x - offsetX, y - offsetY, str, color, scale);
     }
 
     /**
@@ -265,30 +264,30 @@ public class GameTextUtilities {
      * @param color     Color of string
      * @param scale     Scale of string
      */
-    public static void drawMenuTextAlign( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int alignment, String str, Integer color, Float scale ) {
-        if ( color == null ) color = 0;
-        if ( scale == null ) scale = 1f;
-        if ( str == null ) return;
+    public static void drawMenuTextAlign(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int alignment, String str, Integer color, Float scale) {
+        if (color == null) color = 0;
+        if (scale == null) scale = 1f;
+        if (str == null) return;
 
         int offsetX;
 
-        switch ( alignment ) {
+        switch (alignment) {
             case ALIGN_TOP_MIDDLE:
             case ALIGN_MIDDLE_MIDDLE:
             case ALIGN_BOTTOM_MIDDLE:
-                offsetX = ( int ) ( str.length() * scale / 2 );
+                offsetX = (int) (str.length() * scale / 2);
                 break;
             case ALIGN_TOP_RIGHT:
             case ALIGN_MIDDLE_RIGHT:
             case ALIGN_BOTTOM_RIGHT:
-                offsetX = ( int ) ( str.length() * scale );
+                offsetX = (int) (str.length() * scale);
                 break;
             default:
                 offsetX = 0;
                 break;
         }
 
-        receiver.drawMenuFont( engine, playerID, x - offsetX, y, str, color, scale );
+        receiver.drawMenuFont(engine, playerID, x - offsetX, y, str, color, scale);
     }
 
     // endregion Aligned Text
@@ -307,8 +306,8 @@ public class GameTextUtilities {
      * @param startColour Starting colour of text
      * @param scale       Scale of text
      */
-    public static void drawRainbowDirectString( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale ) {
-        drawRainbowDirectString( receiver, engine, playerID, x, y, str, startColour, scale, false );
+    public static void drawRainbowDirectString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale) {
+        drawRainbowDirectString(receiver, engine, playerID, x, y, str, startColour, scale, false);
     }
 
     /**
@@ -323,8 +322,8 @@ public class GameTextUtilities {
      * @param startColour Starting colour of text
      * @param scale       Scale of text
      */
-    public static void drawRainbowScoreString( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale ) {
-        drawRainbowScoreString( receiver, engine, playerID, x, y, str, startColour, scale, false );
+    public static void drawRainbowScoreString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale) {
+        drawRainbowScoreString(receiver, engine, playerID, x, y, str, startColour, scale, false);
     }
 
     /**
@@ -339,8 +338,8 @@ public class GameTextUtilities {
      * @param startColour Starting colour of text
      * @param scale       Scale of text
      */
-    public static void drawRainbowMenuString( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale ) {
-        drawRainbowMenuString( receiver, engine, playerID, x, y, str, startColour, scale, false );
+    public static void drawRainbowMenuString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale) {
+        drawRainbowMenuString(receiver, engine, playerID, x, y, str, startColour, scale, false);
     }
 
     /**
@@ -356,15 +355,15 @@ public class GameTextUtilities {
      * @param scale       Scale of text
      * @param reverse     Reverse order or not
      */
-    public static void drawRainbowDirectString( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale, boolean reverse ) {
+    public static void drawRainbowDirectString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale, boolean reverse) {
         int offset = 0;
-        for ( int i = 0; i < str.length(); i++ ) {
-            if ( str.charAt( i ) == ' ' ) {
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == ' ') {
                 offset++;
             } else {
-                int j = ( Arrays.asList( RAINBOW_ORDER ).indexOf( startColour ) + ( i * ( reverse ? -1 : 1 ) ) - ( offset * ( reverse ? -1 : 1 ) ) ) % RAINBOW_COLOURS;
-                if ( j < 0 ) j = RAINBOW_COLOURS - j;
-                receiver.drawDirectFont( engine, playerID, x + ( int ) ( i * 16 * scale ), y, str.substring( i, i + 1 ), RAINBOW_ORDER[ j ] );
+                int j = (Arrays.asList(RAINBOW_ORDER).indexOf(startColour) + (i * (reverse ? -1 : 1)) - (offset * (reverse ? -1 : 1))) % RAINBOW_COLOURS;
+                if (j < 0) j = RAINBOW_COLOURS - j;
+                receiver.drawDirectFont(engine, playerID, x + (int) (i * 16 * scale), y, str.substring(i, i + 1), RAINBOW_ORDER[j]);
             }
         }
     }
@@ -382,15 +381,15 @@ public class GameTextUtilities {
      * @param scale       Scale of text
      * @param reverse     Reverse order or not
      */
-    public static void drawRainbowScoreString( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale, boolean reverse ) {
+    public static void drawRainbowScoreString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale, boolean reverse) {
         int offset = 0;
-        for ( int i = 0; i < str.length(); i++ ) {
-            if ( str.charAt( i ) == ' ' ) {
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == ' ') {
                 offset++;
             } else {
-                int j = ( Arrays.asList( RAINBOW_ORDER ).indexOf( startColour ) + ( i * ( reverse ? -1 : 1 ) ) - ( offset * ( reverse ? -1 : 1 ) ) ) % RAINBOW_COLOURS;
-                if ( j < 0 ) j = RAINBOW_COLOURS - j;
-                receiver.drawScoreFont( engine, playerID, x + i, y, str.substring( i, i + 1 ), RAINBOW_ORDER[ j ] );
+                int j = (Arrays.asList(RAINBOW_ORDER).indexOf(startColour) + (i * (reverse ? -1 : 1)) - (offset * (reverse ? -1 : 1))) % RAINBOW_COLOURS;
+                if (j < 0) j = RAINBOW_COLOURS - j;
+                receiver.drawScoreFont(engine, playerID, x + i, y, str.substring(i, i + 1), RAINBOW_ORDER[j]);
             }
         }
     }
@@ -408,15 +407,15 @@ public class GameTextUtilities {
      * @param scale       Scale of text
      * @param reverse     Reverse order or not
      */
-    public static void drawRainbowMenuString( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale, boolean reverse ) {
+    public static void drawRainbowMenuString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, int startColour, float scale, boolean reverse) {
         int offset = 0;
-        for ( int i = 0; i < str.length(); i++ ) {
-            if ( str.charAt( i ) == ' ' ) {
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == ' ') {
                 offset++;
             } else {
-                int j = ( Arrays.asList( RAINBOW_ORDER ).indexOf( startColour ) + ( i * ( reverse ? -1 : 1 ) ) - ( offset * ( reverse ? -1 : 1 ) ) ) % RAINBOW_COLOURS;
-                if ( j < 0 ) j = RAINBOW_COLOURS - j;
-                receiver.drawMenuFont( engine, playerID, x + i, y, str.substring( i, i + 1 ), RAINBOW_ORDER[ j ] );
+                int j = (Arrays.asList(RAINBOW_ORDER).indexOf(startColour) + (i * (reverse ? -1 : 1)) - (offset * (reverse ? -1 : 1))) % RAINBOW_COLOURS;
+                if (j < 0) j = RAINBOW_COLOURS - j;
+                receiver.drawMenuFont(engine, playerID, x + i, y, str.substring(i, i + 1), RAINBOW_ORDER[j]);
             }
         }
     }
@@ -433,13 +432,13 @@ public class GameTextUtilities {
      * @param randomEngine Random instance to use
      * @param scale        Scale of text
      */
-    public static void drawRandomRainbowDirectString( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, Random randomEngine, float scale ) {
+    public static void drawRandomRainbowDirectString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, Random randomEngine, float scale) {
         int offset = 0;
-        for ( int i = 0; i < str.length(); i++ ) {
-            if ( str.charAt( i ) == ' ' ) {
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == ' ') {
                 offset++;
             } else {
-                receiver.drawDirectFont( engine, playerID, x + ( int ) ( i * 16 * scale ), y, str.substring( i, i + 1 ), RAINBOW_ORDER[ randomEngine.nextInt( RAINBOW_COLOURS ) ] );
+                receiver.drawDirectFont(engine, playerID, x + (int) (i * 16 * scale), y, str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)]);
             }
         }
     }
@@ -456,13 +455,13 @@ public class GameTextUtilities {
      * @param randomEngine Random instance to use
      * @param scale        Scale of text
      */
-    public static void drawRandomRainbowScoreString( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, Random randomEngine, float scale ) {
+    public static void drawRandomRainbowScoreString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, Random randomEngine, float scale) {
         int offset = 0;
-        for ( int i = 0; i < str.length(); i++ ) {
-            if ( str.charAt( i ) == ' ' ) {
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == ' ') {
                 offset++;
             } else {
-                receiver.drawScoreFont( engine, playerID, x + i, y, str.substring( i, i + 1 ), RAINBOW_ORDER[ randomEngine.nextInt( RAINBOW_COLOURS ) ] );
+                receiver.drawScoreFont(engine, playerID, x + i, y, str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)]);
             }
         }
     }
@@ -479,13 +478,13 @@ public class GameTextUtilities {
      * @param randomEngine Random instance to use
      * @param scale        Scale of text
      */
-    public static void drawRandomRainbowMenuString( EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, Random randomEngine, float scale ) {
+    public static void drawRandomRainbowMenuString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, Random randomEngine, float scale) {
         int offset = 0;
-        for ( int i = 0; i < str.length(); i++ ) {
-            if ( str.charAt( i ) == ' ' ) {
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == ' ') {
                 offset++;
             } else {
-                receiver.drawMenuFont( engine, playerID, x + i, y, str.substring( i, i + 1 ), RAINBOW_ORDER[ randomEngine.nextInt( RAINBOW_COLOURS ) ] );
+                receiver.drawMenuFont(engine, playerID, x + i, y, str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)]);
             }
         }
     }
@@ -512,14 +511,14 @@ public class GameTextUtilities {
      * @param destinationY Y of destination (uses drawDirectFont(...)).
      * @param scale        Text scale (0.5f, 1.0f, 2.0f).
      */
-    public static void drawMixedColourDirectString( EventReceiver receiver, GameEngine engine, int playerID, String[] stringData, int[] colourData, int destinationX, int destinationY, float scale ) {
-        if ( stringData.length != colourData.length || stringData.length == 0 ) return;
+    public static void drawMixedColourDirectString(EventReceiver receiver, GameEngine engine, int playerID, String[] stringData, int[] colourData, int destinationX, int destinationY, float scale) {
+        if (stringData.length != colourData.length || stringData.length == 0) return;
 
         int counterX = 0, counterY = 0;
-        for ( int i = 0; i < stringData.length; i++ ) {
-            if ( colourData[ i ] != -1 ) {
-                receiver.drawDirectFont( engine, playerID, destinationX + ( int ) ( counterX * 16 * scale ), destinationY + ( int ) ( counterY * 16 * scale ), stringData[ i ], colourData[ i ], scale );
-                counterX += stringData[ i ].length();
+        for (int i = 0; i < stringData.length; i++) {
+            if (colourData[i] != -1) {
+                receiver.drawDirectFont(engine, playerID, destinationX + (int) (counterX * 16 * scale), destinationY + (int) (counterY * 16 * scale), stringData[i], colourData[i], scale);
+                counterX += stringData[i].length();
             } else {
                 counterX = 0;
                 counterY++;
@@ -545,14 +544,14 @@ public class GameTextUtilities {
      * @param destinationY Y of destination (uses drawScoreFont(...)).
      * @param scale        Text scale (0.5f, 1.0f, 2.0f).
      */
-    public static void drawMixedColourScoreString( EventReceiver receiver, GameEngine engine, int playerID, String[] stringData, int[] colourData, int destinationX, int destinationY, float scale ) {
-        if ( stringData.length != colourData.length || stringData.length == 0 ) return;
+    public static void drawMixedColourScoreString(EventReceiver receiver, GameEngine engine, int playerID, String[] stringData, int[] colourData, int destinationX, int destinationY, float scale) {
+        if (stringData.length != colourData.length || stringData.length == 0) return;
 
         int counterX = 0, counterY = 0;
-        for ( int i = 0; i < stringData.length; i++ ) {
-            if ( colourData[ i ] != -1 ) {
-                receiver.drawScoreFont( engine, playerID, destinationX + counterX, destinationY + counterY, stringData[ i ], colourData[ i ], scale );
-                counterX += stringData[ i ].length();
+        for (int i = 0; i < stringData.length; i++) {
+            if (colourData[i] != -1) {
+                receiver.drawScoreFont(engine, playerID, destinationX + counterX, destinationY + counterY, stringData[i], colourData[i], scale);
+                counterX += stringData[i].length();
             } else {
                 counterX = 0;
                 counterY++;
@@ -578,14 +577,14 @@ public class GameTextUtilities {
      * @param destinationY Y of destination (uses drawMenuFont(...)).
      * @param scale        Text scale (0.5f, 1.0f, 2.0f).
      */
-    public static void drawMixedColourMenuString( EventReceiver receiver, GameEngine engine, int playerID, String[] stringData, int[] colourData, int destinationX, int destinationY, float scale ) {
-        if ( stringData.length != colourData.length || stringData.length == 0 ) return;
+    public static void drawMixedColourMenuString(EventReceiver receiver, GameEngine engine, int playerID, String[] stringData, int[] colourData, int destinationX, int destinationY, float scale) {
+        if (stringData.length != colourData.length || stringData.length == 0) return;
 
         int counterX = 0, counterY = 0;
-        for ( int i = 0; i < stringData.length; i++ ) {
-            if ( colourData[ i ] != -1 ) {
-                receiver.drawMenuFont( engine, playerID, destinationX + counterX, destinationY + counterY, stringData[ i ], colourData[ i ], scale );
-                counterX += stringData[ i ].length();
+        for (int i = 0; i < stringData.length; i++) {
+            if (colourData[i] != -1) {
+                receiver.drawMenuFont(engine, playerID, destinationX + counterX, destinationY + counterY, stringData[i], colourData[i], scale);
+                counterX += stringData[i].length();
             } else {
                 counterX = 0;
                 counterY++;
@@ -609,14 +608,14 @@ public class GameTextUtilities {
      * @param y          Y of destination (uses drawDirectFont(...)).
      * @param scale      Text scale (0.5f, 1.0f, 2.0f).
      */
-    public static void drawAlternatorColourDirectString( EventReceiver receiver, GameEngine engine, int playerID, String string, int[] colourData, int offset, int x, int y, float scale ) {
-        if ( colourData.length <= 0 ) return;
+    public static void drawAlternatorColourDirectString(EventReceiver receiver, GameEngine engine, int playerID, String string, int[] colourData, int offset, int x, int y, float scale) {
+        if (colourData.length <= 0) return;
 
         offset %= colourData.length;
-        if ( offset < 0 ) offset += colourData.length;
+        if (offset < 0) offset += colourData.length;
 
-        for ( int i = 0; i < string.length(); i++ ) {
-            receiver.drawDirectFont( engine, playerID, x + ( int ) ( 16 * i * scale ), y, string.substring( i, i + 1 ), colourData[ ( offset + i ) % colourData.length ], scale );
+        for (int i = 0; i < string.length(); i++) {
+            receiver.drawDirectFont(engine, playerID, x + (int) (16 * i * scale), y, string.substring(i, i + 1), colourData[(offset + i) % colourData.length], scale);
         }
     }
 
@@ -632,14 +631,14 @@ public class GameTextUtilities {
      * @param y          Y of destination (uses drawScoreFont(...)).
      * @param scale      Text scale (0.5f, 1.0f, 2.0f).
      */
-    public static void drawAlternatorColourScoreString( EventReceiver receiver, GameEngine engine, int playerID, String string, int[] colourData, int offset, int x, int y, float scale ) {
-        if ( colourData.length <= 0 ) return;
+    public static void drawAlternatorColourScoreString(EventReceiver receiver, GameEngine engine, int playerID, String string, int[] colourData, int offset, int x, int y, float scale) {
+        if (colourData.length <= 0) return;
 
         offset %= colourData.length;
-        if ( offset < 0 ) offset += colourData.length;
+        if (offset < 0) offset += colourData.length;
 
-        for ( int i = 0; i < string.length(); i++ ) {
-            receiver.drawScoreFont( engine, playerID, x, y, string.substring( i, i + 1 ), colourData[ ( offset + i ) % colourData.length ], scale );
+        for (int i = 0; i < string.length(); i++) {
+            receiver.drawScoreFont(engine, playerID, x, y, string.substring(i, i + 1), colourData[(offset + i) % colourData.length], scale);
         }
     }
 
@@ -655,14 +654,14 @@ public class GameTextUtilities {
      * @param y          Y of destination (uses drawMenuFont(...)).
      * @param scale      Text scale (0.5f, 1.0f, 2.0f).
      */
-    public static void drawAlternatorColourMenuString( EventReceiver receiver, GameEngine engine, int playerID, String string, int[] colourData, int offset, int x, int y, float scale ) {
-        if ( colourData.length <= 0 ) return;
+    public static void drawAlternatorColourMenuString(EventReceiver receiver, GameEngine engine, int playerID, String string, int[] colourData, int offset, int x, int y, float scale) {
+        if (colourData.length <= 0) return;
 
         offset %= colourData.length;
-        if ( offset < 0 ) offset += colourData.length;
+        if (offset < 0) offset += colourData.length;
 
-        for ( int i = 0; i < string.length(); i++ ) {
-            receiver.drawScoreFont( engine, playerID, x, y, string.substring( i, i + 1 ), colourData[ ( offset + i ) % colourData.length ], scale );
+        for (int i = 0; i < string.length(); i++) {
+            receiver.drawScoreFont(engine, playerID, x, y, string.substring(i, i + 1), colourData[(offset + i) % colourData.length], scale);
         }
     }
 
@@ -676,7 +675,7 @@ public class GameTextUtilities {
      * @return Character at phase.
      */
     public static char getCurrentCharacter() {
-        return CHARACTERS.charAt( CharacterPhase );
+        return CHARACTERS.charAt(CharacterPhase);
     }
 
     /**
@@ -685,18 +684,18 @@ public class GameTextUtilities {
      * @param offset Character offset.
      * @return Offset sequence character.
      */
-    public static char getCurrentCharacter( int offset ) {
+    public static char getCurrentCharacter(int offset) {
         int i = CharacterPhase + offset;
-        i = MathHelper.pythonModulo( i, CHARACTERS.length() );
+        i = MathHelper.pythonModulo(i, CHARACTERS.length());
 
-        return CHARACTERS.charAt( i );
+        return CHARACTERS.charAt(i);
     }
 
     /**
      * Increments character phase by 1.
      */
     public static void updatePhase() {
-        updatePhase( 1 );
+        updatePhase(1);
     }
 
     /**
@@ -704,8 +703,8 @@ public class GameTextUtilities {
      *
      * @param x Amount to increment by.
      */
-    public static void updatePhase( int x ) {
-        CharacterPhase = MathHelper.pythonModulo( CharacterPhase + x, CHARACTERS.length() );
+    public static void updatePhase(int x) {
+        CharacterPhase = MathHelper.pythonModulo(CharacterPhase + x, CHARACTERS.length());
     }
 
     /**
@@ -720,9 +719,9 @@ public class GameTextUtilities {
      *
      * @param x Integer to set phase to.
      */
-    public static void setPhase( int x ) {
+    public static void setPhase(int x) {
         CharacterPhase = x % CHARACTERS.length();
-        if ( CharacterPhase < 0 ) CharacterPhase = CHARACTERS.length() + CharacterPhase;
+        if (CharacterPhase < 0) CharacterPhase = CHARACTERS.length() + CharacterPhase;
     }
 
     // endregion Character Phase Functions

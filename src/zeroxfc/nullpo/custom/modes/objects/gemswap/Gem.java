@@ -7,37 +7,37 @@ public interface Gem {
 
     int getColour();
 
+    void setColour(int colour);
+
     int[] getLocation();
 
     boolean getRecentSwap();
 
+    void setRecentSwap(boolean isRecentSwap);
+
     boolean getRecentFall();
+
+    void setRecentFall(boolean isRecentFall);
 
     boolean getMatchedHorizontal();
 
+    void setMatchedHorizontal(boolean isMatched);
+
     boolean getMatchedVertical();
+
+    void setMatchedVertical(boolean isMatched);
 
     boolean getSpecial();
 
     boolean getActionConducted();
 
+    void setActionConducted(boolean isConduted);
+
     boolean getDestroy();
 
-    void setColour( int colour );
+    void setDestroy(boolean shouldDestroy);
 
-    void setLocation( int x, int y );
-
-    void setRecentSwap( boolean isRecentSwap );
-
-    void setRecentFall( boolean isRecentFall );
-
-    void setMatchedHorizontal( boolean isMatched );
-
-    void setMatchedVertical( boolean isMatched );
-
-    void setActionConducted( boolean isConduted );
-
-    void setDestroy( boolean shouldDestroy );
+    void setLocation(int x, int y);
 
     Gem getSelf();
 
@@ -46,5 +46,5 @@ public interface Gem {
      * TODO: Find a way to resolve special gem creation if two
      *       fall at the same time to complete its match type.
      */
-    int conductAction( GemField field, int[] args, ArrayList< ScoreEvent > eventList );
+    int conductAction(GemField field, int[] args, ArrayList<ScoreEvent> eventList);
 }

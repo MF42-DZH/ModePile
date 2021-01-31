@@ -1,5 +1,7 @@
 package zeroxfc.nullpo.custom.modes;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
@@ -11,9 +13,6 @@ import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Accelerator extends MarathonModeBase {
     // Speed check time.
@@ -32,7 +31,10 @@ public class Accelerator extends MarathonModeBase {
 
     // Maximum bonusbar charge
     private static final double MAX_BONUS_CHARGE = 360;
-
+    /**
+     * Rankings' pts counts
+     */
+    public double[][] rankingLines;
     /**
      * Profile loader
      * Use for setting and score loading
@@ -42,34 +44,22 @@ public class Accelerator extends MarathonModeBase {
     private int rankingRankPlayer;
     private int[][] rankingScorePlayer, rankingTimePlayer;
     private double[][] rankingLinesPlayer;
-
     // Current bonusbar charge
     private double currentBonusCharge;
-
     // is bonus active?
     private boolean bonusActive;
-
     // Piece time array
     private int[] timeSincePlacementArray;
-
     // Current speed in the past 3 seconds.
     private double currentSpeed;
-
     // Current progress
     private double progressCoeffeicient;
-
     // score before increase
     private double scoreBeforeIncrease;
-
-    /**
-     * Rankings' pts counts
-     */
-    public double[][] rankingLines;
-
     /**
      * The good hard drop effect
      */
-    private ArrayList< int[] > pCoordList;
+    private ArrayList<int[]> pCoordList;
     private Piece cPiece;
 
     private String PLAYER_NAME;
@@ -86,7 +76,7 @@ public class Accelerator extends MarathonModeBase {
      * Initialization
      */
     @Override
-    public void playerInit( GameEngine engine, int playerID ) {
+    public void playerInit(GameEngine engine, int playerID) {
         owner = engine.owner;
         receiver = engine.owner.receiver;
         lastscore = 0;
@@ -105,47 +95,47 @@ public class Accelerator extends MarathonModeBase {
         pCoordList = new ArrayList<>();
         cPiece = null;
 
-        if ( playerProperties == null ) {
-            playerProperties = new ProfileProperties( EventReceiver.COLOR_ORANGE );
+        if (playerProperties == null) {
+            playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
 
             showPlayerStats = false;
         }
 
         rankingRankPlayer = -1;
-        rankingScorePlayer = new int[ RANKING_TYPE ][ RANKING_MAX ];
-        rankingLinesPlayer = new double[ RANKING_TYPE ][ RANKING_MAX ];
-        rankingTimePlayer = new int[ RANKING_TYPE ][ RANKING_MAX ];
+        rankingScorePlayer = new int[RANKING_TYPE][RANKING_MAX];
+        rankingLinesPlayer = new double[RANKING_TYPE][RANKING_MAX];
+        rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
 
         rankingRank = -1;
-        rankingScore = new int[ RANKING_TYPE ][ RANKING_MAX ];
-        rankingLines = new double[ RANKING_TYPE ][ RANKING_MAX ];
-        rankingTime = new int[ RANKING_TYPE ][ RANKING_MAX ];
+        rankingScore = new int[RANKING_TYPE][RANKING_MAX];
+        rankingLines = new double[RANKING_TYPE][RANKING_MAX];
+        rankingTime = new int[RANKING_TYPE][RANKING_MAX];
 
-        netPlayerInit( engine, playerID );
+        netPlayerInit(engine, playerID);
 
-        if ( !owner.replayMode ) {
-            loadSetting( owner.modeConfig );
-            loadRanking( owner.modeConfig, engine.ruleopt.strRuleName );
+        if (!owner.replayMode) {
+            loadSetting(owner.modeConfig);
+            loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 
-            if ( playerProperties.isLoggedIn() ) {
-                loadSettingPlayer( playerProperties );
-                loadRankingPlayer( playerProperties, engine.ruleopt.strRuleName );
+            if (playerProperties.isLoggedIn()) {
+                loadSettingPlayer(playerProperties);
+                loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
             }
 
             PLAYER_NAME = "";
             version = CURRENT_VERSION;
         } else {
-            loadSetting( owner.replayProp );
-            if ( ( version == 0 ) && ( owner.replayProp.getProperty( "accelerator.endless", false ) ) ) goaltype = 2;
+            loadSetting(owner.replayProp);
+            if ((version == 0) && (owner.replayProp.getProperty("accelerator.endless", false))) goaltype = 2;
 
-            PLAYER_NAME = owner.replayProp.getProperty( "accelerator.playerName", "" );
+            PLAYER_NAME = owner.replayProp.getProperty("accelerator.playerName", "");
 
             // NET: Load name
-            netPlayerName = engine.owner.replayProp.getProperty( playerID + ".net.netPlayerName", "" );
+            netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
         }
 
-        timeSincePlacementArray = new int[ 301 ];
-        Arrays.fill( timeSincePlacementArray, -1 );
+        timeSincePlacementArray = new int[301];
+        Arrays.fill(timeSincePlacementArray, -1);
 
         currentSpeed = 0;
 
@@ -157,43 +147,43 @@ public class Accelerator extends MarathonModeBase {
      * Called at settings screen
      */
     @Override
-    public boolean onSetting( GameEngine engine, int playerID ) {
+    public boolean onSetting(GameEngine engine, int playerID) {
         // NET: Net Ranking
-        if ( netIsNetRankingDisplayMode ) {
-            netOnUpdateNetPlayRanking( engine, goaltype );
+        if (netIsNetRankingDisplayMode) {
+            netOnUpdateNetPlayRanking(engine, goaltype);
         }
         // Menu
-        else if ( !engine.owner.replayMode ) {
+        else if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor( engine, 8, playerID );
+            int change = updateCursor(engine, 8, playerID);
 
-            if ( change != 0 ) {
-                engine.playSE( "change" );
+            if (change != 0) {
+                engine.playSE("change");
 
-                switch ( engine.statc[ 2 ] ) {
+                switch (engine.statc[2]) {
                     case 0:
                         startlevel += change;
-                        if ( GOALS[ goaltype ] >= 0 ) {
-                            if ( startlevel < 0 ) startlevel = ( GOALS[ goaltype ] - 1 ) / 20;
-                            if ( startlevel > ( GOALS[ goaltype ] - 1 ) / 20 ) startlevel = 0;
+                        if (GOALS[goaltype] >= 0) {
+                            if (startlevel < 0) startlevel = (GOALS[goaltype] - 1) / 20;
+                            if (startlevel > (GOALS[goaltype] - 1) / 20) startlevel = 0;
                         } else {
-                            if ( startlevel < 0 ) startlevel = 19;
-                            if ( startlevel > 19 ) startlevel = 0;
+                            if (startlevel < 0) startlevel = 19;
+                            if (startlevel > 19) startlevel = 0;
                         }
                         break;
                     case 1:
                         //enableTSpin = !enableTSpin;
                         tspinEnableType += change;
-                        if ( tspinEnableType < 0 ) tspinEnableType = 2;
-                        if ( tspinEnableType > 2 ) tspinEnableType = 0;
+                        if (tspinEnableType < 0) tspinEnableType = 2;
+                        if (tspinEnableType > 2) tspinEnableType = 0;
                         break;
                     case 2:
                         enableTSpinKick = !enableTSpinKick;
                         break;
                     case 3:
                         spinCheckType += change;
-                        if ( spinCheckType < 0 ) spinCheckType = 1;
-                        if ( spinCheckType > 1 ) spinCheckType = 0;
+                        if (spinCheckType < 0) spinCheckType = 1;
+                        if (spinCheckType > 1) spinCheckType = 0;
                         break;
                     case 4:
                         tspinEnableEZ = !tspinEnableEZ;
@@ -206,11 +196,11 @@ public class Accelerator extends MarathonModeBase {
                         break;
                     case 7:
                         goaltype += change;
-                        if ( goaltype < 0 ) goaltype = GAMETYPE_MAX - 1;
-                        if ( goaltype > GAMETYPE_MAX - 1 ) goaltype = 0;
+                        if (goaltype < 0) goaltype = GAMETYPE_MAX - 1;
+                        if (goaltype > GAMETYPE_MAX - 1) goaltype = 0;
 
-                        if ( ( startlevel > ( GOALS[ goaltype ] - 1 ) / 20 ) && ( GOALS[ goaltype ] >= 0 ) ) {
-                            startlevel = ( GOALS[ goaltype ] - 1 ) / 20;
+                        if ((startlevel > (GOALS[goaltype] - 1) / 20) && (GOALS[goaltype] >= 0)) {
+                            startlevel = (GOALS[goaltype] - 1) / 20;
                             engine.owner.backgroundStatus.bg = startlevel;
                         }
                         break;
@@ -220,40 +210,40 @@ public class Accelerator extends MarathonModeBase {
                 }
 
                 // NET: Signal options change
-                if ( netIsNetPlay && ( netNumSpectators > 0 ) ) {
-                    netSendOptions( engine );
+                if (netIsNetPlay && (netNumSpectators > 0)) {
+                    netSendOptions(engine);
                 }
             }
 
             engine.owner.backgroundStatus.bg = startlevel;
 
             // Confirm
-            if ( engine.ctrl.isPush( Controller.BUTTON_A ) && ( engine.statc[ 3 ] >= 5 ) ) {
-                engine.playSE( "decide" );
-                if ( playerProperties.isLoggedIn() ) {
-                    saveSettingPlayer( playerProperties );
+            if (engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
+                engine.playSE("decide");
+                if (playerProperties.isLoggedIn()) {
+                    saveSettingPlayer(playerProperties);
                     playerProperties.saveProfileConfig();
                 } else {
-                    saveSetting( owner.modeConfig );
-                    receiver.saveModeConfig( owner.modeConfig );
+                    saveSetting(owner.modeConfig);
+                    receiver.saveModeConfig(owner.modeConfig);
                 }
 
                 // NET: Signal start of the game
-                if ( netIsNetPlay ) netLobby.netPlayerClient.send( "start1p\n" );
+                if (netIsNetPlay) netLobby.netPlayerClient.send("start1p\n");
 
                 return false;
             }
 
             // Cancel
-            if ( engine.ctrl.isPush( Controller.BUTTON_B ) && !netIsNetPlay ) {
+            if (engine.ctrl.isPush(Controller.BUTTON_B) && !netIsNetPlay) {
                 engine.quitflag = true;
-                playerProperties = new ProfileProperties( EventReceiver.COLOR_ORANGE );
+                playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
             }
 
             // New acc
-            if ( engine.ctrl.isPush( Controller.BUTTON_E ) && engine.ai == null && !netIsNetPlay ) {
-                playerProperties = new ProfileProperties( EventReceiver.COLOR_ORANGE );
-                engine.playSE( "decide" );
+            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !netIsNetPlay) {
+                playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
+                engine.playSE("decide");
 
                 engine.stat = GameEngine.STAT_CUSTOM;
                 engine.resetStatc();
@@ -261,19 +251,19 @@ public class Accelerator extends MarathonModeBase {
             }
 
             // NET: Netplay Ranking
-            if ( engine.ctrl.isPush( Controller.BUTTON_D ) && netIsNetPlay && startlevel == 0 && !big &&
-                    engine.ai == null ) {
-                netEnterNetPlayRankingScreen( engine, playerID, goaltype );
+            if (engine.ctrl.isPush(Controller.BUTTON_D) && netIsNetPlay && startlevel == 0 && !big &&
+                engine.ai == null) {
+                netEnterNetPlayRankingScreen(engine, playerID, goaltype);
             }
 
-            engine.statc[ 3 ]++;
+            engine.statc[3]++;
         }
         // Replay
         else {
-            engine.statc[ 3 ]++;
-            engine.statc[ 2 ] = -1;
+            engine.statc[3]++;
+            engine.statc[2] = -1;
 
-            return engine.statc[ 3 ] < 60;
+            return engine.statc[3] < 60;
         }
 
         return true;
@@ -283,29 +273,29 @@ public class Accelerator extends MarathonModeBase {
      * Render the settings screen
      */
     @Override
-    public void renderSetting( GameEngine engine, int playerID ) {
-        if ( netIsNetRankingDisplayMode ) {
+    public void renderSetting(GameEngine engine, int playerID) {
+        if (netIsNetRankingDisplayMode) {
             // NET: Netplay Ranking
-            netOnRenderNetPlayRanking( engine, playerID, receiver );
+            netOnRenderNetPlayRanking(engine, playerID, receiver);
         } else {
             String strTSpinEnable = "";
-            if ( version >= 2 ) {
-                if ( tspinEnableType == 0 ) strTSpinEnable = "OFF";
-                if ( tspinEnableType == 1 ) strTSpinEnable = "T-ONLY";
-                if ( tspinEnableType == 2 ) strTSpinEnable = "ALL";
+            if (version >= 2) {
+                if (tspinEnableType == 0) strTSpinEnable = "OFF";
+                if (tspinEnableType == 1) strTSpinEnable = "T-ONLY";
+                if (tspinEnableType == 2) strTSpinEnable = "ALL";
             } else {
-                strTSpinEnable = GeneralUtil.getONorOFF( enableTSpin );
+                strTSpinEnable = GeneralUtil.getONorOFF(enableTSpin);
             }
-            drawMenu( engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE, 0,
-                    "LEVEL", String.valueOf( startlevel + 1 ),
-                    "SPIN BONUS", strTSpinEnable,
-                    "EZ SPIN", GeneralUtil.getONorOFF( enableTSpinKick ),
-                    "SPIN TYPE", ( spinCheckType == 0 ) ? "4POINT" : "IMMOBILE",
-                    "EZIMMOBILE", GeneralUtil.getONorOFF( tspinEnableEZ ),
-                    "B2B", GeneralUtil.getONorOFF( enableB2B ),
-                    "COMBO", GeneralUtil.getONorOFF( enableCombo ),
-                    "GOAL", ( goaltype == 2 ) ? "ENDLESS" : GOALS[ goaltype ] + " PTS",
-                    "BIG", GeneralUtil.getONorOFF( big ) );
+            drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE, 0,
+                "LEVEL", String.valueOf(startlevel + 1),
+                "SPIN BONUS", strTSpinEnable,
+                "EZ SPIN", GeneralUtil.getONorOFF(enableTSpinKick),
+                "SPIN TYPE", (spinCheckType == 0) ? "4POINT" : "IMMOBILE",
+                "EZIMMOBILE", GeneralUtil.getONorOFF(tspinEnableEZ),
+                "B2B", GeneralUtil.getONorOFF(enableB2B),
+                "COMBO", GeneralUtil.getONorOFF(enableCombo),
+                "GOAL", (goaltype == 2) ? "ENDLESS" : GOALS[goaltype] + " PTS",
+                "BIG", GeneralUtil.getONorOFF(big));
         }
     }
 
@@ -313,12 +303,12 @@ public class Accelerator extends MarathonModeBase {
      * Called for initialization during "Ready" screen
      */
     @Override
-    public void startGame( GameEngine engine, int playerID ) {
+    public void startGame(GameEngine engine, int playerID) {
         engine.speed.are = 0;
 
         currentSpeed = 0;
-        timeSincePlacementArray = new int[ 301 ];
-        Arrays.fill( timeSincePlacementArray, -1 );
+        timeSincePlacementArray = new int[301];
+        Arrays.fill(timeSincePlacementArray, -1);
 
         progressCoeffeicient = 0.0;
         currentBonusCharge = 0.0;
@@ -327,18 +317,18 @@ public class Accelerator extends MarathonModeBase {
         engine.statistics.level = startlevel;
         engine.statistics.levelDispAdd = 1;
         engine.b2bEnable = enableB2B;
-        if ( enableCombo ) {
+        if (enableCombo) {
             engine.comboType = GameEngine.COMBO_TYPE_NORMAL;
         } else {
             engine.comboType = GameEngine.COMBO_TYPE_DISABLE;
         }
         engine.big = big;
 
-        if ( version >= 2 ) {
+        if (version >= 2) {
             engine.tspinAllowKick = enableTSpinKick;
-            if ( tspinEnableType == 0 ) {
+            if (tspinEnableType == 0) {
                 engine.tspinEnable = false;
-            } else if ( tspinEnableType == 1 ) {
+            } else if (tspinEnableType == 1) {
                 engine.tspinEnable = true;
             } else {
                 engine.tspinEnable = true;
@@ -352,32 +342,32 @@ public class Accelerator extends MarathonModeBase {
         engine.tspinEnableEZ = tspinEnableEZ;
         scoreBeforeIncrease = 0;
 
-        setSpeed( engine );
+        setSpeed(engine);
 
-        if ( netIsWatch ) {
+        if (netIsWatch) {
             owner.bgmStatus.bgm = BGMStatus.BGM_NOTHING;
         }
     }
 
     @Override
-    public void onFirst( GameEngine engine, int playerID ) {
+    public void onFirst(GameEngine engine, int playerID) {
         pCoordList.clear();
         cPiece = null;
     }
 
     @Override
-    public boolean onCustom( GameEngine engine, int playerID ) {
+    public boolean onCustom(GameEngine engine, int playerID) {
         showPlayerStats = false;
 
         engine.isInGame = true;
 
-        boolean s = playerProperties.loginScreen.updateScreen( engine, playerID );
-        if ( playerProperties.isLoggedIn() ) {
-            loadRankingPlayer( playerProperties, engine.ruleopt.strRuleName );
-            loadSettingPlayer( playerProperties );
+        boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+        if (playerProperties.isLoggedIn()) {
+            loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+            loadSettingPlayer(playerProperties);
         }
 
-        if ( engine.stat == GameEngine.STAT_SETTING ) engine.isInGame = false;
+        if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
 
         return s;
     }
@@ -386,19 +376,19 @@ public class Accelerator extends MarathonModeBase {
      * Called after every frame
      */
     @Override
-    public void onLast( GameEngine engine, int playerID ) {
+    public void onLast(GameEngine engine, int playerID) {
         scgettime++;
 
-        if ( ( engine.stat == GameEngine.STAT_SETTING ) || ( ( engine.stat == GameEngine.STAT_RESULT ) && ( !owner.replayMode ) ) || engine.stat == GameEngine.STAT_CUSTOM ) {
+        if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM) {
             // Show rank
-            if ( engine.ctrl.isPush( Controller.BUTTON_F ) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM ) {
+            if (engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
                 showPlayerStats = !showPlayerStats;
-                engine.playSE( "change" );
+                engine.playSE("change");
             }
         }
 
-        if ( engine.quitflag ) {
-            playerProperties = new ProfileProperties( EventReceiver.COLOR_ORANGE );
+        if (engine.quitflag) {
+            playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
         }
     }
 
@@ -406,32 +396,32 @@ public class Accelerator extends MarathonModeBase {
      * Hard drop
      */
     @Override
-    public void afterHardDropFall( GameEngine engine, int playerID, int fall ) {
+    public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
         engine.statistics.scoreFromHardDrop += fall * 2;
         engine.statistics.score += fall * 2;
 
-        int baseX = ( 16 * engine.nowPieceX ) + 4 + receiver.getFieldDisplayPositionX( engine, playerID );
-        int baseY = ( 16 * engine.nowPieceY ) + 52 + receiver.getFieldDisplayPositionY( engine, playerID );
-        cPiece = new Piece( engine.nowPieceObject );
-        for ( int i = 1; i <= fall; i++ ) {
+        int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+        int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+        cPiece = new Piece(engine.nowPieceObject);
+        for (int i = 1; i <= fall; i++) {
             pCoordList.add(
-                    new int[] { engine.nowPieceX, engine.nowPieceY - i }
+                new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for ( int i = 0; i < cPiece.getMaxBlock(); i++ ) {
-            if ( !cPiece.big ) {
-                int x2 = baseX + ( cPiece.dataX[ cPiece.direction ][ i ] * 16 );
-                int y2 = baseY + ( cPiece.dataY[ cPiece.direction ][ i ] * 16 );
+        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+            if (!cPiece.big) {
+                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                RendererExtension.addBlockBreakEffect( receiver, x2, y2, cPiece.block[ i ] );
+                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
             } else {
-                int x2 = baseX + ( cPiece.dataX[ cPiece.direction ][ i ] * 32 );
-                int y2 = baseY + ( cPiece.dataY[ cPiece.direction ][ i ] * 32 );
+                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
 
-                RendererExtension.addBlockBreakEffect( receiver, x2, y2, cPiece.block[ i ] );
-                RendererExtension.addBlockBreakEffect( receiver, x2 + 16, y2, cPiece.block[ i ] );
-                RendererExtension.addBlockBreakEffect( receiver, x2, y2 + 16, cPiece.block[ i ] );
-                RendererExtension.addBlockBreakEffect( receiver, x2 + 16, y2 + 16, cPiece.block[ i ] );
+                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                RendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
             }
         }
     }
@@ -441,277 +431,277 @@ public class Accelerator extends MarathonModeBase {
      * Render score
      */
     @Override
-    public void renderLast( GameEngine engine, int playerID ) {
-        if ( owner.menuOnly ) return;
+    public void renderLast(GameEngine engine, int playerID) {
+        if (owner.menuOnly) return;
 
-        receiver.drawScoreFont( engine, playerID, 0, 0, getName(), EventReceiver.COLOR_GREEN );
+        receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_GREEN);
 
-        if ( GOALS[ goaltype ] == -1 ) {
-            receiver.drawScoreFont( engine, playerID, 0, 1, "(ENDLESS GAME)", EventReceiver.COLOR_GREEN );
+        if (GOALS[goaltype] == -1) {
+            receiver.drawScoreFont(engine, playerID, 0, 1, "(ENDLESS GAME)", EventReceiver.COLOR_GREEN);
         } else {
-            receiver.drawScoreFont( engine, playerID, 0, 1, "(" + GOALS[ goaltype ] + " SPEED GOAL GAME)", EventReceiver.COLOR_GREEN );
+            receiver.drawScoreFont(engine, playerID, 0, 1, "(" + GOALS[goaltype] + " SPEED GOAL GAME)", EventReceiver.COLOR_GREEN);
         }
 
-        if ( ( engine.stat == GameEngine.STAT_SETTING ) || ( ( engine.stat == GameEngine.STAT_RESULT ) && ( !owner.replayMode ) ) ) {
-            if ( ( !owner.replayMode ) && ( !big ) && ( engine.ai == null ) ) {
-                float scale = ( receiver.getNextDisplayType() == 2 ) ? 0.5f : 1.0f;
-                int topY = ( receiver.getNextDisplayType() == 2 ) ? 6 : 4;
-                receiver.drawScoreFont( engine, playerID, 3, topY - 1, "SCORE  SPDPT TIME", EventReceiver.COLOR_BLUE, scale );
+        if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode))) {
+            if ((!owner.replayMode) && (!big) && (engine.ai == null)) {
+                float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
+                int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
+                receiver.drawScoreFont(engine, playerID, 3, topY - 1, "SCORE  SPDPT TIME", EventReceiver.COLOR_BLUE, scale);
 
-                if ( showPlayerStats ) {
-                    for ( int i = 0; i < RANKING_MAX; i++ ) {
-                        receiver.drawScoreFont( engine, playerID, 0, topY + i, String.format( "%2d", i + 1 ), EventReceiver.COLOR_YELLOW, scale );
-                        String s = String.valueOf( rankingScorePlayer[ goaltype ][ i ] );
-                        receiver.drawScoreFont( engine, playerID, ( s.length() > 6 && receiver.getNextDisplayType() != 2 ) ? 6 : 3, ( s.length() > 6 && receiver.getNextDisplayType() != 2 ) ? ( topY + i ) * 2 : ( topY + i ), s, ( i == rankingRankPlayer ), ( s.length() > 6 && receiver.getNextDisplayType() != 2 ) ? scale * 0.5f : scale );
-                        receiver.drawScoreFont( engine, playerID, 10, topY + i, String.format( "%.1f", rankingLinesPlayer[ goaltype ][ i ] ), ( i == rankingRankPlayer ), scale );
-                        receiver.drawScoreFont( engine, playerID, 16, topY + i, GeneralUtil.getTime( rankingTimePlayer[ goaltype ][ i ] ), ( i == rankingRankPlayer ), scale );
+                if (showPlayerStats) {
+                    for (int i = 0; i < RANKING_MAX; i++) {
+                        receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+                        String s = String.valueOf(rankingScorePlayer[goaltype][i]);
+                        receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY + i) * 2 : (topY + i), s, (i == rankingRankPlayer), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
+                        receiver.drawScoreFont(engine, playerID, 10, topY + i, String.format("%.1f", rankingLinesPlayer[goaltype][i]), (i == rankingRankPlayer), scale);
+                        receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTimePlayer[goaltype][i]), (i == rankingRankPlayer), scale);
                     }
 
-                    receiver.drawScoreFont( engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE );
-                    receiver.drawScoreFont( engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f );
+                    receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+                    receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
 
-                    receiver.drawScoreFont( engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN );
+                    receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                 } else {
-                    for ( int i = 0; i < RANKING_MAX; i++ ) {
-                        receiver.drawScoreFont( engine, playerID, 0, topY + i, String.format( "%2d", i + 1 ), EventReceiver.COLOR_YELLOW, scale );
-                        String s = String.valueOf( rankingScore[ goaltype ][ i ] );
-                        receiver.drawScoreFont( engine, playerID, ( s.length() > 6 && receiver.getNextDisplayType() != 2 ) ? 6 : 3, ( s.length() > 6 && receiver.getNextDisplayType() != 2 ) ? ( topY + i ) * 2 : ( topY + i ), s, ( i == rankingRank ), ( s.length() > 6 && receiver.getNextDisplayType() != 2 ) ? scale * 0.5f : scale );
-                        receiver.drawScoreFont( engine, playerID, 10, topY + i, String.format( "%.1f", rankingLines[ goaltype ][ i ] ), ( i == rankingRank ), scale );
-                        receiver.drawScoreFont( engine, playerID, 16, topY + i, GeneralUtil.getTime( rankingTime[ goaltype ][ i ] ), ( i == rankingRank ), scale );
+                    for (int i = 0; i < RANKING_MAX; i++) {
+                        receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
+                        String s = String.valueOf(rankingScore[goaltype][i]);
+                        receiver.drawScoreFont(engine, playerID, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? 6 : 3, (s.length() > 6 && receiver.getNextDisplayType() != 2) ? (topY + i) * 2 : (topY + i), s, (i == rankingRank), (s.length() > 6 && receiver.getNextDisplayType() != 2) ? scale * 0.5f : scale);
+                        receiver.drawScoreFont(engine, playerID, 10, topY + i, String.format("%.1f", rankingLines[goaltype][i]), (i == rankingRank), scale);
+                        receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTime[goaltype][i]), (i == rankingRank), scale);
                     }
 
-                    receiver.drawScoreFont( engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE );
-                    if ( !playerProperties.isLoggedIn() )
-                        receiver.drawScoreFont( engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)" );
-                    if ( playerProperties.isLoggedIn() )
-                        receiver.drawScoreFont( engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN );
+                    receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+                    if (!playerProperties.isLoggedIn())
+                        receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, "(NOT LOGGED IN)\n(E:LOG IN)");
+                    if (playerProperties.isLoggedIn())
+                        receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                 }
             }
-        } else if ( engine.stat == GameEngine.STAT_CUSTOM ) {
-            playerProperties.loginScreen.renderScreen( receiver, engine, playerID );
+        } else if (engine.stat == GameEngine.STAT_CUSTOM) {
+            playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
         } else {
-            receiver.drawScoreFont( engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE );
+            receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
             String strScore;
-            if ( ( lastscore == 0 ) || ( scgettime >= 120 ) ) {
-                strScore = String.valueOf( engine.statistics.score );
+            if ((lastscore == 0) || (scgettime >= 120)) {
+                strScore = String.valueOf(engine.statistics.score);
             } else {
-                strScore = ( int ) Interpolation.sineStep( scoreBeforeIncrease, engine.statistics.score, ( scgettime / 120.0 ) ) + "(+" + lastscore + ")";
+                strScore = (int) Interpolation.sineStep(scoreBeforeIncrease, engine.statistics.score, (scgettime / 120.0)) + "(+" + lastscore + ")";
             }
-            receiver.drawScoreFont( engine, playerID, 0, 4, strScore );
+            receiver.drawScoreFont(engine, playerID, 0, 4, strScore);
 
-            receiver.drawScoreFont( engine, playerID, 0, 6, "SPEED GOAL", EventReceiver.COLOR_BLUE );
-            if ( ( engine.statistics.level >= 19 ) && ( GOALS[ goaltype ] < 0 ) )
-                receiver.drawScoreFont( engine, playerID, 0, 7, String.format( "%.1f", progressCoeffeicient ) + "" );
+            receiver.drawScoreFont(engine, playerID, 0, 6, "SPEED GOAL", EventReceiver.COLOR_BLUE);
+            if ((engine.statistics.level >= 19) && (GOALS[goaltype] < 0))
+                receiver.drawScoreFont(engine, playerID, 0, 7, String.format("%.1f", progressCoeffeicient) + "");
             else
-                receiver.drawScoreFont( engine, playerID, 0, 7, String.format( "%.1f", progressCoeffeicient ) + "/" + ( ( engine.statistics.level + 1 ) * GOAL_COEFFICIENT ) + ".0" );
+                receiver.drawScoreFont(engine, playerID, 0, 7, String.format("%.1f", progressCoeffeicient) + "/" + ((engine.statistics.level + 1) * GOAL_COEFFICIENT) + ".0");
 
-            receiver.drawScoreFont( engine, playerID, 0, 9, "LEVEL", EventReceiver.COLOR_BLUE );
-            receiver.drawScoreFont( engine, playerID, 0, 10, String.valueOf( engine.statistics.level + 1 ) );
+            receiver.drawScoreFont(engine, playerID, 0, 9, "LEVEL", EventReceiver.COLOR_BLUE);
+            receiver.drawScoreFont(engine, playerID, 0, 10, String.valueOf(engine.statistics.level + 1));
 
-            receiver.drawScoreFont( engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE );
-            receiver.drawScoreFont( engine, playerID, 0, 13, GeneralUtil.getTime( engine.statistics.time ) );
+            receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
+            receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
 
             int speedColor = EventReceiver.COLOR_RED;
-            if ( currentSpeed >= 0.5 ) speedColor = EventReceiver.COLOR_ORANGE;
-            if ( currentSpeed >= 1 ) speedColor = EventReceiver.COLOR_YELLOW;
-            if ( currentSpeed >= 2 ) speedColor = EventReceiver.COLOR_GREEN;
+            if (currentSpeed >= 0.5) speedColor = EventReceiver.COLOR_ORANGE;
+            if (currentSpeed >= 1) speedColor = EventReceiver.COLOR_YELLOW;
+            if (currentSpeed >= 2) speedColor = EventReceiver.COLOR_GREEN;
 
-            receiver.drawScoreFont( engine, playerID, 0, 15, "SPEED (/10S)", EventReceiver.COLOR_BLUE );
-            receiver.drawScoreFont( engine, playerID, 0, 16, String.format( "%.1f", currentSpeed ), speedColor );
+            receiver.drawScoreFont(engine, playerID, 0, 15, "SPEED (/10S)", EventReceiver.COLOR_BLUE);
+            receiver.drawScoreFont(engine, playerID, 0, 16, String.format("%.1f", currentSpeed), speedColor);
 
             //int speedBar = (int)((currentBonusCharge / MAX_BONUS_CHARGE) * 40);
-            double percentage = ( currentBonusCharge / MAX_BONUS_CHARGE );
+            double percentage = (currentBonusCharge / MAX_BONUS_CHARGE);
 
-            receiver.drawScoreFont( engine, playerID, 0, 18, "BONUS", EventReceiver.COLOR_BLUE );
-            if ( bonusActive )
-                receiver.drawScoreFont( engine, playerID, 6, 18, "(ACTIVE!)", EventReceiver.COLOR_GREEN );
-            receiver.drawScoreFont( engine, playerID, 0, 19, String.format( "%.2f%%", percentage * 100 ), bonusActive ? ( ( engine.statistics.time % 2 == 0 ) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_YELLOW ) : EventReceiver.COLOR_WHITE, 1f + ( float ) percentage );
+            receiver.drawScoreFont(engine, playerID, 0, 18, "BONUS", EventReceiver.COLOR_BLUE);
+            if (bonusActive)
+                receiver.drawScoreFont(engine, playerID, 6, 18, "(ACTIVE!)", EventReceiver.COLOR_GREEN);
+            receiver.drawScoreFont(engine, playerID, 0, 19, String.format("%.2f%%", percentage * 100), bonusActive ? ((engine.statistics.time % 2 == 0) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_YELLOW) : EventReceiver.COLOR_WHITE, 1f + (float) percentage);
 
-            if ( playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0 ) {
-                receiver.drawScoreFont( engine, playerID, 14, 18, "PLAYER", EventReceiver.COLOR_BLUE );
-                receiver.drawScoreFont( engine, playerID, 14, 19, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f );
+            if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+                receiver.drawScoreFont(engine, playerID, 14, 18, "PLAYER", EventReceiver.COLOR_BLUE);
+                receiver.drawScoreFont(engine, playerID, 14, 19, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
             }
 
-            int baseX = receiver.getFieldDisplayPositionX( engine, playerID ) + 4;
-            int baseY = receiver.getFieldDisplayPositionY( engine, playerID ) + 52;
-            if ( pCoordList.size() > 0 && cPiece != null ) {
-                for ( int[] loc : pCoordList ) {
-                    int cx = baseX + ( 16 * loc[ 0 ] );
-                    int cy = baseY + ( 16 * loc[ 1 ] );
-                    RendererExtension.drawScaledPiece( receiver, engine, playerID, cx, cy, cPiece, 1f, 0f );
+            int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+            int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+            if (pCoordList.size() > 0 && cPiece != null) {
+                for (int[] loc : pCoordList) {
+                    int cx = baseX + (16 * loc[0]);
+                    int cy = baseY + (16 * loc[1]);
+                    RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
                 }
             }
 
-            if ( ( lastevent != EVENT_NONE ) && ( scgettime < 120 ) ) {
-                String strPieceName = Piece.getPieceName( lastpiece );
+            if ((lastevent != EVENT_NONE) && (scgettime < 120)) {
+                String strPieceName = Piece.getPieceName(lastpiece);
 
-                switch ( lastevent ) {
+                switch (lastevent) {
                     case EVENT_SINGLE:
-                        receiver.drawMenuFont( engine, playerID, 2, 21, "SINGLE", EventReceiver.COLOR_DARKBLUE );
+                        receiver.drawMenuFont(engine, playerID, 2, 21, "SINGLE", EventReceiver.COLOR_DARKBLUE);
                         break;
                     case EVENT_DOUBLE:
-                        receiver.drawMenuFont( engine, playerID, 2, 21, "DOUBLE", EventReceiver.COLOR_BLUE );
+                        receiver.drawMenuFont(engine, playerID, 2, 21, "DOUBLE", EventReceiver.COLOR_BLUE);
                         break;
                     case EVENT_TRIPLE:
-                        receiver.drawMenuFont( engine, playerID, 2, 21, "TRIPLE", EventReceiver.COLOR_GREEN );
+                        receiver.drawMenuFont(engine, playerID, 2, 21, "TRIPLE", EventReceiver.COLOR_GREEN);
                         break;
                     case EVENT_FOUR:
-                        if ( lastb2b )
-                            receiver.drawMenuFont( engine, playerID, 3, 21, "FOUR", EventReceiver.COLOR_RED );
-                        else receiver.drawMenuFont( engine, playerID, 3, 21, "FOUR", EventReceiver.COLOR_ORANGE );
+                        if (lastb2b)
+                            receiver.drawMenuFont(engine, playerID, 3, 21, "FOUR", EventReceiver.COLOR_RED);
+                        else receiver.drawMenuFont(engine, playerID, 3, 21, "FOUR", EventReceiver.COLOR_ORANGE);
                         break;
                     case EVENT_TSPIN_ZERO_MINI:
-                        receiver.drawMenuFont( engine, playerID, 2, 21, strPieceName + "-SPIN", EventReceiver.COLOR_PURPLE );
+                        receiver.drawMenuFont(engine, playerID, 2, 21, strPieceName + "-SPIN", EventReceiver.COLOR_PURPLE);
                         break;
                     case EVENT_TSPIN_ZERO:
-                        receiver.drawMenuFont( engine, playerID, 2, 21, strPieceName + "-SPIN", EventReceiver.COLOR_PINK );
+                        receiver.drawMenuFont(engine, playerID, 2, 21, strPieceName + "-SPIN", EventReceiver.COLOR_PINK);
                         break;
                     case EVENT_TSPIN_SINGLE_MINI:
-                        if ( lastb2b )
-                            receiver.drawMenuFont( engine, playerID, 1, 21, strPieceName + "-MINI-S", EventReceiver.COLOR_RED );
+                        if (lastb2b)
+                            receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-S", EventReceiver.COLOR_RED);
                         else
-                            receiver.drawMenuFont( engine, playerID, 1, 21, strPieceName + "-MINI-S", EventReceiver.COLOR_ORANGE );
+                            receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-S", EventReceiver.COLOR_ORANGE);
                         break;
                     case EVENT_TSPIN_SINGLE:
-                        if ( lastb2b )
-                            receiver.drawMenuFont( engine, playerID, 1, 21, strPieceName + "-SINGLE", EventReceiver.COLOR_RED );
+                        if (lastb2b)
+                            receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-SINGLE", EventReceiver.COLOR_RED);
                         else
-                            receiver.drawMenuFont( engine, playerID, 1, 21, strPieceName + "-SINGLE", EventReceiver.COLOR_ORANGE );
+                            receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-SINGLE", EventReceiver.COLOR_ORANGE);
                         break;
                     case EVENT_TSPIN_DOUBLE_MINI:
-                        if ( lastb2b )
-                            receiver.drawMenuFont( engine, playerID, 1, 21, strPieceName + "-MINI-D", EventReceiver.COLOR_RED );
+                        if (lastb2b)
+                            receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-D", EventReceiver.COLOR_RED);
                         else
-                            receiver.drawMenuFont( engine, playerID, 1, 21, strPieceName + "-MINI-D", EventReceiver.COLOR_ORANGE );
+                            receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-MINI-D", EventReceiver.COLOR_ORANGE);
                         break;
                     case EVENT_TSPIN_DOUBLE:
-                        if ( lastb2b )
-                            receiver.drawMenuFont( engine, playerID, 1, 21, strPieceName + "-DOUBLE", EventReceiver.COLOR_RED );
+                        if (lastb2b)
+                            receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-DOUBLE", EventReceiver.COLOR_RED);
                         else
-                            receiver.drawMenuFont( engine, playerID, 1, 21, strPieceName + "-DOUBLE", EventReceiver.COLOR_ORANGE );
+                            receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-DOUBLE", EventReceiver.COLOR_ORANGE);
                         break;
                     case EVENT_TSPIN_TRIPLE:
-                        if ( lastb2b )
-                            receiver.drawMenuFont( engine, playerID, 1, 21, strPieceName + "-TRIPLE", EventReceiver.COLOR_RED );
+                        if (lastb2b)
+                            receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-TRIPLE", EventReceiver.COLOR_RED);
                         else
-                            receiver.drawMenuFont( engine, playerID, 1, 21, strPieceName + "-TRIPLE", EventReceiver.COLOR_ORANGE );
+                            receiver.drawMenuFont(engine, playerID, 1, 21, strPieceName + "-TRIPLE", EventReceiver.COLOR_ORANGE);
                         break;
                     case EVENT_TSPIN_EZ:
-                        if ( lastb2b )
-                            receiver.drawMenuFont( engine, playerID, 3, 21, "EZ-" + strPieceName, EventReceiver.COLOR_RED );
+                        if (lastb2b)
+                            receiver.drawMenuFont(engine, playerID, 3, 21, "EZ-" + strPieceName, EventReceiver.COLOR_RED);
                         else
-                            receiver.drawMenuFont( engine, playerID, 3, 21, "EZ-" + strPieceName, EventReceiver.COLOR_ORANGE );
+                            receiver.drawMenuFont(engine, playerID, 3, 21, "EZ-" + strPieceName, EventReceiver.COLOR_ORANGE);
                         break;
                 }
 
-                if ( ( lastcombo >= 2 ) && ( lastevent != EVENT_TSPIN_ZERO_MINI ) && ( lastevent != EVENT_TSPIN_ZERO ) )
-                    receiver.drawMenuFont( engine, playerID, 2, 22, ( lastcombo - 1 ) + "COMBO", EventReceiver.COLOR_CYAN );
+                if ((lastcombo >= 2) && (lastevent != EVENT_TSPIN_ZERO_MINI) && (lastevent != EVENT_TSPIN_ZERO))
+                    receiver.drawMenuFont(engine, playerID, 2, 22, (lastcombo - 1) + "COMBO", EventReceiver.COLOR_CYAN);
             }
         }
 
         // NET: Number of spectators
-        netDrawSpectatorsCount( engine, 0, 18 );
+        netDrawSpectatorsCount(engine, 0, 18);
         // NET: All number of players
-        if ( playerID == getPlayers() - 1 ) {
-            netDrawAllPlayersCount( engine );
-            netDrawGameRate( engine );
+        if (playerID == getPlayers() - 1) {
+            netDrawAllPlayersCount(engine);
+            netDrawGameRate(engine);
         }
         // NET: Player name (It may also appear in offline replay)
-        netDrawPlayerName( engine );
+        netDrawPlayerName(engine);
     }
 
     /*
      * Calculate score
      */
     @Override
-    public void calcScore( GameEngine engine, int playerID, int lines ) {
+    public void calcScore(GameEngine engine, int playerID, int lines) {
         // Get speed
         addZero();
 
         // Line clear bonus
         int pts = 0;
 
-        if ( engine.tspin ) {
+        if (engine.tspin) {
             // T-Spin 0 lines
-            if ( ( lines == 0 ) && ( !engine.tspinez ) ) {
-                if ( engine.tspinmini ) {
-                    pts += 100 * ( engine.statistics.level + 1 );
+            if ((lines == 0) && (!engine.tspinez)) {
+                if (engine.tspinmini) {
+                    pts += 100 * (engine.statistics.level + 1);
                     lastevent = EVENT_TSPIN_ZERO_MINI;
                 } else {
-                    pts += 400 * ( engine.statistics.level + 1 );
+                    pts += 400 * (engine.statistics.level + 1);
                     lastevent = EVENT_TSPIN_ZERO;
                 }
             }
             // Immobile EZ Spin
-            else if ( engine.tspinez && ( lines > 0 ) ) {
-                if ( engine.b2b ) {
-                    pts += 180 * ( engine.statistics.level + 1 );
+            else if (engine.tspinez && (lines > 0)) {
+                if (engine.b2b) {
+                    pts += 180 * (engine.statistics.level + 1);
                 } else {
-                    pts += 120 * ( engine.statistics.level + 1 );
+                    pts += 120 * (engine.statistics.level + 1);
                 }
                 lastevent = EVENT_TSPIN_EZ;
             }
             // T-Spin 1 line
-            else if ( lines == 1 ) {
-                if ( engine.tspinmini ) {
-                    if ( engine.b2b ) {
-                        pts += 300 * ( engine.statistics.level + 1 );
+            else if (lines == 1) {
+                if (engine.tspinmini) {
+                    if (engine.b2b) {
+                        pts += 300 * (engine.statistics.level + 1);
                     } else {
-                        pts += 200 * ( engine.statistics.level + 1 );
+                        pts += 200 * (engine.statistics.level + 1);
                     }
                     lastevent = EVENT_TSPIN_SINGLE_MINI;
                 } else {
-                    if ( engine.b2b ) {
-                        pts += 1200 * ( engine.statistics.level + 1 );
+                    if (engine.b2b) {
+                        pts += 1200 * (engine.statistics.level + 1);
                     } else {
-                        pts += 800 * ( engine.statistics.level + 1 );
+                        pts += 800 * (engine.statistics.level + 1);
                     }
                     lastevent = EVENT_TSPIN_SINGLE;
                 }
             }
             // T-Spin 2 lines
-            else if ( lines == 2 ) {
-                if ( engine.tspinmini && engine.useAllSpinBonus ) {
-                    if ( engine.b2b ) {
-                        pts += 600 * ( engine.statistics.level + 1 );
+            else if (lines == 2) {
+                if (engine.tspinmini && engine.useAllSpinBonus) {
+                    if (engine.b2b) {
+                        pts += 600 * (engine.statistics.level + 1);
                     } else {
-                        pts += 400 * ( engine.statistics.level + 1 );
+                        pts += 400 * (engine.statistics.level + 1);
                     }
                     lastevent = EVENT_TSPIN_DOUBLE_MINI;
                 } else {
-                    if ( engine.b2b ) {
-                        pts += 1800 * ( engine.statistics.level + 1 );
+                    if (engine.b2b) {
+                        pts += 1800 * (engine.statistics.level + 1);
                     } else {
-                        pts += 1200 * ( engine.statistics.level + 1 );
+                        pts += 1200 * (engine.statistics.level + 1);
                     }
                     lastevent = EVENT_TSPIN_DOUBLE;
                 }
             }
             // T-Spin 3 lines
-            else if ( lines >= 3 ) {
-                if ( engine.b2b ) {
-                    pts += 2400 * ( engine.statistics.level + 1 );
+            else if (lines >= 3) {
+                if (engine.b2b) {
+                    pts += 2400 * (engine.statistics.level + 1);
                 } else {
-                    pts += 1600 * ( engine.statistics.level + 1 );
+                    pts += 1600 * (engine.statistics.level + 1);
                 }
                 lastevent = EVENT_TSPIN_TRIPLE;
             }
         } else {
-            if ( lines == 1 ) {
-                pts += 100 * ( engine.statistics.level + 1 ); // 1列
+            if (lines == 1) {
+                pts += 100 * (engine.statistics.level + 1); // 1列
                 lastevent = EVENT_SINGLE;
-            } else if ( lines == 2 ) {
-                pts += 300 * ( engine.statistics.level + 1 ); // 2列
+            } else if (lines == 2) {
+                pts += 300 * (engine.statistics.level + 1); // 2列
                 lastevent = EVENT_DOUBLE;
-            } else if ( lines == 3 ) {
-                pts += 500 * ( engine.statistics.level + 1 ); // 3列
+            } else if (lines == 3) {
+                pts += 500 * (engine.statistics.level + 1); // 3列
                 lastevent = EVENT_TRIPLE;
-            } else if ( lines >= 4 ) {
+            } else if (lines >= 4) {
                 // 4 lines
-                if ( engine.b2b ) {
-                    pts += 1200 * ( engine.statistics.level + 1 );
+                if (engine.b2b) {
+                    pts += 1200 * (engine.statistics.level + 1);
                 } else {
-                    pts += 800 * ( engine.statistics.level + 1 );
+                    pts += 800 * (engine.statistics.level + 1);
                 }
                 lastevent = EVENT_FOUR;
             }
@@ -720,57 +710,57 @@ public class Accelerator extends MarathonModeBase {
         lastb2b = engine.b2b;
 
         // Combo
-        if ( ( enableCombo ) && ( engine.combo >= 1 ) && ( lines >= 1 ) ) {
-            pts += ( ( engine.combo - 1 ) * 50 ) * ( engine.statistics.level + 1 );
+        if ((enableCombo) && (engine.combo >= 1) && (lines >= 1)) {
+            pts += ((engine.combo - 1) * 50) * (engine.statistics.level + 1);
             lastcombo = engine.combo;
         }
 
         // All clear
-        if ( ( lines >= 1 ) && ( engine.field.isEmpty() ) ) {
-            engine.playSE( "bravo" );
-            pts += 1800 * ( engine.statistics.level + 1 );
+        if ((lines >= 1) && (engine.field.isEmpty())) {
+            engine.playSE("bravo");
+            pts += 1800 * (engine.statistics.level + 1);
         }
 
         // Add to goal
-        if ( lines >= 1 ) {
+        if (lines >= 1) {
             progressCoeffeicient += currentSpeed;
         }
 
-        double usedSpeed = Math.min( currentSpeed, 6.5 );
-        double usedMultiplier = ( currentSpeed >= 2.0 ) ? 1.5 : 0.5;
+        double usedSpeed = Math.min(currentSpeed, 6.5);
+        double usedMultiplier = (currentSpeed >= 2.0) ? 1.5 : 0.5;
         double finalMultiplier = usedMultiplier + usedSpeed;
-        if ( bonusActive ) finalMultiplier *= 4;
+        if (bonusActive) finalMultiplier *= 4;
 
         pts *= finalMultiplier;
 
         // Add to score
-        if ( pts > 0 ) {
+        if (pts > 0) {
             lastscore = pts;
             lastpiece = engine.nowPieceObject.id;
             scgettime = 0;
             scoreBeforeIncrease = engine.statistics.score;
-            if ( lines >= 1 ) engine.statistics.scoreFromLineClear += pts;
+            if (lines >= 1) engine.statistics.scoreFromLineClear += pts;
             else engine.statistics.scoreFromOtherBonus += pts;
             engine.statistics.score += pts;
         }
 
         // BGM fade-out effects and BGM changes
-        if ( tableBGMChange[ bgmlv ] != -1 ) {
-            if ( progressCoeffeicient >= tableBGMChange[ bgmlv ] - 5 ) owner.bgmStatus.fadesw = true;
+        if (tableBGMChange[bgmlv] != -1) {
+            if (progressCoeffeicient >= tableBGMChange[bgmlv] - 5) owner.bgmStatus.fadesw = true;
 
-            if ( ( progressCoeffeicient >= tableBGMChange[ bgmlv ] ) &&
-                    ( ( progressCoeffeicient < GOALS[ goaltype ] ) || ( GOALS[ goaltype ] < 0 ) ) ) {
+            if ((progressCoeffeicient >= tableBGMChange[bgmlv]) &&
+                ((progressCoeffeicient < GOALS[goaltype]) || (GOALS[goaltype] < 0))) {
                 bgmlv++;
                 owner.bgmStatus.bgm = bgmlv;
                 owner.bgmStatus.fadesw = false;
             }
         }
 
-        if ( ( progressCoeffeicient >= GOALS[ goaltype ] ) && ( GOALS[ goaltype ] >= 0 ) ) {
+        if ((progressCoeffeicient >= GOALS[goaltype]) && (GOALS[goaltype] >= 0)) {
             // Ending
             engine.ending = 1;
             engine.gameEnded();
-        } else if ( ( progressCoeffeicient >= ( engine.statistics.level + 1 ) * GOAL_COEFFICIENT ) && ( engine.statistics.level < 19 ) ) {
+        } else if ((progressCoeffeicient >= (engine.statistics.level + 1) * GOAL_COEFFICIENT) && (engine.statistics.level < 19)) {
             // Level up
             engine.statistics.level++;
 
@@ -778,8 +768,8 @@ public class Accelerator extends MarathonModeBase {
             owner.backgroundStatus.fadecount = 0;
             owner.backgroundStatus.fadebg = engine.statistics.level;
 
-            setSpeed( engine );
-            engine.playSE( "levelup" );
+            setSpeed(engine);
+            engine.playSE("levelup");
         }
     }
 
@@ -787,74 +777,74 @@ public class Accelerator extends MarathonModeBase {
      * Called during movetime
      */
     @Override
-    public boolean onMove( GameEngine engine, int playerID ) {
-        currentSpeed = getSpeed( engine );
-        double usedSpeed = Math.min( currentSpeed, 6.5 );
+    public boolean onMove(GameEngine engine, int playerID) {
+        currentSpeed = getSpeed(engine);
+        double usedSpeed = Math.min(currentSpeed, 6.5);
 
-        for ( int i = 0; i < timeSincePlacementArray.length; i++ ) {
-            if ( timeSincePlacementArray[ i ] >= bufferTime ) {
-                timeSincePlacementArray[ i ] = -1;
-            } else if ( timeSincePlacementArray[ i ] != -1 ) {
-                timeSincePlacementArray[ i ]++;
+        for (int i = 0; i < timeSincePlacementArray.length; i++) {
+            if (timeSincePlacementArray[i] >= bufferTime) {
+                timeSincePlacementArray[i] = -1;
+            } else if (timeSincePlacementArray[i] != -1) {
+                timeSincePlacementArray[i]++;
             }
         }
 
-        if ( usedSpeed >= 2 && !bonusActive ) {
-            currentBonusCharge += ( usedSpeed >= 2.5 ) ? 0.1 : 0.25;
-        } else if ( bonusActive ) {
+        if (usedSpeed >= 2 && !bonusActive) {
+            currentBonusCharge += (usedSpeed >= 2.5) ? 0.1 : 0.25;
+        } else if (bonusActive) {
             currentBonusCharge -= 0.2;
             engine.nowPieceColorOverride = Block.BLOCK_COLOR_ORANGE;
-            if ( engine.nowPieceObject != null ) {
-                if ( engine.nowPieceObject.getColors()[ 0 ] != Block.BLOCK_COLOR_ORANGE ) {
-                    engine.nowPieceObject.setColor( Block.BLOCK_COLOR_ORANGE );
+            if (engine.nowPieceObject != null) {
+                if (engine.nowPieceObject.getColors()[0] != Block.BLOCK_COLOR_ORANGE) {
+                    engine.nowPieceObject.setColor(Block.BLOCK_COLOR_ORANGE);
                 }
             }
         }
 
-        if ( currentBonusCharge >= MAX_BONUS_CHARGE && !bonusActive ) {
+        if (currentBonusCharge >= MAX_BONUS_CHARGE && !bonusActive) {
             currentBonusCharge = MAX_BONUS_CHARGE;
             bonusActive = true;
-            engine.playSE( "cool" );
+            engine.playSE("cool");
             engine.framecolor = GameEngine.FRAME_COLOR_RED;
         }
 
-        if ( bonusActive && currentBonusCharge <= 0 ) {
+        if (bonusActive && currentBonusCharge <= 0) {
             currentBonusCharge = 0;
             bonusActive = false;
             engine.nowPieceColorOverride = -1;
-            engine.playSE( "bravo" );
+            engine.playSE("bravo");
             engine.framecolor = GameEngine.FRAME_COLOR_GREEN;
         }
 
         // Meter
-        engine.meterValue = ( int ) ( ( ( usedSpeed / 0.25 ) * receiver.getMeterMax( engine ) ) / 10 );
+        engine.meterValue = (int) (((usedSpeed / 0.25) * receiver.getMeterMax(engine)) / 10);
         engine.meterColor = GameEngine.METER_COLOR_RED;
-        if ( usedSpeed >= 0.5 ) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
-        if ( usedSpeed >= 1 ) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
-        if ( usedSpeed >= 2.5 ) engine.meterColor = GameEngine.METER_COLOR_GREEN;
+        if (usedSpeed >= 0.5) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
+        if (usedSpeed >= 1) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
+        if (usedSpeed >= 2.5) engine.meterColor = GameEngine.METER_COLOR_GREEN;
 
         return false;
     }
 
     // Get current speed of play
-    private double getSpeed( GameEngine engine ) {
+    private double getSpeed(GameEngine engine) {
         int placed = 0;
-        for ( int value : timeSincePlacementArray ) {
-            if ( value != -1 ) {
+        for (int value : timeSincePlacementArray) {
+            if (value != -1) {
                 placed++;
             }
         }
 
-        int usedTime = Math.min( engine.statistics.time, bufferTime );
-        if ( usedTime <= 0 ) usedTime = 1;
-        return ( double ) placed / ( ( double ) usedTime / 60 );
+        int usedTime = Math.min(engine.statistics.time, bufferTime);
+        if (usedTime <= 0) usedTime = 1;
+        return (double) placed / ((double) usedTime / 60);
     }
 
     // place new 0 in placement array
     private void addZero() {
-        for ( int i = 0; i < timeSincePlacementArray.length; i++ ) {
-            if ( timeSincePlacementArray[ i ] == -1 ) {
-                timeSincePlacementArray[ i ] = 0;
+        for (int i = 0; i < timeSincePlacementArray.length; i++) {
+            if (timeSincePlacementArray[i] == -1) {
+                timeSincePlacementArray[i] = 0;
                 break;
             }
         }
@@ -865,18 +855,18 @@ public class Accelerator extends MarathonModeBase {
      *
      * @param prop Property file
      */
-    private void loadSetting( CustomProperties prop ) {
-        startlevel = prop.getProperty( "accelerator.startlevel", 0 );
-        tspinEnableType = prop.getProperty( "accelerator.tspinEnableType", 1 );
-        enableTSpin = prop.getProperty( "accelerator.enableTSpin", true );
-        enableTSpinKick = prop.getProperty( "accelerator.enableTSpinKick", true );
-        spinCheckType = prop.getProperty( "accelerator.spinCheckType", 0 );
-        tspinEnableEZ = prop.getProperty( "accelerator.tspinEnableEZ", false );
-        enableB2B = prop.getProperty( "accelerator.enableB2B", true );
-        enableCombo = prop.getProperty( "accelerator.enableCombo", true );
-        goaltype = prop.getProperty( "accelerator.gametype", 0 );
-        big = prop.getProperty( "accelerator.big", false );
-        version = prop.getProperty( "accelerator.version", 0 );
+    private void loadSetting(CustomProperties prop) {
+        startlevel = prop.getProperty("accelerator.startlevel", 0);
+        tspinEnableType = prop.getProperty("accelerator.tspinEnableType", 1);
+        enableTSpin = prop.getProperty("accelerator.enableTSpin", true);
+        enableTSpinKick = prop.getProperty("accelerator.enableTSpinKick", true);
+        spinCheckType = prop.getProperty("accelerator.spinCheckType", 0);
+        tspinEnableEZ = prop.getProperty("accelerator.tspinEnableEZ", false);
+        enableB2B = prop.getProperty("accelerator.enableB2B", true);
+        enableCombo = prop.getProperty("accelerator.enableCombo", true);
+        goaltype = prop.getProperty("accelerator.gametype", 0);
+        big = prop.getProperty("accelerator.big", false);
+        version = prop.getProperty("accelerator.version", 0);
     }
 
     /**
@@ -884,18 +874,18 @@ public class Accelerator extends MarathonModeBase {
      *
      * @param prop Property file
      */
-    private void saveSetting( CustomProperties prop ) {
-        prop.setProperty( "accelerator.startlevel", startlevel );
-        prop.setProperty( "accelerator.tspinEnableType", tspinEnableType );
-        prop.setProperty( "accelerator.enableTSpin", enableTSpin );
-        prop.setProperty( "accelerator.enableTSpinKick", enableTSpinKick );
-        prop.setProperty( "accelerator.spinCheckType", spinCheckType );
-        prop.setProperty( "accelerator.tspinEnableEZ", tspinEnableEZ );
-        prop.setProperty( "accelerator.enableB2B", enableB2B );
-        prop.setProperty( "accelerator.enableCombo", enableCombo );
-        prop.setProperty( "accelerator.gametype", goaltype );
-        prop.setProperty( "accelerator.big", big );
-        prop.setProperty( "accelerator.version", version );
+    private void saveSetting(CustomProperties prop) {
+        prop.setProperty("accelerator.startlevel", startlevel);
+        prop.setProperty("accelerator.tspinEnableType", tspinEnableType);
+        prop.setProperty("accelerator.enableTSpin", enableTSpin);
+        prop.setProperty("accelerator.enableTSpinKick", enableTSpinKick);
+        prop.setProperty("accelerator.spinCheckType", spinCheckType);
+        prop.setProperty("accelerator.tspinEnableEZ", tspinEnableEZ);
+        prop.setProperty("accelerator.enableB2B", enableB2B);
+        prop.setProperty("accelerator.enableCombo", enableCombo);
+        prop.setProperty("accelerator.gametype", goaltype);
+        prop.setProperty("accelerator.big", big);
+        prop.setProperty("accelerator.version", version);
     }
 
     /**
@@ -903,18 +893,18 @@ public class Accelerator extends MarathonModeBase {
      *
      * @param prop Property file
      */
-    private void loadSettingPlayer( ProfileProperties prop ) {
-        if ( !prop.isLoggedIn() ) return;
-        startlevel = prop.getProperty( "accelerator.startlevel", 0 );
-        tspinEnableType = prop.getProperty( "accelerator.tspinEnableType", 1 );
-        enableTSpin = prop.getProperty( "accelerator.enableTSpin", true );
-        enableTSpinKick = prop.getProperty( "accelerator.enableTSpinKick", true );
-        spinCheckType = prop.getProperty( "accelerator.spinCheckType", 0 );
-        tspinEnableEZ = prop.getProperty( "accelerator.tspinEnableEZ", false );
-        enableB2B = prop.getProperty( "accelerator.enableB2B", true );
-        enableCombo = prop.getProperty( "accelerator.enableCombo", true );
-        goaltype = prop.getProperty( "accelerator.gametype", 0 );
-        big = prop.getProperty( "accelerator.big", false );
+    private void loadSettingPlayer(ProfileProperties prop) {
+        if (!prop.isLoggedIn()) return;
+        startlevel = prop.getProperty("accelerator.startlevel", 0);
+        tspinEnableType = prop.getProperty("accelerator.tspinEnableType", 1);
+        enableTSpin = prop.getProperty("accelerator.enableTSpin", true);
+        enableTSpinKick = prop.getProperty("accelerator.enableTSpinKick", true);
+        spinCheckType = prop.getProperty("accelerator.spinCheckType", 0);
+        tspinEnableEZ = prop.getProperty("accelerator.tspinEnableEZ", false);
+        enableB2B = prop.getProperty("accelerator.enableB2B", true);
+        enableCombo = prop.getProperty("accelerator.enableCombo", true);
+        goaltype = prop.getProperty("accelerator.gametype", 0);
+        big = prop.getProperty("accelerator.big", false);
     }
 
     /**
@@ -922,18 +912,18 @@ public class Accelerator extends MarathonModeBase {
      *
      * @param prop Property file
      */
-    private void saveSettingPlayer( ProfileProperties prop ) {
-        if ( !prop.isLoggedIn() ) return;
-        prop.setProperty( "accelerator.startlevel", startlevel );
-        prop.setProperty( "accelerator.tspinEnableType", tspinEnableType );
-        prop.setProperty( "accelerator.enableTSpin", enableTSpin );
-        prop.setProperty( "accelerator.enableTSpinKick", enableTSpinKick );
-        prop.setProperty( "accelerator.spinCheckType", spinCheckType );
-        prop.setProperty( "accelerator.tspinEnableEZ", tspinEnableEZ );
-        prop.setProperty( "accelerator.enableB2B", enableB2B );
-        prop.setProperty( "accelerator.enableCombo", enableCombo );
-        prop.setProperty( "accelerator.gametype", goaltype );
-        prop.setProperty( "accelerator.big", big );
+    private void saveSettingPlayer(ProfileProperties prop) {
+        if (!prop.isLoggedIn()) return;
+        prop.setProperty("accelerator.startlevel", startlevel);
+        prop.setProperty("accelerator.tspinEnableType", tspinEnableType);
+        prop.setProperty("accelerator.enableTSpin", enableTSpin);
+        prop.setProperty("accelerator.enableTSpinKick", enableTSpinKick);
+        prop.setProperty("accelerator.spinCheckType", spinCheckType);
+        prop.setProperty("accelerator.tspinEnableEZ", tspinEnableEZ);
+        prop.setProperty("accelerator.enableB2B", enableB2B);
+        prop.setProperty("accelerator.enableCombo", enableCombo);
+        prop.setProperty("accelerator.gametype", goaltype);
+        prop.setProperty("accelerator.big", big);
     }
 
     /**
@@ -943,12 +933,12 @@ public class Accelerator extends MarathonModeBase {
      * @param ruleName Rule name
      */
     @Override
-    protected void loadRanking( CustomProperties prop, String ruleName ) {
-        for ( int i = 0; i < RANKING_MAX; i++ ) {
-            for ( int j = 0; j < GAMETYPE_MAX; j++ ) {
-                rankingScore[ j ][ i ] = prop.getProperty( "accelerator.ranking." + ruleName + "." + j + ".score." + i, 0 );
-                rankingLines[ j ][ i ] = prop.getProperty( "accelerator.ranking." + ruleName + "." + j + ".lines." + i, 0.0 );
-                rankingTime[ j ][ i ] = prop.getProperty( "accelerator.ranking." + ruleName + "." + j + ".time." + i, 0 );
+    protected void loadRanking(CustomProperties prop, String ruleName) {
+        for (int i = 0; i < RANKING_MAX; i++) {
+            for (int j = 0; j < GAMETYPE_MAX; j++) {
+                rankingScore[j][i] = prop.getProperty("accelerator.ranking." + ruleName + "." + j + ".score." + i, 0);
+                rankingLines[j][i] = prop.getProperty("accelerator.ranking." + ruleName + "." + j + ".lines." + i, 0.0);
+                rankingTime[j][i] = prop.getProperty("accelerator.ranking." + ruleName + "." + j + ".time." + i, 0);
             }
         }
     }
@@ -959,12 +949,12 @@ public class Accelerator extends MarathonModeBase {
      * @param prop     Property file
      * @param ruleName Rule name
      */
-    private void saveRanking( CustomProperties prop, String ruleName ) {
-        for ( int i = 0; i < RANKING_MAX; i++ ) {
-            for ( int j = 0; j < GAMETYPE_MAX; j++ ) {
-                prop.setProperty( "accelerator.ranking." + ruleName + "." + j + ".score." + i, rankingScore[ j ][ i ] );
-                prop.setProperty( "accelerator.ranking." + ruleName + "." + j + ".lines." + i, rankingLines[ j ][ i ] );
-                prop.setProperty( "accelerator.ranking." + ruleName + "." + j + ".time." + i, rankingTime[ j ][ i ] );
+    private void saveRanking(CustomProperties prop, String ruleName) {
+        for (int i = 0; i < RANKING_MAX; i++) {
+            for (int j = 0; j < GAMETYPE_MAX; j++) {
+                prop.setProperty("accelerator.ranking." + ruleName + "." + j + ".score." + i, rankingScore[j][i]);
+                prop.setProperty("accelerator.ranking." + ruleName + "." + j + ".lines." + i, rankingLines[j][i]);
+                prop.setProperty("accelerator.ranking." + ruleName + "." + j + ".time." + i, rankingTime[j][i]);
             }
         }
     }
@@ -975,13 +965,13 @@ public class Accelerator extends MarathonModeBase {
      * @param prop     Property file
      * @param ruleName Rule name
      */
-    private void loadRankingPlayer( ProfileProperties prop, String ruleName ) {
-        if ( !prop.isLoggedIn() ) return;
-        for ( int i = 0; i < RANKING_MAX; i++ ) {
-            for ( int j = 0; j < GAMETYPE_MAX; j++ ) {
-                rankingScorePlayer[ j ][ i ] = prop.getProperty( "accelerator.ranking." + ruleName + "." + j + ".score." + i, 0 );
-                rankingLinesPlayer[ j ][ i ] = prop.getProperty( "accelerator.ranking." + ruleName + "." + j + ".lines." + i, 0.0 );
-                rankingTimePlayer[ j ][ i ] = prop.getProperty( "accelerator.ranking." + ruleName + "." + j + ".time." + i, 0 );
+    private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+        if (!prop.isLoggedIn()) return;
+        for (int i = 0; i < RANKING_MAX; i++) {
+            for (int j = 0; j < GAMETYPE_MAX; j++) {
+                rankingScorePlayer[j][i] = prop.getProperty("accelerator.ranking." + ruleName + "." + j + ".score." + i, 0);
+                rankingLinesPlayer[j][i] = prop.getProperty("accelerator.ranking." + ruleName + "." + j + ".lines." + i, 0.0);
+                rankingTimePlayer[j][i] = prop.getProperty("accelerator.ranking." + ruleName + "." + j + ".time." + i, 0);
             }
         }
     }
@@ -992,13 +982,13 @@ public class Accelerator extends MarathonModeBase {
      * @param prop     Property file
      * @param ruleName Rule name
      */
-    private void saveRankingPlayer( ProfileProperties prop, String ruleName ) {
-        if ( !prop.isLoggedIn() ) return;
-        for ( int i = 0; i < RANKING_MAX; i++ ) {
-            for ( int j = 0; j < GAMETYPE_MAX; j++ ) {
-                prop.setProperty( "accelerator.ranking." + ruleName + "." + j + ".score." + i, rankingScorePlayer[ j ][ i ] );
-                prop.setProperty( "accelerator.ranking." + ruleName + "." + j + ".lines." + i, rankingLinesPlayer[ j ][ i ] );
-                prop.setProperty( "accelerator.ranking." + ruleName + "." + j + ".time." + i, rankingTimePlayer[ j ][ i ] );
+    private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+        if (!prop.isLoggedIn()) return;
+        for (int i = 0; i < RANKING_MAX; i++) {
+            for (int j = 0; j < GAMETYPE_MAX; j++) {
+                prop.setProperty("accelerator.ranking." + ruleName + "." + j + ".score." + i, rankingScorePlayer[j][i]);
+                prop.setProperty("accelerator.ranking." + ruleName + "." + j + ".lines." + i, rankingLinesPlayer[j][i]);
+                prop.setProperty("accelerator.ranking." + ruleName + "." + j + ".time." + i, rankingTimePlayer[j][i]);
             }
         }
     }
@@ -1007,29 +997,29 @@ public class Accelerator extends MarathonModeBase {
      * Called when saving replay
      */
     @Override
-    public void saveReplay( GameEngine engine, int playerID, CustomProperties prop ) {
-        saveSetting( prop );
+    public void saveReplay(GameEngine engine, int playerID, CustomProperties prop) {
+        saveSetting(prop);
 
         // NET: Save name
-        if ( ( netPlayerName != null ) && ( netPlayerName.length() > 0 ) ) {
-            prop.setProperty( playerID + ".net.netPlayerName", netPlayerName );
+        if ((netPlayerName != null) && (netPlayerName.length() > 0)) {
+            prop.setProperty(playerID + ".net.netPlayerName", netPlayerName);
         }
 
         // Update rankings
-        if ( ( !owner.replayMode ) && ( !big ) && ( engine.ai == null ) ) {
-            updateRanking( engine.statistics.score, progressCoeffeicient, engine.statistics.time, goaltype );
+        if ((!owner.replayMode) && (!big) && (engine.ai == null)) {
+            updateRanking(engine.statistics.score, progressCoeffeicient, engine.statistics.time, goaltype);
 
-            if ( playerProperties.isLoggedIn() ) {
-                prop.setProperty( "accelerator.playerName", playerProperties.getNameDisplay() );
+            if (playerProperties.isLoggedIn()) {
+                prop.setProperty("accelerator.playerName", playerProperties.getNameDisplay());
             }
 
-            if ( rankingRank != -1 ) {
-                saveRanking( owner.modeConfig, engine.ruleopt.strRuleName );
-                receiver.saveModeConfig( owner.modeConfig );
+            if (rankingRank != -1) {
+                saveRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+                receiver.saveModeConfig(owner.modeConfig);
             }
 
-            if ( rankingRankPlayer != -1 && playerProperties.isLoggedIn() ) {
-                saveRankingPlayer( playerProperties, engine.ruleopt.strRuleName );
+            if (rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
+                saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
                 playerProperties.saveProfileConfig();
             }
         }
@@ -1042,38 +1032,38 @@ public class Accelerator extends MarathonModeBase {
      * @param li   Lines
      * @param time Time
      */
-    private void updateRanking( int sc, double li, int time, int type ) {
-        rankingRank = checkRanking( sc, li, time, type );
+    private void updateRanking(int sc, double li, int time, int type) {
+        rankingRank = checkRanking(sc, li, time, type);
 
-        if ( rankingRank != -1 ) {
+        if (rankingRank != -1) {
             // Shift down ranking entries
-            for ( int i = RANKING_MAX - 1; i > rankingRank; i-- ) {
-                rankingScore[ type ][ i ] = rankingScore[ type ][ i - 1 ];
-                rankingLines[ type ][ i ] = rankingLines[ type ][ i - 1 ];
-                rankingTime[ type ][ i ] = rankingTime[ type ][ i - 1 ];
+            for (int i = RANKING_MAX - 1; i > rankingRank; i--) {
+                rankingScore[type][i] = rankingScore[type][i - 1];
+                rankingLines[type][i] = rankingLines[type][i - 1];
+                rankingTime[type][i] = rankingTime[type][i - 1];
             }
 
             // Add new data
-            rankingScore[ type ][ rankingRank ] = sc;
-            rankingLines[ type ][ rankingRank ] = li;
-            rankingTime[ type ][ rankingRank ] = time;
+            rankingScore[type][rankingRank] = sc;
+            rankingLines[type][rankingRank] = li;
+            rankingTime[type][rankingRank] = time;
         }
 
-        if ( playerProperties.isLoggedIn() ) {
-            rankingRankPlayer = checkRankingPlayer( sc, li, time, type );
+        if (playerProperties.isLoggedIn()) {
+            rankingRankPlayer = checkRankingPlayer(sc, li, time, type);
 
-            if ( rankingRankPlayer != -1 ) {
+            if (rankingRankPlayer != -1) {
                 // Shift down ranking entries
-                for ( int i = RANKING_MAX - 1; i > rankingRankPlayer; i-- ) {
-                    rankingScorePlayer[ type ][ i ] = rankingScorePlayer[ type ][ i - 1 ];
-                    rankingLinesPlayer[ type ][ i ] = rankingLinesPlayer[ type ][ i - 1 ];
-                    rankingTimePlayer[ type ][ i ] = rankingTimePlayer[ type ][ i - 1 ];
+                for (int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
+                    rankingScorePlayer[type][i] = rankingScorePlayer[type][i - 1];
+                    rankingLinesPlayer[type][i] = rankingLinesPlayer[type][i - 1];
+                    rankingTimePlayer[type][i] = rankingTimePlayer[type][i - 1];
                 }
 
                 // Add new data
-                rankingScorePlayer[ type ][ rankingRankPlayer ] = sc;
-                rankingLinesPlayer[ type ][ rankingRankPlayer ] = li;
-                rankingTimePlayer[ type ][ rankingRankPlayer ] = time;
+                rankingScorePlayer[type][rankingRankPlayer] = sc;
+                rankingLinesPlayer[type][rankingRankPlayer] = li;
+                rankingTimePlayer[type][rankingRankPlayer] = time;
             }
         }
     }
@@ -1086,13 +1076,13 @@ public class Accelerator extends MarathonModeBase {
      * @param time Time
      * @return Position (-1 if unranked)
      */
-    private int checkRanking( int sc, double li, int time, int type ) {
-        for ( int i = 0; i < RANKING_MAX; i++ ) {
-            if ( sc > rankingScore[ type ][ i ] ) {
+    private int checkRanking(int sc, double li, int time, int type) {
+        for (int i = 0; i < RANKING_MAX; i++) {
+            if (sc > rankingScore[type][i]) {
                 return i;
-            } else if ( ( sc == rankingScore[ type ][ i ] ) && ( li > rankingLines[ type ][ i ] ) ) {
+            } else if ((sc == rankingScore[type][i]) && (li > rankingLines[type][i])) {
                 return i;
-            } else if ( ( sc == rankingScore[ type ][ i ] ) && ( li == rankingLines[ type ][ i ] ) && ( time < rankingTime[ type ][ i ] ) ) {
+            } else if ((sc == rankingScore[type][i]) && (li == rankingLines[type][i]) && (time < rankingTime[type][i])) {
                 return i;
             }
         }
@@ -1108,13 +1098,13 @@ public class Accelerator extends MarathonModeBase {
      * @param time Time
      * @return Position (-1 if unranked)
      */
-    private int checkRankingPlayer( int sc, double li, int time, int type ) {
-        for ( int i = 0; i < RANKING_MAX; i++ ) {
-            if ( sc > rankingScorePlayer[ type ][ i ] ) {
+    private int checkRankingPlayer(int sc, double li, int time, int type) {
+        for (int i = 0; i < RANKING_MAX; i++) {
+            if (sc > rankingScorePlayer[type][i]) {
                 return i;
-            } else if ( ( sc == rankingScorePlayer[ type ][ i ] ) && ( li > rankingLinesPlayer[ type ][ i ] ) ) {
+            } else if ((sc == rankingScorePlayer[type][i]) && (li > rankingLinesPlayer[type][i])) {
                 return i;
-            } else if ( ( sc == rankingScorePlayer[ type ][ i ] ) && ( li == rankingLinesPlayer[ type ][ i ] ) && ( time < rankingTimePlayer[ type ][ i ] ) ) {
+            } else if ((sc == rankingScorePlayer[type][i]) && (li == rankingLinesPlayer[type][i]) && (time < rankingTimePlayer[type][i])) {
                 return i;
             }
         }

@@ -11,54 +11,54 @@ public class SomeRandomShittyRotationSystemWallkick implements Wallkick {
     // The bigger the field width, the more checks it performs.
 
     @Override
-    public WallkickResult executeWallkick( int x, int y, int rtDir, int rtOld, int rtNew, boolean allowUpward,
-                                           Piece piece, Field field, Controller ctrl ) {
+    public WallkickResult executeWallkick(int x, int y, int rtDir, int rtOld, int rtNew, boolean allowUpward,
+                                          Piece piece, Field field, Controller ctrl) {
         int x2 = 0;
         int y2 = 0;
         int offsetRadius = field.getWidth() + 1;
-        if ( piece.big ) offsetRadius = ( field.getWidth() / 2 ) + 1;
+        if (piece.big) offsetRadius = (field.getWidth() / 2) + 1;
         int dx = 1;
         int dy = 1;
         int m = 1;  // not sure what this is for...
         int iter = 0;
 
-        while ( iter < Math.pow( offsetRadius, 2 ) ) {
-            while ( ( 2 * x2 * dx ) < m ) {
+        while (iter < Math.pow(offsetRadius, 2)) {
+            while ((2 * x2 * dx) < m) {
                 // STH
-                if ( iter >= Math.pow( offsetRadius, 2 ) ) break;
+                if (iter >= Math.pow(offsetRadius, 2)) break;
 
                 int x3 = x2;
-                x3 *= ( rtDir == 1 ) ? 1 : -1;
+                x3 *= (rtDir == 1) ? 1 : -1;
 
-                if ( piece.big ) {
+                if (piece.big) {
                     x3 *= 2;
                     y2 *= 2;
                 }
 
-                if ( ( !piece.checkCollision( x + x3, y + y2, rtNew, field ) ) ) {
-                    if ( !( x3 == 0 && y2 == 0 ) ) {
-                        return new WallkickResult( x3, y2, rtNew );
+                if ((!piece.checkCollision(x + x3, y + y2, rtNew, field))) {
+                    if (!(x3 == 0 && y2 == 0)) {
+                        return new WallkickResult(x3, y2, rtNew);
                     }
                 }
 
                 iter++;
                 x2 += dx;
             }
-            while ( ( 2 * y2 * dy ) < m ) {
+            while ((2 * y2 * dy) < m) {
                 // STH
-                if ( iter >= Math.pow( offsetRadius, 2 ) ) break;
+                if (iter >= Math.pow(offsetRadius, 2)) break;
 
                 int x3 = x2;
-                x3 *= ( rtDir == 1 ) ? 1 : -1;
+                x3 *= (rtDir == 1) ? 1 : -1;
 
-                if ( piece.big ) {
+                if (piece.big) {
                     x3 *= 2;
                     y2 *= 2;
                 }
 
-                if ( ( !piece.checkCollision( x + x3, y + y2, rtNew, field ) ) ) {
-                    if ( !( x3 == 0 && y2 == 0 ) ) {
-                        return new WallkickResult( x3, y2, rtNew );
+                if ((!piece.checkCollision(x + x3, y + y2, rtNew, field))) {
+                    if (!(x3 == 0 && y2 == 0)) {
+                        return new WallkickResult(x3, y2, rtNew);
                     }
                 }
 

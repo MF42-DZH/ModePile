@@ -7,7 +7,7 @@ public class GridSpace {
     public boolean flagged;
     public boolean question;
 
-    public GridSpace( boolean isMine ) {
+    public GridSpace(boolean isMine) {
         uncovered = false;
         this.isMine = isMine;
         surroundingMines = 0;

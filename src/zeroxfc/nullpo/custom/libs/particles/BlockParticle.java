@@ -33,7 +33,6 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
 import java.util.Random;
-
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
@@ -41,21 +40,16 @@ import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 
 public class BlockParticle {
-    // Block for use in texture.
-    private Block objectTexture;
-
-    // Position
-    private DoubleVector position;
-
-    // Velocity
-    private DoubleVector velocity;
-
-    // Size
-    private float size;
-
     // Lifetime
     private final int maxLifetime;
-
+    // Block for use in texture.
+    private final Block objectTexture;
+    // Position
+    private DoubleVector position;
+    // Velocity
+    private DoubleVector velocity;
+    // Size
+    private float size;
     // Current time alive
     private int currentLifetime;
 
@@ -71,14 +65,14 @@ public class BlockParticle {
      * @param timeToLive  Frames to live.
      * @param randomiser  Randomiser used for setting speed and direction.
      */
-    public BlockParticle( Block block, DoubleVector position, double maxVelocity, int timeToLive, boolean flash, Random randomiser ) {
+    public BlockParticle(Block block, DoubleVector position, double maxVelocity, int timeToLive, boolean flash, Random randomiser) {
         objectTexture = new Block();
-        objectTexture.copy( block );
+        objectTexture.copy(block);
         this.position = position;
 
         double speed = randomiser.nextDouble() * maxVelocity;
         double angle = randomiser.nextDouble() * Math.PI * 2;
-        velocity = new DoubleVector( speed, angle, true );
+        velocity = new DoubleVector(speed, angle, true);
         isFlashing = flash;
 
         maxLifetime = timeToLive;
@@ -86,9 +80,9 @@ public class BlockParticle {
         size = 1;
     }
 
-    public BlockParticle( Block block, DoubleVector position, DoubleVector velocity, int timeToLive ) {
+    public BlockParticle(Block block, DoubleVector position, DoubleVector velocity, int timeToLive) {
         objectTexture = new Block();
-        objectTexture.copy( block );
+        objectTexture.copy(block);
 
         this.position = position;
         this.velocity = velocity;
@@ -101,18 +95,18 @@ public class BlockParticle {
     /**
      * Update position and lifetime data.
      */
-    public void update( int animType ) {
-        position = DoubleVector.add( position, velocity );
+    public void update(int animType) {
+        position = DoubleVector.add(position, velocity);
 
-        switch ( animType ) {
+        switch (animType) {
             case BlockParticleCollection.ANIMATION_DTET:
-                if ( currentLifetime < ( maxLifetime * 0.75 ) ) {
-                    velocity.setDirection( velocity.getDirection() + ( Math.PI / maxLifetime ) );
+                if (currentLifetime < (maxLifetime * 0.75)) {
+                    velocity.setDirection(velocity.getDirection() + (Math.PI / maxLifetime));
                 }
                 break;
             case BlockParticleCollection.ANIMATION_TGM:
-                velocity = DoubleVector.add( velocity, new DoubleVector( 0, 0.980665 / 2.25, false ) );
-                size += ( 1f / 60f );
+                velocity = DoubleVector.add(velocity, new DoubleVector(0, 0.980665 / 2.25, false));
+                size += (1f / 60f);
                 break;
         }
 
@@ -124,23 +118,23 @@ public class BlockParticle {
      *
      * @param receiver EventReceiver doing the drawing.
      */
-    public void draw( GameEngine engine, EventReceiver receiver, int playerID, int animType ) {
-        if ( engine.displaysize != -1 ) {
-            if ( animType == BlockParticleCollection.ANIMATION_TGM ) {
-                RendererExtension.drawScaledBlock( receiver, ( int ) position.getX() + ( int ) ( ( ( engine.displaysize == 0 ) ? 2 : 4 ) * size ), ( int ) position.getY() + ( ( engine.displaysize == 0 ) ? 2 : 4 ),
-                        objectTexture.color, objectTexture.skin,
-                        objectTexture.getAttribute( Block.BLOCK_ATTRIBUTE_BONE ), 0.5f, 1f,
-                        ( ( engine.displaysize == 0 ) ? 1f : 2f ) * size, 0 );
+    public void draw(GameEngine engine, EventReceiver receiver, int playerID, int animType) {
+        if (engine.displaysize != -1) {
+            if (animType == BlockParticleCollection.ANIMATION_TGM) {
+                RendererExtension.drawScaledBlock(receiver, (int) position.getX() + (int) (((engine.displaysize == 0) ? 2 : 4) * size), (int) position.getY() + ((engine.displaysize == 0) ? 2 : 4),
+                    objectTexture.color, objectTexture.skin,
+                    objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0.5f, 1f,
+                    ((engine.displaysize == 0) ? 1f : 2f) * size, 0);
 //				receiver.drawSingleBlock(engine, playerID,
 //		                (int)position.getX() + ((engine.displaysize == 0) ? 2 : 4), (int)position.getY() + ((engine.displaysize == 0) ? 2 : 4),
 //		                objectTexture.color, objectTexture.skin,
 //		                objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0.5f, 1f,
 //		                (engine.displaysize == 0) ? 1f : 2f);
             }
-            RendererExtension.drawScaledBlock( receiver, ( int ) position.getX(), ( int ) position.getY(),
-                    objectTexture.color, objectTexture.skin,
-                    objectTexture.getAttribute( Block.BLOCK_ATTRIBUTE_BONE ), ( isFlashing && ( ( currentLifetime / 2 ) % 2 == 0 ) ) ? -0.8f : 0f, ( animType == BlockParticleCollection.ANIMATION_DTET ) ? 0.667f : 1f,
-                    ( ( engine.displaysize == 0 ) ? 1f : 2f ) * size, 0 );
+            RendererExtension.drawScaledBlock(receiver, (int) position.getX(), (int) position.getY(),
+                objectTexture.color, objectTexture.skin,
+                objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), (isFlashing && ((currentLifetime / 2) % 2 == 0)) ? -0.8f : 0f, (animType == BlockParticleCollection.ANIMATION_DTET) ? 0.667f : 1f,
+                ((engine.displaysize == 0) ? 1f : 2f) * size, 0);
 //			receiver.drawSingleBlock(engine, playerID,
 //	                (int)position.getX(), (int)position.getY(),
 //	                objectTexture.color, objectTexture.skin,

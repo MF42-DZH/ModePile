@@ -29,9 +29,9 @@ public interface GamePiece {
 
     int getPowerup();
 
+    void setPowerup(int powerup);
+
     void rotate();
 
-    void setLocation( int x, int y );
-
-    void setPowerup( int powerup );
+    void setLocation(int x, int y);
 }

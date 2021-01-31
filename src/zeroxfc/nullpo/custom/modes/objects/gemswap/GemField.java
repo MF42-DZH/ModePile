@@ -2,74 +2,67 @@ package zeroxfc.nullpo.custom.modes.objects.gemswap;
 
 import java.util.ArrayList;
 import java.util.Random;
-
-import org.apache.log4j.Logger;
-
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Field;
 import mu.nu.nullpo.game.play.GameEngine;
+import org.apache.log4j.Logger;
 
 public class GemField {
-    private static Logger log = Logger.getLogger( GemField.class );
-
     /**
      * Gem IDs
      */
     public static final int GEMID_EMPTY = 0,
-            GEMID_NORMAL = 1,
-            GEMID_POWER = 2,
-            GEMID_STAR = 3,
-            GEMID_HYPERCUBE = 4,
-            GEMID_SUPERNOVA = 5;
-
+        GEMID_NORMAL = 1,
+        GEMID_POWER = 2,
+        GEMID_STAR = 3,
+        GEMID_HYPERCUBE = 4,
+        GEMID_SUPERNOVA = 5;
     public static final int ATTRIBUTE_RECENTSWAP = 0,
-            ATTRIBUTE_RECENTFALL = 1,
-            ATTRIBUTE_MATCHEDHORIZONTAL = 2,
-            ATTRIBUTE_MATCHEDVERTICAL = 3,
-            ATTRIBUTE_SPECIAL = 4,
-            ATTRIBUTE_ACTIONCONDUCTED = 5,
-            ATTRIBUTE_DESTROY = 6;
-
+        ATTRIBUTE_RECENTFALL = 1,
+        ATTRIBUTE_MATCHEDHORIZONTAL = 2,
+        ATTRIBUTE_MATCHEDVERTICAL = 3,
+        ATTRIBUTE_SPECIAL = 4,
+        ATTRIBUTE_ACTIONCONDUCTED = 5,
+        ATTRIBUTE_DESTROY = 6;
     public static final int[] GEM_COLOURS = {
-            Block.BLOCK_COLOR_RED,
-            Block.BLOCK_COLOR_ORANGE,
-            Block.BLOCK_COLOR_YELLOW,
-            Block.BLOCK_COLOR_GREEN,
-            Block.BLOCK_COLOR_BLUE,
-            Block.BLOCK_COLOR_PURPLE,
-            Block.BLOCK_COLOR_GRAY
+        Block.BLOCK_COLOR_RED,
+        Block.BLOCK_COLOR_ORANGE,
+        Block.BLOCK_COLOR_YELLOW,
+        Block.BLOCK_COLOR_GREEN,
+        Block.BLOCK_COLOR_BLUE,
+        Block.BLOCK_COLOR_PURPLE,
+        Block.BLOCK_COLOR_GRAY
     };
-
     public static final int MAX_GEM_COLOURS = 7;
-
-    private static final double randomCoefficient = ( 2.0 / 3.0 );
-
-    private int fieldWidth, fieldHeight;
-    private Gem[][] fieldContents;
+    private static final double randomCoefficient = (2.0 / 3.0);
+    private static final Logger log = Logger.getLogger(GemField.class);
+    private final int fieldWidth;
+    private final int fieldHeight;
+    private final Gem[][] fieldContents;
+    private final Random randEngine;
+    private final long randSeed;
     private int[][] fieldHorizontalMatchValues;
     private int[][] fieldVerticalMatchValues;
-    private Random randEngine;
-    private long randSeed;
 
-    public GemField( int width, int height, long seed ) {
-        fieldContents = new Gem[ height ][ width ];
-        fieldHorizontalMatchValues = new int[ height ][ width ];
-        fieldVerticalMatchValues = new int[ height ][ width ];
+    public GemField(int width, int height, long seed) {
+        fieldContents = new Gem[height][width];
+        fieldHorizontalMatchValues = new int[height][width];
+        fieldVerticalMatchValues = new int[height][width];
 
         fieldWidth = width;
         fieldHeight = height;
 
         randSeed = seed;
-        randEngine = new Random( seed );
+        randEngine = new Random(seed);
 
-        for ( int i = 0; i < fieldContents.length; i++ ) {
-            for ( int j = 0; j < fieldContents[ i ].length; j++ ) {
-                fieldContents[ i ][ j ] = new EmptyGem( j, i );
+        for (int i = 0; i < fieldContents.length; i++) {
+            for (int j = 0; j < fieldContents[i].length; j++) {
+                fieldContents[i][j] = new EmptyGem(j, i);
             }
         }
     }
 
-    public GemField( GemField field ) {
+    public GemField(GemField field) {
         fieldWidth = field.getWidth();
         fieldHeight = field.getHeight();
         randSeed = field.getRandSeed();
@@ -77,62 +70,62 @@ public class GemField {
         fieldHorizontalMatchValues = field.getFieldHorizontalMatchValues();
         fieldVerticalMatchValues = field.getFieldVerticalMatchValues();
 
-        fieldContents = new Gem[ fieldHeight ][ fieldWidth ];
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                fieldContents[ y ][ x ] = field.getCell( x, y ).getSelf();
+        fieldContents = new Gem[fieldHeight][fieldWidth];
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth; x++) {
+                fieldContents[y][x] = field.getCell(x, y).getSelf();
             }
         }
     }
 
     public void resetMatchArrays() {
-        fieldHorizontalMatchValues = new int[ fieldHeight ][ fieldWidth ];
-        fieldVerticalMatchValues = new int[ fieldHeight ][ fieldWidth ];
+        fieldHorizontalMatchValues = new int[fieldHeight][fieldWidth];
+        fieldVerticalMatchValues = new int[fieldHeight][fieldWidth];
     }
 
     public void generateField() {
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth / 2; x++ ) {
-                int x2 = ( x * 2 ) + ( y % 2 );
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth / 2; x++) {
+                int x2 = (x * 2) + (y % 2);
 
-                fieldContents[ y ][ x2 ] = new NormalGem( x2, y, GEM_COLOURS[ randEngine.nextInt( MAX_GEM_COLOURS ) ] );
+                fieldContents[y][x2] = new NormalGem(x2, y, GEM_COLOURS[randEngine.nextInt(MAX_GEM_COLOURS)]);
             }
         }
 
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth / 2; x++ ) {
-                int x2 = ( x * 2 ) + ( 1 - ( y % 2 ) );
-                int[][] loc = getSurroundingLocations( x2, y );
-                int[] colors = new int[ getSurrounding( x2, y ) ];
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth / 2; x++) {
+                int x2 = (x * 2) + (1 - (y % 2));
+                int[][] loc = getSurroundingLocations(x2, y);
+                int[] colors = new int[getSurrounding(x2, y)];
 
                 int i = 0;
-                for ( int[] is : loc ) {
-                    colors[ i ] = fieldContents[ is[ 1 ] ][ is[ 0 ] ].getColour();
+                for (int[] is : loc) {
+                    colors[i] = fieldContents[is[1]][is[0]].getColour();
                     i++;
                 }
 
                 double res = randEngine.nextDouble();
 
-                if ( res < randomCoefficient ) {
-                    fieldContents[ y ][ x2 ] = new NormalGem( x2, y, GEM_COLOURS[ randEngine.nextInt( GEM_COLOURS.length ) ] );
+                if (res < randomCoefficient) {
+                    fieldContents[y][x2] = new NormalGem(x2, y, GEM_COLOURS[randEngine.nextInt(GEM_COLOURS.length)]);
                 } else {
-                    fieldContents[ y ][ x2 ] = new NormalGem( x2, y, colors[ randEngine.nextInt( colors.length ) ] );
+                    fieldContents[y][x2] = new NormalGem(x2, y, colors[randEngine.nextInt(colors.length)]);
                 }
             }
         }
     }
 
-    public int getSurrounding( int x, int y ) {
+    public int getSurrounding(int x, int y) {
         int amt = 0;
         int[][] testLocations = {
-                { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 }
+            { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 }
         };
 
-        for ( int[] is : testLocations ) {
-            int tX = x + is[ 0 ];
-            int tY = y + is[ 1 ];
+        for (int[] is : testLocations) {
+            int tX = x + is[0];
+            int tY = y + is[1];
 
-            if ( tX >= 0 && tX < fieldWidth && tY >= 0 && tY < fieldHeight ) {
+            if (tX >= 0 && tX < fieldWidth && tY >= 0 && tY < fieldHeight) {
                 amt++;
             }
         }
@@ -140,20 +133,20 @@ public class GemField {
         return amt;
     }
 
-    public int[][] getSurroundingLocations( int x, int y ) {
-        int[][] loc = new int[ getSurrounding( x, y ) ][];
+    public int[][] getSurroundingLocations(int x, int y) {
+        int[][] loc = new int[getSurrounding(x, y)][];
 
         int[][] testLocations = {
-                { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 }
+            { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 }
         };
 
         int i = 0;
-        for ( int[] is : testLocations ) {
-            int tX = x + is[ 0 ];
-            int tY = y + is[ 1 ];
+        for (int[] is : testLocations) {
+            int tX = x + is[0];
+            int tY = y + is[1];
 
-            if ( tX >= 0 && tX < fieldWidth && tY >= 0 && tY < fieldHeight ) {
-                loc[ i ] = new int[] { tX, tY };
+            if (tX >= 0 && tX < fieldWidth && tY >= 0 && tY < fieldHeight) {
+                loc[i] = new int[] { tX, tY };
 
                 i++;
             }
@@ -166,88 +159,88 @@ public class GemField {
         int patternMatches = 0;
 
         int[][][] testLocationPairs = {
-                {
-                        { -2, 0 },
-                        { -3, 0 }
-                },
-                {
-                        { 2, 0 },
-                        { 3, 0 }
-                },
-                {
-                        { 0, -2 },
-                        { 0, -3 }
-                },
-                {
-                        { 0, 2 },
-                        { 0, 3 }
-                },
-                {
-                        { -1, -1 },
-                        { -2, -1 }
-                },
-                {
-                        { 1, -1 },
-                        { 2, -1 }
-                },
-                {
-                        { -1, 1 },
-                        { -2, 1 }
-                },
-                {
-                        { 1, 1 },
-                        { 2, 1 }
-                },
-                {
-                        { 1, -1 },
-                        { 1, -2 }
-                },
-                {
-                        { 1, 1 },
-                        { 1, 2 }
-                },
-                {
-                        { -1, 1 },
-                        { -1, 2 }
-                },
-                {
-                        { -1, -1 },
-                        { -1, -2 }
-                },
-                {
-                        { -1, -1 },
-                        { 1, -1 }
-                },
-                {
-                        { 1, -1 },
-                        { 1, 1 }
-                },
-                {
-                        { -1, -1 },
-                        { -1, 1 }
-                },
-                {
-                        { -1, 1 },
-                        { 1, 1 }
-                }
+            {
+                { -2, 0 },
+                { -3, 0 }
+            },
+            {
+                { 2, 0 },
+                { 3, 0 }
+            },
+            {
+                { 0, -2 },
+                { 0, -3 }
+            },
+            {
+                { 0, 2 },
+                { 0, 3 }
+            },
+            {
+                { -1, -1 },
+                { -2, -1 }
+            },
+            {
+                { 1, -1 },
+                { 2, -1 }
+            },
+            {
+                { -1, 1 },
+                { -2, 1 }
+            },
+            {
+                { 1, 1 },
+                { 2, 1 }
+            },
+            {
+                { 1, -1 },
+                { 1, -2 }
+            },
+            {
+                { 1, 1 },
+                { 1, 2 }
+            },
+            {
+                { -1, 1 },
+                { -1, 2 }
+            },
+            {
+                { -1, -1 },
+                { -1, -2 }
+            },
+            {
+                { -1, -1 },
+                { 1, -1 }
+            },
+            {
+                { 1, -1 },
+                { 1, 1 }
+            },
+            {
+                { -1, -1 },
+                { -1, 1 }
+            },
+            {
+                { -1, 1 },
+                { 1, 1 }
+            }
         };
 
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                if ( fieldContents[ y ][ x ].getID() == GEMID_HYPERCUBE ) {
-                    patternMatches += getSurrounding( x, y );
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth; x++) {
+                if (fieldContents[y][x].getID() == GEMID_HYPERCUBE) {
+                    patternMatches += getSurrounding(x, y);
                 } else {
-                    int colour = fieldContents[ y ][ x ].getColour();
+                    int colour = fieldContents[y][x].getColour();
 
-                    for ( int[][] coordPairSet : testLocationPairs ) {
+                    for (int[][] coordPairSet : testLocationPairs) {
                         boolean match = true;
 
-                        for ( int[] coordPair : coordPairSet ) {
-                            int tX = x + coordPair[ 0 ];
-                            int tY = y + coordPair[ 1 ];
+                        for (int[] coordPair : coordPairSet) {
+                            int tX = x + coordPair[0];
+                            int tY = y + coordPair[1];
 
-                            if ( tX >= 0 && tX < fieldWidth && tY >= 0 && tY < fieldHeight ) {
-                                if ( colour != fieldContents[ tY ][ tX ].getColour() ) {
+                            if (tX >= 0 && tX < fieldWidth && tY >= 0 && tY < fieldHeight) {
+                                if (colour != fieldContents[tY][tX].getColour()) {
                                     match = false;
                                     break;
                                 }
@@ -257,7 +250,7 @@ public class GemField {
                             }
                         }
 
-                        if ( match ) patternMatches++;
+                        if (match) patternMatches++;
                     }
                 }
             }
@@ -272,31 +265,31 @@ public class GemField {
      *
      * @param status New match status.
      */
-    public void setAllMatchStatus( boolean status ) {
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth / 2; x++ ) {
-                fieldContents[ y ][ x ].setMatchedHorizontal( status );
-                fieldContents[ y ][ x ].setMatchedVertical( status );
+    public void setAllMatchStatus(boolean status) {
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth / 2; x++) {
+                fieldContents[y][x].setMatchedHorizontal(status);
+                fieldContents[y][x].setMatchedVertical(status);
             }
         }
     }
 
     public void matchCheck() {
         // 1: Vertical match check.
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                if ( fieldContents[ y ][ x ].getID() == GEMID_HYPERCUBE || fieldContents[ y ][ x ].getMatchedVertical() ) {
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth; x++) {
+                if (fieldContents[y][x].getID() == GEMID_HYPERCUBE || fieldContents[y][x].getMatchedVertical()) {
                     continue;
                 } else {
-                    ArrayList< int[] > coordList = new ArrayList< int[] >();
-                    coordList.add( new int[] { x, y } );
+                    ArrayList<int[]> coordList = new ArrayList<int[]>();
+                    coordList.add(new int[] { x, y });
 
-                    int colour = fieldContents[ y ][ x ].getColour();
+                    int colour = fieldContents[y][x].getColour();
 
                     int yOffset = -1;
-                    while ( y + yOffset >= 0 ) {
-                        if ( fieldContents[ y + yOffset ][ x ].getColour() == colour ) {
-                            coordList.add( new int[] { x, y + yOffset } );
+                    while (y + yOffset >= 0) {
+                        if (fieldContents[y + yOffset][x].getColour() == colour) {
+                            coordList.add(new int[] { x, y + yOffset });
                         } else {
                             break;
                         }
@@ -305,9 +298,9 @@ public class GemField {
                     }
 
                     yOffset = 1;
-                    while ( y + yOffset < fieldHeight ) {
-                        if ( fieldContents[ y + yOffset ][ x ].getColour() == colour ) {
-                            coordList.add( new int[] { x, y + yOffset } );
+                    while (y + yOffset < fieldHeight) {
+                        if (fieldContents[y + yOffset][x].getColour() == colour) {
+                            coordList.add(new int[] { x, y + yOffset });
                         } else {
                             break;
                         }
@@ -315,16 +308,16 @@ public class GemField {
                         yOffset++;
                     }
 
-                    if ( coordList.size() >= 3 ) {
-                        for ( int[] is : coordList ) {
-                            int x2 = is[ 0 ];
-                            int y2 = is[ 1 ];
+                    if (coordList.size() >= 3) {
+                        for (int[] is : coordList) {
+                            int x2 = is[0];
+                            int y2 = is[1];
 
-                            log.debug( coordList.size() + "-MATCH AT " + x2 + ", " + y2 );
+                            log.debug(coordList.size() + "-MATCH AT " + x2 + ", " + y2);
 
-                            fieldContents[ y2 ][ x2 ].setMatchedVertical( true );
-                            fieldContents[ y2 ][ x2 ].setDestroy( true );
-                            fieldVerticalMatchValues[ y2 ][ x2 ] = coordList.size();
+                            fieldContents[y2][x2].setMatchedVertical(true);
+                            fieldContents[y2][x2].setDestroy(true);
+                            fieldVerticalMatchValues[y2][x2] = coordList.size();
                         }
                     }
                 }
@@ -332,20 +325,20 @@ public class GemField {
         }
 
         // 2: Horizontal match check.
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                if ( fieldContents[ y ][ x ].getID() == GEMID_HYPERCUBE || fieldContents[ y ][ x ].getMatchedHorizontal() ) {
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth; x++) {
+                if (fieldContents[y][x].getID() == GEMID_HYPERCUBE || fieldContents[y][x].getMatchedHorizontal()) {
                     continue;
                 } else {
-                    ArrayList< int[] > coordList = new ArrayList< int[] >();
-                    coordList.add( new int[] { x, y } );
+                    ArrayList<int[]> coordList = new ArrayList<int[]>();
+                    coordList.add(new int[] { x, y });
 
-                    int colour = fieldContents[ y ][ x ].getColour();
+                    int colour = fieldContents[y][x].getColour();
 
                     int xOffset = -1;
-                    while ( x + xOffset >= 0 ) {
-                        if ( fieldContents[ y ][ x + xOffset ].getColour() == colour ) {
-                            coordList.add( new int[] { x + xOffset, y } );
+                    while (x + xOffset >= 0) {
+                        if (fieldContents[y][x + xOffset].getColour() == colour) {
+                            coordList.add(new int[] { x + xOffset, y });
                         } else {
                             break;
                         }
@@ -354,9 +347,9 @@ public class GemField {
                     }
 
                     xOffset = 1;
-                    while ( x + xOffset < fieldWidth ) {
-                        if ( fieldContents[ y ][ x + xOffset ].getColour() == colour ) {
-                            coordList.add( new int[] { x + xOffset, y } );
+                    while (x + xOffset < fieldWidth) {
+                        if (fieldContents[y][x + xOffset].getColour() == colour) {
+                            coordList.add(new int[] { x + xOffset, y });
                         } else {
                             break;
                         }
@@ -364,105 +357,105 @@ public class GemField {
                         xOffset++;
                     }
 
-                    if ( coordList.size() >= 3 ) {
-                        for ( int[] is : coordList ) {
-                            int x2 = is[ 0 ];
-                            int y2 = is[ 1 ];
+                    if (coordList.size() >= 3) {
+                        for (int[] is : coordList) {
+                            int x2 = is[0];
+                            int y2 = is[1];
 
-                            log.debug( coordList.size() + "-MATCH AT " + x2 + ", " + y2 );
+                            log.debug(coordList.size() + "-MATCH AT " + x2 + ", " + y2);
 
-                            fieldContents[ y2 ][ x2 ].setMatchedHorizontal( true );
-                            fieldContents[ y2 ][ x2 ].setDestroy( true );
-                            fieldHorizontalMatchValues[ y2 ][ x2 ] = coordList.size();
+                            fieldContents[y2][x2].setMatchedHorizontal(true);
+                            fieldContents[y2][x2].setDestroy(true);
+                            fieldHorizontalMatchValues[y2][x2] = coordList.size();
                         }
                     }
                 }
             }
         }
 
-        for ( int y = 0; y < fieldHeight; y++ ) {
+        for (int y = 0; y < fieldHeight; y++) {
             String debugString = "";
 
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                debugString += fieldHorizontalMatchValues[ y ][ x ] + " ";
+            for (int x = 0; x < fieldWidth; x++) {
+                debugString += fieldHorizontalMatchValues[y][x] + " ";
             }
-            log.debug( debugString );
+            log.debug(debugString);
         }
 
-        for ( int y = 0; y < fieldHeight; y++ ) {
+        for (int y = 0; y < fieldHeight; y++) {
             String debugString = "";
 
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                debugString += fieldVerticalMatchValues[ y ][ x ] + " ";
+            for (int x = 0; x < fieldWidth; x++) {
+                debugString += fieldVerticalMatchValues[y][x] + " ";
             }
-            log.debug( debugString );
+            log.debug(debugString);
         }
     }
 
     public void createGemsOnTopRow() {
-        for ( int x = 0; x < fieldWidth; x++ ) {
-            if ( fieldContents[ 0 ][ x ].getID() == GEMID_EMPTY ) {
+        for (int x = 0; x < fieldWidth; x++) {
+            if (fieldContents[0][x].getID() == GEMID_EMPTY) {
                 double res = randEngine.nextDouble();
 
-                if ( res < randomCoefficient ) {
-                    fieldContents[ 0 ][ x ] = new NormalGem( x, 0, GEM_COLOURS[ randEngine.nextInt( GEM_COLOURS.length ) ] );
+                if (res < randomCoefficient) {
+                    fieldContents[0][x] = new NormalGem(x, 0, GEM_COLOURS[randEngine.nextInt(GEM_COLOURS.length)]);
                 } else {
-                    int[][] loc = getSurroundingLocations( x, 0 );
-                    int[] colors = new int[ getSurrounding( x, 0 ) ];
+                    int[][] loc = getSurroundingLocations(x, 0);
+                    int[] colors = new int[getSurrounding(x, 0)];
 
                     int i = 0;
-                    for ( int[] is : loc ) {
-                        colors[ i ] = fieldContents[ is[ 1 ] ][ is[ 0 ] ].getColour();
+                    for (int[] is : loc) {
+                        colors[i] = fieldContents[is[1]][is[0]].getColour();
                         i++;
                     }
 
                     int c = Block.BLOCK_COLOR_NONE;
                     do {
-                        c = colors[ randEngine.nextInt( colors.length ) ];
-                    } while ( c == Block.BLOCK_COLOR_NONE );
+                        c = colors[randEngine.nextInt(colors.length)];
+                    } while (c == Block.BLOCK_COLOR_NONE);
 
-                    fieldContents[ 0 ][ x ] = new NormalGem( x, 0, c );
+                    fieldContents[0][x] = new NormalGem(x, 0, c);
                 }
             }
         }
     }
 
     public void resetFallStatus() {
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                fieldContents[ y ][ x ].setRecentFall( false );
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth; x++) {
+                fieldContents[y][x].setRecentFall(false);
             }
         }
     }
 
     public void resetSwapStatus() {
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                fieldContents[ y ][ x ].setRecentSwap( false );
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth; x++) {
+                fieldContents[y][x].setRecentSwap(false);
             }
         }
     }
 
-    public void setCellAttribute( int x, int y, int attribute, boolean state ) {
-        if ( x < 0 || y < 0 || y >= fieldHeight || x >= fieldWidth ) {
-            switch ( attribute ) {
+    public void setCellAttribute(int x, int y, int attribute, boolean state) {
+        if (x < 0 || y < 0 || y >= fieldHeight || x >= fieldWidth) {
+            switch (attribute) {
                 case ATTRIBUTE_RECENTSWAP:
-                    fieldContents[ y ][ x ].setRecentSwap( state );
+                    fieldContents[y][x].setRecentSwap(state);
                     break;
                 case ATTRIBUTE_RECENTFALL:
-                    fieldContents[ y ][ x ].setRecentFall( state );
+                    fieldContents[y][x].setRecentFall(state);
                     break;
                 case ATTRIBUTE_MATCHEDHORIZONTAL:
-                    fieldContents[ y ][ x ].setMatchedHorizontal( state );
+                    fieldContents[y][x].setMatchedHorizontal(state);
                     break;
                 case ATTRIBUTE_MATCHEDVERTICAL:
-                    fieldContents[ y ][ x ].setMatchedVertical( state );
+                    fieldContents[y][x].setMatchedVertical(state);
                     break;
                 case ATTRIBUTE_ACTIONCONDUCTED:
-                    fieldContents[ y ][ x ].setActionConducted( state );
+                    fieldContents[y][x].setActionConducted(state);
                     break;
                 case ATTRIBUTE_DESTROY:
-                    fieldContents[ y ][ x ].setDestroy( state );
+                    fieldContents[y][x].setDestroy(state);
                     break;
                 default:
                     break;
@@ -473,10 +466,10 @@ public class GemField {
 
     }
 
-    public boolean getCellAttribute( int x, int y, int attribute ) {
-        Gem cell = getCell( x, y );
-        if ( cell != null ) {
-            switch ( attribute ) {
+    public boolean getCellAttribute(int x, int y, int attribute) {
+        Gem cell = getCell(x, y);
+        if (cell != null) {
+            switch (attribute) {
                 case ATTRIBUTE_RECENTSWAP:
                     return cell.getRecentSwap();
                 case ATTRIBUTE_RECENTFALL:
@@ -500,10 +493,10 @@ public class GemField {
     }
 
     public void destroyGems() {
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                if ( fieldContents[ y ][ x ].getDestroy() ) {
-                    fieldContents[ y ][ x ] = new EmptyGem( x, y );
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth; x++) {
+                if (fieldContents[y][x].getDestroy()) {
+                    fieldContents[y][x] = new EmptyGem(x, y);
                 }
             }
         }
@@ -514,12 +507,12 @@ public class GemField {
         // USED A DO-WHILE LOOP.
         boolean dropped = false;
 
-        for ( int y = fieldHeight - 1; y > 0; y-- ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                if ( fieldContents[ y ][ x ].getID() == GEMID_EMPTY ) {
-                    fieldContents[ y ][ x ] = fieldContents[ y - 1 ][ x ];
-                    fieldContents[ y ][ x ].setRecentFall( true );
-                    fieldContents[ y - 1 ][ x ] = new EmptyGem( x, y - 1 );
+        for (int y = fieldHeight - 1; y > 0; y--) {
+            for (int x = 0; x < fieldWidth; x++) {
+                if (fieldContents[y][x].getID() == GEMID_EMPTY) {
+                    fieldContents[y][x] = fieldContents[y - 1][x];
+                    fieldContents[y][x].setRecentFall(true);
+                    fieldContents[y - 1][x] = new EmptyGem(x, y - 1);
 
                     dropped = true;
                 }
@@ -532,40 +525,40 @@ public class GemField {
     }
 
     public void refreshLocations() {
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                if ( fieldContents[ y ][ x ] != null ) fieldContents[ y ][ x ].setLocation( x, y );
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth; x++) {
+                if (fieldContents[y][x] != null) fieldContents[y][x].setLocation(x, y);
             }
         }
     }
 
-    public void checkForLanding( GameEngine engine ) {
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                if ( getCell( x, y ).getRecentFall() ) {
-                    if ( getCell( x, y + 1 ) != null ) {
-                        if ( getCell( x, y + 1 ).getID() != GEMID_EMPTY ) engine.playSE( "linefall" );
+    public void checkForLanding(GameEngine engine) {
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth; x++) {
+                if (getCell(x, y).getRecentFall()) {
+                    if (getCell(x, y + 1) != null) {
+                        if (getCell(x, y + 1).getID() != GEMID_EMPTY) engine.playSE("linefall");
                     }
                 }
             }
         }
     }
 
-    public void swapGems( int x1, int y1, int x2, int y2 ) {
-        Gem old = getCell( x1, y1 ).getSelf();
+    public void swapGems(int x1, int y1, int x2, int y2) {
+        Gem old = getCell(x1, y1).getSelf();
 
-        fieldContents[ y1 ][ x1 ] = getCell( x2, y2 ).getSelf();
-        fieldContents[ y2 ][ x2 ] = old;
+        fieldContents[y1][x1] = getCell(x2, y2).getSelf();
+        fieldContents[y2][x2] = old;
 
-        getCell( x1, y1 ).setRecentSwap( true );
-        getCell( x2, y2 ).setRecentSwap( true );
+        getCell(x1, y1).setRecentSwap(true);
+        getCell(x2, y2).setRecentSwap(true);
         refreshLocations();
     }
 
     public boolean isMatchExist() {
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                if ( getCell( x, y ).getMatchedHorizontal() || getCell( x, y ).getMatchedVertical() ) {
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth; x++) {
+                if (getCell(x, y).getMatchedHorizontal() || getCell(x, y).getMatchedVertical()) {
                     return true;
                 }
             }
@@ -593,42 +586,42 @@ public class GemField {
         return randEngine;
     }
 
-    public Gem getCell( int x, int y ) {
-        if ( x < 0 || y < 0 || y >= fieldHeight || x >= fieldWidth ) {
+    public Gem getCell(int x, int y) {
+        if (x < 0 || y < 0 || y >= fieldHeight || x >= fieldWidth) {
             return null;
         } else {
-            return fieldContents[ y ][ x ];
+            return fieldContents[y][x];
         }
     }
 
-    public void setCell( Gem gem, int x, int y ) {
-        if ( x < 0 || y < 0 || y >= fieldHeight || x >= fieldWidth ) {
-            fieldContents[ y ][ x ] = gem.getSelf();
+    public void setCell(Gem gem, int x, int y) {
+        if (x < 0 || y < 0 || y >= fieldHeight || x >= fieldWidth) {
+            fieldContents[y][x] = gem.getSelf();
         } else {
             return;
         }
     }
 
-    public void setEmpty( int x, int y ) {
-        if ( x < 0 || y < 0 || y >= fieldHeight || x >= fieldWidth ) {
-            fieldContents[ y ][ x ] = new EmptyGem( x, y );
+    public void setEmpty(int x, int y) {
+        if (x < 0 || y < 0 || y >= fieldHeight || x >= fieldWidth) {
+            fieldContents[y][x] = new EmptyGem(x, y);
         } else {
             return;
         }
     }
 
-    public Field getFieldToDraw( GameEngine engine ) {
-        Field localField = new Field( fieldWidth, fieldHeight, 0 );
+    public Field getFieldToDraw(GameEngine engine) {
+        Field localField = new Field(fieldWidth, fieldHeight, 0);
 
-        for ( int y = 0; y < fieldHeight; y++ ) {
-            for ( int x = 0; x < fieldWidth; x++ ) {
-                Block blk = new Block( ( getCell( x, y ) != null ) ? getCell( x, y ).getColour() : Block.BLOCK_COLOR_NONE, engine.getSkin() );
-                localField.getBlock( x, y ).copy( blk );
+        for (int y = 0; y < fieldHeight; y++) {
+            for (int x = 0; x < fieldWidth; x++) {
+                Block blk = new Block((getCell(x, y) != null) ? getCell(x, y).getColour() : Block.BLOCK_COLOR_NONE, engine.getSkin());
+                localField.getBlock(x, y).copy(blk);
             }
         }
 
-        localField.setAllAttribute( Block.BLOCK_ATTRIBUTE_VISIBLE, true );
-        localField.setAllAttribute( Block.BLOCK_ATTRIBUTE_OUTLINE, false );
+        localField.setAllAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+        localField.setAllAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, false);
 
         return localField;
     }

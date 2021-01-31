@@ -40,18 +40,16 @@ import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 public class MouseParser {
     /**
-     * Debug Log
-     */
-    private static final Logger log = Logger.getLogger( MouseParser.class );
-
-    /**
      * Mouse Button IDs
      */
     public static final int BUTTON_LEFT = 0,
-            BUTTON_RIGHT = 1,
-            BUTTON_MIDDLE = 2;
-
-    private int holderType;
+        BUTTON_RIGHT = 1,
+        BUTTON_MIDDLE = 2;
+    /**
+     * Debug Log
+     */
+    private static final Logger log = Logger.getLogger(MouseParser.class);
+    private final int holderType;
 
     /**
      * Creates a new instance. All methods are instance methods since
@@ -65,15 +63,15 @@ public class MouseParser {
      * Updates current mouse input handler.
      */
     public void update() {
-        switch ( holderType ) {
+        switch (holderType) {
             case AnimatedBackgroundHook.HOLDER_SLICK:
-                MouseInput.mouseInput.update( NullpoMinoSlick.appGameContainer.getInput() );
+                MouseInput.mouseInput.update(NullpoMinoSlick.appGameContainer.getInput());
                 break;
             case AnimatedBackgroundHook.HOLDER_SDL:
                 try {
                     MouseInputSDL.mouseInput.update();
-                } catch ( Exception e ) {
-                    log.debug( "Failed to update SDL's mouse input:\n", e );
+                } catch (Exception e) {
+                    log.debug("Failed to update SDL's mouse input:\n", e);
                 }
                 break;
             default:
@@ -87,7 +85,7 @@ public class MouseParser {
      * @return <code>int[2] = { x, y }</code> or <code>int[2] = { -1, -1 }</code> if the current handler does not support mouse
      */
     public int[] getMouseCoordinates() {
-        switch ( holderType ) {
+        switch (holderType) {
             case AnimatedBackgroundHook.HOLDER_SLICK:
             case AnimatedBackgroundHook.HOLDER_SDL:
                 return new int[] { getMouseX(), getMouseY() };
@@ -102,7 +100,7 @@ public class MouseParser {
      * @return int
      */
     public int getMouseX() {
-        switch ( holderType ) {
+        switch (holderType) {
             case AnimatedBackgroundHook.HOLDER_SLICK:
                 return MouseInput.mouseInput.getMouseX();
             case AnimatedBackgroundHook.HOLDER_SDL:
@@ -118,7 +116,7 @@ public class MouseParser {
      * @return int
      */
     public int getMouseY() {
-        switch ( holderType ) {
+        switch (holderType) {
             case AnimatedBackgroundHook.HOLDER_SLICK:
                 return MouseInput.mouseInput.getMouseY();
             case AnimatedBackgroundHook.HOLDER_SDL:
@@ -134,10 +132,10 @@ public class MouseParser {
      * @param button Button ID (use the IDs in this class)
      * @return <code>boolean</code>; <code>true</code> = clicked, <code>false</code> = not clicked or was held before
      */
-    public boolean getMouseClick( int button ) {
-        switch ( holderType ) {
+    public boolean getMouseClick(int button) {
+        switch (holderType) {
             case AnimatedBackgroundHook.HOLDER_SLICK:
-                switch ( button ) {
+                switch (button) {
                     case BUTTON_LEFT:
                         return MouseInput.mouseInput.isMouseClicked();
                     case BUTTON_RIGHT:
@@ -148,7 +146,7 @@ public class MouseParser {
                         return false;
                 }
             case AnimatedBackgroundHook.HOLDER_SDL:
-                switch ( button ) {
+                switch (button) {
                     case BUTTON_LEFT:
                         return MouseInputSDL.mouseInput.isMouseClicked();
                     case BUTTON_RIGHT:
@@ -169,10 +167,10 @@ public class MouseParser {
      * @param button Button ID (use the IDs in this class)
      * @return <code>boolean</code>; <code>true</code> = clicked or held, <code>false</code> = not clicked nor held
      */
-    public boolean getMousePressed( int button ) {
-        switch ( holderType ) {
+    public boolean getMousePressed(int button) {
+        switch (holderType) {
             case AnimatedBackgroundHook.HOLDER_SLICK:
-                switch ( button ) {
+                switch (button) {
                     case BUTTON_LEFT:
                         return MouseInput.mouseInput.isMousePressed();
                     case BUTTON_RIGHT:
@@ -183,7 +181,7 @@ public class MouseParser {
                         return false;
                 }
             case AnimatedBackgroundHook.HOLDER_SDL:
-                switch ( button ) {
+                switch (button) {
                     case BUTTON_LEFT:
                         return MouseInputSDL.mouseInput.isMousePressed();
                     case BUTTON_RIGHT:
