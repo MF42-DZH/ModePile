@@ -1,0 +1,23 @@
+name: ModePile Pack CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: openjdk/openjdk:8u322-slim-bullseye
+    steps:
+      - name: Clone the Pack
+        uses: actions/checkout@v2
+      - name: Build the Pack
+        run: ./ci-build-task.sh
+      - name: Export the built class files
+        uses: actions/upload-artifact@v3
+        with:
+          name: bin-classes
+          path: ./bin

@@ -18,3 +18,5 @@
 !/CONTRIBUTING.md
 !/build.bat
 !/build.sh
+!/Dockerfile
+!/.github
