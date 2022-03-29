@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: openjdk/openjdk:8u322-slim-bullseye
+      image: openjdk:8u322-slim-bullseye
     steps:
       - name: Clone the Pack
         uses: actions/checkout@v2
