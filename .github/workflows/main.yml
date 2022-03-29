@@ -15,7 +15,7 @@ jobs:
       - name: Clone the Pack
         uses: actions/checkout@v2
       - name: Build the Pack
-        run: ./ci-build-task.sh
+        run: sh ./ci-build-task.sh
       - name: Export the built class files
         uses: actions/upload-artifact@v3
         with:
