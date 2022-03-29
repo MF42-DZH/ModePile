@@ -1,10 +1,18 @@
-/src/mu/nu/nullpo/
-/src/me/ry00001/nullpo/vol1
-/src/biz/source_code/base64Coder/
-/src/com/centerkey/utils/
-/src/net/
-/src/nullpomino_installer/
-/src/nullpomino_launcher/
-/src/org/cacas/java/gnu/tools/
-/src/sylveon/nullpo
-/src/xyz/glitchypsi/teto/
+# Ignore IDE junk.
+/.idea/*
+/.vscode/*
+
+# Ignore everything that isn't the project.
+/*
+
+# Un-ignore everything to do with the project.
+!/required files
+!/src/bin.sylveon*
+!/src/mandl*
+!/src/zeroxfc
+!/POST_BUILD_INSTALLATION_v1.11.txt
+!/README.md
+!/USAGE.txt
+!/GitHub ModePile Banner-Final.png
+!/LICENCE
+!/CONTRIBUTING.md
