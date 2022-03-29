@@ -5,4 +5,4 @@ tar -xf ./v7.5.0.tar.gz
 cp -a ./nullpomino-7.5.0/* .
 mkdir -p ./bin
 find -wholename "./src/*.java" > .TMPSRC
-javac -source 8 -target 8 -encoding utf8 -sourcepath ./src -d ./bin -cp ./lib/* @.TMPSRC
+javac -source 8 -target 8 -encoding utf8 -sourcepath ./src -d ./bin -cp ./lib/*:. @.TMPSRC
