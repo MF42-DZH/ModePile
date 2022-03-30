@@ -772,7 +772,7 @@ public class ColourPower extends MarathonModeBase {
             lastscore = bonus;
             lastevent = EVENT_NONE;
             scgettime = 0;
-            scoreBeforeIncrease = new Integer(engine.statistics.score);
+            scoreBeforeIncrease = engine.statistics.score;
             engine.statistics.score += bonus;
 
             engine.lives = 0;
@@ -855,7 +855,7 @@ public class ColourPower extends MarathonModeBase {
                         } else {
                             scgettime = 0;
                             lastevent = EVENT_NONE;
-                            scoreBeforeIncrease = new Integer(engine.statistics.score);
+                            scoreBeforeIncrease = engine.statistics.score;
                             engine.statistics.score += (3200 * scoreMultiplier * (engine.statistics.level + 1));
                             lastscore = (3200 * scoreMultiplier * (engine.statistics.level + 1));
                             engine.playSE("medal");
@@ -943,7 +943,7 @@ public class ColourPower extends MarathonModeBase {
                     case POWERUP_SCOREBONUS:
                         scgettime = 0;
                         lastevent = EVENT_NONE;
-                        scoreBeforeIncrease = new Integer(engine.statistics.score);
+                        scoreBeforeIncrease = engine.statistics.score;
                         engine.statistics.score += (6400 * scoreMultiplier * (engine.statistics.level + 1));
                         lastscore = (6400 * scoreMultiplier * (engine.statistics.level + 1));
                         engine.playSE("medal");
@@ -1094,7 +1094,7 @@ public class ColourPower extends MarathonModeBase {
             lastscore = pts;
             lastpiece = engine.nowPieceObject.id;
             scgettime = 0;
-            scoreBeforeIncrease = new Integer(engine.statistics.score);
+            scoreBeforeIncrease = engine.statistics.score;
             if (lines >= 1) engine.statistics.scoreFromLineClear += pts;
             else engine.statistics.scoreFromOtherBonus += pts;
             engine.statistics.score += pts;

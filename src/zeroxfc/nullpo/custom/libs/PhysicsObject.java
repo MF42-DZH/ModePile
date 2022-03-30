@@ -132,13 +132,10 @@ public class PhysicsObject implements Cloneable {
 
         boolean intersection = false;
 
-        if (aMaxX >= bMinX && aMaxX <= bMaxX && aMaxY >= bMinY && aMaxY <= bMaxY) {
-            intersection = true;
-        } else if (aMinX >= bMinX && aMinX <= bMaxX && aMinY >= bMinY && aMinY <= bMaxY) {
-            intersection = true;
-        } else if (bMaxX >= aMinX && bMaxX <= aMaxX && bMaxY >= aMinY && bMaxY <= aMaxY) {
-            intersection = true;
-        } else if (bMinX >= aMinX && bMinX <= aMaxX && bMinY >= aMinY && bMinY <= aMaxY) {
+        if (aMaxX >= bMinX && aMaxX <= bMaxX && aMaxY >= bMinY && aMaxY <= bMaxY
+            | aMinX >= bMinX && aMinX <= bMaxX && aMinY >= bMinY && aMinY <= bMaxY
+            || bMaxX >= aMinX && bMaxX <= aMaxX && bMaxY >= aMinY && bMaxY <= aMaxY
+            || bMinX >= aMinX && bMinX <= aMaxX && bMinY >= aMinY && bMinY <= aMaxY) {
             intersection = true;
         }
 
@@ -194,25 +191,25 @@ public class PhysicsObject implements Cloneable {
                 anchor = new double[] { 0, 0 };
                 break;
             case ANCHOR_POINT_TM:
-                anchor = new double[] { sizeX / 2, 0 };
+                anchor = new double[] { sizeX / 2.0, 0 };
                 break;
             case ANCHOR_POINT_TR:
                 anchor = new double[] { sizeX - 1, 0 };
                 break;
             case ANCHOR_POINT_ML:
-                anchor = new double[] { 0, sizeY / 2 };
+                anchor = new double[] { 0, sizeY / 2.0 };
                 break;
             case ANCHOR_POINT_MM:
-                anchor = new double[] { sizeX / 2, sizeY / 2 };
+                anchor = new double[] { sizeX / 2.0, sizeY / 2.0 };
                 break;
             case ANCHOR_POINT_MR:
-                anchor = new double[] { sizeX - 1, sizeY / 2 };
+                anchor = new double[] { sizeX - 1, sizeY / 2.0 };
                 break;
             case ANCHOR_POINT_LL:
                 anchor = new double[] { 0, sizeY - 1 };
                 break;
             case ANCHOR_POINT_LM:
-                anchor = new double[] { sizeX / 2, sizeY - 1 };
+                anchor = new double[] { sizeX / 2.0, sizeY - 1 };
                 break;
             case ANCHOR_POINT_LR:
                 anchor = new double[] { sizeX - 1, sizeY - 1 };
