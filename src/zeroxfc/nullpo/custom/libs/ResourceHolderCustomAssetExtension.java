@@ -199,45 +199,6 @@ public class ResourceHolderCustomAssetExtension {
         }
     }
 
-    @Deprecated
-    public static void setGraphicsSDL(RendererSDL renderer, SDLSurface grp) {
-        Class<RendererSDL> local = RendererSDL.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField("graphics");
-            localField.setAccessible(true);
-            localField.set(renderer, grp);
-        } catch (Exception e) {
-            log.error("Failed to extract graphics from SDL renderer.");
-        }
-    }
-
-    @Deprecated
-    public static void setGraphicsSwing(RendererSwing renderer, Graphics2D grp) {
-        Class<RendererSwing> local = RendererSwing.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField("graphics");
-            localField.setAccessible(true);
-            localField.set(renderer, grp);
-        } catch (Exception e) {
-            log.error("Failed to extract graphics from Swing renderer.");
-        }
-    }
-
-    @Deprecated
-    public static void setGraphicsSlick(RendererSlick renderer, Graphics grp) {
-        Class<RendererSlick> local = RendererSlick.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField("graphics");
-            localField.setAccessible(true);
-            localField.set(renderer, grp);
-        } catch (Exception e) {
-            log.error("Failed to extract graphics from Slick renderer.");
-        }
-    }
-
     /**
      * Adds an image to the custom image library
      *

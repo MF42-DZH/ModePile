@@ -433,8 +433,6 @@ public class RendererExtension {
                 graphics.setColor(brightfilter);
                 graphics.fillRect(x, y, size, size);
             }
-
-            ResourceHolderCustomAssetExtension.setGraphicsSlick((RendererSlick) receiver, graphics);
             // endregion Slick Case
         } else if (renderer == AnimatedBackgroundHook.HOLDER_SWING) {
             // region Swing Case
@@ -671,28 +669,24 @@ public class RendererExtension {
                         rectSrc2 = new SDLRect(d2, sy, h2, h2);
                         NullpoMinoSDL.fixRect(rectSrc2, rectDst2);
                         img.blitSurface(rectSrc2, graphics, rectDst2);
-                        //graphics.drawImage(img, x, y, x + h, y + h, d, sy, d + h, sy + h, filter);
                     }
                     if (((attr & Block.BLOCK_ATTRIBUTE_CONNECT_UP) != 0) && ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT) != 0)) {
                         rectDst2 = new SDLRect(x + h, y, h, h);
                         rectSrc2 = new SDLRect(d2 + h2, sy, h2, h2);
                         NullpoMinoSDL.fixRect(rectSrc2, rectDst2);
                         img.blitSurface(rectSrc2, graphics, rectDst2);
-                        //graphics.drawImage(img, x + h, y, x + h + h, y + h, d + h, sy, d + h + h, sy + h, filter);
                     }
                     if (((attr & Block.BLOCK_ATTRIBUTE_CONNECT_DOWN) != 0) && ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_LEFT) != 0)) {
                         rectDst2 = new SDLRect(x, y + h, h, h);
                         rectSrc2 = new SDLRect(d2, sy + h2, h2, h2);
                         NullpoMinoSDL.fixRect(rectSrc2, rectDst2);
                         img.blitSurface(rectSrc2, graphics, rectDst2);
-                        //graphics.drawImage(img, x, y + h, x + h, y + h + h, d, sy + h, d + h, sy + h + h, filter);
                     }
                     if (((attr & Block.BLOCK_ATTRIBUTE_CONNECT_DOWN) != 0) && ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT) != 0)) {
                         rectDst2 = new SDLRect(x + h, y + h, h, h);
                         rectSrc2 = new SDLRect(d2 + h2, sy + h2, h2, h2);
                         NullpoMinoSDL.fixRect(rectSrc2, rectDst2);
                         img.blitSurface(rectSrc2, graphics, rectDst2);
-                        //graphics.drawImage(img, x + h, y + h, x + h + h, y + h + h, d + h, sy + h, d + h + h, sy + h + h, filter);
                     }
                 }
 

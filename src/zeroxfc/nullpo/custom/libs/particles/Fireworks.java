@@ -87,10 +87,10 @@ public class Fireworks extends ParticleEmitterBase {
                 DoubleVector origin = new DoubleVector(Interpolation.lerp(minX, maxX, randomiser.nextDouble()), Interpolation.lerp(minY, maxY, randomiser.nextDouble()), false);
                 for (int j = 0; j < randomiser.nextInt(121) + 120; ++j) {
                     int ured, ugreen, ublue, ualpha;
-                    ured = red + (int) (2 * randomiser.nextDouble() * variance - variance);
-                    ugreen = green + (int) (2 * randomiser.nextDouble() * variance - variance);
-                    ublue = blue + (int) (2 * randomiser.nextDouble() * variance - variance);
-                    ualpha = alpha + (int) (2 * randomiser.nextDouble() * variance - variance);
+                    ured = red + (randomiser.nextInt(2 * variance) - variance);
+                    ugreen = green + (randomiser.nextInt(2 * variance) - variance);
+                    ublue = blue + (randomiser.nextInt(2 * variance) - variance);
+                    ualpha = alpha + (randomiser.nextInt(2 * variance) - variance);
 
                     int s = 1 + randomiser.nextInt(3);
                     DoubleVector v = new DoubleVector(2 * randomiser.nextDouble() * maxVelocity - maxVelocity, 2 * randomiser.nextDouble() * Math.PI, true);
