@@ -16,6 +16,9 @@ public class PrimitiveDrawingHook {
     // Log object for debugging
     private static final Logger log = Logger.getLogger(PrimitiveDrawingHook.class);
 
+    // Hide public constructor.
+    private PrimitiveDrawingHook() {}
+
     /**
      * Draws a rectangle using a set of coordinates and its dimensions.
      *
@@ -41,8 +44,6 @@ public class PrimitiveDrawingHook {
                 if (fill) graphicsSlick.fillRect(x, y, sizeX, sizeY);
                 else graphicsSlick.drawRect(x, y, sizeX, sizeY);
                 graphicsSlick.setColor(Color.white);
-
-                ResourceHolderCustomAssetExtension.setGraphicsSlick((RendererSlick) receiver, graphicsSlick);
                 break;
             case AnimatedBackgroundHook.HOLDER_SWING:
                 // Swing graphics object
@@ -53,8 +54,6 @@ public class PrimitiveDrawingHook {
                 if (fill) graphicsSwing.fillRect(x, y, sizeX, sizeY);
                 else graphicsSwing.drawRect(x, y, sizeX, sizeY);
                 graphicsSwing.setColor(java.awt.Color.white);
-
-                ResourceHolderCustomAssetExtension.setGraphicsSwing((RendererSwing) receiver, graphicsSwing);
                 break;
             case AnimatedBackgroundHook.HOLDER_SDL:
                 // SDL graphics object
@@ -62,11 +61,10 @@ public class PrimitiveDrawingHook {
                 if (graphicsSDL == null) return;
 
                 SDLRect rectDst = new SDLRect(x, y, sizeX, sizeY);
-                long total = ((long) red << 24L) + ((long) green << 16L) + ((long) blue << 8L) + (long) alpha;
+                long total = ((long) red << 24L) + ((long) green << 16L) + ((long) blue << 8L) + alpha;
 
                 try {
                     graphicsSDL.fillRect(rectDst, total);
-                    ResourceHolderCustomAssetExtension.setGraphicsSDL((RendererSDL) receiver, graphicsSDL);
                 } catch (Exception e) {
                     log.error("SDL Exception. Cannot draw rectangle.", e);
                 }
@@ -106,7 +104,6 @@ public class PrimitiveDrawingHook {
                 else graphicsSlick.drawArc(x, y, sizeX, sizeY, angleStart, angleSize);
                 graphicsSlick.setColor(Color.white);
 
-                ResourceHolderCustomAssetExtension.setGraphicsSlick((RendererSlick) receiver, graphicsSlick);
                 break;
             case AnimatedBackgroundHook.HOLDER_SWING:
                 // Swing graphics object
@@ -118,7 +115,6 @@ public class PrimitiveDrawingHook {
                 else graphicsSwing.drawArc(x, y, sizeX, sizeY, angleStart, angleSize);
                 graphicsSwing.setColor(java.awt.Color.white);
 
-                ResourceHolderCustomAssetExtension.setGraphicsSwing((RendererSwing) receiver, graphicsSwing);
                 break;
             default:
                 log.error("Invalid renderer. Cannot draw arc.");
@@ -153,7 +149,6 @@ public class PrimitiveDrawingHook {
                 else graphicsSlick.drawOval(x, y, sizeX, sizeY);
                 graphicsSlick.setColor(Color.white);
 
-                ResourceHolderCustomAssetExtension.setGraphicsSlick((RendererSlick) receiver, graphicsSlick);
                 break;
             case AnimatedBackgroundHook.HOLDER_SWING:
                 // Swing graphics object
@@ -165,7 +160,6 @@ public class PrimitiveDrawingHook {
                 else graphicsSwing.drawOval(x, y, sizeX, sizeY);
                 graphicsSwing.setColor(java.awt.Color.white);
 
-                ResourceHolderCustomAssetExtension.setGraphicsSwing((RendererSwing) receiver, graphicsSwing);
                 break;
             default:
                 log.error("Invalid renderer. Cannot draw rectangle.");
@@ -219,7 +213,7 @@ public class PrimitiveDrawingHook {
                 SDLSurface graphicsSDL = (SDLSurface) graphicsObject;
 
                 SDLRect rectDst = new SDLRect(x, y, sizeX, sizeY);
-                long total = ((long) red << 24L) + ((long) green << 16L) + ((long) blue << 8L) + (long) alpha;
+                long total = ((long) red << 24L) + ((long) green << 16L) + ((long) blue << 8L) + alpha;
 
                 try {
                     graphicsSDL.fillRect(rectDst, total);
