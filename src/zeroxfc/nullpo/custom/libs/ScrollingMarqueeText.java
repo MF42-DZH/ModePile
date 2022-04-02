@@ -40,18 +40,15 @@ public class ScrollingMarqueeText {
     public static final int SIZE_SMALL = 0,
         SIZE_NORMAL = 1,
         SIZE_LARGE = 2;
+
     // Sizes of texts
     private static final int[] SIZES = { 8, 16, 32 };
+
     // Float sizes
     private static final float[] SCALES_FLOAT = { 0.5f, 1f, 2f };
+
     // Excess length
     private static final int EXCESS_LENGTH = 5;
-
-    // Strings that make up the headings
-    private final String[] headings;
-
-    // Strings that fill the info under the headings
-    private final String[] texts;
 
     // Whole string
     private String mainHeadingString;
@@ -69,8 +66,8 @@ public class ScrollingMarqueeText {
      * Create a staff roll.
      */
     public ScrollingMarqueeText(String[] headingArray, String[] textArray, int hColour, int tColour) {
-        headings = headingArray;
-        texts = textArray;
+        // Strings that make up the headings
+        // Strings that fill the info under the headings
         headingColour = hColour;
         textColour = tColour;
 
@@ -79,9 +76,9 @@ public class ScrollingMarqueeText {
 
         StringBuilder mHS = new StringBuilder(mainHeadingString);
         StringBuilder mTS = new StringBuilder(mainTextString);
-        for (int i = 0; i < headings.length; i++) {
-            mHS.append(new String(new char[headings[i].length()]).replace("\0", " ")).append(" ").append(texts[i]).append((i < headings.length - 1) ? " / " : "");
-            mTS.append(headings[i]).append(" ").append(new String(new char[texts[i].length()]).replace("\0", " ")).append((i < headings.length - 1) ? " / " : "");
+        for (int i = 0; i < headingArray.length; i++) {
+            mHS.append(new String(new char[headingArray[i].length()]).replace("\0", " ")).append(" ").append(textArray[i]).append((i < headingArray.length - 1) ? " / " : "");
+            mTS.append(headingArray[i]).append(" ").append(new String(new char[textArray[i].length()]).replace("\0", " ")).append((i < headingArray.length - 1) ? " / " : "");
         }
 
         mainHeadingString = mHS.toString();

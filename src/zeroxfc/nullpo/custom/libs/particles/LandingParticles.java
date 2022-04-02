@@ -80,10 +80,10 @@ public class LandingParticles extends ParticleEmitterBase {
 
             for (int i = 0; i < num; i++) {
                 int ured, ugreen, ublue, ualpha;
-                ured = red + (int) (2 * randomiser.nextDouble() * variance - variance);
-                ugreen = green + (int) (2 * randomiser.nextDouble() * variance - variance);
-                ublue = blue + (int) (2 * randomiser.nextDouble() * variance - variance);
-                ualpha = alpha + (int) (2 * randomiser.nextDouble() * variance - variance);
+                ured = red + (randomiser.nextInt(2 * variance + 1) * variance - variance);
+                ugreen = green + (randomiser.nextInt(2 * variance + 1) - variance);
+                ublue = blue + (randomiser.nextInt(2 * variance + 1) - variance);
+                ualpha = alpha + (randomiser.nextInt(2 * variance + 1) - variance);
 
                 DoubleVector p = new DoubleVector(
                     Interpolation.lerp(minX, maxX, randomiser.nextDouble()),

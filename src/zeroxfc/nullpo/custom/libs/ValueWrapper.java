@@ -32,6 +32,7 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
+@Deprecated
 public class ValueWrapper {
     public Byte valueByte;
     public Short valueShort;

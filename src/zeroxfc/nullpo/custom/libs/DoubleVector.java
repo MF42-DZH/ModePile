@@ -50,10 +50,10 @@ public class DoubleVector {
             direction = v2;
 
             x = (magnitude * Math.cos(direction));
-            if (almostEqual(x, 0, 1E-8)) x = 0;
+            if (almostEqualZero(x)) x = 0;
 
             y = (magnitude * Math.sin(direction));
-            if (almostEqual(y, 0, 1E-8)) y = 0;
+            if (almostEqualZero(y)) y = 0;
 
         } else {
             // CARTESIAN
@@ -156,8 +156,8 @@ public class DoubleVector {
     }
 
     // Fuzzy equals.
-    private static boolean almostEqual(double a, double b, double eps) {
-        return Math.abs(a - b) < eps;
+    private static boolean almostEqualZero(double a) {
+        return Math.abs(a) < 1.0E-8;
     }
 
     /*
@@ -240,10 +240,10 @@ public class DoubleVector {
         this.magnitude = Math.abs(magnitude);
 
         x = (this.magnitude * Math.cos(direction));
-        if (almostEqual(x, 0, 1E-8)) x = 0;
+        if (almostEqualZero(x)) x = 0;
 
         y = (this.magnitude * Math.sin(direction));
-        if (almostEqual(y, 0, 1E-8)) y = 0;
+        if (almostEqualZero(y)) y = 0;
     }
 
     public double getDirection() {
@@ -254,9 +254,9 @@ public class DoubleVector {
         this.direction = direction;
 
         x = (magnitude * Math.cos(this.direction));
-        if (almostEqual(x, 0, 1E-8)) x = 0;
+        if (almostEqualZero(x)) x = 0;
 
         y = (magnitude * Math.sin(this.direction));
-        if (almostEqual(y, 0, 1E-8)) y = 0;
+        if (almostEqualZero(y)) y = 0;
     }
 }
