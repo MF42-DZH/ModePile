@@ -44,37 +44,40 @@ public class FlyInOutText {
     private final int flyInTime;
     private final int persistTime;
     private final int flyOutTime;
+
     // Vector array of positions
     private final DoubleVector[][] letterPositions;
+
     // Start location
     private final DoubleVector[][] startLocation;
 
-    // Vector array of velocities
-    // private DoubleVector[] letterVelocities;
     // Destination vector
     private final DoubleVector[][] destinationLocation;
+
     // Shadow count
     private final int shadowCount;
+
     // Colours: idx 0 - main, any other - shadows
     private final int[] textColours;
-    // Randomiser for start pos
-    private final Random positionRandomiser;
+
     // Text scale
     private final float textScale;
+
     // Should it flash?
     private final boolean flash;
+
     // Lifetime variable
     private int currentLifetime;
 
     public FlyInOutText(String text, int destinationX, int destinationY, int timeIn, int timePersist, int timeOut, int[] colours, float scale, long seed, boolean flashOnLand) {
         // Independent vars.
         mainString = text;
-        // destinationLocation = new DoubleVector(destinationX, destinationY, false);
         flyInTime = timeIn;
         persistTime = timePersist;
         flyOutTime = timeOut;
         textColours = colours;
-        positionRandomiser = new Random(seed);
+        // Randomiser for start pos
+        final Random positionRandomiser = new Random(seed);
 
         currentLifetime = 0;
         textScale = scale;
@@ -85,7 +88,6 @@ public class FlyInOutText {
         letterPositions = new DoubleVector[shadowCount][mainString.length()];
         startLocation = new DoubleVector[shadowCount][mainString.length()];
         destinationLocation = new DoubleVector[shadowCount][mainString.length()];
-        // letterVelocities = new DoubleVector[mainString.length()];
 
         int sMod = 16;
         if (scale == 2.0f) sMod = 32;
@@ -94,8 +96,6 @@ public class FlyInOutText {
         for (int i = 0; i < mainString.length(); i++) {
             int startX = 0, startY = 0;
             DoubleVector position = DoubleVector.zero();
-            // double distanceX = 0, distanceY = 0;
-            // DoubleVector velocity = DoubleVector.zero();
 
             double dec1 = positionRandomiser.nextDouble();
             double dec2 = positionRandomiser.nextDouble();
@@ -104,20 +104,16 @@ public class FlyInOutText {
                 startX = -sMod;
                 if (dec2 < 0.5) startX = 41 * sMod;
 
-                startY = (int) (positionRandomiser.nextDouble() * (32 * sMod)) - sMod;
+                startY = positionRandomiser.nextInt(32 * sMod) - sMod;
             } else {
                 startY = -sMod;
                 if (dec2 < 0.5) startY = 31 * sMod;
 
-                startX = (int) (positionRandomiser.nextDouble() * (42 * sMod)) - sMod;
+                startX = positionRandomiser.nextInt(42 * sMod) - sMod;
             }
 
             position = new DoubleVector(startX, startY, false);
-            // distanceX = (destinationLocation.getX() + (i * sMod)) - position.getX();
-            // distanceY = destinationLocation.getY() - position.getY();
-            // velocity = new DoubleVector(distanceX / flyInTime, distanceY / flyInTime, false);
 
-            // letterVelocities[i] = velocity;
             for (int j = 0; j < letterPositions.length; j++) {
                 letterPositions[j][i] = position;
                 startLocation[j][i] = position;
@@ -138,6 +134,10 @@ public class FlyInOutText {
     }
 
     public void update() {
+        if (shouldPurge()) {
+            return;
+        }
+
         for (int i = 0; i < letterPositions.length; i++) {
             if (currentLifetime - i >= 0 && currentLifetime - i < flyInTime) {
                 for (int j = 0; j < letterPositions[i].length; j++) {

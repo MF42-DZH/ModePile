@@ -125,21 +125,11 @@ public class BlockParticle {
                     objectTexture.color, objectTexture.skin,
                     objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0.5f, 1f,
                     ((engine.displaysize == 0) ? 1f : 2f) * size, 0);
-//				receiver.drawSingleBlock(engine, playerID,
-//		                (int)position.getX() + ((engine.displaysize == 0) ? 2 : 4), (int)position.getY() + ((engine.displaysize == 0) ? 2 : 4),
-//		                objectTexture.color, objectTexture.skin,
-//		                objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0.5f, 1f,
-//		                (engine.displaysize == 0) ? 1f : 2f);
             }
             RendererExtension.drawScaledBlock(receiver, (int) position.getX(), (int) position.getY(),
                 objectTexture.color, objectTexture.skin,
                 objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), (isFlashing && ((currentLifetime / 2) % 2 == 0)) ? -0.8f : 0f, (animType == BlockParticleCollection.ANIMATION_DTET) ? 0.667f : 1f,
                 ((engine.displaysize == 0) ? 1f : 2f) * size, 0);
-//			receiver.drawSingleBlock(engine, playerID,
-//	                (int)position.getX(), (int)position.getY(),
-//	                objectTexture.color, objectTexture.skin,
-//	                objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), (isFlashing && ((currentLifetime / 2) % 2 == 0)) ? -0.8f : 0f, (animType == BlockParticleCollection.ANIMATION_DTET) ? 0.667f : 1f,
-//	                (engine.displaysize == 0) ? 1f : 2f);
         }
     }
 

@@ -176,10 +176,6 @@ public class Interpolation {
         double p1 = diff * (1d / denominator);
         double p2 = diff - p1;
 
-        // log.debug(Arrays.toString(new double[] { v0, v0 + p1, v0 + p2, v1 }));
-        // log.debug(Arrays.toString(new double[] { p1, p2}));
-        // log.debug(lerpVal);
-
         return bezier1DInterp(new double[] { v0, v0 + p1, v0 + p2, v1 }, interpVal);
     }
 

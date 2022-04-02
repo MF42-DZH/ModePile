@@ -94,7 +94,6 @@ public class ResourceHolderCustomAssetExtension {
      */
     public ResourceHolderCustomAssetExtension(int initialCapacity) {
         String mainClass = getMainClassName();
-        // log.info("MAIN CLASS: " + mainClass);
 
         holderType = -1;
         if (mainClass.contains("Slick")) holderType = HOLDER_SLICK;
@@ -197,42 +196,6 @@ public class ResourceHolderCustomAssetExtension {
         } catch (Exception e) {
             log.error("Failed to extract graphics from Slick renderer.");
             return null;
-        }
-    }
-
-    public static void setGraphicsSDL(RendererSDL renderer, SDLSurface grp) {
-        Class<RendererSDL> local = RendererSDL.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField("graphics");
-            localField.setAccessible(true);
-            localField.set(renderer, grp);
-        } catch (Exception e) {
-            log.error("Failed to extract graphics from SDL renderer.");
-        }
-    }
-
-    public static void setGraphicsSwing(RendererSwing renderer, Graphics2D grp) {
-        Class<RendererSwing> local = RendererSwing.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField("graphics");
-            localField.setAccessible(true);
-            localField.set(renderer, grp);
-        } catch (Exception e) {
-            log.error("Failed to extract graphics from Swing renderer.");
-        }
-    }
-
-    public static void setGraphicsSlick(RendererSlick renderer, Graphics grp) {
-        Class<RendererSlick> local = RendererSlick.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField("graphics");
-            localField.setAccessible(true);
-            localField.set(renderer, grp);
-        } catch (Exception e) {
-            log.error("Failed to extract graphics from Slick renderer.");
         }
     }
 
@@ -497,6 +460,11 @@ public class ResourceHolderCustomAssetExtension {
                 break;
             case HOLDER_SWING:
                 localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
+                if (localSwingGraphics == null) {
+                    log.error("Swing graphics is null!");
+                    return;
+                }
+
                 java.awt.Image toDrawSwing = swingImages.get(name);
 
                 localSwingGraphics.setColor(new java.awt.Color(red, green, blue, alpha));
@@ -663,27 +631,22 @@ public class ResourceHolderCustomAssetExtension {
     public void loadNewBGMAppend(String filename, boolean noLoop, boolean showerr) {
         switch (holderType) {
             case HOLDER_SLICK:
-                if (NullpoMinoSlick.propConfig.getProperty("option.bgm", false) == false) return;
+                if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
 
                 int no = ResourceHolder.bgm.length + 1;
                 Music[] newArr = new Music[no];
-                for (int i = 0; i < ResourceHolder.bgm.length; i++) {
-                    newArr[i] = ResourceHolder.bgm[i];
-                }
+                System.arraycopy(ResourceHolder.bgm, 0, newArr, 0, ResourceHolder.bgm.length);
 
                 if (newArr[no - 1] == null) {
                     if (showerr) log.info("Loading BGM at " + filename);
 
                     try {
-                        // String filename = NullpoMinoSlick.propMusic.getProperty("music.filename." + no, null);
                         if ((filename == null) || (filename.length() < 1)) {
                             if (showerr) log.info("BGM at " + filename + " not available");
                             return;
                         }
 
                         NullpoMinoSlick.propMusic.setProperty("music.noloop." + no, noLoop);
-                        // boolean streaming = NullpoMinoSlick.propConfig.getProperty("option.bgmstreaming", true);
-
                         newArr[no - 1] = new Music(filename, true);
                         ResourceHolder.bgm = newArr.clone();
 
@@ -700,13 +663,11 @@ public class ResourceHolderCustomAssetExtension {
                 log.warn("BGM is not supported on Swing.");
                 return;
             case HOLDER_SDL:
-                if (NullpoMinoSDL.propConfig.getProperty("option.bgm", false) == false) return;
+                if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
 
                 int no2 = ResourceHolderSDL.bgm.length + 1;
                 MixMusic[] newArr2 = new MixMusic[no2];
-                for (int i = 0; i < ResourceHolderSDL.bgm.length; i++) {
-                    newArr2[i] = ResourceHolderSDL.bgm[i];
-                }
+                System.arraycopy(ResourceHolderSDL.bgm, 0, newArr2, 0, ResourceHolderSDL.bgm.length);
 
                 if (newArr2[no2 - 1] == null) {
                     if (showerr) {
@@ -714,7 +675,6 @@ public class ResourceHolderCustomAssetExtension {
                     }
 
                     try {
-                        // String filename = NullpoMinoSDL.propMusic.getProperty("music.filename." + no, null);
                         if ((filename == null) || (filename.length() < 1)) {
                             if (showerr) log.info("BGM at " + filename + " not available");
                             return;
@@ -735,7 +695,6 @@ public class ResourceHolderCustomAssetExtension {
                         }
                     }
                 }
-                return;
         }
     }
 
@@ -747,14 +706,12 @@ public class ResourceHolderCustomAssetExtension {
     public void removeBGMFromEnd(boolean showerr) {
         switch (holderType) {
             case HOLDER_SLICK:
-                if (NullpoMinoSlick.propConfig.getProperty("option.bgm", false) == false) return;
+                if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
 
                 int no = ResourceHolder.bgm.length - 1;
                 Music[] newBGM = new Music[no];
 
-                for (int i = 0; i < newBGM.length; i++) {
-                    newBGM[i] = ResourceHolder.bgm[i];
-                }
+                System.arraycopy(ResourceHolder.bgm, 0, newBGM, 0, newBGM.length);
 
                 ResourceHolder.bgm = newBGM.clone();
                 if (showerr) log.info("Removed BGM at " + no);
@@ -763,18 +720,15 @@ public class ResourceHolderCustomAssetExtension {
                 log.warn("BGM is not supported on Swing.");
                 return;
             case HOLDER_SDL:
-                if (NullpoMinoSDL.propConfig.getProperty("option.bgm", false) == false) return;
+                if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
 
                 int no2 = ResourceHolderSDL.bgm.length - 1;
                 MixMusic[] newBGM2 = new MixMusic[no2];
 
-                for (int i = 0; i < newBGM2.length; i++) {
-                    newBGM2[i] = ResourceHolderSDL.bgm[i];
-                }
+                System.arraycopy(ResourceHolderSDL.bgm, 0, newBGM2, 0, newBGM2.length);
 
                 ResourceHolderSDL.bgm = newBGM2.clone();
                 if (showerr) log.info("Removed BGM at " + no2);
-                return;
         }
     }
 
@@ -796,11 +750,8 @@ public class ResourceHolderCustomAssetExtension {
                 NullpoMinoSlick.appGameContainer.setMusicVolume(bgmvolume / (float) 128);
 
                 try {
-                    if (noLoop)
-                        slickMusic.get(name).play();
-                    else
-                        slickMusic.get(name).play();
-                } catch (Throwable e) {
+                    slickMusic.get(name).play();
+                } catch (Exception e) {
                     log.error("Failed to play music " + name, e);
                 }
 
@@ -884,9 +835,9 @@ public class ResourceHolderCustomAssetExtension {
             case HOLDER_SLICK:
                 if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
 
-                for (String s : slickMusic.keySet()) {
-                    slickMusic.get(s).pause();
-                    slickMusic.get(s).stop();
+                for (Music sm : slickMusic.values()) {
+                    sm.pause();
+                    sm.stop();
                 }
 
                 return;

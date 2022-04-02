@@ -51,36 +51,44 @@ public class ProfileProperties {
     /**
      * Button password values
      */
-    public static final int VALUE_BT_A = 1,
-        VALUE_BT_B = 2,
-        VALUE_BT_C = 4,
-        VALUE_BT_D = 8;
+    public static final int VALUE_BT_A = 1;
+    public static final int VALUE_BT_B = 2;
+    public static final int VALUE_BT_C = 4;
+    public static final int VALUE_BT_D = 8;
     /**
      * Valid characters in a name selector:<br />
      * Please note that "p" is backspace and "q" is end entry.
      */
     public static final String ENTRY_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789?!. pq";
+
     /**
      * Debug logger
      */
     private static final Logger log = Logger.getLogger(ProfileProperties.class);
+
     /**
      * Profile prefixes.
      */
-    private static final String PREFIX_NAME = "profile.name.",
-        PREFIX_PASS = "profile.password.";
+    private static final String PREFIX_NAME = "profile.name.";
+    private static final String PREFIX_PASS = "profile.password.";
+    private static final String PROFILE_CFG = "config/setting/profile.cfg";
+
     /**
      * Login screen
      */
     public final LoginScreen loginScreen;
+
     /**
      * Profile cfg file
      */
-    private final CustomProperties PROP_PROFILE;
+    private final CustomProperties propProfile;
+
     /**
      * Username
      */
-    private String nameDisplay, nameProp;
+    private String nameDisplay;
+    private String nameProp;
+
     /**
      * Is it logged in
      */
@@ -99,34 +107,27 @@ public class ProfileProperties {
      * @param colourHeading Colour of heading. Use values from {@link EventReceiver} class.
      */
     public ProfileProperties(int colourHeading) {
-        PROP_PROFILE = new CustomProperties();
+        propProfile = new CustomProperties();
 
         try {
-            FileInputStream in = new FileInputStream("config/setting/profile.cfg");
-            PROP_PROFILE.load(in);
+            FileInputStream in = new FileInputStream(PROFILE_CFG);
+            propProfile.load(in);
             in.close();
 
             log.info("Profile file \"config/setting/profile.cfg\" loaded and ready.");
-        } catch (IOException e) {
-            if (e instanceof FileNotFoundException) {
-                log.error("Profile file \"config/setting/profile.cfg\" not found. Creating new.\n", e);
+        } catch (FileNotFoundException e) {
+            log.error("Profile file \"config/setting/profile.cfg\" not found. Creating new.\n", e);
 
-                Writer fileWriter;
-                BufferedWriter outputWriter;
-                try {
-                    fileWriter = new OutputStreamWriter(new FileOutputStream("config/setting/profile.cfg"), StandardCharsets.UTF_8);
-                    outputWriter = new BufferedWriter(fileWriter);
-                    outputWriter.write('\0');
-                    outputWriter.close();
-                    fileWriter.close();
+            try (Writer fileWriter = new OutputStreamWriter(new FileOutputStream(PROFILE_CFG), StandardCharsets.UTF_8);
+                BufferedWriter outputWriter = new BufferedWriter(fileWriter)) {
+                outputWriter.write('\0');
 
-                    log.info("Blank profile file \"config/setting/profile.cfg\" created.\n", e);
-                } catch (Exception e2) {
-                    log.error("Profile file creation failed.\n", e2);
-                }
-            } else {
-                log.error("Profile file \"config/setting/profile.cfg\" is not loadable.\n", e);
+                log.info("Blank profile file \"config/setting/profile.cfg\" created.\n", e);
+            } catch (Exception e2) {
+                log.error("Profile file creation failed.\n", e2);
             }
+        } catch (Exception e) {
+            log.error("Profile file \"config/setting/profile.cfg\" is not loadable.\n", e);
         }
 
         nameDisplay = "";
@@ -147,24 +148,6 @@ public class ProfileProperties {
     }
 
     /**
-     * Test two button sequences to see if they are the same and each contain 6 presses.<br />
-     * This is used outside in a mode during its password entry sequence.
-     *
-     * @param pass1 Button press sequence (exp. length 6)
-     * @param pass2 Button press sequence (exp. length 6)
-     * @return Same?
-     */
-    private static boolean isAdequate(int[] pass1, int[] pass2) {
-        if (pass1.length != pass2.length) return false;
-        if (pass1.length != 6) return false;
-
-        for (int i = 0; i < pass1.length; i++) {
-            if (pass1[i] != pass2[i]) return false;
-        }
-        return true;
-    }
-
-    /**
      * Gets the internal property version of a name.
      *
      * @param name Raw name
@@ -175,146 +158,6 @@ public class ProfileProperties {
             .replace('.', 'd')
             .replace('?', 'k')
             .replace('!', 'e');
-    }
-
-    /**
-     * Tests to see if a name has already been taken on the local machine.
-     *
-     * @param name Name to test
-     * @return Available?
-     */
-    private boolean testUsernameTaken(String name, long number) {
-        String nCap = getStorageName(name);
-        return PROP_PROFILE.getProperty(PREFIX_NAME + nCap + "." + number, false);
-    }
-
-    /**
-     * Tests to see if a name has not already been taken on the local machine.
-     *
-     * @param name Name to test
-     * @return Available?
-     */
-    private boolean testUsernameAvailability(String name) {
-        String nCap = getStorageName(name);
-        return !PROP_PROFILE.getProperty(PREFIX_NAME + nCap + "." + 0, false);
-    }
-
-    /**
-     * Tests to see if a password conflict arises.
-     *
-     * @param name Name to test
-     * @return Available?
-     */
-    private boolean testPasswordCrash(String name, int[] buttonPresses) {
-        String nCap = getStorageName(name);
-        boolean crash = false;
-        long number = 0;
-
-        while (testUsernameTaken(name, number)) {
-            if (!PROP_PROFILE.getProperty(PREFIX_NAME + nCap + "." + number, false)) return false;
-            else {
-                crash = true;
-                int pass = PROP_PROFILE.getProperty(PREFIX_PASS + nCap + "." + number, 0);
-                for (int i = 0; i < buttonPresses.length; i++) {
-                    int j = 4 * (buttonPresses.length - i - 1);
-                    if (((buttonPresses[i] << j) & pass) == 0) {
-                        crash = false;
-                        break;
-                    }
-                }
-            }
-            number++;
-        }
-
-        return crash;
-    }
-
-    /**
-     * Attempt to log into an account with a name and password.
-     *
-     * @param name          Account name
-     * @param buttonPresses Password input sequence (exp. length 6)
-     * @return Was the attempt to log into the account successful?
-     */
-    private boolean attemptLogIn(String name, int[] buttonPresses) {
-        String nCap = getStorageName(name);
-        String nCapDisplay = name.toUpperCase();
-        if (testUsernameAvailability(nCap)) {
-            log.warn("Login to " + nCapDisplay + " failed. Account with that name does not exist.");
-            return false;  // If username does not exist, fail login.
-        }
-
-        boolean login = false;
-
-        long number = 0;
-        while (testUsernameTaken(nCap, number)) {
-            int pass = PROP_PROFILE.getProperty(PREFIX_PASS + nCap + "." + number, 0);
-
-            for (int i = 0; i < buttonPresses.length; i++) {
-                login = true;
-
-                int j = 4 * (buttonPresses.length - i - 1);
-                if (((buttonPresses[i] << j) & pass) == 0) {
-                    log.warn("Login to " + nCapDisplay + " " + number + " failed. Password mismatch.");
-                    login = false;
-                    break;
-                }
-            }
-
-            if (login) {
-                break;
-            }
-
-            number++;
-        }
-
-        this.nameDisplay = nCapDisplay;
-        this.nameProp = nCap + "." + number;
-
-        loggedIn = true;
-
-        log.info("Login to " + nCapDisplay + " " + number + " successful!");
-
-        return true;
-    }
-
-    /**
-     * Attempt to create an account with a name and password.
-     *
-     * @param name          Account name
-     * @param buttonPresses Password input sequence (exp. length 6)
-     * @return Was the attempt to create an account successful?
-     */
-    private boolean createAccount(String name, int[] buttonPresses) {
-        String nCap = getStorageName(name);
-        String nCapDisplay = name.toUpperCase();
-
-        long number = 0;
-        while (testUsernameTaken(nCap, number)) {
-            log.warn("Creation of " + nCapDisplay + " " + number + " failed. Name and number taken.");
-            number++;
-        }
-
-        this.nameDisplay = nCapDisplay;
-        this.nameProp = nCap + "." + number;
-
-        int password = new SecureRandom().nextInt(128);
-        password <<= 4;
-
-        for (int buttonPress : buttonPresses) {
-            password <<= 4;
-            password |= buttonPress;
-        }
-
-        PROP_PROFILE.setProperty(PREFIX_NAME + nameProp, true);
-        PROP_PROFILE.setProperty(PREFIX_PASS + nameProp, password);
-        loggedIn = true;
-
-        log.info("Account " + nameDisplay + " " + number + " created!");
-
-        saveProfileConfig();
-
-        return true;
     }
 
     //region getProperty() methods
@@ -328,7 +171,7 @@ public class ProfileProperties {
      */
     public byte getProperty(String path, byte def) {
         if (loggedIn) {
-            return PROP_PROFILE.getProperty(nameProp + "." + path, def);
+            return propProfile.getProperty(nameProp + "." + path, def);
         } else {
             return def;
         }
@@ -343,7 +186,7 @@ public class ProfileProperties {
      */
     public short getProperty(String path, short def) {
         if (loggedIn) {
-            return PROP_PROFILE.getProperty(nameProp + "." + path, def);
+            return propProfile.getProperty(nameProp + "." + path, def);
         } else {
             return def;
         }
@@ -358,7 +201,7 @@ public class ProfileProperties {
      */
     public int getProperty(String path, int def) {
         if (loggedIn) {
-            return PROP_PROFILE.getProperty(nameProp + "." + path, def);
+            return propProfile.getProperty(nameProp + "." + path, def);
         } else {
             return def;
         }
@@ -373,7 +216,7 @@ public class ProfileProperties {
      */
     public long getProperty(String path, long def) {
         if (loggedIn) {
-            return PROP_PROFILE.getProperty(nameProp + "." + path, def);
+            return propProfile.getProperty(nameProp + "." + path, def);
         } else {
             return def;
         }
@@ -388,7 +231,7 @@ public class ProfileProperties {
      */
     public float getProperty(String path, float def) {
         if (loggedIn) {
-            return PROP_PROFILE.getProperty(nameProp + "." + path, def);
+            return propProfile.getProperty(nameProp + "." + path, def);
         } else {
             return def;
         }
@@ -403,7 +246,7 @@ public class ProfileProperties {
      */
     public double getProperty(String path, double def) {
         if (loggedIn) {
-            return PROP_PROFILE.getProperty(nameProp + "." + path, def);
+            return propProfile.getProperty(nameProp + "." + path, def);
         } else {
             return def;
         }
@@ -418,7 +261,7 @@ public class ProfileProperties {
      */
     public char getProperty(String path, char def) {
         if (loggedIn) {
-            return PROP_PROFILE.getProperty(nameProp + "." + path, def);
+            return propProfile.getProperty(nameProp + "." + path, def);
         } else {
             return def;
         }
@@ -433,7 +276,7 @@ public class ProfileProperties {
      */
     public String getProperty(String path, String def) {
         if (loggedIn) {
-            return PROP_PROFILE.getProperty(nameProp + "." + path, def);
+            return propProfile.getProperty(nameProp + "." + path, def);
         } else {
             return def;
         }
@@ -448,7 +291,7 @@ public class ProfileProperties {
      */
     public boolean getProperty(String path, boolean def) {
         if (loggedIn) {
-            return PROP_PROFILE.getProperty(nameProp + "." + path, def);
+            return propProfile.getProperty(nameProp + "." + path, def);
         } else {
             return def;
         }
@@ -465,7 +308,7 @@ public class ProfileProperties {
      */
     public void setProperty(String path, byte val) {
         if (loggedIn) {
-            PROP_PROFILE.setProperty(nameProp + "." + path, val);
+            propProfile.setProperty(nameProp + "." + path, val);
         }
     }
 
@@ -477,7 +320,7 @@ public class ProfileProperties {
      */
     public void setProperty(String path, short val) {
         if (loggedIn) {
-            PROP_PROFILE.setProperty(nameProp + "." + path, val);
+            propProfile.setProperty(nameProp + "." + path, val);
         }
     }
 
@@ -489,7 +332,7 @@ public class ProfileProperties {
      */
     public void setProperty(String path, int val) {
         if (loggedIn) {
-            PROP_PROFILE.setProperty(nameProp + "." + path, val);
+            propProfile.setProperty(nameProp + "." + path, val);
         }
     }
 
@@ -501,7 +344,7 @@ public class ProfileProperties {
      */
     public void setProperty(String path, long val) {
         if (loggedIn) {
-            PROP_PROFILE.setProperty(nameProp + "." + path, val);
+            propProfile.setProperty(nameProp + "." + path, val);
         }
     }
 
@@ -513,7 +356,7 @@ public class ProfileProperties {
      */
     public void setProperty(String path, float val) {
         if (loggedIn) {
-            PROP_PROFILE.setProperty(nameProp + "." + path, val);
+            propProfile.setProperty(nameProp + "." + path, val);
         }
     }
 
@@ -525,7 +368,7 @@ public class ProfileProperties {
      */
     public void setProperty(String path, double val) {
         if (loggedIn) {
-            PROP_PROFILE.setProperty(nameProp + "." + path, val);
+            propProfile.setProperty(nameProp + "." + path, val);
         }
     }
 
@@ -537,7 +380,7 @@ public class ProfileProperties {
      */
     public void setProperty(String path, char val) {
         if (loggedIn) {
-            PROP_PROFILE.setProperty(nameProp + "." + path, val);
+            propProfile.setProperty(nameProp + "." + path, val);
         }
     }
 
@@ -549,7 +392,7 @@ public class ProfileProperties {
      */
     public void setProperty(String path, String val) {
         if (loggedIn) {
-            PROP_PROFILE.setProperty(nameProp + "." + path, val);
+            propProfile.setProperty(nameProp + "." + path, val);
         }
     }
 
@@ -561,7 +404,7 @@ public class ProfileProperties {
      */
     public void setProperty(String path, boolean val) {
         if (loggedIn) {
-            PROP_PROFILE.setProperty(nameProp + "." + path, val);
+            propProfile.setProperty(nameProp + "." + path, val);
         }
     }
     //endregion
@@ -571,8 +414,8 @@ public class ProfileProperties {
      */
     public void saveProfileConfig() {
         try {
-            FileOutputStream out = new FileOutputStream("config/setting/profile.cfg");
-            PROP_PROFILE.store(out, "NullpoMino Player Profile Config");
+            FileOutputStream out = new FileOutputStream(PROFILE_CFG);
+            propProfile.store(out, "NullpoMino Player Profile Config");
             out.close();
         } catch (IOException e) {
             log.error("Failed to save mode config", e);
@@ -604,14 +447,16 @@ public class ProfileProperties {
         /**
          * Screen states
          */
-        private static final int CUSTOM_STATE_INITIAL_SCREEN = 0,
-            CUSTOM_STATE_NAME_INPUT = 1,
-            CUSTOM_STATE_PASSWORD_INPUT = 2,
-            CUSTOM_STATE_IS_SUCCESS_SCREEN = 3;
+        private static final int CUSTOM_STATE_INITIAL_SCREEN = 0;
+        private static final int CUSTOM_STATE_NAME_INPUT = 1;
+        private static final int CUSTOM_STATE_PASSWORD_INPUT = 2;
+        private static final int CUSTOM_STATE_IS_SUCCESS_SCREEN = 3;
+
         private final int colourHeading;
         private final ProfileProperties playerProperties;
         private String nameEntry;
-        private int[] buttonPresses, secondButtonPresses;
+        private int[] buttonPresses;
+        private int[] secondButtonPresses;
         private int currentChar;
         private int customState;
         private boolean login;
@@ -645,6 +490,24 @@ public class ProfileProperties {
             signup = false;
             success = false;
             this.colourHeading = colourHeading;
+        }
+
+        /**
+         * Test two button sequences to see if they are the same and each contain 6 presses.<br />
+         * This is used outside in a mode during its password entry sequence.
+         *
+         * @param pass1 Button press sequence (exp. length 6)
+         * @param pass2 Button press sequence (exp. length 6)
+         * @return Same?
+         */
+        private static boolean isAdequate(int[] pass1, int[] pass2) {
+            if (pass1.length != pass2.length) return false;
+            if (pass1.length != 6) return false;
+
+            for (int i = 0; i < pass1.length; i++) {
+                if (pass1[i] != pass2[i]) return false;
+            }
+            return true;
         }
 
         /**
@@ -697,18 +560,15 @@ public class ProfileProperties {
                 customState = CUSTOM_STATE_NAME_INPUT;
                 engine.playSE("decide");
                 engine.resetStatc();
-                return false;
             } else if (engine.ctrl.isPush(Controller.BUTTON_B)) {
                 signup = true;
                 customState = CUSTOM_STATE_NAME_INPUT;
                 engine.playSE("decide");
                 engine.resetStatc();
-                return false;
             } else if (engine.ctrl.isPush(Controller.BUTTON_E)) {
                 engine.stat = GameEngine.STAT_SETTING;
                 engine.playSE("decide");
                 engine.resetStatc();
-                return false;
             }
 
             return false;
@@ -807,10 +667,10 @@ public class ProfileProperties {
                 engine.statc[2] = 1;
             } else if (engine.statc[1] == 6) {
                 if (login && !signup) {
-                    success = playerProperties.attemptLogIn(nameEntry, buttonPresses);
+                    success = playerProperties.loginScreen.attemptLogIn(nameEntry, buttonPresses, playerProperties);
                 } else if (signup) {
-                    boolean adequate = ProfileProperties.isAdequate(buttonPresses, secondButtonPresses) && !playerProperties.testPasswordCrash(nameEntry, buttonPresses);
-                    if (adequate) success = playerProperties.createAccount(nameEntry, buttonPresses);
+                    boolean adequate = isAdequate(buttonPresses, secondButtonPresses) && !playerProperties.loginScreen.testPasswordCrash(nameEntry, buttonPresses, playerProperties);
+                    if (adequate) success = playerProperties.loginScreen.createAccount(nameEntry, buttonPresses, playerProperties);
                 }
 
                 if (success) engine.playSE("decide");
@@ -919,6 +779,146 @@ public class ProfileProperties {
                 default:
                     break;
             }
+        }
+
+        /**
+         * Tests to see if a password conflict arises.
+         *
+         * @param name Name to test
+         * @return Available?
+         */
+        private boolean testPasswordCrash(String name, int[] buttonPresses, ProfileProperties profileProperties) {
+            String nCap = profileProperties.getStorageName(name);
+            boolean crash = false;
+            long number = 0;
+
+            while (profileProperties.loginScreen.testUsernameTaken(name, number, profileProperties)) {
+                if (!profileProperties.propProfile.getProperty(PREFIX_NAME + nCap + "." + number, false)) return false;
+                else {
+                    crash = true;
+                    int pass = profileProperties.propProfile.getProperty(PREFIX_PASS + nCap + "." + number, 0);
+                    for (int i = 0; i < buttonPresses.length; i++) {
+                        int j = 4 * (buttonPresses.length - i - 1);
+                        if (((buttonPresses[i] << j) & pass) == 0) {
+                            crash = false;
+                            break;
+                        }
+                    }
+                }
+                number++;
+            }
+
+            return crash;
+        }
+
+        /**
+         * Attempt to log into an account with a name and password.
+         *
+         * @param name          Account name
+         * @param buttonPresses Password input sequence (exp. length 6)
+         * @return Was the attempt to log into the account successful?
+         */
+        private boolean attemptLogIn(String name, int[] buttonPresses, ProfileProperties profileProperties) {
+            String nCap = profileProperties.getStorageName(name);
+            String nCapDisplay = name.toUpperCase();
+            if (profileProperties.loginScreen.testUsernameAvailability(nCap, profileProperties)) {
+                log.warn("Login to " + nCapDisplay + " failed. Account with that name does not exist.");
+                return false;  // If username does not exist, fail login.
+            }
+
+            boolean successfulLogin = false;
+
+            long number = 0;
+            while (profileProperties.loginScreen.testUsernameTaken(nCap, number, profileProperties)) {
+                int pass = profileProperties.propProfile.getProperty(PREFIX_PASS + nCap + "." + number, 0);
+
+                for (int i = 0; i < buttonPresses.length; i++) {
+                    successfulLogin = true;
+
+                    int j = 4 * (buttonPresses.length - i - 1);
+                    if (((buttonPresses[i] << j) & pass) == 0) {
+                        log.warn("Login to " + nCapDisplay + " " + number + " failed. Password mismatch.");
+                        successfulLogin = false;
+                        break;
+                    }
+                }
+
+                if (successfulLogin) {
+                    break;
+                }
+
+                number++;
+            }
+
+            profileProperties.nameDisplay = nCapDisplay;
+            profileProperties.nameProp = nCap + "." + number;
+
+            profileProperties.loggedIn = true;
+
+            log.info("Login to " + nCapDisplay + " " + number + " successful!");
+
+            return true;
+        }
+
+        /**
+         * Attempt to create an account with a name and password.
+         *
+         * @param name          Account name
+         * @param buttonPresses Password input sequence (exp. length 6)
+         * @return Was the attempt to create an account successful?
+         */
+        private boolean createAccount(String name, int[] buttonPresses, ProfileProperties profileProperties) {
+            String nCap = profileProperties.getStorageName(name);
+            String nCapDisplay = name.toUpperCase();
+
+            long number = 0;
+            while (profileProperties.loginScreen.testUsernameTaken(nCap, number, profileProperties)) {
+                log.warn("Creation of " + nCapDisplay + " " + number + " failed. Name and number taken.");
+                number++;
+            }
+
+            profileProperties.nameDisplay = nCapDisplay;
+            profileProperties.nameProp = nCap + "." + number;
+
+            int password = new SecureRandom().nextInt(128);
+            password <<= 4;
+
+            for (int buttonPress : buttonPresses) {
+                password <<= 4;
+                password |= buttonPress;
+            }
+
+            profileProperties.propProfile.setProperty(PREFIX_NAME + profileProperties.nameProp, true);
+            profileProperties.propProfile.setProperty(PREFIX_PASS + profileProperties.nameProp, password);
+            profileProperties.loggedIn = true;
+
+            log.info("Account " + profileProperties.nameDisplay + " " + number + " created!");
+
+            profileProperties.saveProfileConfig();
+
+            return true;
+        }
+
+        /**
+         * Tests to see if a name has already been taken on the local machine.
+         *
+         * @param name Name to test
+         * @return Available?
+         */
+        private boolean testUsernameTaken(String name, long number, ProfileProperties profileProperties) {
+            String nCap = profileProperties.getStorageName(name);
+            return profileProperties.propProfile.getProperty(PREFIX_NAME + nCap + "." + number, false);
+        }
+
+        /**
+         * Tests to see if a name has not already been taken on the local machine.
+         *
+         * @param name Name to test
+         * @return Available?
+         */
+        private boolean testUsernameAvailability(String name, ProfileProperties profileProperties) {
+            String nCap = profileProperties.getStorageName(name);
+            return !profileProperties.propProfile.getProperty(PREFIX_NAME + nCap + "." + 0, false);
         }
     }
 }

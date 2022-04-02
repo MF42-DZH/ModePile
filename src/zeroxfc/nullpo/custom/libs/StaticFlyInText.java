@@ -48,8 +48,6 @@ public class StaticFlyInText {
     private final DoubleVector[] startLocation;
     // Destination vector
     private final DoubleVector[] destinationLocation;
-    // Randomiser for start pos
-    private final Random positionRandomiser;
     // Text scale
     private final float textScale;
     // Lifetime variable
@@ -73,7 +71,9 @@ public class StaticFlyInText {
         flyInTime = timeIn;
         textColour = colour;
         textScale = scale;
-        positionRandomiser = new Random(seed);
+
+        // Randomiser for start pos
+        final Random positionRandomiser = new Random(seed);
 
         letterPositions = new DoubleVector[mainString.length()];
         startLocation = new DoubleVector[mainString.length()];
@@ -94,12 +94,12 @@ public class StaticFlyInText {
                 startX = -sMod;
                 if (dec2 < 0.5) startX = 41 * sMod;
 
-                startY = (int) (positionRandomiser.nextDouble() * (32 * sMod)) - sMod;
+                startY = (positionRandomiser.nextInt(32 * sMod)) - sMod;
             } else {
                 startY = -sMod;
                 if (dec2 < 0.5) startY = 31 * sMod;
 
-                startX = (int) (positionRandomiser.nextDouble() * (42 * sMod)) - sMod;
+                startX = (positionRandomiser.nextInt(42 * sMod)) - sMod;
             }
 
             position = new DoubleVector(startX, startY, false);

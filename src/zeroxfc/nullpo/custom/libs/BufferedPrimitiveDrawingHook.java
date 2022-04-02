@@ -1,14 +1,11 @@
 package zeroxfc.nullpo.custom.libs;
 
-import java.awt.*;
 import java.util.ArrayList;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.gui.sdl.RendererSDL;
 import mu.nu.nullpo.gui.slick.RendererSlick;
 import mu.nu.nullpo.gui.swing.RendererSwing;
 import org.apache.log4j.Logger;
-import org.newdawn.slick.Graphics;
-import sdljava.video.SDLSurface;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 public class BufferedPrimitiveDrawingHook {
@@ -22,11 +19,31 @@ public class BufferedPrimitiveDrawingHook {
      */
     private final ArrayList<RenderCommand> commandBuffer;
 
-    /**
-     * Create a new queue.
-     */
-    public BufferedPrimitiveDrawingHook() {
-        commandBuffer = new ArrayList<>();
+    /** Temporary holder for EventReceiver. */
+    private EventReceiver receiver = null;
+
+    /** Lazy instantiator for graphics object. */
+    private final LazyReference<Object> USER_GRAPHICS_OBJECT = LazyReference.fromCallable(() -> {
+        switch (AnimatedBackgroundHook.getResourceHook()) {
+            case AnimatedBackgroundHook.HOLDER_SLICK:
+                // Slick graphics object
+                return ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
+            case AnimatedBackgroundHook.HOLDER_SWING:
+                // Swing graphics object
+                return ResourceHolderCustomAssetExtension.getGraphicsSwing((RendererSwing) receiver);
+            case AnimatedBackgroundHook.HOLDER_SDL:
+                // SDL graphics object
+                return ResourceHolderCustomAssetExtension.getGraphicsSDL((RendererSDL) receiver);
+            default:
+                throw new LazyLoadException("Cannot find renderer!");
+        }
+    });
+
+/**
+ * Create a new queue.
+ */
+public BufferedPrimitiveDrawingHook() {
+    commandBuffer = new ArrayList<>();
     }
 
     /**
@@ -74,24 +91,12 @@ public class BufferedPrimitiveDrawingHook {
         if (commandBuffer.size() <= 0) return;
 
         try {
-            Object graphicsObject = null;
-            switch (AnimatedBackgroundHook.getResourceHook()) {
-                case AnimatedBackgroundHook.HOLDER_SLICK:
-                    // Slick graphics object
-                    graphicsObject = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
-                    break;
-                case AnimatedBackgroundHook.HOLDER_SWING:
-                    // Swing graphics object
-                    graphicsObject = ResourceHolderCustomAssetExtension.getGraphicsSwing((RendererSwing) receiver);
-                    break;
-                case AnimatedBackgroundHook.HOLDER_SDL:
-                    // SDL graphics object
-                    graphicsObject = ResourceHolderCustomAssetExtension.getGraphicsSDL((RendererSDL) receiver);
-                    break;
-                default:
-                    log.error("Could not extract renderer.");
-                    break;
+            // Get our graphics object.
+            if (this.receiver == null) {
+                this.receiver = receiver;
             }
+
+            final Object graphicsObject = USER_GRAPHICS_OBJECT.getValue();
 
             if (graphicsObject == null) return;
             for (RenderCommand cmd : commandBuffer) {
@@ -151,27 +156,6 @@ public class BufferedPrimitiveDrawingHook {
                 }
             }
             commandBuffer.clear();
-
-            switch (AnimatedBackgroundHook.getResourceHook()) {
-                case AnimatedBackgroundHook.HOLDER_SLICK:
-                    // Slick graphics object
-                    assert receiver instanceof RendererSlick;
-                    ResourceHolderCustomAssetExtension.setGraphicsSlick((RendererSlick) receiver, (Graphics) graphicsObject);
-                    break;
-                case AnimatedBackgroundHook.HOLDER_SWING:
-                    // Swing graphics object
-                    assert receiver instanceof RendererSwing;
-                    ResourceHolderCustomAssetExtension.setGraphicsSwing((RendererSwing) receiver, (Graphics2D) graphicsObject);
-                    break;
-                case AnimatedBackgroundHook.HOLDER_SDL:
-                    // SDL graphics object
-                    assert receiver instanceof RendererSDL;
-                    ResourceHolderCustomAssetExtension.setGraphicsSDL((RendererSDL) receiver, (SDLSurface) graphicsObject);
-                    break;
-                default:
-                    log.error("Invalid renderer. Cannot replace graphics object.");
-                    break;
-            }
         } catch (Exception e) {
             log.error("Something went wrong.", e);
         }

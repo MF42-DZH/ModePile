@@ -60,16 +60,20 @@ public class ExamSpinner {
             new int[] { 96, 32 }
         }   // Fail
     };
+
     private static final int[] startXs = {
         0, 80, 160, 240  // P F P F
     };
+
     private static final int TravelClose = 320 * 32;
+
     private static final int[] endXs = {
         startXs[0] + TravelClose,
         startXs[1] + TravelClose,
         startXs[2] + TravelClose,
         startXs[3] + TravelClose
     };
+
     private static final int spinDuration = 360;
     private static final Piece HUGE_O;
     private static final Logger log = Logger.getLogger(ExamSpinner.class);
@@ -96,7 +100,6 @@ public class ExamSpinner {
     {
         lifeTime = 0;
 
-        // locations = endXs;
         locations = endXs.clone();
 
         clickedBefore = false;
@@ -369,14 +372,7 @@ public class ExamSpinner {
     public void update(GameEngine engine) {
         lifeTime++;
 
-        if (lifeTime == 60 && !close) {
-            engine.playSE("linefall");
-            if (selectedOutcome == 0) {
-                engine.playSE("excellent");
-            } else {
-                engine.playSE("regret");
-            }
-        } else if (lifeTime == spinDuration + 120 && close) {
+        if (lifeTime == 60 && !close || lifeTime == spinDuration + 120 && close) {
             engine.playSE("linefall");
             if (selectedOutcome == 0) {
                 engine.playSE("excellent");
@@ -387,16 +383,10 @@ public class ExamSpinner {
 
         if (close && lifeTime <= spinDuration) {
             double j = (double) lifeTime / (double) spinDuration;
-            // StringBuilder sb = new StringBuilder();
-            // sb.append("[");
             for (int i = 0; i < locations.length; i++) {
                 double res = Interpolation.smoothStep(endXs[i], startXs[i], 64, j);
-                // sb.append(res).append(", ");
                 locations[i] = (int) res;
             }
-            // sb.append("]");
-            // log.debug(lifeTime + ": (LOC) " + Arrays.toString(locations) + ", " + j);
-            // log.debug(lifeTime + ": (RAW) " + sb.toString());
 
             for (int i = 0; i < locations.length; i++) {
                 if (MathHelper.almostEqual(locations[i] % 320, 80, 24)) {

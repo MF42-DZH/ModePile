@@ -107,7 +107,7 @@ public class FieldManipulation {
      */
     public static boolean checkSingleLineNoFlag(Field field, int rownum) {
         if (field.lastLinesCleared == null) {
-            field.lastLinesCleared = new ArrayList<Block[]>();
+            field.lastLinesCleared = new ArrayList<>();
         }
         field.lastLinesCleared.clear();
 
@@ -228,7 +228,7 @@ public class FieldManipulation {
     public static void mirrorFix(Field field) {
         Block temp;
 
-        for (int y = field.getHighestBlockY(); y < field.getHeight(); y--)
+        for (int y = field.getHighestBlockY(); y < field.getHeight(); y++)
             for (int xMin = 0, xMax = field.getWidth() - 1; xMin < xMax; xMin++, xMax--) {
                 temp = field.getBlock(xMin, y);
                 field.setBlock(xMin, y, field.getBlock(xMax, y));
