@@ -991,6 +991,7 @@ public class Joker extends MarathonModeBase {
             // Level up, unless at level 200+, where only Fours+ increment level.
             if (version < CURRENT_VERSION + 1 || engine.statistics.level < 200 || lines >= 4) {
                 engine.statistics.level++;
+                engine.playSE("levelup");
             }
 
             // owner.backgroundStatus.fadesw = true;
@@ -1050,7 +1051,6 @@ public class Joker extends MarathonModeBase {
             }
 
             setSpeed(engine);
-            engine.playSE("levelup");
         }
     }
 
