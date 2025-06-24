@@ -167,7 +167,7 @@ public class Joker extends MarathonModeBase {
                 loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
             }
 
-            version = CURRENT_VERSION;
+            version = CURRENT_VERSION + 1;
             PLAYER_NAME = "";
         } else {
             loadSetting(owner.replayProp);
@@ -988,8 +988,10 @@ public class Joker extends MarathonModeBase {
         }
 
         if (lines > 0) {
-            // Level up
-            engine.statistics.level++;
+            // Level up, unless at level 200+, where only Fours+ increment level.
+            if (version < CURRENT_VERSION + 1 || engine.statistics.level < 200 || lines >= 4) {
+                engine.statistics.level++;
+            }
 
             // owner.backgroundStatus.fadesw = true;
             // owner.backgroundStatus.fadecount = 0;
@@ -1130,7 +1132,7 @@ public class Joker extends MarathonModeBase {
         startlevel = prop.getProperty("joker.startlevel", 0);
         big = prop.getProperty("joker.big", false);
         startingStock = prop.getProperty("joker.extrastock", 0);
-        version = prop.getProperty("joker.version", 0);
+        version = prop.getProperty("joker.version", CURRENT_VERSION);
         lineClearAnimType = prop.getProperty("joker.lcat", 0);
         drawJevil = prop.getProperty("joker.drawjevil", false);
         useAnimBG = prop.getProperty("joker.animatedBG", false);
@@ -1190,9 +1192,9 @@ public class Joker extends MarathonModeBase {
     @Override
     protected void loadRanking(CustomProperties prop, String ruleName) {
         for (int i = 0; i < RANKING_MAX; i++) {
-            rankingLevel[i] = prop.getProperty("joker.ranking." + ruleName + ".level." + i, 0);
-            rankingLines[i] = prop.getProperty("joker.ranking." + ruleName + ".lines." + i, 0);
-            rankingTime[i] = prop.getProperty("joker.ranking." + ruleName + ".time." + i, 0);
+            rankingLevel[i] = prop.getProperty("joker.ranking." + ruleName + ".level." + version + "." + i, 0);
+            rankingLines[i] = prop.getProperty("joker.ranking." + ruleName + ".lines." + version + "." + i, 0);
+            rankingTime[i] = prop.getProperty("joker.ranking." + ruleName + ".time." + version + "." + i, 0);
         }
     }
 
@@ -1204,9 +1206,9 @@ public class Joker extends MarathonModeBase {
      */
     private void saveRanking(CustomProperties prop, String ruleName) {
         for (int i = 0; i < RANKING_MAX; i++) {
-            prop.setProperty("joker.ranking." + ruleName + ".level." + i, rankingLevel[i]);
-            prop.setProperty("joker.ranking." + ruleName + ".lines." + i, rankingLines[i]);
-            prop.setProperty("joker.ranking." + ruleName + ".time." + i, rankingTime[i]);
+            prop.setProperty("joker.ranking." + ruleName + ".level." + version + "." + i, rankingLevel[i]);
+            prop.setProperty("joker.ranking." + ruleName + ".lines." + version + "." + i, rankingLines[i]);
+            prop.setProperty("joker.ranking." + ruleName + ".time." + version + "." + i, rankingTime[i]);
         }
     }
 
@@ -1219,9 +1221,9 @@ public class Joker extends MarathonModeBase {
     private void loadRankingPlayer(ProfileProperties prop, String ruleName) {
         if (!prop.isLoggedIn()) return;
         for (int i = 0; i < RANKING_MAX; i++) {
-            rankingLevelPlayer[i] = prop.getProperty("joker.ranking." + ruleName + ".level." + i, 0);
-            rankingLinesPlayer[i] = prop.getProperty("joker.ranking." + ruleName + ".lines." + i, 0);
-            rankingTimePlayer[i] = prop.getProperty("joker.ranking." + ruleName + ".time." + i, 0);
+            rankingLevelPlayer[i] = prop.getProperty("joker.ranking." + ruleName + ".level." + version + "." + i, 0);
+            rankingLinesPlayer[i] = prop.getProperty("joker.ranking." + ruleName + ".lines." + version + "." + i, 0);
+            rankingTimePlayer[i] = prop.getProperty("joker.ranking." + ruleName + ".time." + version + "." + i, 0);
         }
     }
 
@@ -1234,9 +1236,9 @@ public class Joker extends MarathonModeBase {
     private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
         if (!prop.isLoggedIn()) return;
         for (int i = 0; i < RANKING_MAX; i++) {
-            prop.setProperty("joker.ranking." + ruleName + ".level." + i, rankingLevelPlayer[i]);
-            prop.setProperty("joker.ranking." + ruleName + ".lines." + i, rankingLinesPlayer[i]);
-            prop.setProperty("joker.ranking." + ruleName + ".time." + i, rankingTimePlayer[i]);
+            prop.setProperty("joker.ranking." + ruleName + ".level." + version + "." + i, rankingLevelPlayer[i]);
+            prop.setProperty("joker.ranking." + ruleName + ".lines." + version + "." + i, rankingLinesPlayer[i]);
+            prop.setProperty("joker.ranking." + ruleName + ".time." + version + "." + i, rankingTimePlayer[i]);
         }
     }
 
