@@ -27,23 +27,6 @@ public class FixedTerrorInstinctRandomizer extends Randomizer {
     private ArrayList<Integer> history;
 
     private int count;
-    private int tiRandState;
-
-    private short tiRandNext() {
-        int result = (int) (0x41C64E6DL * tiRandState + 12345L);
-        tiRandState = result;
-        return (short) ((result >>> 10) & 0x7FFF);
-    }
-
-    private short tiRandInt(short upperBound) {
-        return (short) (tiRandNext() % upperBound);
-    }
-
-    @Override
-    public void reseed(long seed) {
-        super.reseed(seed);
-        tiRandState = (int) seed;
-    }
 
     @Override
     public void init() {
@@ -93,19 +76,19 @@ public class FixedTerrorInstinctRandomizer extends Randomizer {
 
         if (count == 0 && !isPieceSZOOnly()) {
             do {
-                piece = piecePool.get(tiRandInt((short) piecePool.size()));
+                piece = piecePool.get(r.nextInt(piecePool.size()));
                 history.set(0, piece);
             } while (piece == Piece.PIECE_S || piece == Piece.PIECE_Z || piece == Piece.PIECE_O);
         } else {
             for (int rolls = 0; rolls < MAX_ROLLS; ++rolls) {
-                bagPos = tiRandInt((short) piecePool.size());
+                bagPos = r.nextInt(piecePool.size());
                 piece = piecePool.get(bagPos);
 
                 if (!history.contains(piece)) break;
 
                 insertDroughtedPieceIntoBagAt(bagPos);
 
-                bagPos = tiRandInt((short) piecePool.size());
+                bagPos = r.nextInt(piecePool.size());
                 piece = piecePool.get(bagPos);
             }
         }
