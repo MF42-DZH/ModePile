@@ -106,6 +106,8 @@ public class TerrorInstinctRandomizer extends Randomizer {
         history.set(1, history.get(0));
         history.set(0, piece);
 
+        ++count;
+
         return piece;
     }
 
