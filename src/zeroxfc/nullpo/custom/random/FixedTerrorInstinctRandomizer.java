@@ -30,9 +30,9 @@ public class FixedTerrorInstinctRandomizer extends Randomizer {
     private int tiRandState;
 
     private short tiRandNext() {
-        int result = (int) (0x41C64E6L * tiRandState + 12345L);
+        int result = (int) (0x41C64E6DL * tiRandState + 12345L);
         tiRandState = result;
-        return (short) ((result >> 10) & 0x7FFF);
+        return (short) ((result >>> 10) & 0x7FFF);
     }
 
     private short tiRandInt(short upperBound) {
