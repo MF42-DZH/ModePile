@@ -1,6 +1,8 @@
 package zeroxfc.nullpo.custom.random;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import mu.nu.nullpo.game.component.Piece;
 import net.omegaboshi.nullpomino.game.subsystem.randomizer.Randomizer;
 
@@ -8,6 +10,7 @@ public class TerrorInstinctRandomizer extends Randomizer {
     private static final int MAX_ROLLS = 6;
 
     private ArrayList<Integer> piecePool;
+    private HashMap<Integer, Integer> histogram;
     private ArrayList<Integer> history;
 
     private int count;
@@ -15,6 +18,7 @@ public class TerrorInstinctRandomizer extends Randomizer {
     @Override
     public void init() {
         piecePool = new ArrayList<>();
+        histogram = new HashMap<>();
         history = new ArrayList<>();
 
         count = 0;
@@ -23,10 +27,12 @@ public class TerrorInstinctRandomizer extends Randomizer {
             for (int j = 0; j < 5; j++) {
                 piecePool.add(i);
             }
+
+            histogram.put(i, 4);
         }
 
         for (int i = 0; i < 4; i++) {
-            if (i % 2 == 0) history.add(Piece.PIECE_S);
+            if (i > 1) history.add(Piece.PIECE_S);
             else history.add(Piece.PIECE_Z);
         }
     }
@@ -39,46 +45,74 @@ public class TerrorInstinctRandomizer extends Randomizer {
      */
     @Override
     public void setPieceEnable(boolean[] pieceEnable) {
-        int piece = 0;
-        for (int i = 0; i < Piece.PIECE_COUNT; i++) {
-            if (pieceEnable[i]) piece++;
-        }
-        pieces = new int[piece];
-        piece = 0;
-        for (int i = 0; i < Piece.PIECE_COUNT; i++) {
-            if (pieceEnable[i]) {
-                pieces[piece] = i;
-                piece++;
-            }
-        }
-
+        super.setPieceEnable(pieceEnable);
         init();
     }
 
+    /**
+     * Based on <a href="https://tetrisconcept.net/threads/randomizer-theory.512/page-12#post-65418">this post</a>.
+     * This implementation also fixes the droughted piece bug by adding a missing variable initialisation.
+     */
     @Override
     public int next() {
-        int idx, id, rolls = 0;
+        int bagPos = 0, piece = 0;
+        int droughted = 0, highScore = 0;
 
-        do {
-            idx = r.nextInt(piecePool.size());
-            id = piecePool.get(idx);
+        if (count == 0 && !isPieceSZOOnly()) {
+            do {
+                piece = piecePool.get(r.nextInt(piecePool.size()));
+                history.set(0, piece);
+            } while (piece == Piece.PIECE_S || piece == Piece.PIECE_Z || piece == Piece.PIECE_O);
+        } else {
+            for (int rolls = 0; rolls < MAX_ROLLS; ++rolls) {
+                bagPos = r.nextInt(piecePool.size());
+                piece = piecePool.get(bagPos);
 
-            rolls++;
-        } while ((history.contains(id) && rolls < MAX_ROLLS) || (count == 0 && id == Piece.PIECE_O));
+                if (!history.contains(piece)) break;
 
-        count++;
-        appendHistory(id, idx);
+                // Originally in the TI code, this line was omitted, causing a bug where the bag is not updated.
+                highScore = 0;
 
-        return id;
+                for (Map.Entry<Integer, Integer> entry : histogram.entrySet()) {
+                    if (highScore < entry.getValue()) {
+                        highScore = entry.getValue();
+                        droughted = entry.getKey();
+                    }
+                }
+
+                piecePool.set(bagPos, droughted);
+
+                bagPos = r.nextInt(piecePool.size());
+                piece = piecePool.get(bagPos);
+            }
+        }
+
+        updateHistogram(piece);
+
+        // Originally in the TI code, this line was omitted, causing a bug where the bag is not updated.
+        highScore = 0;
+
+        for (Map.Entry<Integer, Integer> entry : histogram.entrySet()) {
+            if (highScore < entry.getValue()) {
+                highScore = entry.getValue();
+                droughted = entry.getKey();
+            }
+        }
+
+        piecePool.set(bagPos, droughted);
+
+        history.set(3, history.get(2));
+        history.set(2, history.get(1));
+        history.set(1, history.get(0));
+        history.set(0, piece);
+
+        return piece;
     }
 
-    private void appendHistory(int id, int idx) {
-        int temp = history.remove(0);
-        history.add(id);
-        piecePool.remove(idx);
-
-        if (count > 4) {
-            piecePool.add(temp);
+    private void updateHistogram(int id) {
+        for (int key : histogram.keySet()) {
+            if (key == id) histogram.put(key, 0);
+            else histogram.put(key, histogram.get(key) + 1);
         }
     }
 }
