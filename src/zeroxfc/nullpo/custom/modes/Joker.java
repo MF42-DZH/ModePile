@@ -10,7 +10,7 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.FlyInOutText;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.BackgroundDiagonalRipple;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.BackgroundVerticalBars;
@@ -78,7 +78,7 @@ public class Joker extends MarathonModeBase {
     private FlyInOutText warningTextSecondLine;
     // Custom asset variables
     private int jevilTimer;
-    private ResourceHolderCustomAssetExtension customHolder;
+    private CustomResourceHolder customHolder;
     private boolean jSpeed;
     private boolean drawJevil;
     private float efficiency;
@@ -198,7 +198,7 @@ public class Joker extends MarathonModeBase {
         engine.bigmove = true;
 
         // 92 x 96
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage("res/graphics/jevil.png", "jevil");
         customHolder.loadImage("res/graphics/efficiency_grades.png", "grades");
     }

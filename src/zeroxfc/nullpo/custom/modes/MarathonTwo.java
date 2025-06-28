@@ -31,7 +31,7 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.WeightedRandomiser;
 
@@ -343,7 +343,7 @@ public class MarathonTwo extends MarathonModeBase {
         // Reflection is an unholy magic. It's powerful alright, but very unsafe.
         // region SOUND NAME EXTRACTION
         holderType = -1;
-        String mainClass = ResourceHolderCustomAssetExtension.getMainClassName();
+        String mainClass = CustomResourceHolder.getMainClassName();
 
         if (mainClass.contains("Slick")) holderType = HOLDER_SLICK;
         else if (mainClass.contains("Swing")) holderType = HOLDER_SWING;

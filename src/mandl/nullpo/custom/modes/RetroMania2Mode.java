@@ -28,8 +28,6 @@
 */
 package mandl.nullpo.custom.modes;
 
-import java.util.*;
-
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
 import mu.nu.nullpo.game.component.Field;
@@ -40,7 +38,7 @@ import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.FieldScatter;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
 
 /**
@@ -151,7 +149,7 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 	/** EventReceiver object (This receives many game events, can also be used for drawing the fonts.) */
 	private EventReceiver receiver;
 
-	private ResourceHolderCustomAssetExtension rhcae = new ResourceHolderCustomAssetExtension(18);
+	private CustomResourceHolder rhcae = new CustomResourceHolder(18);
 
 	/** Amount of points you just get from line clears */
 	private int lastscore;

@@ -34,7 +34,7 @@ package zeroxfc.nullpo.custom.libs.backgroundtypes;
 
 import java.util.Random;
 import mu.nu.nullpo.game.play.GameEngine;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
     private static final int DIRECTION_UP = 0;
@@ -70,7 +70,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
         custom = false;
         this.skin = skin;
 
-        if (skin < 0 || skin >= ResourceHolderCustomAssetExtension.getNumberLoadedBlockSkins()) skin = 0;
+        if (skin < 0 || skin >= CustomResourceHolder.getNumberLoadedBlockSkins()) skin = 0;
 
         this.colour = colour;
         this.size = size;
@@ -86,7 +86,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
         custom = false;
         this.skin = skin;
 
-        if (skin < 0 || skin >= ResourceHolderCustomAssetExtension.getNumberLoadedBlockSkins()) skin = 0;
+        if (skin < 0 || skin >= CustomResourceHolder.getNumberLoadedBlockSkins()) skin = 0;
 
         this.colour = colour;
         this.size = size;
@@ -102,7 +102,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
         custom = true;
         this.directionRandomiser = directionRandomiser;
 
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage(filePath, imageName);
 
         setup();
@@ -111,7 +111,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
     }
 
     private void setup() {
-        if (customHolder == null) customHolder = new ResourceHolderCustomAssetExtension();
+        if (customHolder == null) customHolder = new CustomResourceHolder();
         customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");
 
         direction = directionRandomiser.nextInt(DIRECTIONS);
@@ -324,7 +324,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
      * @param name   Image name
      */
     @Override
-    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+    public void setBGFromHolder(CustomResourceHolder holder, String name) {
         custom = true;
         customHolder.putImageAt(holder.getImageAt(name), imageName);
 

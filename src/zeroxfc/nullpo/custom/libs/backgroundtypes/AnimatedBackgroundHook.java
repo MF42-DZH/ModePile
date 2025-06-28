@@ -40,7 +40,7 @@ import mu.nu.nullpo.gui.sdl.NullpoMinoSDL;
 import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
 import mu.nu.nullpo.gui.swing.NullpoMinoSwing;
 import org.apache.log4j.Logger;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public abstract class AnimatedBackgroundHook {
     /**
@@ -74,7 +74,7 @@ public abstract class AnimatedBackgroundHook {
      */
     private static int ResourceHolderType = -1;
     protected int ID;
-    protected ResourceHolderCustomAssetExtension customHolder;
+    protected CustomResourceHolder customHolder;
     protected String imageName;
 
     /**
@@ -85,7 +85,7 @@ public abstract class AnimatedBackgroundHook {
      */
     public static int getResourceHook() {
         if (ResourceHolderType < 0) {
-            String mainClass = ResourceHolderCustomAssetExtension.getMainClassName();
+            String mainClass = CustomResourceHolder.getMainClassName();
 
             if (mainClass.contains("Slick")) ResourceHolderType = HOLDER_SLICK;
             else if (mainClass.contains("Swing")) ResourceHolderType = HOLDER_SWING;
@@ -217,7 +217,7 @@ public abstract class AnimatedBackgroundHook {
         return Math.abs(a - b) < eps;
     }
 
-    public void setExternalHolder(ResourceHolderCustomAssetExtension holder) {
+    public void setExternalHolder(CustomResourceHolder holder) {
         customHolder = holder;
     }
 
@@ -263,7 +263,7 @@ public abstract class AnimatedBackgroundHook {
      * @param holder Storage instance
      * @param name   Image name
      */
-    public abstract void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name);
+    public abstract void setBGFromHolder(CustomResourceHolder holder, String name);
 
     /**
      * This last one is important. In the case that any of the child types are used, it allows identification.

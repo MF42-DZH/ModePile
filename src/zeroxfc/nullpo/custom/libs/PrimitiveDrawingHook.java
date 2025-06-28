@@ -37,7 +37,7 @@ public class PrimitiveDrawingHook {
         switch (AnimatedBackgroundHook.getResourceHook()) {
             case AnimatedBackgroundHook.HOLDER_SLICK:
                 // Slick graphics object
-                Graphics graphicsSlick = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
+                Graphics graphicsSlick = CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
                 if (graphicsSlick == null) return;
 
                 graphicsSlick.setColor(new Color(red, green, blue, alpha));
@@ -47,7 +47,7 @@ public class PrimitiveDrawingHook {
                 break;
             case AnimatedBackgroundHook.HOLDER_SWING:
                 // Swing graphics object
-                Graphics2D graphicsSwing = ResourceHolderCustomAssetExtension.getGraphicsSwing((RendererSwing) receiver);
+                Graphics2D graphicsSwing = CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
                 if (graphicsSwing == null) return;
 
                 graphicsSwing.setColor(new java.awt.Color(red, green, blue, alpha));
@@ -57,7 +57,7 @@ public class PrimitiveDrawingHook {
                 break;
             case AnimatedBackgroundHook.HOLDER_SDL:
                 // SDL graphics object
-                SDLSurface graphicsSDL = ResourceHolderCustomAssetExtension.getGraphicsSDL((RendererSDL) receiver);
+                SDLSurface graphicsSDL = CustomResourceHolder.getGraphicsSDL((RendererSDL) receiver);
                 if (graphicsSDL == null) return;
 
                 SDLRect rectDst = new SDLRect(x, y, sizeX, sizeY);
@@ -96,7 +96,7 @@ public class PrimitiveDrawingHook {
         switch (AnimatedBackgroundHook.getResourceHook()) {
             case AnimatedBackgroundHook.HOLDER_SLICK:
                 // Slick graphics object
-                Graphics graphicsSlick = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
+                Graphics graphicsSlick = CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
                 if (graphicsSlick == null) return;
 
                 graphicsSlick.setColor(new Color(red, green, blue, alpha));
@@ -107,7 +107,7 @@ public class PrimitiveDrawingHook {
                 break;
             case AnimatedBackgroundHook.HOLDER_SWING:
                 // Swing graphics object
-                Graphics2D graphicsSwing = ResourceHolderCustomAssetExtension.getGraphicsSwing((RendererSwing) receiver);
+                Graphics2D graphicsSwing = CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
                 if (graphicsSwing == null) return;
 
                 graphicsSwing.setColor(new java.awt.Color(red, green, blue, alpha));
@@ -141,7 +141,7 @@ public class PrimitiveDrawingHook {
         switch (AnimatedBackgroundHook.getResourceHook()) {
             case AnimatedBackgroundHook.HOLDER_SLICK:
                 // Slick graphics object
-                Graphics graphicsSlick = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
+                Graphics graphicsSlick = CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
                 if (graphicsSlick == null) return;
 
                 graphicsSlick.setColor(new Color(red, green, blue, alpha));
@@ -152,7 +152,7 @@ public class PrimitiveDrawingHook {
                 break;
             case AnimatedBackgroundHook.HOLDER_SWING:
                 // Swing graphics object
-                Graphics2D graphicsSwing = ResourceHolderCustomAssetExtension.getGraphicsSwing((RendererSwing) receiver);
+                Graphics2D graphicsSwing = CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
                 if (graphicsSwing == null) return;
 
                 graphicsSwing.setColor(new java.awt.Color(red, green, blue, alpha));

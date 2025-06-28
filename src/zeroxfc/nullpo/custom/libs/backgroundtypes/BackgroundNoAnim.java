@@ -33,7 +33,7 @@
 package zeroxfc.nullpo.custom.libs.backgroundtypes;
 
 import mu.nu.nullpo.game.play.GameEngine;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class BackgroundNoAnim extends AnimatedBackgroundHook {
     // private ResourceHolderCustomAssetExtension customHolder;
@@ -49,14 +49,14 @@ public class BackgroundNoAnim extends AnimatedBackgroundHook {
     public BackgroundNoAnim(int bgNumber) {
         if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
 
         log.debug("Non-custom static background (" + bgNumber + ") created.");
     }
 
     public BackgroundNoAnim(String filePath) {
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage(filePath, imageName);
 
         log.debug("Custom static background created (File Path: " + filePath + ").");
@@ -96,7 +96,7 @@ public class BackgroundNoAnim extends AnimatedBackgroundHook {
      * @param name   Image name
      */
     @Override
-    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+    public void setBGFromHolder(CustomResourceHolder holder, String name) {
         customHolder.putImageAt(holder.getImageAt(name), imageName);
         log.debug("Custom static background modified (New Image Reference: " + name + ").");
     }

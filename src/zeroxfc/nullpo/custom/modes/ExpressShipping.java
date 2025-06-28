@@ -91,7 +91,7 @@ public class ExpressShipping extends PuzzleGameEngine {
     private Random boardRandomiser;
     private Random miscRandomiser;
     private Random powerupRandomiser;
-    private ResourceHolderCustomAssetExtension customHolder;
+    private CustomResourceHolder customHolder;
     private WeightedRandomiser pieceRandomiser;
     private ArrayList<GamePiece> conveyorBelt;
     private ArrayList<Integer> history;
@@ -163,7 +163,7 @@ public class ExpressShipping extends PuzzleGameEngine {
         rankingLevelPlayer = new int[RANKING_MAX];
         rankingScorePlayer = new int[RANKING_MAX];
 
-        customHolder = new ResourceHolderCustomAssetExtension(3);
+        customHolder = new CustomResourceHolder(3);
         customHolder.loadImage("res/graphics/conveyor.png", "conveyor");
         customHolder.loadImage("res/graphics/conveyorreverse.png", "conveyorreverse");
         customHolder.loadImage("res/graphics/cargoreturn.png", "cargoreturn");

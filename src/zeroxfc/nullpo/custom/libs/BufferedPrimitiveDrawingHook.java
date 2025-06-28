@@ -27,13 +27,13 @@ public class BufferedPrimitiveDrawingHook {
         switch (AnimatedBackgroundHook.getResourceHook()) {
             case AnimatedBackgroundHook.HOLDER_SLICK:
                 // Slick graphics object
-                return ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
+                return CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
             case AnimatedBackgroundHook.HOLDER_SWING:
                 // Swing graphics object
-                return ResourceHolderCustomAssetExtension.getGraphicsSwing((RendererSwing) receiver);
+                return CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
             case AnimatedBackgroundHook.HOLDER_SDL:
                 // SDL graphics object
-                return ResourceHolderCustomAssetExtension.getGraphicsSDL((RendererSDL) receiver);
+                return CustomResourceHolder.getGraphicsSDL((RendererSDL) receiver);
             default:
                 throw new LazyLoadException("Cannot find renderer!");
         }

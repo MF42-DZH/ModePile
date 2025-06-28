@@ -1,7 +1,7 @@
 package zeroxfc.nullpo.custom.libs.backgroundtypes;
 
 import mu.nu.nullpo.game.play.GameEngine;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class BackgroundImageSequenceAnim extends AnimatedBackgroundHook {
     private final int frameTime;
@@ -16,7 +16,7 @@ public class BackgroundImageSequenceAnim extends AnimatedBackgroundHook {
     }
 
     public BackgroundImageSequenceAnim(String[] filePaths, int frameTime, boolean pingPong) {
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
 
         for (int i = 0; i < filePaths.length; i++) {
             customHolder.loadImage(filePaths[i], "frame" + i);
@@ -115,7 +115,7 @@ public class BackgroundImageSequenceAnim extends AnimatedBackgroundHook {
      * @param name   Image name
      */
     @Override
-    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+    public void setBGFromHolder(CustomResourceHolder holder, String name) {
         log.warn("Image Sequence animation backgrounds do not support this operation. Please create a new instance.");
     }
 

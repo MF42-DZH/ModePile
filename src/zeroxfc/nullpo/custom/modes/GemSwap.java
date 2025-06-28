@@ -13,7 +13,7 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.MouseParser;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.modes.objects.gemswap.Effect;
 import zeroxfc.nullpo.custom.modes.objects.gemswap.GemField;
 import zeroxfc.nullpo.custom.modes.objects.gemswap.ScoreEvent;
@@ -58,7 +58,7 @@ public class GemSwap extends DummyMode {
     // private Effect[] scorePopups;
     private Effect[] lightningChains;
     private ArrayList<ScoreEvent> events;
-    private ResourceHolderCustomAssetExtension customHolder;
+    private CustomResourceHolder customHolder;
     private int bgm;
     private int combo;
 
@@ -80,7 +80,7 @@ public class GemSwap extends DummyMode {
         engine.framecolor = GameEngine.FRAME_COLOR_GRAY;
         localState = CUSTOMSTATE_IDLE;
 
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage("res/graphics/particle.png", "particle");
 
         loadSetting(owner.modeConfig);

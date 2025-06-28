@@ -56,14 +56,14 @@ import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
-public class ResourceHolderCustomAssetExtension {
+public class CustomResourceHolder {
     /**
      * Internal used ResourceHolder class.
      */
     private static final int HOLDER_SLICK = 0,
         HOLDER_SWING = 1,
         HOLDER_SDL = 2;
-    private static final Logger log = Logger.getLogger(ResourceHolderCustomAssetExtension.class);
+    private static final Logger log = Logger.getLogger(CustomResourceHolder.class);
     private static int bgmPrevious = -1;
 
     private static String mainClassName = "";
@@ -83,7 +83,7 @@ public class ResourceHolderCustomAssetExtension {
     /**
      * Creates a new custom resource holder with 8 initial capacity.
      */
-    public ResourceHolderCustomAssetExtension() {
+    public CustomResourceHolder() {
         this(8);
     }
 
@@ -92,7 +92,7 @@ public class ResourceHolderCustomAssetExtension {
      *
      * @param initialCapacity Start capacity of the internal hashmaps.
      */
-    public ResourceHolderCustomAssetExtension(int initialCapacity) {
+    public CustomResourceHolder(int initialCapacity) {
         String mainClass = getMainClassName();
 
         holderType = -1;

@@ -35,7 +35,7 @@ package zeroxfc.nullpo.custom.libs.backgroundtypes;
 import java.util.ArrayList;
 import java.util.Collections;
 import mu.nu.nullpo.game.play.GameEngine;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
     private static final double TWO_PI = Math.PI * 2;
@@ -59,7 +59,7 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
     public BackgroundDiagonalRipple(int bgNumber, Integer cellWidth, Integer cellHeight, int pulseFrames, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse, boolean reverseSlant) {
         if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
 
         setup(cellWidth, cellHeight, pulseFrames, pulseBaseScale, pulseScaleVariance, reverse, reverseSlant);
@@ -68,7 +68,7 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
     }
 
     public BackgroundDiagonalRipple(String filePath, Integer cellWidth, Integer cellHeight, int pulseFrames, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse, boolean reverseSlant) {
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage(filePath, imageName);
 
         setup(cellWidth, cellHeight, pulseFrames, pulseBaseScale, pulseScaleVariance, reverse, reverseSlant);
@@ -202,7 +202,7 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
      * @param name   Image name
      */
     @Override
-    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+    public void setBGFromHolder(CustomResourceHolder holder, String name) {
         customHolder.putImageAt(holder.getImageAt(name), imageName);
         log.debug("Custom diagonal ripple background modified (New Image Reference: " + name + ").");
     }

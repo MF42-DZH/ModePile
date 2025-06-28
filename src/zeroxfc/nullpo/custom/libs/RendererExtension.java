@@ -349,7 +349,7 @@ public class RendererExtension {
 
         if (renderer == AnimatedBackgroundHook.HOLDER_SLICK) {
             // region Slick Case
-            Graphics graphics = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
+            Graphics graphics = CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
             if (graphics == null) return;
 
             if ((color <= Block.BLOCK_COLOR_INVALID)) return;
@@ -436,7 +436,7 @@ public class RendererExtension {
             // endregion Slick Case
         } else if (renderer == AnimatedBackgroundHook.HOLDER_SWING) {
             // region Swing Case
-            Graphics2D graphics = ResourceHolderCustomAssetExtension.getGraphicsSwing((RendererSwing) receiver);
+            Graphics2D graphics = CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
             if (graphics == null) return;
 
             if ((color <= Block.BLOCK_COLOR_INVALID)) return;
@@ -587,7 +587,7 @@ public class RendererExtension {
         } else if (renderer == AnimatedBackgroundHook.HOLDER_SDL) {
             try {
                 // region SDL Case
-                SDLSurface graphics = ResourceHolderCustomAssetExtension.getGraphicsSDL((RendererSDL) receiver);
+                SDLSurface graphics = CustomResourceHolder.getGraphicsSDL((RendererSDL) receiver);
                 if (graphics == null) return;
 
                 if (color <= Block.BLOCK_COLOR_INVALID) return;
@@ -780,7 +780,7 @@ public class RendererExtension {
 
         if (renderer == AnimatedBackgroundHook.HOLDER_SLICK) {
             //region Slick Case
-            Graphics graphics = ResourceHolderCustomAssetExtension.getGraphicsSlick((RendererSlick) receiver);
+            Graphics graphics = CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
 
             if (graphics == null) return;
 
@@ -801,7 +801,7 @@ public class RendererExtension {
             //endregion Slick Case
         } else if (renderer == AnimatedBackgroundHook.HOLDER_SWING) {
             //region Swing Case
-            Graphics2D graphics = ResourceHolderCustomAssetExtension.getGraphicsSwing((RendererSwing) receiver);
+            Graphics2D graphics = CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
 
             if (graphics == null) return;
 
@@ -822,7 +822,7 @@ public class RendererExtension {
             //endregion Swing Case
         } else if (renderer == AnimatedBackgroundHook.HOLDER_SDL) {
             //region SDL Case
-            SDLSurface graphics = ResourceHolderCustomAssetExtension.getGraphicsSDL((RendererSDL) receiver);
+            SDLSurface graphics = CustomResourceHolder.getGraphicsSDL((RendererSDL) receiver);
 
             if (graphics == null) return;
 

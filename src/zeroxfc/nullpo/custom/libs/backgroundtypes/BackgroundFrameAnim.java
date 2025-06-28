@@ -33,7 +33,7 @@
 package zeroxfc.nullpo.custom.libs.backgroundtypes;
 
 import mu.nu.nullpo.game.play.GameEngine;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class BackgroundFrameAnim extends AnimatedBackgroundHook {
     public static final int SEQUENCE_LINEAR_HORIZONTAL = 0;
@@ -55,7 +55,7 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
     }
 
     public BackgroundFrameAnim(String filePath, int type, int frameTime, boolean pingPong) {
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage(filePath, imageName);
 
         this.type = type;
@@ -199,7 +199,7 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
      * @param name   Image name
      */
     @Override
-    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+    public void setBGFromHolder(CustomResourceHolder holder, String name) {
         customHolder.putImageAt(holder.getImageAt(name), imageName);
         log.debug("Custom frame animation background modified (New Image Reference: " + name + ").");
         setup();

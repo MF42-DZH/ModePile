@@ -908,7 +908,7 @@ public class EXReborn extends DummyMode {
 				}*/
 
                 // T-Spin判定
-                if ((engine.lastmove == GameEngine.LASTMOVE_ROTATE_GROUND) && (engine.tspinEnable == true)) {
+                if(((engine.lastmove == GameEngine.LASTMOVE_ROTATE_GROUND) || (engine.lastmove == GameEngine.LASTMOVE_ROTATE_AIR)) && (engine.tspinEnable == true)) {
                     if (engine.useAllSpinBonus)
                         engine.setAllSpin(engine.nowPieceX, engine.nowPieceY, engine.nowPieceObject, engine.field);
                     else

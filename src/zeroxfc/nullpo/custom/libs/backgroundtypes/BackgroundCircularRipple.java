@@ -35,7 +35,7 @@ package zeroxfc.nullpo.custom.libs.backgroundtypes;
 import java.util.ArrayList;
 import java.util.Collections;
 import mu.nu.nullpo.game.play.GameEngine;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class BackgroundCircularRipple extends AnimatedBackgroundHook {
     private static final int DEF_FIELD_DIM = 8;
@@ -68,7 +68,7 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
     public BackgroundCircularRipple(int bgNumber, Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance) {
         if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
 
         setup(cellWidth, cellHeight, pulseCentreX, pulseCentreY, wavelength, waveSpeed, pulseTimerFrames, pulseBaseScale, pulseScaleVariance);
@@ -77,7 +77,7 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
     }
 
     public BackgroundCircularRipple(String filePath, Integer cellWidth, Integer cellHeight, Integer pulseCentreX, Integer pulseCentreY, Float wavelength, Integer waveSpeed, int pulseTimerFrames, Float pulseBaseScale, Float pulseScaleVariance) {
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage(filePath, imageName);
 
         setup(cellWidth, cellHeight, pulseCentreX, pulseCentreY, wavelength, waveSpeed, pulseTimerFrames, pulseBaseScale, pulseScaleVariance);
@@ -253,7 +253,7 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
      * @param name   Image name
      */
     @Override
-    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+    public void setBGFromHolder(CustomResourceHolder holder, String name) {
         customHolder.putImageAt(holder.getImageAt(name), imageName);
         log.debug("Custom circular ripple background modified (New Image Reference: " + name + ").");
     }

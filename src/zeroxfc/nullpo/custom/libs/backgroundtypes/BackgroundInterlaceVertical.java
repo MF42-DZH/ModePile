@@ -1,7 +1,7 @@
 package zeroxfc.nullpo.custom.libs.backgroundtypes;
 
 import mu.nu.nullpo.game.play.GameEngine;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class BackgroundInterlaceVertical extends AnimatedBackgroundHook {
     private static final int SCREEN_WIDTH = 640;
@@ -19,7 +19,7 @@ public class BackgroundInterlaceVertical extends AnimatedBackgroundHook {
 
     {
         ID = AnimatedBackgroundHook.ANIMATION_INTERLACE_VERTICAL;
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         setImageName("localBG");
     }
 
@@ -152,7 +152,7 @@ public class BackgroundInterlaceVertical extends AnimatedBackgroundHook {
      * @param name   Image name
      */
     @Override
-    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+    public void setBGFromHolder(CustomResourceHolder holder, String name) {
         customHolder.putImageAt(holder.getImageAt(name), imageName);
         log.debug("Custom vertical interlace background modified (New Image Reference: " + name + ").");
     }

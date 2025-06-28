@@ -2,7 +2,7 @@ package zeroxfc.nullpo.custom.modes.objects.gemswap;
 
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class ScorePopup implements Effect {
     private static final int MAX_TIME_FULL_SIZE = 90;
@@ -66,7 +66,7 @@ public class ScorePopup implements Effect {
     }
 
     @Override
-    public void draw(GameEngine engine, EventReceiver receiver, int playerID, int[] args, ResourceHolderCustomAssetExtension customHolder) {
+    public void draw(GameEngine engine, EventReceiver receiver, int playerID, int[] args, CustomResourceHolder customHolder) {
         receiver.drawDirectFont(engine, playerID, location[0] - offsets[0], location[1] - offsets[1], value, colour, size);
     }
 

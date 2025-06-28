@@ -16,7 +16,7 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.SideWaveText;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.ValueWrapper;
@@ -218,7 +218,7 @@ public class Collapse extends DummyMode {
         nextBlocks = new Block[12];
         resetBlockArray(engine);
 
-        String mainClass = ResourceHolderCustomAssetExtension.getMainClassName();
+        String mainClass = CustomResourceHolder.getMainClassName();
 
         holderType = -1;
         if (mainClass.contains("Slick")) holderType = HOLDER_SLICK;

@@ -91,7 +91,7 @@ public class ExamSpinner {
     private final Boolean close;
     private final boolean custom;
     private final int[] locations;
-    private ResourceHolderCustomAssetExtension customHolder;
+    private CustomResourceHolder customHolder;
     private String header, subheading;
     private String[] possibilities;
     private boolean clickedBefore;
@@ -117,7 +117,7 @@ public class ExamSpinner {
 
         if (gradeText == null) gradeText = "UNDEFINED";
 
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage("res/graphics/examResultText.png", "default");
 
         log.debug("Non-custom ExamSpinner object created.");

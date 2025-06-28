@@ -4,7 +4,7 @@ import java.util.Random;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.Interpolation;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class Lightning implements Effect {
     public static final int MAX_LIFETIME = 120;
@@ -33,7 +33,7 @@ public class Lightning implements Effect {
     }
 
     @Override
-    public void draw(GameEngine engine, EventReceiver receiver, int playerID, int[] args, ResourceHolderCustomAssetExtension customHolder) {
+    public void draw(GameEngine engine, EventReceiver receiver, int playerID, int[] args, CustomResourceHolder customHolder) {
         if (customHolder != null) {
             for (int i = 0; i <= args[0]; i++) {
                 int[] drawLocation = new int[] {

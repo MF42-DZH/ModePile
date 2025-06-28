@@ -35,7 +35,7 @@ package zeroxfc.nullpo.custom.libs.backgroundtypes;
 import java.util.ArrayList;
 import java.util.Collections;
 import mu.nu.nullpo.game.play.GameEngine;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
     private static final int AMT = 480 / 3;
@@ -58,7 +58,7 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
     public BackgroundHorizontalBars(int bgNumber, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
         if (bgNumber < 0 || bgNumber > 19) bgNumber = 0;
 
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage("res/graphics/back" + bgNumber + ".png", imageName);
 
         setup(pulseFrames, sliceSize, pulseBaseScale, pulseScaleVariance, reverse);
@@ -67,7 +67,7 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
     }
 
     public BackgroundHorizontalBars(String filePath, int pulseFrames, Integer sliceSize, Float pulseBaseScale, Float pulseScaleVariance, boolean reverse) {
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage(filePath, imageName);
 
         setup(pulseFrames, sliceSize, pulseBaseScale, pulseScaleVariance, reverse);
@@ -94,7 +94,7 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
      * @param name   Image name
      */
     @Override
-    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+    public void setBGFromHolder(CustomResourceHolder holder, String name) {
         customHolder.putImageAt(holder.getImageAt(name), imageName);
         log.debug("Custom horizontal bars background modified (New Image Reference: " + name + ").");
     }

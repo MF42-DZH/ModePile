@@ -12,7 +12,7 @@ import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 
 public class Scanline extends MarathonModeBase {
@@ -67,7 +67,7 @@ public class Scanline extends MarathonModeBase {
     // Score before increase
     private int scoreBeforeIncrease;
     // Custom Scanner Graphic
-    private ResourceHolderCustomAssetExtension customHolder;
+    private CustomResourceHolder customHolder;
     private int sx, sy;
     /**
      * The good hard drop effect
@@ -169,7 +169,7 @@ public class Scanline extends MarathonModeBase {
         engine.lineGravityType = GameEngine.LINE_GRAVITY_CASCADE;
         engine.comboType = GameEngine.COMBO_TYPE_DISABLE;
 
-        customHolder = new ResourceHolderCustomAssetExtension(1);
+        customHolder = new CustomResourceHolder(1);
         customHolder.loadImage("res/graphics/scanner.png", "scanner");
 
         sx = 0;

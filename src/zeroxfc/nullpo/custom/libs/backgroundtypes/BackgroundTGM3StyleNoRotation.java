@@ -35,7 +35,7 @@ package zeroxfc.nullpo.custom.libs.backgroundtypes;
 import java.util.Random;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.Interpolation;
-import zeroxfc.nullpo.custom.libs.ResourceHolderCustomAssetExtension;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.ValueWrapper;
 
 public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
@@ -88,7 +88,7 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
     }
 
     public BackgroundTGM3StyleNoRotation(String filePath, Random valueRandomiser) {
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage(filePath, imageName);
         customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");
         localPath = filePath;
@@ -107,7 +107,7 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
     }
 
     public BackgroundTGM3StyleNoRotation(String filePath, long seed) {
-        customHolder = new ResourceHolderCustomAssetExtension();
+        customHolder = new CustomResourceHolder();
         customHolder.loadImage(filePath, imageName);
         customHolder.loadImage("res/graphics/blank_black_24b.png", "blackBG");
         localPath = filePath;
@@ -313,7 +313,7 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
      * @param holder Storage instance
      * @param name   Image name
      */
-    public void setBGFromHolder(ResourceHolderCustomAssetExtension holder, String name) {
+    public void setBGFromHolder(CustomResourceHolder holder, String name) {
         final Object image = holder.getImageAt(name);
         if (image == null) return;
         if (!name.equals(localPath)) {
