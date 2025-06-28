@@ -234,7 +234,7 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 
 	@Override
 	public boolean onGameOver(GameEngine engine, int playerID) {
-		rhcae.stopBGM();
+		rhcae.stopCustomBGM();
 		engine.gameEnded();
 		return false;
 	}
@@ -401,7 +401,7 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 	 */
 	public boolean onReady(GameEngine engine, int playerID) {
 		if(engine.statc[0] == 0) {
-			if (customBgm && rhcae.getAmountLoadedBGM() == 0) {
+			if (customBgm && rhcae.getAmountManagedLoadedBGM() == 0) {
 				// Load extra music, if it exists
 				rhcae.loadNewBGMAppend("res/bgm/segatet/00.ogg", false, true);
 				rhcae.loadNewBGMAppend("res/bgm/segatet/01.ogg", false, true);
@@ -615,7 +615,7 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 
 		// Unload extra music, if necessary
 		if (engine.quitflag && customBgm) {
-			while (rhcae.getAmountLoadedBGM() > 0) rhcae.removeBGMFromEnd(true);
+			while (rhcae.getAmountManagedLoadedBGM() > 0) rhcae.removeBGMFromEnd(true);
 		}
 
 

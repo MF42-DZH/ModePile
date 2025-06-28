@@ -36,6 +36,10 @@ import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
@@ -55,6 +59,8 @@ import sdljava.mixer.SDLMixer;
 import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
+import zeroxfc.nullpo.custom.libs.types.RuntimeImage;
+import zeroxfc.nullpo.custom.libs.types.RuntimeMusic;
 
 public class CustomResourceHolder {
     /**
@@ -68,12 +74,8 @@ public class CustomResourceHolder {
 
     private static String mainClassName = "";
 
-    private HashMap<String, org.newdawn.slick.Image> slickImages;  // Slick Images
-    private HashMap<String, java.awt.Image> swingImages;           // Swing Images
-    private HashMap<String, sdljava.video.SDLSurface> sdlImages;   // SDL Images
-
-    private HashMap<String, org.newdawn.slick.Music> slickMusic;  // Slick Music
-    private HashMap<String, sdljava.mixer.MixMusic> sdlMusic;     // SDL Music
+    private final HashMap<String, RuntimeImage<?>> loadedImages;
+    private final HashMap<String, RuntimeMusic<?>> loadedMusic;
 
     private Graphics2D localSwingGraphics;
     private sdljava.video.SDLSurface localSDLGraphics;
@@ -100,19 +102,8 @@ public class CustomResourceHolder {
         else if (mainClass.contains("Swing")) holderType = HOLDER_SWING;
         else if (mainClass.contains("SDL")) holderType = HOLDER_SDL;
 
-        switch (holderType) {
-            case HOLDER_SLICK:
-                slickImages = new HashMap<>(initialCapacity);
-                slickMusic = new HashMap<>(initialCapacity);
-                break;
-            case HOLDER_SWING:
-                swingImages = new HashMap<>(initialCapacity);
-                break;
-            case HOLDER_SDL:
-                sdlImages = new HashMap<>(initialCapacity);
-                sdlMusic = new HashMap<>(initialCapacity);
-                break;
-        }
+        loadedImages = new HashMap<>(initialCapacity);
+        loadedMusic = new HashMap<>(initialCapacity);
     }
 
     /**
@@ -208,13 +199,13 @@ public class CustomResourceHolder {
     public void loadImage(String filePath, String name) {
         switch (holderType) {
             case HOLDER_SLICK:
-                slickImages.put(name, ResourceHolder.loadImage(filePath));
+                loadedImages.put(name, new RuntimeImage.Slick(ResourceHolder.loadImage(filePath)));
                 break;
             case HOLDER_SWING:
-                swingImages.put(name, ResourceHolderSwing.loadImage(ResourceHolderSwing.getURL(filePath)));
+                loadedImages.put(name, new RuntimeImage.Swing(ResourceHolderSwing.loadImage(ResourceHolderSwing.getURL(filePath))));
                 break;
             case HOLDER_SDL:
-                sdlImages.put(name, ResourceHolderSDL.loadImage(filePath));
+                loadedImages.put(name, new RuntimeImage.SDL(ResourceHolderSDL.loadImage(filePath)));
                 break;
         }
     }
@@ -226,17 +217,7 @@ public class CustomResourceHolder {
      * @param dest   Destination key
      */
     public void copyImage(String source, String dest) {
-        switch (holderType) {
-            case HOLDER_SLICK:
-                slickImages.replace(dest, slickImages.get(source));
-                break;
-            case HOLDER_SWING:
-                swingImages.replace(dest, swingImages.get(source));
-                break;
-            case HOLDER_SDL:
-                sdlImages.replace(dest, sdlImages.get(source));
-                break;
-        }
+        loadedImages.replace(dest, loadedImages.get(source));
     }
 
     /**
@@ -247,23 +228,23 @@ public class CustomResourceHolder {
      */
     public int[] getImageDimensions(String name) {
         try {
-            int[] dim = new int[2];
-            switch (holderType) {
-                case HOLDER_SLICK:
-                    dim[0] = slickImages.get(name).getWidth();
-                    dim[1] = slickImages.get(name).getHeight();
-                    return dim;
-                case HOLDER_SWING:
-                    dim[0] = swingImages.get(name).getWidth(null);
-                    dim[1] = swingImages.get(name).getHeight(null);
-                    return dim;
-                case HOLDER_SDL:
-                    dim[0] = sdlImages.get(name).getWidth();
-                    dim[1] = sdlImages.get(name).getHeight();
-                    return dim;
-                default:
-                    return new int[] { 0, 0 };
+            int[] dim = new int[] { 0, 0 };
+            final RuntimeImage<?> image = loadedImages.get(name);
+
+            if (image != null) {
+                if (image instanceof RuntimeImage.Slick) {
+                    dim[0] = ((RuntimeImage.Slick) image).image.getWidth();
+                    dim[1] = ((RuntimeImage.Slick) image).image.getHeight();
+                } else if (image instanceof RuntimeImage.Swing) {
+                    dim[0] = ((RuntimeImage.Swing) image).image.getWidth(null);
+                    dim[1] = ((RuntimeImage.Swing) image).image.getHeight(null);
+                } else if (image instanceof RuntimeImage.SDL) {
+                    dim[0] = ((RuntimeImage.SDL) image).image.getWidth();
+                    dim[1] = ((RuntimeImage.SDL) image).image.getHeight();
+                }
             }
+
+            return dim;
         } catch (Exception e) {
             return new int[] { 0, 0 };
         }
@@ -274,24 +255,12 @@ public class CustomResourceHolder {
      *
      * @param name Image name
      */
-    public void putImageAt(Object image, String name) {
+    public void putImageAt(RuntimeImage<?> image, String name) {
         if (image == null) return;
         try {
-            switch (holderType) {
-                case HOLDER_SLICK:
-                    slickImages.put(name, (org.newdawn.slick.Image) image);
-                    break;
-                case HOLDER_SWING:
-                    swingImages.put(name, (java.awt.Image) image);
-                    break;
-                case HOLDER_SDL:
-                    sdlImages.put(name, (SDLSurface) image);
-                    break;
-                default:
-                    break;
-            }
+            loadedImages.put(name, image);
         } catch (Exception e) {
-            log.error("Unable to insert image " + image.toString() + " at " + name);
+            log.error("Unable to insert image " + image + " at " + name);
         }
     }
 
@@ -302,18 +271,9 @@ public class CustomResourceHolder {
      * @param name Image name
      * @return Image at name
      */
-    public Object getImageAt(String name) {
+    public RuntimeImage<?> getImageAt(String name) {
         try {
-            switch (holderType) {
-                case HOLDER_SLICK:
-                    return slickImages.get(name);
-                case HOLDER_SWING:
-                    return swingImages.get(name);
-                case HOLDER_SDL:
-                    return sdlImages.get(name);
-                default:
-                    return null;
-            }
+            return loadedImages.get(name);
         } catch (Exception e) {
             return null;
         }
@@ -325,24 +285,10 @@ public class CustomResourceHolder {
      * @param name  Key of image to replace
      * @param image Image object to replace with.
      */
-    public void setImageAt(String name, Object image) {
+    public void setImageAt(String name, RuntimeImage<?> image) {
         try {
-            switch (holderType) {
-                case HOLDER_SLICK:
-                    slickImages.replace(name, (org.newdawn.slick.Image) image);
-                    log.error("Image " + name + " replaced.");
-                    break;
-                case HOLDER_SWING:
-                    swingImages.replace(name, (java.awt.Image) image);
-                    log.error("Image " + name + " replaced.");
-                    break;
-                case HOLDER_SDL:
-                    sdlImages.replace(name, (sdljava.video.SDLSurface) image);
-                    log.error("Image " + name + " replaced.");
-                    break;
-                default:
-                    break;
-            }
+            loadedImages.replace(name, image);
+            log.info("Image " + name + " replaced.");
         } catch (Exception e) {
             log.error("Image does not exist or invalid cast attempted.");
         }
@@ -356,8 +302,10 @@ public class CustomResourceHolder {
      * @param y    Y-coordinate relative to image's top-left corner
      */
     public void setRotationCentre(String name, float x, float y) {
-        if (holderType == HOLDER_SLICK) {
-            slickImages.get(name).setCenterOfRotation(x, y);
+        final RuntimeImage<?> image = getImageAt(name);
+
+        if (holderType == HOLDER_SLICK && image instanceof RuntimeImage.Slick) {
+            ((RuntimeImage.Slick) image).image.setCenterOfRotation(x, y);
         }
     }
 
@@ -368,8 +316,10 @@ public class CustomResourceHolder {
      * @param a    Angle, degrees.
      */
     public void setRotation(String name, float a) {
-        if (holderType == HOLDER_SLICK) {
-            slickImages.get(name).setRotation(a);
+        final RuntimeImage<?> image = getImageAt(name);
+
+        if (holderType == HOLDER_SLICK && image instanceof RuntimeImage.Slick) {
+            ((RuntimeImage.Slick) image).image.setRotation(a);
         }
     }
 
@@ -391,21 +341,38 @@ public class CustomResourceHolder {
      * @param scale    Image scale
      */
     public void drawImage(GameEngine engine, String name, int x, int y, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha, float scale) {
+        final RuntimeImage<?> runtimeImage = getImageAt(name);
+
         switch (holderType) {
             case HOLDER_SLICK:
-                org.newdawn.slick.Image toDraw = slickImages.get(name);
+                if (!(runtimeImage instanceof RuntimeImage.Slick)) {
+                    log.error("Image '" + name + "' is not a Slick image!");
+                    return;
+                }
+
+                org.newdawn.slick.Image toDrawSlick = ((RuntimeImage.Slick) runtimeImage).image;
 
                 int fx = x + (int) (srcSizeX * scale);
                 int fy = y + (int) (srcSizeY * scale);
 
                 org.newdawn.slick.Color filter = new org.newdawn.slick.Color(red, green, blue, alpha);
 
-                toDraw.draw(x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
+                toDrawSlick.draw(x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
 
                 break;
             case HOLDER_SWING:
+                if (!(runtimeImage instanceof RuntimeImage.Swing)) {
+                    log.error("Image '" + name + "' is not a Swing image!");
+                    return;
+                }
+
                 localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
-                java.awt.Image toDrawSwing = swingImages.get(name);
+                if (localSwingGraphics == null) {
+                    log.error("Swing graphics is null!");
+                    return;
+                }
+
+                java.awt.Image toDrawSwing = ((RuntimeImage.Swing) runtimeImage).image;
 
                 int fxSw = x + (int) (srcSizeX * scale);
                 int fySw = y + (int) (srcSizeY * scale);
@@ -415,8 +382,14 @@ public class CustomResourceHolder {
                 localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
                 break;
             case HOLDER_SDL:
+                if (!(runtimeImage instanceof RuntimeImage.SDL)) {
+                    log.error("Image '" + name + "' is not a SDL image!");
+                    return;
+                }
+
                 localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver);
-                sdljava.video.SDLSurface toDrawSDL = sdlImages.get(name);
+                sdljava.video.SDLSurface toDrawSDL = ((RuntimeImage.SDL) runtimeImage).image;
+
                 int dx = (int) (srcSizeX * scale);
                 int dy = (int) (srcSizeY * scale);
                 try {
@@ -427,6 +400,7 @@ public class CustomResourceHolder {
                 break;
         }
     }
+
 
     /**
      * Draws image to game.
@@ -448,32 +422,48 @@ public class CustomResourceHolder {
      */
     public void drawImage(GameEngine engine, String name, int x, int y, int x2, int y2, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha) {
         if (x < x2 || y < y2) return;
+        final RuntimeImage<?> runtimeImage = getImageAt(name);
 
         switch (holderType) {
             case HOLDER_SLICK:
-                org.newdawn.slick.Image toDraw = slickImages.get(name);
+                if (!(runtimeImage instanceof RuntimeImage.Slick)) {
+                    log.error("Image '" + name + "' is not a Slick image!");
+                    return;
+                }
+
+                org.newdawn.slick.Image toDrawSlick = ((RuntimeImage.Slick) runtimeImage).image;
 
                 org.newdawn.slick.Color filter = new org.newdawn.slick.Color(red, green, blue, alpha);
 
-                toDraw.draw(x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
-
+                toDrawSlick.draw(x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
                 break;
             case HOLDER_SWING:
+                if (!(runtimeImage instanceof RuntimeImage.Swing)) {
+                    log.error("Image '" + name + "' is not a Swing image!");
+                    return;
+                }
+
                 localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
                 if (localSwingGraphics == null) {
                     log.error("Swing graphics is null!");
                     return;
                 }
 
-                java.awt.Image toDrawSwing = swingImages.get(name);
+                java.awt.Image toDrawSwing = ((RuntimeImage.Swing) runtimeImage).image;
 
                 localSwingGraphics.setColor(new java.awt.Color(red, green, blue, alpha));
                 localSwingGraphics.drawImage(toDrawSwing, x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
                 localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
                 break;
             case HOLDER_SDL:
+                if (!(runtimeImage instanceof RuntimeImage.SDL)) {
+                    log.error("Image '" + name + "' is not a SDL image!");
+                    return;
+                }
+
                 localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver);
-                sdljava.video.SDLSurface toDrawSDL = sdlImages.get(name);
+                sdljava.video.SDLSurface toDrawSDL = ((RuntimeImage.SDL) runtimeImage).image;
+
                 int dx = x2 - x;
                 int dy = y2 - y;
                 try {
@@ -502,27 +492,41 @@ public class CustomResourceHolder {
      * @param green    Green component
      * @param blue     Blue component
      * @param alpha    Alpha component
-     * @param flag     (silences the compiler)
      */
-    public void drawImage(GameEngine engine, String name, int x, int y, int sx, int sy, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha, Integer flag) {
-        if (flag == null) flag = 0;
+    public void drawOffsetImage(GameEngine engine, String name, int x, int y, int sx, int sy, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha) {
         if (sx <= 0 || sy <= 0) return;
+        final RuntimeImage<?> runtimeImage = getImageAt(name);
 
         switch (holderType) {
             case HOLDER_SLICK:
-                org.newdawn.slick.Image toDraw = slickImages.get(name);
+                if (!(runtimeImage instanceof RuntimeImage.Slick)) {
+                    log.error("Image '" + name + "' is not a Slick image!");
+                    return;
+                }
+
+                org.newdawn.slick.Image toDrawSlick = ((RuntimeImage.Slick) runtimeImage).image;
 
                 int fx = x + sx;
                 int fy = y + sy;
 
                 org.newdawn.slick.Color filter = new org.newdawn.slick.Color(red, green, blue, alpha);
 
-                toDraw.draw(x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
+                toDrawSlick.draw(x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
 
                 break;
             case HOLDER_SWING:
+                if (!(runtimeImage instanceof RuntimeImage.Swing)) {
+                    log.error("Image '" + name + "' is not a Swing image!");
+                    return;
+                }
+
                 localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
-                java.awt.Image toDrawSwing = swingImages.get(name);
+                if (localSwingGraphics == null) {
+                    log.error("Swing graphics is null!");
+                    return;
+                }
+
+                java.awt.Image toDrawSwing = ((RuntimeImage.Swing) runtimeImage).image;
 
                 int fxSw = x + sx;
                 int fySw = y + sy;
@@ -532,8 +536,14 @@ public class CustomResourceHolder {
                 localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
                 break;
             case HOLDER_SDL:
+                if (!(runtimeImage instanceof RuntimeImage.SDL)) {
+                    log.error("Image '" + name + "' is not a SDL image!");
+                    return;
+                }
+
                 localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver);
-                sdljava.video.SDLSurface toDrawSDL = sdlImages.get(name);
+                sdljava.video.SDLSurface toDrawSDL = ((RuntimeImage.SDL) runtimeImage).image;
+
                 try {
                     toDrawSDL.blitSurface(new SDLRect(srcX, srcY, srcSizeX, srcSizeY), localSDLGraphics, new SDLRect(x, y, sx, sy));
                 } catch (Exception e) {
@@ -552,34 +562,8 @@ public class CustomResourceHolder {
      * @param y      Y position
      */
     public void drawImage(GameEngine engine, String name, int x, int y) {
-        switch (holderType) {
-            case HOLDER_SLICK:
-                org.newdawn.slick.Image toDraw = slickImages.get(name);
-
-                int fx = toDraw.getWidth();
-                int fy = toDraw.getHeight();
-
-                drawImage(engine, name, x, y, 0, 0, fx, fy, 255, 255, 255, 255, 1f);
-                break;
-            case HOLDER_SWING:
-                localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
-                java.awt.Image toDrawSwing = swingImages.get(name);
-
-                int fxSw = toDrawSwing.getWidth(null);
-                int fySw = toDrawSwing.getHeight(null);
-
-                drawImage(engine, name, x, y, 0, 0, fxSw, fySw, 255, 255, 255, 255, 1f);
-                break;
-            case HOLDER_SDL:
-                localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver);
-                sdljava.video.SDLSurface toDrawSDL = sdlImages.get(name);
-
-                int dx = toDrawSDL.getWidth();
-                int dy = toDrawSDL.getHeight();
-
-                drawImage(engine, name, x, y, 0, 0, dx, dy, 255, 255, 255, 255, 1f);
-                break;
-        }
+        final int[] dims = getImageDimensions(name);
+        drawImage(engine, name, x, y, 0, 0, dims[0], dims[1], 255, 255, 255, 255, 1f);
     }
 
     /**
@@ -617,84 +601,85 @@ public class CustomResourceHolder {
         r = Integer.parseInt(red, 16);
         g = Integer.parseInt(green, 16);
         b = Integer.parseInt(blue, 16);
-        a = Integer.parseInt(alpha, 16);
+        a = lc.length() == 8 ? Integer.parseInt(alpha, 16) : 255;
 
         drawImage(engine, name, x, y, srcX, srcY, srcSizeX, srcSizeY, r, g, b, a, scale);
+    }
+
+    // Generic load music worker function.
+    private static <M> void loadMusicWorker(Supplier<Boolean> bgmGetter, BiConsumer<Integer, Boolean> noLoopSetter, Consumer<M[]> bgmArraySetter, Class<M> musicClass, Function<String, M> musicLoader, String fileName, boolean noLoop, boolean showErr) {
+        if (!bgmGetter.get()) return;
+
+        int no = ResourceHolder.bgm.length + 1;
+        final M[] newArr = (M[]) java.lang.reflect.Array.newInstance(musicClass, no);
+        System.arraycopy(ResourceHolder.bgm, 0, newArr, 0, ResourceHolder.bgm.length);
+
+        if (newArr[no - 1] == null) {
+            if (showErr) log.info("Loading BGM at " + fileName);
+
+            try {
+                if ((fileName == null) || (fileName.length() < 1)) {
+                    if (showErr) log.info("BGM at " + fileName + " not available");
+                    return;
+                }
+
+                noLoopSetter.accept(no, noLoop);
+                newArr[no - 1] = musicLoader.apply(fileName);
+                bgmArraySetter.accept(newArr);
+
+                if (!showErr) log.info("Loaded BGM at " + fileName);
+            } catch (Exception e) {
+                if (showErr)
+                    log.error("BGM at " + fileName + " load failed", e);
+                else
+                    log.warn("BGM at " + fileName + " load failed");
+            }
+        }
     }
 
     /**
      * Appends a new BGM number into the BGM array. On Swing, this has no effect.
      *
-     * @param filename File path of music file to import.
-     * @param showerr  Show in log?
+     * @param fileName File path of music file to import.
+     * @param showErr  Show in log?
      */
-    public void loadNewBGMAppend(String filename, boolean noLoop, boolean showerr) {
-        switch (holderType) {
-            case HOLDER_SLICK:
-                if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
-
-                int no = ResourceHolder.bgm.length + 1;
-                Music[] newArr = new Music[no];
-                System.arraycopy(ResourceHolder.bgm, 0, newArr, 0, ResourceHolder.bgm.length);
-
-                if (newArr[no - 1] == null) {
-                    if (showerr) log.info("Loading BGM at " + filename);
-
+    public void loadNewBGMAppend(String fileName, boolean noLoop, boolean showErr) {
+        if (holderType == HOLDER_SWING) {
+            log.warn("BGM is not supported on Swing.");
+        } else if (holderType == HOLDER_SLICK) {
+            loadMusicWorker(
+                () -> NullpoMinoSlick.propConfig.getProperty("option.bgm", false),
+                (no, nl) -> NullpoMinoSlick.propConfig.setProperty("music.noloop." + no, nl),
+                arr -> ResourceHolder.bgm = arr.clone(),
+                Music.class,
+                fn -> {
                     try {
-                        if ((filename == null) || (filename.length() < 1)) {
-                            if (showerr) log.info("BGM at " + filename + " not available");
-                            return;
-                        }
-
-                        NullpoMinoSlick.propMusic.setProperty("music.noloop." + no, noLoop);
-                        newArr[no - 1] = new Music(filename, true);
-                        ResourceHolder.bgm = newArr.clone();
-
-                        if (!showerr) log.info("Loaded BGM at " + filename);
-                    } catch (Throwable e) {
-                        if (showerr)
-                            log.error("BGM at " + filename + " load failed", e);
-                        else
-                            log.warn("BGM at " + filename + " load failed");
+                        return new Music(fn, true);
+                    } catch (Exception e) {
+                        throw new IllegalStateException(e);
                     }
-                }
-                return;
-            case HOLDER_SWING:
-                log.warn("BGM is not supported on Swing.");
-                return;
-            case HOLDER_SDL:
-                if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
-
-                int no2 = ResourceHolderSDL.bgm.length + 1;
-                MixMusic[] newArr2 = new MixMusic[no2];
-                System.arraycopy(ResourceHolderSDL.bgm, 0, newArr2, 0, ResourceHolderSDL.bgm.length);
-
-                if (newArr2[no2 - 1] == null) {
-                    if (showerr) {
-                        log.info("Loading BGM at " + filename);
-                    }
-
+                },
+                fileName,
+                noLoop,
+                showErr
+            );
+        } else if (holderType == HOLDER_SDL) {
+            loadMusicWorker(
+                () -> NullpoMinoSDL.propConfig.getProperty("option.bgm", false),
+                (no, nl) -> NullpoMinoSDL.propConfig.setProperty("music.noloop." + no, nl),
+                arr -> ResourceHolderSDL.bgm = arr.clone(),
+                MixMusic.class,
+                fn -> {
                     try {
-                        if ((filename == null) || (filename.length() < 1)) {
-                            if (showerr) log.info("BGM at " + filename + " not available");
-                            return;
-                        }
-
-                        NullpoMinoSDL.propMusic.setProperty("music.noloop." + no2, noLoop);
-                        newArr2[no2 - 1] = SDLMixer.loadMUS(filename);
-                        ResourceHolderSDL.bgm = newArr2.clone();
-
-                        if (!showerr) {
-                            log.info("Loaded BGM at " + filename);
-                        }
-                    } catch (Throwable e) {
-                        if (showerr) {
-                            log.warn("BGM at " + filename + " load failed", e);
-                        } else {
-                            log.warn("BGM at " + filename + " load failed");
-                        }
+                        return SDLMixer.loadMUS(fn);
+                    } catch (Exception e) {
+                        throw new IllegalStateException(e);
                     }
-                }
+                },
+                fileName,
+                noLoop,
+                showErr
+            );
         }
     }
 
@@ -733,47 +718,77 @@ public class CustomResourceHolder {
     }
 
     /**
-     * Starts the play of an internal BGM. Use the relative index of the added music. (0 = first added track.)
+     * Adds a named custom BGM.
+     * There is a limitation that the song can't be paused.
+     *
+     * @param name     Track name.
+     * @param fileName File path of track.
+     */
+    public void addCustomBGM(String name, String fileName) {
+        try {
+            if (holderType == HOLDER_SLICK) {
+                loadedMusic.put(name, new RuntimeMusic.Slick(new Music(fileName, true)));
+            } else if (holderType == HOLDER_SDL) {
+                loadedMusic.put(name, new RuntimeMusic.SDL(SDLMixer.loadMUS(fileName)));
+            } else {
+                log.warn("BGM is not supported on Swing.");
+            }
+        } catch (Exception e) {
+            log.error("Unable to load file '" + fileName + "' as BGM.");
+        }
+    }
+
+    /**
+     * Starts the play of a discrete custom BGM. Uses the key name of an added custom BGM.
      * There is a limitation that the song can't be paused.
      *
      * @param name   Track name.
      * @param noLoop Set true if it shouldn't loop.
      */
     public void playCustomBGM(String name, boolean noLoop) {
-        switch (holderType) {
-            case HOLDER_SLICK:
-                if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
+        final RuntimeMusic<?> mus =  loadedMusic.get(name);
 
-                stopCustomBGM();
+        if (mus != null) {
+            switch (holderType) {
+                case HOLDER_SLICK:
+                    if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
 
-                int bgmvolume = NullpoMinoSlick.propConfig.getProperty("option.bgmvolume", 128);
-                NullpoMinoSlick.appGameContainer.setMusicVolume(bgmvolume / (float) 128);
+                    stopCustomBGM();
 
-                try {
-                    slickMusic.get(name).play();
-                } catch (Exception e) {
-                    log.error("Failed to play music " + name, e);
-                }
+                    int bgmvolume = NullpoMinoSlick.propConfig.getProperty("option.bgmvolume", 128);
+                    NullpoMinoSlick.appGameContainer.setMusicVolume(bgmvolume / (float) 128);
 
-                return;
-            case HOLDER_SWING:
-                log.warn("BGM is not supported on Swing.");
-                return;
-            case HOLDER_SDL:
-                if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
+                    try {
+                        if (mus instanceof RuntimeMusic.Slick) {
+                            if (noLoop) ((RuntimeMusic.Slick) mus).music.play();
+                            else ((RuntimeMusic.Slick) mus).music.loop();
+                        }
+                    } catch (Exception e) {
+                        log.error("Failed to play music " + name, e);
+                    }
 
-                stopCustomBGM();
+                    return;
+                case HOLDER_SWING:
+                    log.warn("BGM is not supported on Swing.");
+                    return;
+                case HOLDER_SDL:
+                    if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
 
-                try {
-                    if (noLoop)
-                        SDLMixer.playMusic(sdlMusic.get(name), 1);
-                    else
-                        SDLMixer.playMusic(sdlMusic.get(name), -1);
+                    stopCustomBGM();
 
-                    SDLMixer.volumeMusic(NullpoMinoSDL.propConfig.getProperty("option.bgmvolume", 128));
-                } catch (Exception e) {
-                    log.warn("BGM " + name + " start failed", e);
-                }
+                    try {
+                        if (mus instanceof RuntimeMusic.SDL) {
+                            if (noLoop) SDLMixer.playMusic(((RuntimeMusic.SDL) mus).music, 1);
+                            else SDLMixer.playMusic(((RuntimeMusic.SDL) mus).music, -1);
+
+                            SDLMixer.volumeMusic(NullpoMinoSDL.propConfig.getProperty("option.bgmvolume", 128));
+                        }
+                    } catch (Exception e) {
+                        log.warn("BGM " + name + " start failed", e);
+                    }
+            }
+        } else {
+            log.warn("Music named '" + name + "' does not exist.");
         }
     }
 
@@ -783,16 +798,7 @@ public class CustomResourceHolder {
      * @param name BGM name
      */
     public void removeCustomInternalBGM(String name) {
-        switch (holderType) {
-            case HOLDER_SLICK:
-                slickMusic.remove(name);
-                break;
-            case HOLDER_SDL:
-                sdlMusic.remove(name);
-                break;
-            default:
-                break;
-        }
+        loadedMusic.remove(name);
     }
 
     /**
@@ -800,7 +806,7 @@ public class CustomResourceHolder {
      *
      * @return Number of loaded, appended BGM files.
      */
-    public int getAmountLoadedBGM() {
+    public int getAmountManagedLoadedBGM() {
         switch (holderType) {
             case HOLDER_SLICK:
                 return ResourceHolder.bgm.length - BGMStatus.BGM_COUNT;
@@ -817,78 +823,31 @@ public class CustomResourceHolder {
      * @return Number of loaded BGM files in holder.
      */
     public int getAmountDiscreteLoadedBGM() {
-        switch (holderType) {
-            case HOLDER_SLICK:
-                return slickMusic.size();
-            case HOLDER_SDL:
-                return sdlImages.size();
-            default:
-                return 0;
-        }
+        return loadedMusic.size();
     }
 
     /**
      * Stops all custom BGM.
      */
     public void stopCustomBGM() {
-        switch (holderType) {
-            case HOLDER_SLICK:
-                if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
-
-                for (Music sm : slickMusic.values()) {
-                    sm.pause();
-                    sm.stop();
+        if (holderType == HOLDER_SLICK) {
+            for (RuntimeMusic<?> mus : loadedMusic.values()) {
+                if (mus instanceof RuntimeMusic.Slick) {
+                    ((RuntimeMusic.Slick) mus).music.pause();
+                    ((RuntimeMusic.Slick) mus).music.stop();
                 }
-
-                return;
-            case HOLDER_SWING:
-                log.warn("BGM is not supported on Swing.");
-                return;
-            case HOLDER_SDL:
-                if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
-
-                try {
-                    SDLMixer.haltMusic();
-                } catch (Exception e) {
-                    log.debug("BGM stop failed", e);
-                }
-                break;
+            }
+        } else if (holderType == HOLDER_SDL) {
+            try {
+                SDLMixer.haltMusic();
+            } catch (Exception e) {
+                log.debug("BGM stop failed", e);
+            }
         }
     }
 
     /**
-     * Stops custom BGM.
-     */
-    public void stopBGM() {
-        switch (holderType) {
-            case HOLDER_SLICK:
-                if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
-
-                for (Music s : ResourceHolder.bgm) {
-                    if (s != null) {
-                        s.pause();
-                        s.stop();
-                    }
-                }
-
-                return;
-            case HOLDER_SWING:
-                log.warn("BGM is not supported on Swing.");
-                return;
-            case HOLDER_SDL:
-                if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
-
-                try {
-                    SDLMixer.haltMusic();
-                } catch (Exception e) {
-                    log.debug("BGM stop failed", e);
-                }
-                break;
-        }
-    }
-
-    /**
-     * Stops all BGM.
+     * Stops game-managed BGM.
      *
      * @param owner Current GameManager
      */

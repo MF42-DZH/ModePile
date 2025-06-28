@@ -9,7 +9,7 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
     private static final int PERIOD = 480;  // Frames
     private static final float BASE_LUMINANCE_OFFSET = 0.25f;
 
-    // private ResourceHolderCustomAssetExtension customHolder;
+    // private CustomResourceHolder customHolder;
     private Random colourRandom;
     private ImageChunk[] chunks;
     private int phase;
@@ -52,7 +52,7 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
     }
 
     /**
-     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>CustomResourceHolder</code>.
      *
      * @param holder Storage instance
      * @param name   Image name
@@ -110,7 +110,7 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
             int[] ddim = chunks[id].getDrawDimensions();
             int[] sloc = chunks[id].getSourceLocation();
             int[] sdim = chunks[id].getSourceDimensions();
-            customHolder.drawImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], colour, colour, colour, 255, 0);
+            customHolder.drawOffsetImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], colour, colour, colour, 255);
         }
     }
 

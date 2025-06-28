@@ -788,7 +788,7 @@ public class MarathonTwo extends MarathonModeBase {
     @Override
     public boolean onGameOver(GameEngine engine, int playerID) {
         if (engine.statc[0] == 0) {
-            if (engine.statistics.lines < 100) {
+            if (engine.statistics.lines < tableGameClearLines[goaltype] || goaltype == 2) {
                 for (int y = engine.field.getHiddenHeight() * -1; y < engine.field.getHeight(); y++) {
                     for (int x = 0; x < engine.field.getWidth(); x++) {
                         Block blk = engine.field.getBlock(x, y);

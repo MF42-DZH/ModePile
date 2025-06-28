@@ -43,7 +43,7 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
     private static final float BASE_SCALE = 1f;
     private static final float SCALE_VARIANCE = 1f;
 
-    // private ResourceHolderCustomAssetExtension customHolder;
+    // private CustomResourceHolder customHolder;
     private ImageChunk[] chunks;
     private int pulsePhaseMax;
     private int currentPulsePhase;
@@ -88,7 +88,7 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
     }
 
     /**
-     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>CustomResourceHolder</code>.
      *
      * @param holder Storage instance
      * @param name   Image name
@@ -181,7 +181,7 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
             int[] ddim = i.getDrawDimensions();
             int[] sloc = i.getSourceLocation();
             int[] sdim = i.getSourceDimensions();
-            customHolder.drawImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], 255, 255, 255, 255, 0);
+            customHolder.drawOffsetImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], 255, 255, 255, 255);
         }
     }
 

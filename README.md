@@ -43,6 +43,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _BlockParticleCollection_ - Collection class for easy generation, update and drawing of block particles.
 * _BufferedPrimitiveDrawingHook_ - For fast primitive drawing.
 * _DoubleVector_ - 2D vector type that uses doubles for more precision.
+* _CustomResourceHolder_ - Allows the use of custom images and BGM in a mode.
 * _DynamicReactiveSound_ (incomplete; on hold) - Generates and plays PCM samples on the fly.
 * _ExamSpinner_ - TI-style spinner like the one used during Promotion Exam results.
 * _FieldManipulation_ - Adds and fixes methods for dealing with the game's _Field_ type.
@@ -58,7 +59,6 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _PrimitiveDrawingHook_ - For normal primitive drawing.
 * _ProfileProperties_ - Allows the use of TI-styled profiles.
 * _RendererExtension_ - Extra drawing methods.
-* _ResourceHolderCustomAssetExtension_ - Allows the use of custom images and BGM in a mode.
 * _ScrollingMarqueeText_ - Horizontal scrolling text.
 * _ShakingText_ - Text that vibrates around a fixed point.
 * _SideWaveText_ - _Super Collapse II_-styled text popups.

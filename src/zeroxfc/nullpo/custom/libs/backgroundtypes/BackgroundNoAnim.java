@@ -36,7 +36,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class BackgroundNoAnim extends AnimatedBackgroundHook {
-    // private ResourceHolderCustomAssetExtension customHolder;
+    // private CustomResourceHolder customHolder;
 
     {
         ID = AnimatedBackgroundHook.ANIMATION_NONE;
@@ -90,7 +90,7 @@ public class BackgroundNoAnim extends AnimatedBackgroundHook {
     }
 
     /**
-     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>CustomResourceHolder</code>.
      *
      * @param holder Storage instance
      * @param name   Image name

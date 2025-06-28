@@ -85,7 +85,7 @@ public class BackgroundImageSequenceAnim extends AnimatedBackgroundHook {
     @Override
     public void draw(GameEngine engine, int playerID) {
         String i = "frame" + currentFrame;
-        customHolder.drawImage(engine, i, 0, 0, 640, 480, 0, 0, 640, 480, 255, 255, 255, 255, 0);
+        customHolder.drawOffsetImage(engine, i, 0, 0, 640, 480, 0, 0, 640, 480, 255, 255, 255, 255);
     }
 
     /**
@@ -109,7 +109,7 @@ public class BackgroundImageSequenceAnim extends AnimatedBackgroundHook {
     }
 
     /**
-     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>CustomResourceHolder</code>.
      *
      * @param holder Storage instance
      * @param name   Image name

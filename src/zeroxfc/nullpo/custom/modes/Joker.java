@@ -232,7 +232,7 @@ public class Joker extends MarathonModeBase {
     @Override
     public boolean onSetting(GameEngine engine, int playerID) {
         engine.owner.bgmStatus.bgm = -1;
-        while (customHolder.getAmountLoadedBGM() > 0) customHolder.removeBGMFromEnd(true);
+        while (customHolder.getAmountManagedLoadedBGM() > 0) customHolder.removeBGMFromEnd(true);
 
         // NET: Net Ranking
         if (netIsNetRankingDisplayMode) {
@@ -567,7 +567,7 @@ public class Joker extends MarathonModeBase {
         shouldUseTimer = false;
         if (engine.statc[0] == 0 && drawJevil) {
             customHolder.stopCustomBGM();
-            while (customHolder.getAmountLoadedBGM() > 0) customHolder.removeBGMFromEnd(true);
+            while (customHolder.getAmountManagedLoadedBGM() > 0) customHolder.removeBGMFromEnd(true);
         }
 
         return false;
@@ -684,7 +684,7 @@ public class Joker extends MarathonModeBase {
 
         if (engine.quitflag) {
             playerProperties = new ProfileProperties(headerColour);
-            while (customHolder.getAmountLoadedBGM() > 0) customHolder.removeBGMFromEnd(true);
+            while (customHolder.getAmountManagedLoadedBGM() > 0) customHolder.removeBGMFromEnd(true);
         }
     }
 

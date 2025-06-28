@@ -258,7 +258,7 @@ public abstract class AnimatedBackgroundHook {
     public abstract void setBG(String filePath);
 
     /**
-     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>CustomResourceHolder</code>.
      *
      * @param holder Storage instance
      * @param name   Image name

@@ -37,6 +37,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.ValueWrapper;
+import zeroxfc.nullpo.custom.libs.types.RuntimeImage;
 
 public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
     /*
@@ -271,7 +272,7 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
         /*
          * Calculate the new "size" where it is basically the size of the smallest non-rotated rectangle that can inscribe the new image
          */
-        customHolder.drawImage(engine, imageName, currentPan[0] + 320 - (imgDim[0] / 2), currentPan[1] + 240 - (imgDim[1] / 2), imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255, 0);
+        customHolder.drawOffsetImage(engine, imageName, currentPan[0] + 320 - (imgDim[0] / 2), currentPan[1] + 240 - (imgDim[1] / 2), imgDim[0], imgDim[1], 0, 0, rawImgDim[0], rawImgDim[1], v, v, v, 255);
     }
 
     @Override
@@ -308,13 +309,13 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
     }
 
     /**
-     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>ResourceHolderCustomAssetExtension</code>.
+     * Allows the hot-swapping of pre-loaded BGs from a storage instance of a <code>CustomResourceHolder</code>.
      *
      * @param holder Storage instance
      * @param name   Image name
      */
     public void setBGFromHolder(CustomResourceHolder holder, String name) {
-        final Object image = holder.getImageAt(name);
+        final RuntimeImage<?> image = holder.getImageAt(name);
         if (image == null) return;
         if (!name.equals(localPath)) {
             int[] dimOld = customHolder.getImageDimensions(imageName);
