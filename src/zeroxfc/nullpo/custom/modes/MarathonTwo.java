@@ -275,6 +275,7 @@ public class MarathonTwo extends MarathonModeBase {
     private Piece cPiece;
 
     private RendererExtension rendererExtension;
+    private boolean hardDropEffect;
 
     // endregion Private Fields
 
@@ -343,88 +344,9 @@ public class MarathonTwo extends MarathonModeBase {
         SoundLoader.loadSoundset(SoundLoader.LOADTYPE_CONSTANTRIS);
 
         rendererExtension = new RendererExtension();
+        hardDropEffect = true;
 
-        // Reflection is an unholy magic. It's powerful alright, but very unsafe.
-        // region SOUND NAME EXTRACTION
-        holderType = -1;
-        String mainClass = CustomResourceHolder.getMainClassName();
-
-        if (mainClass.contains("Slick")) holderType = HOLDER_SLICK;
-        else if (mainClass.contains("Swing")) holderType = HOLDER_SWING;
-        else if (mainClass.contains("SDL")) holderType = HOLDER_SDL;
-
-        soundList = new ArrayList<>();
-
-        /*
-         * XXX: welp, i guess it's time to use reflection again... apologies in advance for this atrocity.
-         */
-        Field localField;
-        switch (holderType) {
-            case HOLDER_SLICK:
-                Class<SoundManager> slickSound = SoundManager.class;
-                try {
-                    localField = slickSound.getDeclaredField("clipMap");
-                    localField.setAccessible(true);
-
-                    /*
-                     * This should not return anything other than HashMap<String, Sound>,
-                     * as verified in the source code (see SoundManager.java).
-                     *
-                     * Use @SuppressWarnings("unchecked").
-                     */
-                    HashMap<String, Sound> slickSE = (HashMap<String, Sound>) localField.get(ResourceHolder.soundManager);
-
-                    soundList.addAll(slickSE.keySet());
-                    log.info("Sound name loading from Slick soundManager successful.");
-                } catch (Exception e) {
-                    log.error("Sound name loading from Slick soundManager failed.");
-                }
-
-                break;
-            case HOLDER_SWING:
-                Class<WaveEngine> swingSound = WaveEngine.class;
-                try {
-                    localField = swingSound.getDeclaredField("clipMap");
-                    localField.setAccessible(true);
-
-                    /*
-                     * This should not return anything other than HashMap<String, Clip>,
-                     * as verified in the source code (see WaveEngine.java).
-                     *
-                     * Use @SuppressWarnings("unchecked").
-                     */
-                    HashMap<String, Clip> swingSE = (HashMap<String, Clip>) localField.get(ResourceHolderSwing.soundManager);
-
-                    soundList.addAll(swingSE.keySet());
-                    log.info("Sound name loading from Swing soundManager successful.");
-                } catch (Exception e) {
-                    log.error("Sound name loading from Swing soundManager failed.");
-                }
-
-                break;
-            case HOLDER_SDL:
-                Class<SoundManagerSDL> sdlSound = SoundManagerSDL.class;
-                try {
-                    localField = sdlSound.getDeclaredField("clipMap");
-                    localField.setAccessible(true);
-
-                    /*
-                     * This should not return anything other than HashMap<String, MixChunk>,
-                     * as verified in the source code (see SoundManagerSDL.java).
-                     *
-                     * Use @SuppressWarnings("unchecked").
-                     */
-                    HashMap<String, MixChunk> sdlSE = (HashMap<String, MixChunk>) localField.get(ResourceHolderSDL.soundManager);
-
-                    soundList.addAll(sdlSE.keySet());
-                    log.info("Sound name loading from SDL soundManager successful.");
-                } catch (Exception e) {
-                    log.error("Sound name loading from SDL soundManager failed.");
-                }
-
-                break;
-        }
-        // endregion SOUND NAME EXTRACTION
+        soundList = new ArrayList<>(SoundLoader.getSoundNames());
 
         netPlayerInit(engine, playerID);
 
@@ -581,7 +503,7 @@ public class MarathonTwo extends MarathonModeBase {
         // Menu
         else if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 8, playerID);
+            int change = updateCursor(engine, 9, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -633,6 +555,9 @@ public class MarathonTwo extends MarathonModeBase {
                         break;
                     case 8:
                         big = !big;
+                        break;
+                    case 9:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
 
@@ -723,6 +648,9 @@ public class MarathonTwo extends MarathonModeBase {
                 "COMBO", GeneralUtil.getONorOFF(enableCombo),
                 "GOAL", (goaltype == 2) ? "ENDLESS" : tableGameClearLines[goaltype] + " LINES",
                 "BIG", GeneralUtil.getONorOFF(big));
+            drawMenu(engine, playerID, receiver, 18, EventReceiver.COLOR_PINK, 9,
+                "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+            );
         }
     }
 
@@ -867,20 +795,23 @@ public class MarathonTwo extends MarathonModeBase {
                     new int[] { engine.nowPieceX, engine.nowPieceY - i }
                 );
             }
-            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-                if (!cPiece.big) {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                } else {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+            if (hardDropEffect) {
+                for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                    if (!cPiece.big) {
+                        int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                        int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                        rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    } else {
+                        int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                        int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+                        rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                        rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                        rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                        rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    }
                 }
             }
         }
@@ -959,7 +890,7 @@ public class MarathonTwo extends MarathonModeBase {
         } else {
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
@@ -1723,6 +1654,7 @@ public class MarathonTwo extends MarathonModeBase {
         big = prop.getProperty("marathon2.big", false);
         version = prop.getProperty("marathon2.version", 0);
         initialBGState = prop.getProperty("marathon2.initBG", true);
+        hardDropEffect = prop.getProperty("marathon2.hardDropEffect", true);
     }
 
     /**
@@ -1743,6 +1675,7 @@ public class MarathonTwo extends MarathonModeBase {
         prop.setProperty("marathon2.big", big);
         prop.setProperty("marathon2.version", version);
         prop.setProperty("marathon2.initBG", initialBGState);
+        prop.setProperty("marathon2.hardDropEffect", hardDropEffect);
     }
 
     /**
@@ -1763,6 +1696,7 @@ public class MarathonTwo extends MarathonModeBase {
         goaltype = prop.getProperty("marathon2.gametype", 0);
         big = prop.getProperty("marathon2.big", false);
         initialBGState = prop.getProperty("marathon2.initBG", true);
+        hardDropEffect = prop.getProperty("marathon2.hardDropEffect", true);
     }
 
     /**
@@ -1783,6 +1717,7 @@ public class MarathonTwo extends MarathonModeBase {
         prop.setProperty("marathon2.gametype", goaltype);
         prop.setProperty("marathon2.big", big);
         prop.setProperty("marathon2.initBG", initialBGState);
+        prop.setProperty("marathon2.hardDropEffect", hardDropEffect);
     }
 
     /**
