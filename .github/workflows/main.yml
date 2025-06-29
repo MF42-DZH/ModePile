@@ -13,11 +13,11 @@ jobs:
       image: 0xfc963f18dc21/doc-project-images:wacc
     steps:
       - name: Clone the Pack
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Build the Pack
         run: sh ./ci-build-task.sh
       - name: Export the built class files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bin-classes
           path: ./bin
