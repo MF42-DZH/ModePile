@@ -9,6 +9,7 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
@@ -99,6 +100,8 @@ public class Deltatris extends MarathonModeBase {
     private ArrayList<int[]> pCoordList;
     private Piece cPiece;
 
+    private RendererExtension rendererExtension;
+
     /**
      * Deltatris - How fast can you go in this ΔMAX-inspired gamemode?
      *
@@ -150,6 +153,8 @@ public class Deltatris extends MarathonModeBase {
 
         pCoordList = new ArrayList<>();
         cPiece = null;
+
+        rendererExtension = new RendererExtension();
 
         netPlayerInit(engine, playerID);
 
@@ -481,7 +486,7 @@ public class Deltatris extends MarathonModeBase {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
-                    RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
                 }
             }
 
@@ -527,7 +532,7 @@ public class Deltatris extends MarathonModeBase {
             int ix, iy;
             ix = receiver.getScoreDisplayPositionX(engine, playerID);
             iy = receiver.getScoreDisplayPositionY(engine, playerID) + 18 * 16 + 4;
-            RendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
+            rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
                 RendererExtension.ALIGN_TOP_LEFT,
                 engine.statistics.totalPieceLocked < PIECES_MAX[difficulty] ? (float) Math.min(1, engine.statistics.totalPieceLocked / (double) PIECES_MAX[difficulty]) : (engine.statistics.time / 12 % 2 == 0 ? 1f : 0f),
                 2f);
@@ -891,15 +896,15 @@ public class Deltatris extends MarathonModeBase {
                 int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
                 int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
             } else {
                 int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
                 int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
 
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
             }
         }
     }

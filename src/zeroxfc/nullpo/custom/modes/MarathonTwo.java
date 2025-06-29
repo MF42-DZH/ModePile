@@ -274,6 +274,8 @@ public class MarathonTwo extends MarathonModeBase {
     private ArrayList<int[]> pCoordList;
     private Piece cPiece;
 
+    private RendererExtension rendererExtension;
+
     // endregion Private Fields
 
     /**
@@ -339,6 +341,8 @@ public class MarathonTwo extends MarathonModeBase {
         SoundLoader.loadSoundset(SoundLoader.LOADTYPE_MINESWEEPER);
         SoundLoader.loadSoundset(SoundLoader.LOADTYPE_COLLAPSE);
         SoundLoader.loadSoundset(SoundLoader.LOADTYPE_CONSTANTRIS);
+
+        rendererExtension = new RendererExtension();
 
         // Reflection is an unholy magic. It's powerful alright, but very unsafe.
         // region SOUND NAME EXTRACTION
@@ -868,15 +872,15 @@ public class MarathonTwo extends MarathonModeBase {
                     int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
                     int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                    RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
                 } else {
                     int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
                     int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
 
-                    RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                    RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                    RendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                    RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
                 }
             }
         }
@@ -959,7 +963,7 @@ public class MarathonTwo extends MarathonModeBase {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
-                    RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
                 }
             }
 

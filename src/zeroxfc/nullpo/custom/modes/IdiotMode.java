@@ -17,6 +17,7 @@ import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
@@ -357,6 +358,8 @@ public class IdiotMode extends DummyMode {
     private int[][] rankingGradePlayer;     // Grade rankings
     private int[][] rankingLevelPlayer;     // Level rankings
 
+    private RendererExtension rendererExtension;
+
     /*
      * [--- OVERRIDE METHOD BLOCK ---]
      */
@@ -465,6 +468,8 @@ public class IdiotMode extends DummyMode {
         engine.bigmove = false;
         engine.staffrollEnable = true;
         engine.staffrollNoDeath = false;
+
+        rendererExtension = new RendererExtension();
 
         // Is replay?
         if (owner.replayMode == false) {
@@ -887,15 +892,15 @@ public class IdiotMode extends DummyMode {
                 int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
                 int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
             } else {
                 int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
                 int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
 
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
             }
         }
     }
@@ -1046,7 +1051,7 @@ public class IdiotMode extends DummyMode {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
-                    RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
                 }
             }
 

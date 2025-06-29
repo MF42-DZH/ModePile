@@ -36,13 +36,10 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.net.NetUtil;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.subsystem.mode.NetDummyMode;
-import mu.nu.nullpo.gui.sdl.ResourceHolderSDL;
-import mu.nu.nullpo.gui.slick.ResourceHolder;
-import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import java.util.Random;
 
@@ -553,17 +550,7 @@ public class SubscriberChallenge extends NetDummyMode {
 	}
 
 	public int getSkinCount() {
-		final int holder = AnimatedBackgroundHook.getResourceHook();
-		switch (holder) {
-			case AnimatedBackgroundHook.HOLDER_SLICK:
-				return ResourceHolder.imgNormalBlockList.size();
-			case AnimatedBackgroundHook.HOLDER_SWING:
-				return ResourceHolderSwing.imgNormalBlockList.size();
-			case AnimatedBackgroundHook.HOLDER_SDL:
-				return ResourceHolderSDL.imgNormalBlockList.size();
-			default:
-				return 0;
-		}
+		return CustomResourceHolder.getNumberLoadedBlockSkins();
 	}
 
 	/*

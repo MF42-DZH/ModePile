@@ -56,6 +56,8 @@ public class BlockParticle {
     // Flash
     private boolean isFlashing;
 
+    private RendererExtension rendererExtension;
+
     /**
      * Creates a block particle.
      *
@@ -65,10 +67,11 @@ public class BlockParticle {
      * @param timeToLive  Frames to live.
      * @param randomiser  Randomiser used for setting speed and direction.
      */
-    public BlockParticle(Block block, DoubleVector position, double maxVelocity, int timeToLive, boolean flash, Random randomiser) {
+    public BlockParticle(Block block, RendererExtension rendererExtension, DoubleVector position, double maxVelocity, int timeToLive, boolean flash, Random randomiser) {
         objectTexture = new Block();
         objectTexture.copy(block);
         this.position = position;
+        this.rendererExtension = rendererExtension;
 
         double speed = randomiser.nextDouble() * maxVelocity;
         double angle = randomiser.nextDouble() * Math.PI * 2;
@@ -80,9 +83,10 @@ public class BlockParticle {
         size = 1;
     }
 
-    public BlockParticle(Block block, DoubleVector position, DoubleVector velocity, int timeToLive) {
+    public BlockParticle(Block block, RendererExtension rendererExtension, DoubleVector position, DoubleVector velocity, int timeToLive) {
         objectTexture = new Block();
         objectTexture.copy(block);
+        this.rendererExtension = rendererExtension;
 
         this.position = position;
         this.velocity = velocity;
@@ -121,12 +125,12 @@ public class BlockParticle {
     public void draw(GameEngine engine, EventReceiver receiver, int playerID, int animType) {
         if (engine.displaysize != -1) {
             if (animType == BlockParticleCollection.ANIMATION_TGM) {
-                RendererExtension.drawScaledBlock(receiver, (int) position.getX() + (int) (((engine.displaysize == 0) ? 2 : 4) * size), (int) position.getY() + ((engine.displaysize == 0) ? 2 : 4),
+                rendererExtension.drawScaledBlock(receiver, (int) position.getX() + (int) (((engine.displaysize == 0) ? 2 : 4) * size), (int) position.getY() + ((engine.displaysize == 0) ? 2 : 4),
                     objectTexture.color, objectTexture.skin,
                     objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0.5f, 1f,
                     ((engine.displaysize == 0) ? 1f : 2f) * size, 0);
             }
-            RendererExtension.drawScaledBlock(receiver, (int) position.getX(), (int) position.getY(),
+            rendererExtension.drawScaledBlock(receiver, (int) position.getX(), (int) position.getY(),
                 objectTexture.color, objectTexture.skin,
                 objectTexture.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), (isFlashing && ((currentLifetime / 2) % 2 == 0)) ? -0.8f : 0f, (animType == BlockParticleCollection.ANIMATION_DTET) ? 0.667f : 1f,
                 ((engine.displaysize == 0) ? 1f : 2f) * size, 0);

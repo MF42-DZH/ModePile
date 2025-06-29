@@ -36,7 +36,6 @@ import mu.nu.nullpo.gui.sdl.MouseInputSDL;
 import mu.nu.nullpo.gui.slick.MouseInput;
 import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
 import org.apache.log4j.Logger;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 public class MouseParser {
     /**
@@ -49,14 +48,14 @@ public class MouseParser {
      * Debug Log
      */
     private static final Logger log = Logger.getLogger(MouseParser.class);
-    private final int holderType;
+    private final CustomResourceHolder.Runtime holderType;
 
     /**
      * Creates a new instance. All methods are instance methods since
      * they are dependent on which renderer is being used.
      */
     public MouseParser() {
-        holderType = AnimatedBackgroundHook.getResourceHook();
+        holderType = CustomResourceHolder.getCurrentNullpominoRuntime();
     }
 
     /**
@@ -64,10 +63,10 @@ public class MouseParser {
      */
     public void update() {
         switch (holderType) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+            case SLICK:
                 MouseInput.mouseInput.update(NullpoMinoSlick.appGameContainer.getInput());
                 break;
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 try {
                     MouseInputSDL.mouseInput.update();
                 } catch (Exception e) {
@@ -86,8 +85,8 @@ public class MouseParser {
      */
     public int[] getMouseCoordinates() {
         switch (holderType) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SLICK:
+            case SDL:
                 return new int[] { getMouseX(), getMouseY() };
             default:
                 return new int[] { -1, -1 };
@@ -101,9 +100,9 @@ public class MouseParser {
      */
     public int getMouseX() {
         switch (holderType) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+            case SLICK:
                 return MouseInput.mouseInput.getMouseX();
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 return MouseInputSDL.mouseInput.getMouseX();
             default:
                 return -1;
@@ -117,9 +116,9 @@ public class MouseParser {
      */
     public int getMouseY() {
         switch (holderType) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+            case SLICK:
                 return MouseInput.mouseInput.getMouseY();
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 return MouseInputSDL.mouseInput.getMouseY();
             default:
                 return -1;
@@ -134,7 +133,7 @@ public class MouseParser {
      */
     public boolean getMouseClick(int button) {
         switch (holderType) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+            case SLICK:
                 switch (button) {
                     case BUTTON_LEFT:
                         return MouseInput.mouseInput.isMouseClicked();
@@ -145,7 +144,7 @@ public class MouseParser {
                     default:
                         return false;
                 }
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 switch (button) {
                     case BUTTON_LEFT:
                         return MouseInputSDL.mouseInput.isMouseClicked();
@@ -169,7 +168,7 @@ public class MouseParser {
      */
     public boolean getMousePressed(int button) {
         switch (holderType) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+            case SLICK:
                 switch (button) {
                     case BUTTON_LEFT:
                         return MouseInput.mouseInput.isMousePressed();
@@ -180,7 +179,7 @@ public class MouseParser {
                     default:
                         return false;
                 }
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 switch (button) {
                     case BUTTON_LEFT:
                         return MouseInputSDL.mouseInput.isMousePressed();

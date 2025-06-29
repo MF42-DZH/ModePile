@@ -49,7 +49,7 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
     private static final double MIN_ANGLE = -60d, MAX_ANGLE = 60d;
     private static final int MIN_TRAVEL_TIME = 600, MAX_TRAVEL_TIME = 1800;
     private static final float MIN_SCALE = 1.5f, MAX_SCALE = 4f;
-    private final int holderType;
+    private final CustomResourceHolder.Runtime holderType;
     private final double sizeX;
     private final double sizeY;
     /**
@@ -72,7 +72,7 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
     {
         ID = AnimatedBackgroundHook.ANIMATION_TGM3TI_STYLE;
         setImageName("localBG");
-        holderType = getResourceHook();
+        holderType = CustomResourceHolder.getCurrentNullpominoRuntime();
 
         lastValues = new ValueWrapper();
         currentValues = new ValueWrapper();

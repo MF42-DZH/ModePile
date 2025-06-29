@@ -14,6 +14,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
@@ -732,6 +733,8 @@ public class ShadowMarathon extends MarathonModeBase {
     private int[][] rankingLinesPlayer;
     private int[][] rankingTimePlayer;
 
+    private RendererExtension rendererExtension;
+
     @Override
     public String getName() {
         return "SHADOW MARATHON";
@@ -783,6 +786,8 @@ public class ShadowMarathon extends MarathonModeBase {
         rankingScorePlayer = new int[RANKING_TYPE][RANKING_MAX];
         rankingLinesPlayer = new int[RANKING_TYPE][RANKING_MAX];
         rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
+
+        rendererExtension = new RendererExtension();
 
         netPlayerInit(engine, playerID);
 
@@ -2137,15 +2142,15 @@ public class ShadowMarathon extends MarathonModeBase {
                 int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
                 int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
             } else {
                 int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
                 int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
 
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
             }
         }
     }
@@ -2319,8 +2324,8 @@ public class ShadowMarathon extends MarathonModeBase {
             }
 
             if (fallPieceDraw != null) {
-                RendererExtension.drawPiece(receiver, (int) fallPieceLoc[0] + 2, (int) fallPieceLoc[1] + 2, fallPieceDraw, 1f, (1f / 3f));
-                RendererExtension.drawPiece(receiver, (int) fallPieceLoc[0], (int) fallPieceLoc[1], fallPieceDraw, 1f, 0f);
+                rendererExtension.drawPiece(receiver, (int) fallPieceLoc[0] + 2, (int) fallPieceLoc[1] + 2, fallPieceDraw, 1f, (1f / 3f));
+                rendererExtension.drawPiece(receiver, (int) fallPieceLoc[0], (int) fallPieceLoc[1], fallPieceDraw, 1f, 0f);
             }
         }
 

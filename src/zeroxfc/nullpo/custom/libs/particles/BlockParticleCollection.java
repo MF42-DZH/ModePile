@@ -38,6 +38,7 @@ import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
+import zeroxfc.nullpo.custom.libs.RendererExtension;
 
 public class BlockParticleCollection {
     // Animation types:
@@ -50,15 +51,19 @@ public class BlockParticleCollection {
     // Animation type
     private final int animationType;
 
+    private RendererExtension rendererExtension;
+
     /**
      * Creates a new collection of particles.
      *
      * @param length Maximum particle count.
      */
-    public BlockParticleCollection(int length, int animType) {
+    public BlockParticleCollection(RendererExtension rendererExtension, int length, int animType) {
         collectionBlockParticles = new BlockParticle[length];
         animationType = animType;
         Arrays.fill(collectionBlockParticles, null);
+
+        this.rendererExtension = rendererExtension;
     }
 
     public void update() {
@@ -98,7 +103,7 @@ public class BlockParticleCollection {
 
         timeToLive += (randomiser.nextInt(5) - 2);
 
-        collectionBlockParticles[i] = new BlockParticle(k, position, maxVelocity, timeToLive, isFlashing, randomiser);
+        collectionBlockParticles[i] = new BlockParticle(k, rendererExtension, position, maxVelocity, timeToLive, isFlashing, randomiser);
     }
 
     public void addBlock(GameEngine engine, EventReceiver receiver, int playerID, Block block, int x, int y, int maxX, int yMod, int maxYMod, int timeToLive) {
@@ -121,7 +126,7 @@ public class BlockParticleCollection {
         double mod = (1.0 / 3.0) * xU;
         DoubleVector velocity = new DoubleVector(mod * 1.1d, -4.8 * (0.5 + (0.5 * ((double) (maxYMod - yMod) / maxYMod))), false);
 
-        collectionBlockParticles[i] = new BlockParticle(k, position, velocity, timeToLive);
+        collectionBlockParticles[i] = new BlockParticle(k, rendererExtension, position, velocity, timeToLive);
     }
 
     public int getCount() {

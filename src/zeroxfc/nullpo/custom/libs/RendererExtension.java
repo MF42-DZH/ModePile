@@ -84,6 +84,18 @@ public class RendererExtension {
      */
     private static final boolean DEBUG = true;
 
+    // Local instance for custom resource holder.
+    private final CustomResourceHolder customGraphics;
+
+    /** Use this constructor when no custom resource holder is used by the gamemode. */
+    public RendererExtension() {
+        this(new CustomResourceHolder(1));
+    }
+
+    public RendererExtension(CustomResourceHolder customGraphics) {
+        this.customGraphics = customGraphics;
+    }
+
     /**
      * Draw piece
      *
@@ -93,20 +105,20 @@ public class RendererExtension {
      * @param scale    Scale factor at which the piece is drawn in (0.5f, 1f or 2f)
      * @param darkness Darkness value (0f = None, negative = lighter, positive = darker)
      */
-    public static void drawPiece(EventReceiver receiver, int x, int y, Piece piece, float scale, float darkness) {
-        final int renderer = AnimatedBackgroundHook.getResourceHook();
+    public void drawPiece(EventReceiver receiver, int x, int y, Piece piece, float scale, float darkness) {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
 
         Class<?> local;
         Method localMethod;
 
         switch (renderer) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+            case SLICK:
                 local = RendererSlick.class;
                 break;
-            case AnimatedBackgroundHook.HOLDER_SWING:
+            case SWING:
                 local = RendererSwing.class;
                 break;
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 local = RendererSDL.class;
                 break;
             default:
@@ -132,7 +144,7 @@ public class RendererExtension {
      * @param scale    Scale factor at which the piece is drawn in
      * @param darkness Darkness value (0f = None, negative = lighter, positive = darker)
      */
-    public static void drawScaledPiece(EventReceiver receiver, int x, int y, Piece piece, float scale, float darkness) {
+    public void drawScaledPiece(EventReceiver receiver, int x, int y, Piece piece, float scale, float darkness) {
         if (piece.big) {
             for (int i = 0; i < piece.block.length; i++) {
                 int x2 = x + (int) (piece.dataX[piece.direction][i] * 32 * scale);
@@ -167,7 +179,7 @@ public class RendererExtension {
      * @param scale    Scale factor at which the piece is drawn in
      * @param darkness Darkness value (0f = None, negative = lighter, positive = darker)
      */
-    public static void drawScaledPiece(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, Piece piece, float scale, float darkness) {
+    public void drawScaledPiece(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, Piece piece, float scale, float darkness) {
         if (piece.big) {
             for (int i = 0; i < piece.block.length; i++) {
                 int x2 = x + (int) (piece.dataX[piece.direction][i] * 32 * scale);
@@ -218,7 +230,7 @@ public class RendererExtension {
      * @param scale     Scale factor at which the piece is drawn in
      * @param darkness  Darkness value (0f = None, negative = lighter, positive = darker)
      */
-    public static void drawAlignedScaledPiece(EventReceiver receiver, int x, int y, int alignment, Piece piece, float scale, float darkness) {
+    public void drawAlignedScaledPiece(EventReceiver receiver, int x, int y, int alignment, Piece piece, float scale, float darkness) {
         final int baseSize = 16 * Math.max(piece.getWidth(), piece.getHeight());
         int offsetX, offsetY;
 
@@ -270,7 +282,7 @@ public class RendererExtension {
      * @param y        Y-Coordinate of top left corner of 16x16 block
      * @param blk      Block to break
      */
-    public static void addBlockBreakEffect(EventReceiver receiver, int x, int y, Block blk) {
+    public void addBlockBreakEffect(EventReceiver receiver, int x, int y, Block blk) {
         if (receiver == null || blk == null) return;
         addBlockBreakEffect(receiver, blk.isGemBlock() ? 2 : 1, x, y, blk.getDrawColor());
     }
@@ -284,11 +296,11 @@ public class RendererExtension {
      * @param y          Y-Coordinate of top left corner of 16x16 block
      * @param color      Effect colour
      */
-    public static void addBlockBreakEffect(EventReceiver receiver, int effectType, int x, int y, int color) {
+    public void addBlockBreakEffect(EventReceiver receiver, int effectType, int x, int y, int color) {
         if (receiver == null) return;
 
-        int renderer = AnimatedBackgroundHook.getResourceHook();
-        if (renderer == AnimatedBackgroundHook.HOLDER_SWING) return;
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+        if (renderer == CustomResourceHolder.Runtime.SWING) return;
 
         Class<?> local;
         Field effectList;
@@ -296,11 +308,11 @@ public class RendererExtension {
         boolean show;
 
         switch (renderer) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+            case SLICK:
                 local = RendererSlick.class;
                 show = NullpoMinoSlick.propConfig.getProperty("option.showlineeffect", true);
                 break;
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 local = RendererSDL.class;
                 show = NullpoMinoSDL.propConfig.getProperty("option.showlineeffect", true);
                 break;
@@ -344,12 +356,12 @@ public class RendererExtension {
      * @param scale    Scale of drawing
      * @param attr     Block attributes (use attrs in <code>Block</code> class and combine with <code>|</code>, or use <code>0</code> for none)
      */
-    public static void drawScaledBlock(EventReceiver receiver, int x, int y, int color, int skin, boolean bone, float darkness, float alpha, float scale, int attr) {
-        final int renderer = AnimatedBackgroundHook.getResourceHook();
+    public void drawScaledBlock(EventReceiver receiver, int x, int y, int color, int skin, boolean bone, float darkness, float alpha, float scale, int attr) {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
 
-        if (renderer == AnimatedBackgroundHook.HOLDER_SLICK) {
+        if (renderer == CustomResourceHolder.Runtime.SLICK) {
             // region Slick Case
-            Graphics graphics = CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
+            Graphics graphics = customGraphics.getGraphicsSlick((RendererSlick) receiver);
             if (graphics == null) return;
 
             if ((color <= Block.BLOCK_COLOR_INVALID)) return;
@@ -434,9 +446,9 @@ public class RendererExtension {
                 graphics.fillRect(x, y, size, size);
             }
             // endregion Slick Case
-        } else if (renderer == AnimatedBackgroundHook.HOLDER_SWING) {
+        } else if (renderer == CustomResourceHolder.Runtime.SWING) {
             // region Swing Case
-            Graphics2D graphics = CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
+            Graphics2D graphics = customGraphics.getGraphicsSwing((RendererSwing) receiver);
             if (graphics == null) return;
 
             if ((color <= Block.BLOCK_COLOR_INVALID)) return;
@@ -584,10 +596,10 @@ public class RendererExtension {
                 graphics.setColor(backupColor);
             }
             // endregion Swing Case
-        } else if (renderer == AnimatedBackgroundHook.HOLDER_SDL) {
+        } else if (renderer == CustomResourceHolder.Runtime.SDL) {
             try {
                 // region SDL Case
-                SDLSurface graphics = CustomResourceHolder.getGraphicsSDL((RendererSDL) receiver);
+                SDLSurface graphics = customGraphics.getGraphicsSDL((RendererSDL) receiver);
                 if (graphics == null) return;
 
                 if (color <= Block.BLOCK_COLOR_INVALID) return;
@@ -723,7 +735,7 @@ public class RendererExtension {
      * @param scale     Scale of drawing
      * @param attr      Block attributes (use attrs in <code>Block</code> class and combine with <code>|</code>, or use <code>0</code> for none)
      */
-    public static void drawAlignedScaledBlock(EventReceiver receiver, int x, int y, int alignment, int color, int skin, boolean bone, float darkness, float alpha, float scale, int attr) {
+    public void drawAlignedScaledBlock(EventReceiver receiver, int x, int y, int alignment, int color, int skin, boolean bone, float darkness, float alpha, float scale, int attr) {
         final int baseSize = 16;
         int offsetX, offsetY;
 
@@ -771,16 +783,16 @@ public class RendererExtension {
      * @param value    Float in the range <code>0 <= value <= 1</code> that denotes how full the meter is
      * @param scale    Scale factor of speed meter drawn
      */
-    public static void drawDirectSpeedMeter(EventReceiver receiver, int x, int y, float value, float scale) {
-        final int renderer = AnimatedBackgroundHook.getResourceHook();
+    public void drawDirectSpeedMeter(EventReceiver receiver, int x, int y, float value, float scale) {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
 
         final int baseWidth = (int) (42 * scale);
         final int meterMax = baseWidth - 2;
         final int baseHeight = (int) (4 * scale);
 
-        if (renderer == AnimatedBackgroundHook.HOLDER_SLICK) {
+        if (renderer == CustomResourceHolder.Runtime.SLICK) {
             //region Slick Case
-            Graphics graphics = CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
+            Graphics graphics = customGraphics.getGraphicsSlick((RendererSlick) receiver);
 
             if (graphics == null) return;
 
@@ -799,9 +811,9 @@ public class RendererExtension {
 
             graphics.setColor(Color.white);
             //endregion Slick Case
-        } else if (renderer == AnimatedBackgroundHook.HOLDER_SWING) {
+        } else if (renderer == CustomResourceHolder.Runtime.SWING) {
             //region Swing Case
-            Graphics2D graphics = CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
+            Graphics2D graphics = customGraphics.getGraphicsSwing((RendererSwing) receiver);
 
             if (graphics == null) return;
 
@@ -820,9 +832,9 @@ public class RendererExtension {
 
             graphics.setColor(java.awt.Color.white);
             //endregion Swing Case
-        } else if (renderer == AnimatedBackgroundHook.HOLDER_SDL) {
+        } else if (renderer == CustomResourceHolder.Runtime.SDL) {
             //region SDL Case
-            SDLSurface graphics = CustomResourceHolder.getGraphicsSDL((RendererSDL) receiver);
+            SDLSurface graphics = customGraphics.getGraphicsSDL((RendererSDL) receiver);
 
             if (graphics == null) return;
 
@@ -866,7 +878,7 @@ public class RendererExtension {
      * @param value     Float in the range <code>0 <= value <= 1</code> that denotes how full the meter is
      * @param scale     Scale factor of speed meter drawn
      */
-    public static void drawAlignedSpeedMeter(EventReceiver receiver, int x, int y, int alignment, float value, float scale) {
+    public void drawAlignedSpeedMeter(EventReceiver receiver, int x, int y, int alignment, float value, float scale) {
         final int baseWidth = (int) (42 * scale);
         final int baseHeight = (int) (4 * scale);
 

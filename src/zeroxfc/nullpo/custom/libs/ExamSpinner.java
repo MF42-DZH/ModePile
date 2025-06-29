@@ -96,6 +96,7 @@ public class ExamSpinner {
     private String[] possibilities;
     private boolean clickedBefore;
     private int lifeTime;
+    private RendererExtension rendererExtension;
 
     {
         lifeTime = 0;
@@ -119,6 +120,7 @@ public class ExamSpinner {
 
         customHolder = new CustomResourceHolder();
         customHolder.loadImage("res/graphics/examResultText.png", "default");
+        rendererExtension = new RendererExtension(customHolder);
 
         log.debug("Non-custom ExamSpinner object created.");
 
@@ -148,6 +150,9 @@ public class ExamSpinner {
         if (possibilities.length > 2) possibilities = new String[] { possibilities[0], possibilities[1] };
 
         log.debug("Custom ExamSpinner object created.");
+
+        customHolder = new CustomResourceHolder();
+        rendererExtension = new RendererExtension(customHolder);
 
         this.header = header;
         this.subheading = subheading;
@@ -249,7 +254,7 @@ public class ExamSpinner {
                         int height = ((lifeTime - spinDuration - 113) * 2) - 1;
                         int width = 3;
 
-                        RendererExtension.drawScaledPiece(receiver, baseX + width * 16, baseY + height * 16, HUGE_O, 1f, 0f);
+                        rendererExtension.drawScaledPiece(receiver, baseX + width * 16, baseY + height * 16, HUGE_O, 1f, 0f);
                     }
                 } else {
                     if (lifeTime == spinDuration + 120) {
@@ -258,7 +263,7 @@ public class ExamSpinner {
                             for (int x = 3; x < 8; x++) {
                                 int x2 = x * 16 + baseX;
                                 int y2 = y * 16 + baseY;
-                                RendererExtension.addBlockBreakEffect(receiver, x2, y2, blk);
+                                rendererExtension.addBlockBreakEffect(receiver, x2, y2, blk);
                             }
                         }
                     }
@@ -322,7 +327,7 @@ public class ExamSpinner {
                         int height = ((lifeTime - spinDuration - 113) * 2) - 1;
                         int width = 3;
 
-                        RendererExtension.drawScaledPiece(receiver, baseX + width * 16, baseY + height * 16, HUGE_O, 1f, 0f);
+                        rendererExtension.drawScaledPiece(receiver, baseX + width * 16, baseY + height * 16, HUGE_O, 1f, 0f);
                     }
                 } else {
                     if (lifeTime == spinDuration + 120) {
@@ -331,7 +336,7 @@ public class ExamSpinner {
                             for (int x = 3; x < 8; x++) {
                                 int x2 = x * 16 + baseX;
                                 int y2 = y * 16 + baseY;
-                                RendererExtension.addBlockBreakEffect(receiver, x2, y2, blk);
+                                rendererExtension.addBlockBreakEffect(receiver, x2, y2, blk);
                             }
                         }
                     }

@@ -149,7 +149,7 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 	/** EventReceiver object (This receives many game events, can also be used for drawing the fonts.) */
 	private EventReceiver receiver;
 
-	private CustomResourceHolder rhcae = new CustomResourceHolder(18);
+	private CustomResourceHolder rhcae;
 
 	/** Amount of points you just get from line clears */
 	private int lastscore;
@@ -277,6 +277,8 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 		engine.speed.lineDelay = 47;
 		engine.speed.das = 13;
 		engine.framecolor = GameEngine.FRAME_COLOR_BLUE;
+
+		rhcae = new CustomResourceHolder(18);
 
 		if(owner.replayMode == false) {
 			loadSetting(owner.modeConfig);

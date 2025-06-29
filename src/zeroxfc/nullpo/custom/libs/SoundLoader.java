@@ -46,7 +46,6 @@ import mu.nu.nullpo.gui.swing.WaveEngine;
 import org.apache.log4j.Logger;
 import org.newdawn.slick.Sound;
 import sdljava.mixer.MixChunk;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 public class SoundLoader {
     private static final String CUSTOM_SKIN_DIRECTORY = "custom.skin.directory";
@@ -113,16 +112,16 @@ public class SoundLoader {
      */
     private static void importSound(String soundName) {
         String skindir = null;
-        int holderType = AnimatedBackgroundHook.getResourceHook();
+        final CustomResourceHolder.Runtime holderType = CustomResourceHolder.getCurrentNullpominoRuntime();
 
         switch (holderType) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+            case SLICK:
                 skindir = mu.nu.nullpo.gui.slick.NullpoMinoSlick.propConfig.getProperty(CUSTOM_SKIN_DIRECTORY, "res");
                 break;
-            case AnimatedBackgroundHook.HOLDER_SWING:
+            case SWING:
                 skindir = mu.nu.nullpo.gui.swing.NullpoMinoSwing.propConfig.getProperty(CUSTOM_SKIN_DIRECTORY, "res");
                 break;
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 skindir = mu.nu.nullpo.gui.sdl.NullpoMinoSDL.propConfig.getProperty(CUSTOM_SKIN_DIRECTORY, "res");
                 break;
         }
@@ -161,14 +160,14 @@ public class SoundLoader {
     @SuppressWarnings("unchecked")
     public static List<String> getSoundNames() {
         final ArrayList<String> soundList = new ArrayList<>();
-        final int holderType = AnimatedBackgroundHook.getResourceHook();
+        final CustomResourceHolder.Runtime holderType = CustomResourceHolder.getCurrentNullpominoRuntime();
 
         /*
          * XXX: welp, i guess it's time to use reflection again... apologies in advance for this atrocity.
          */
         Field localField;
         switch (holderType) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+            case SLICK:
                 Class<SoundManager> slickSound = SoundManager.class;
                 try {
                     localField = slickSound.getDeclaredField("clipMap");
@@ -187,7 +186,7 @@ public class SoundLoader {
                 }
 
                 break;
-            case AnimatedBackgroundHook.HOLDER_SWING:
+            case SWING:
                 Class<WaveEngine> swingSound = WaveEngine.class;
                 try {
                     localField = swingSound.getDeclaredField("clipMap");
@@ -206,7 +205,7 @@ public class SoundLoader {
                 }
 
                 break;
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 Class<SoundManagerSDL> sdlSound = SoundManagerSDL.class;
                 try {
                     localField = sdlSound.getDeclaredField("clipMap");

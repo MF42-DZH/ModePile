@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import mu.nu.nullpo.game.event.EventReceiver;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.BufferedPrimitiveDrawingHook;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public abstract class ParticleEmitterBase {
     /**
@@ -33,13 +34,17 @@ public abstract class ParticleEmitterBase {
     /**
      * Drawing buffer
      */
-    protected BufferedPrimitiveDrawingHook drawingQueue = new BufferedPrimitiveDrawingHook();
+    protected final BufferedPrimitiveDrawingHook drawingQueue;
+
+    protected ParticleEmitterBase(CustomResourceHolder customGraphics) {
+        drawingQueue = new BufferedPrimitiveDrawingHook(customGraphics);
+    }
 
     /**
      * Update method. Used to update all partcles.
      */
     public void update() {
-        if (particles.size() <= 0) return;
+        if (particles.isEmpty()) return;
         for (int i = particles.size() - 1; i >= 0; i--) {
             boolean res = particles.get(i).update();
             if (res) {
@@ -54,7 +59,7 @@ public abstract class ParticleEmitterBase {
      * @param receiver Renderer to use
      */
     public void draw(EventReceiver receiver) {
-        if (particles.size() <= 0) return;
+        if (particles.isEmpty()) return;
         for (Particle p : particles) {
             if (p.position.getX() < 0 || p.position.getX() > 640) continue;
             if (p.position.getY() < 0 || p.position.getY() > 480) continue;

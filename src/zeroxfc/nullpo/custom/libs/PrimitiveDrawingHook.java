@@ -10,14 +10,18 @@ import org.newdawn.slick.Color;
 import org.newdawn.slick.Graphics;
 import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 public class PrimitiveDrawingHook {
     // Log object for debugging
     private static final Logger log = Logger.getLogger(PrimitiveDrawingHook.class);
 
-    // Hide public constructor.
-    private PrimitiveDrawingHook() {}
+    /** The custom resource holder used to draw the objects. */
+    private final CustomResourceHolder customGraphics;
+
+    /** Requires a mode-local instance of a custom resource holder. */
+    public PrimitiveDrawingHook(CustomResourceHolder customGraphics) {
+        this.customGraphics = customGraphics;
+    }
 
     /**
      * Draws a rectangle using a set of coordinates and its dimensions.
@@ -33,11 +37,11 @@ public class PrimitiveDrawingHook {
      * @param alpha    Alpha component of colour
      * @param fill     Fill rectangle?
      */
-    public static void drawRectangle(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int red, int green, int blue, int alpha, boolean fill) {
-        switch (AnimatedBackgroundHook.getResourceHook()) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+    public void drawRectangle(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int red, int green, int blue, int alpha, boolean fill) {
+        switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
+            case SLICK:
                 // Slick graphics object
-                Graphics graphicsSlick = CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
+                Graphics graphicsSlick = customGraphics.getGraphicsSlick((RendererSlick) receiver);
                 if (graphicsSlick == null) return;
 
                 graphicsSlick.setColor(new Color(red, green, blue, alpha));
@@ -45,9 +49,9 @@ public class PrimitiveDrawingHook {
                 else graphicsSlick.drawRect(x, y, sizeX, sizeY);
                 graphicsSlick.setColor(Color.white);
                 break;
-            case AnimatedBackgroundHook.HOLDER_SWING:
+            case SWING:
                 // Swing graphics object
-                Graphics2D graphicsSwing = CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
+                Graphics2D graphicsSwing = customGraphics.getGraphicsSwing((RendererSwing) receiver);
                 if (graphicsSwing == null) return;
 
                 graphicsSwing.setColor(new java.awt.Color(red, green, blue, alpha));
@@ -55,9 +59,9 @@ public class PrimitiveDrawingHook {
                 else graphicsSwing.drawRect(x, y, sizeX, sizeY);
                 graphicsSwing.setColor(java.awt.Color.white);
                 break;
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 // SDL graphics object
-                SDLSurface graphicsSDL = CustomResourceHolder.getGraphicsSDL((RendererSDL) receiver);
+                SDLSurface graphicsSDL = customGraphics.getGraphicsSDL((RendererSDL) receiver);
                 if (graphicsSDL == null) return;
 
                 SDLRect rectDst = new SDLRect(x, y, sizeX, sizeY);
@@ -92,11 +96,11 @@ public class PrimitiveDrawingHook {
      * @param alpha      Alpha component of colour
      * @param fill       Fill arc?
      */
-    public static void drawArc(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int angleStart, int angleSize, int red, int green, int blue, int alpha, boolean fill) {
-        switch (AnimatedBackgroundHook.getResourceHook()) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+    public void drawArc(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int angleStart, int angleSize, int red, int green, int blue, int alpha, boolean fill) {
+        switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
+            case SLICK:
                 // Slick graphics object
-                Graphics graphicsSlick = CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
+                Graphics graphicsSlick = customGraphics.getGraphicsSlick((RendererSlick) receiver);
                 if (graphicsSlick == null) return;
 
                 graphicsSlick.setColor(new Color(red, green, blue, alpha));
@@ -105,9 +109,9 @@ public class PrimitiveDrawingHook {
                 graphicsSlick.setColor(Color.white);
 
                 break;
-            case AnimatedBackgroundHook.HOLDER_SWING:
+            case SWING:
                 // Swing graphics object
-                Graphics2D graphicsSwing = CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
+                Graphics2D graphicsSwing = customGraphics.getGraphicsSwing((RendererSwing) receiver);
                 if (graphicsSwing == null) return;
 
                 graphicsSwing.setColor(new java.awt.Color(red, green, blue, alpha));
@@ -137,11 +141,11 @@ public class PrimitiveDrawingHook {
      * @param alpha    Alpha component of colour
      * @param fill     Fill oval?
      */
-    public static void drawOval(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int red, int green, int blue, int alpha, boolean fill) {
-        switch (AnimatedBackgroundHook.getResourceHook()) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+    public void drawOval(EventReceiver receiver, int x, int y, int sizeX, int sizeY, int red, int green, int blue, int alpha, boolean fill) {
+        switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
+            case SLICK:
                 // Slick graphics object
-                Graphics graphicsSlick = CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
+                Graphics graphicsSlick = customGraphics.getGraphicsSlick((RendererSlick) receiver);
                 if (graphicsSlick == null) return;
 
                 graphicsSlick.setColor(new Color(red, green, blue, alpha));
@@ -150,9 +154,9 @@ public class PrimitiveDrawingHook {
                 graphicsSlick.setColor(Color.white);
 
                 break;
-            case AnimatedBackgroundHook.HOLDER_SWING:
+            case SWING:
                 // Swing graphics object
-                Graphics2D graphicsSwing = CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
+                Graphics2D graphicsSwing = customGraphics.getGraphicsSwing((RendererSwing) receiver);
                 if (graphicsSwing == null) return;
 
                 graphicsSwing.setColor(new java.awt.Color(red, green, blue, alpha));
@@ -186,8 +190,8 @@ public class PrimitiveDrawingHook {
             !(graphicsObject instanceof Graphics2D) &&
             !(graphicsObject instanceof SDLSurface)) return;
 
-        switch (AnimatedBackgroundHook.getResourceHook()) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+        switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
+            case SLICK:
                 // Slick graphics object
                 assert graphicsObject instanceof Graphics;
                 Graphics graphicsSlick = (Graphics) graphicsObject;
@@ -197,7 +201,7 @@ public class PrimitiveDrawingHook {
                 else graphicsSlick.drawRect(x, y, sizeX, sizeY);
                 graphicsSlick.setColor(Color.white);
                 break;
-            case AnimatedBackgroundHook.HOLDER_SWING:
+            case SWING:
                 // Swing graphics object
                 assert graphicsObject instanceof Graphics2D;
                 Graphics2D graphicsSwing = (Graphics2D) graphicsObject;
@@ -207,7 +211,7 @@ public class PrimitiveDrawingHook {
                 else graphicsSwing.drawRect(x, y, sizeX, sizeY);
                 graphicsSwing.setColor(java.awt.Color.white);
                 break;
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 // SDL graphics object
                 assert graphicsObject instanceof SDLSurface;
                 SDLSurface graphicsSDL = (SDLSurface) graphicsObject;
@@ -249,8 +253,8 @@ public class PrimitiveDrawingHook {
             !(graphicsObject instanceof Graphics2D) &&
             !(graphicsObject instanceof SDLSurface)) return;
 
-        switch (AnimatedBackgroundHook.getResourceHook()) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+        switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
+            case SLICK:
                 // Slick graphics object
                 assert graphicsObject instanceof Graphics;
                 Graphics graphicsSlick = (Graphics) graphicsObject;
@@ -260,7 +264,7 @@ public class PrimitiveDrawingHook {
                 else graphicsSlick.drawArc(x, y, sizeX, sizeY, angleStart, angleSize);
                 graphicsSlick.setColor(Color.white);
                 break;
-            case AnimatedBackgroundHook.HOLDER_SWING:
+            case SWING:
                 // Swing graphics object
                 assert graphicsObject instanceof Graphics2D;
                 Graphics2D graphicsSwing = (Graphics2D) graphicsObject;
@@ -296,8 +300,8 @@ public class PrimitiveDrawingHook {
             !(graphicsObject instanceof Graphics2D) &&
             !(graphicsObject instanceof SDLSurface)) return;
 
-        switch (AnimatedBackgroundHook.getResourceHook()) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+        switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
+            case SLICK:
                 // Slick graphics object
                 assert graphicsObject instanceof Graphics;
                 Graphics graphicsSlick = (Graphics) graphicsObject;
@@ -307,7 +311,7 @@ public class PrimitiveDrawingHook {
                 else graphicsSlick.drawOval(x, y, sizeX, sizeY);
                 graphicsSlick.setColor(Color.white);
                 break;
-            case AnimatedBackgroundHook.HOLDER_SWING:
+            case SWING:
                 // Swing graphics object
                 assert graphicsObject instanceof Graphics2D;
                 Graphics2D graphicsSwing = (Graphics2D) graphicsObject;

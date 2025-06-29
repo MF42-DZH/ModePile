@@ -60,40 +60,20 @@ public abstract class AnimatedBackgroundHook {
         ANIMATION_INTERLACE_HORIZONTAL = 9,   // I hope you like Earthbound.
         ANIMATION_INTERLACE_VERTICAL = 10,    // I hope you like Earthbound.
         ANIMATION_FAKE_SCANLINES = 11;        // Fake CRT Scanlines.
-    /**
-     * ResourceHolder--- types
-     */
-    public static final int HOLDER_SLICK = 0,
-        HOLDER_SWING = 1,
-        HOLDER_SDL = 2;
+
     protected static Logger log = Logger.getLogger(AnimatedBackgroundHook.class);
     private static int LAST_BG = -1;
     private static int LAST_FADE_BG = -1;
     /**
      * Stored ResourceHolder--- type
      */
-    private static int ResourceHolderType = -1;
+    private static final CustomResourceHolder.Runtime resourceHolderType;
     protected int ID;
     protected CustomResourceHolder customHolder;
     protected String imageName;
 
-    /**
-     * Gets the current resource holder type.<br />
-     * Useful for selecting different renderers, sound engines or input handlers.
-     *
-     * @return Integer that represents the holder type.
-     */
-    public static int getResourceHook() {
-        if (ResourceHolderType < 0) {
-            String mainClass = CustomResourceHolder.getMainClassName();
-
-            if (mainClass.contains("Slick")) ResourceHolderType = HOLDER_SLICK;
-            else if (mainClass.contains("Swing")) ResourceHolderType = HOLDER_SWING;
-            else if (mainClass.contains("SDL")) ResourceHolderType = HOLDER_SDL;
-            else ResourceHolderType = -1;
-        }
-
-        return ResourceHolderType;
+    static {
+        resourceHolderType = CustomResourceHolder.getCurrentNullpominoRuntime();
     }
 
     /**
@@ -156,12 +136,12 @@ public abstract class AnimatedBackgroundHook {
      */
     @Deprecated
     public static boolean getInitialBGState() {
-        switch (getResourceHook()) {
-            case HOLDER_SLICK:
+        switch (resourceHolderType) {
+            case SLICK:
                 return NullpoMinoSlick.propConfig.getProperty("option.showbg", true);
-            case HOLDER_SWING:
+            case SWING:
                 return NullpoMinoSwing.propConfig.getProperty("option.showbg", true);
-            case HOLDER_SDL:
+            case SDL:
                 return NullpoMinoSDL.propConfig.getProperty("option.showbg", true);
             default:
                 return false;

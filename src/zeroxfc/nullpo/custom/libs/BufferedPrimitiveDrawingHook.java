@@ -6,7 +6,6 @@ import mu.nu.nullpo.gui.sdl.RendererSDL;
 import mu.nu.nullpo.gui.slick.RendererSlick;
 import mu.nu.nullpo.gui.swing.RendererSwing;
 import org.apache.log4j.Logger;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 public class BufferedPrimitiveDrawingHook {
     /**
@@ -22,28 +21,18 @@ public class BufferedPrimitiveDrawingHook {
     /** Temporary holder for EventReceiver. */
     private EventReceiver receiver = null;
 
-    /** Lazy instantiator for graphics object. */
-    private final LazyReference<Object> USER_GRAPHICS_OBJECT = LazyReference.fromCallable(() -> {
-        switch (AnimatedBackgroundHook.getResourceHook()) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
-                // Slick graphics object
-                return CustomResourceHolder.getGraphicsSlick((RendererSlick) receiver);
-            case AnimatedBackgroundHook.HOLDER_SWING:
-                // Swing graphics object
-                return CustomResourceHolder.getGraphicsSwing((RendererSwing) receiver);
-            case AnimatedBackgroundHook.HOLDER_SDL:
-                // SDL graphics object
-                return CustomResourceHolder.getGraphicsSDL((RendererSDL) receiver);
-            default:
-                throw new LazyLoadException("Cannot find renderer!");
-        }
-    });
+    private CustomResourceHolder customGraphics;
 
-/**
- * Create a new queue.
- */
-public BufferedPrimitiveDrawingHook() {
-    commandBuffer = new ArrayList<>();
+    /** The current graphics context. */
+    private Object userGraphicsObject;
+
+    /**
+     * Create a new queue.
+     * Requires a mode-local instance of a custom resource holder.
+     */
+    public BufferedPrimitiveDrawingHook(CustomResourceHolder customGraphics) {
+        commandBuffer = new ArrayList<>();
+        this.customGraphics = customGraphics;
     }
 
     /**
@@ -88,7 +77,7 @@ public BufferedPrimitiveDrawingHook() {
      * @param receiver Renderer to use
      */
     public void renderAll(EventReceiver receiver) {
-        if (commandBuffer.size() <= 0) return;
+        if (commandBuffer.isEmpty()) return;
 
         try {
             // Get our graphics object.
@@ -96,7 +85,24 @@ public BufferedPrimitiveDrawingHook() {
                 this.receiver = receiver;
             }
 
-            final Object graphicsObject = USER_GRAPHICS_OBJECT.getValue();
+            switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
+                case SLICK:
+                    // Slick graphics object
+                    userGraphicsObject = customGraphics.getGraphicsSlick((RendererSlick) receiver);
+                    break;
+                case SWING:
+                    // Swing graphics object
+                    userGraphicsObject = customGraphics.getGraphicsSwing((RendererSwing) receiver);
+                    break;
+                case SDL:
+                    // SDL graphics object
+                    userGraphicsObject = customGraphics.getGraphicsSDL((RendererSDL) receiver);
+                    break;
+                default:
+                    throw new LazyLoadException("Cannot find renderer!");
+            }
+
+            final Object graphicsObject = userGraphicsObject;
 
             if (graphicsObject == null) return;
             for (RenderCommand cmd : commandBuffer) {

@@ -1,6 +1,7 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
 import java.util.Random;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 
@@ -29,8 +30,8 @@ public class Fireworks extends ParticleEmitterBase {
     /**
      * Parameterless constructor. Uses time as the random seed.
      */
-    public Fireworks() {
-        this(new Random());
+    public Fireworks(CustomResourceHolder customGraphics) {
+        this(customGraphics, new Random());
     }
 
     /**
@@ -38,7 +39,8 @@ public class Fireworks extends ParticleEmitterBase {
      *
      * @param seed Random seed
      */
-    public Fireworks(long seed) {
+    public Fireworks(CustomResourceHolder customGraphics, long seed) {
+        super(customGraphics);
         randomiser = new Random(seed);
     }
 
@@ -47,7 +49,8 @@ public class Fireworks extends ParticleEmitterBase {
      *
      * @param random Random instance
      */
-    public Fireworks(Random random) {
+    public Fireworks(CustomResourceHolder customGraphics, Random random) {
+        super(customGraphics);
         randomiser = random;
     }
 

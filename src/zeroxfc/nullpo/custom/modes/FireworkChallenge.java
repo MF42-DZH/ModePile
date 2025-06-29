@@ -19,6 +19,7 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
@@ -226,6 +227,8 @@ public class FireworkChallenge extends DummyMode {
     private String PLAYER_NAME;
     private int rankingRankPlayer;
     private int[] rankingFireworksPlayer, rankingLevelPlayer, rankingTimePlayer;
+
+    private RendererExtension rendererExtension;
 
     private boolean killed;
     // TODO: debug mode meme
@@ -515,9 +518,11 @@ public class FireworkChallenge extends DummyMode {
     // called onStart
     @Override
     public void startGame(GameEngine engine, int playerID) {
+        final CustomResourceHolder usedCRH = new CustomResourceHolder(1);
+
         killed = false;
         addedCompletionFireworks = false;
-        fireworkEmitter = new Fireworks(engine.randSeed + 31415L);
+        fireworkEmitter = new Fireworks(usedCRH, engine.randSeed + 31415L);
         fireworkRandomiser = new Random(engine.randSeed);
 
         ArrayRandomiser creditScrambler = new ArrayRandomiser(engine.randSeed);
@@ -580,8 +585,10 @@ public class FireworkChallenge extends DummyMode {
         lastPiece = -1;
         engine.big = big;
 
+        rendererExtension = new RendererExtension(usedCRH);
+
         int total = (engine.field.getHeight() + engine.field.getHiddenHeight()) * engine.field.getWidth() * 2;
-        blockParticles = new BlockParticleCollection(total, 1);
+        blockParticles = new BlockParticleCollection(rendererExtension, total, 1);
 
         setSpeed(engine);
         owner.bgmStatus.bgm = 0;
@@ -611,15 +618,15 @@ public class FireworkChallenge extends DummyMode {
                 int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
                 int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
             } else {
                 int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
                 int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
 
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
             }
         }
     }
@@ -726,7 +733,7 @@ public class FireworkChallenge extends DummyMode {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
-                    RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
                 }
             }
 

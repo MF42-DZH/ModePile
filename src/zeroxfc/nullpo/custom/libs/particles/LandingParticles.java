@@ -1,6 +1,7 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
 import java.util.Random;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 
@@ -28,8 +29,8 @@ public class LandingParticles extends ParticleEmitterBase {
     /**
      * Parameterless constructor. Uses time as the random seed.
      */
-    public LandingParticles() {
-        this(new Random());
+    public LandingParticles(CustomResourceHolder customGraphics) {
+        this(customGraphics, new Random());
     }
 
     /**
@@ -37,7 +38,8 @@ public class LandingParticles extends ParticleEmitterBase {
      *
      * @param seed Random seed
      */
-    public LandingParticles(long seed) {
+    public LandingParticles(CustomResourceHolder customGraphics, long seed) {
+        super(customGraphics);
         randomiser = new Random(seed);
     }
 
@@ -46,7 +48,8 @@ public class LandingParticles extends ParticleEmitterBase {
      *
      * @param random Random instance
      */
-    public LandingParticles(Random random) {
+    public LandingParticles(CustomResourceHolder customGraphics, Random random) {
+        super(customGraphics);
         randomiser = random;
     }
 

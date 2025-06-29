@@ -45,7 +45,6 @@ import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import org.apache.log4j.Logger;
 import org.newdawn.slick.openal.Audio;
 import org.newdawn.slick.openal.AudioLoader;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 @Deprecated
 public class DynamicReactiveSound {
@@ -67,10 +66,11 @@ public class DynamicReactiveSound {
         LENGTH = 48000,
         BIT_DEPTH = 8,
         CHANNELS = 1;
+
     /**
      * Which sound interface to hook onto.
      */
-    private final int SOUNDMANAAGER_TYPE;
+    private final CustomResourceHolder.Runtime SOUNDMANAAGER_TYPE;
 
     /**
      * Sound volume
@@ -79,18 +79,18 @@ public class DynamicReactiveSound {
 
     {
         // Tells class which sound manager to hook onto to check volume.
-        SOUNDMANAAGER_TYPE = AnimatedBackgroundHook.getResourceHook();
+        SOUNDMANAAGER_TYPE = CustomResourceHolder.getCurrentNullpominoRuntime();
     }
 
     /**
      * Constructor gets the volume of the
      */
     public DynamicReactiveSound() {
-        if (SOUNDMANAAGER_TYPE == AnimatedBackgroundHook.HOLDER_SLICK) {
+        if (SOUNDMANAAGER_TYPE == CustomResourceHolder.Runtime.SLICK) {
             volume = NullpoMinoSlick.appGameContainer.getSoundVolume();
-        } else if (SOUNDMANAAGER_TYPE == AnimatedBackgroundHook.HOLDER_SWING) {  // Slick / Swing use 0f-1f
+        } else if (SOUNDMANAAGER_TYPE == CustomResourceHolder.Runtime.SWING) {  // Slick / Swing use 0f-1f
             volume = (float) ResourceHolderSwing.soundManager.getVolume();
-        } else if (SOUNDMANAAGER_TYPE == AnimatedBackgroundHook.HOLDER_SDL) {
+        } else if (SOUNDMANAAGER_TYPE == CustomResourceHolder.Runtime.SDL) {
             // SDL uses 0-128 for volume.
             volume = NullpoMinoSDL.propConfig.getProperty("option.sevolume", 128);
         }
@@ -131,7 +131,7 @@ public class DynamicReactiveSound {
         // Used volume
         float usedVolume = volume * volumeMultiplier;
         if (usedVolume < 0) usedVolume = 0;
-        if (SOUNDMANAAGER_TYPE == AnimatedBackgroundHook.HOLDER_SDL) {
+        if (SOUNDMANAAGER_TYPE == CustomResourceHolder.Runtime.SDL) {
             if (usedVolume > 128) usedVolume = 128;
             usedVolume = usedVolume / 128f;
         } else {
@@ -274,7 +274,7 @@ public class DynamicReactiveSound {
             new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, SAMPLE_RATE, BIT_DEPTH, CHANNELS, (BIT_DEPTH / 8), SAMPLE_RATE, false),
             LENGTH);
 
-        if (SOUNDMANAAGER_TYPE == AnimatedBackgroundHook.HOLDER_SLICK) {
+        if (SOUNDMANAAGER_TYPE == CustomResourceHolder.Runtime.SLICK) {
             try {
                 Audio sound = AudioLoader.getAudio("WAV", AS);
                 sound.playAsSoundEffect(1f, usedVolume, false);
@@ -284,9 +284,9 @@ public class DynamicReactiveSound {
             } catch (Exception e) {
                 log.error("FAILED TO PLAY SOUND:\n", e);
             }
-        } else if (SOUNDMANAAGER_TYPE == AnimatedBackgroundHook.HOLDER_SWING) {  // Slick / Swing use 0f-1f
+        } else if (SOUNDMANAAGER_TYPE == CustomResourceHolder.Runtime.SWING) {  // Slick / Swing use 0f-1f
             log.warn("NO SWING SUPPORT YET");
-        } else if (SOUNDMANAAGER_TYPE == AnimatedBackgroundHook.HOLDER_SDL) {
+        } else if (SOUNDMANAAGER_TYPE == CustomResourceHolder.Runtime.SDL) {
             log.warn("NO SDL SUPPORT YET");
         }
     }

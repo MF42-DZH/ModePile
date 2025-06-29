@@ -33,9 +33,11 @@
 package zeroxfc.nullpo.custom.libs;
 
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -58,11 +60,16 @@ import sdljava.mixer.MixMusic;
 import sdljava.mixer.SDLMixer;
 import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 import zeroxfc.nullpo.custom.libs.types.RuntimeImage;
 import zeroxfc.nullpo.custom.libs.types.RuntimeMusic;
 
+// Create instances of this class during playerInit / methods called when a mode is started.
+// Do not create static instances or instances created only once during mode instance initialisation.
 public class CustomResourceHolder {
+    public enum Runtime {
+        SLICK, SWING, SDL, UNKNOWN
+    }
+
     /**
      * Internal used ResourceHolder class.
      */
@@ -80,10 +87,11 @@ public class CustomResourceHolder {
     private Graphics2D localSwingGraphics;
     private sdljava.video.SDLSurface localSDLGraphics;
 
-    private int holderType;
+    private final Runtime holderType;
 
     /**
      * Creates a new custom resource holder with 8 initial capacity.
+     * Do <b>NOT</b> create a static instance of this class, as it caches graphics objects.
      */
     public CustomResourceHolder() {
         this(8);
@@ -91,19 +99,73 @@ public class CustomResourceHolder {
 
     /**
      * Creates a new custom resource holder.
+     * Do <b>NOT</b> create a static instance of this class, as it caches graphics objects.
      *
      * @param initialCapacity Start capacity of the internal hashmaps.
      */
     public CustomResourceHolder(int initialCapacity) {
-        String mainClass = getMainClassName();
-
-        holderType = -1;
-        if (mainClass.contains("Slick")) holderType = HOLDER_SLICK;
-        else if (mainClass.contains("Swing")) holderType = HOLDER_SWING;
-        else if (mainClass.contains("SDL")) holderType = HOLDER_SDL;
+        holderType = getCurrentNullpominoRuntime();
 
         loadedImages = new HashMap<>(initialCapacity);
         loadedMusic = new HashMap<>(initialCapacity);
+    }
+
+    /**
+     * Gets the current NullpoMino runtime.<br />
+     * Useful for selecting different renderers, sound engines or input handlers.
+     *
+     * @return Enum that represents the runtime type (NullpoMinoSlick, NullpoMinoSwing or NullpoMinoSDL).
+     */
+    public static Runtime getCurrentNullpominoRuntime() {
+        Runtime resouceHolderType = Runtime.UNKNOWN;
+
+        final String mainClass = CustomResourceHolder.getMainClassName();
+
+        if (mainClass.contains("Slick")) resouceHolderType = Runtime.SLICK;
+        else if (mainClass.contains("Swing")) resouceHolderType = Runtime.SWING;
+        else if (mainClass.contains("SDL")) resouceHolderType = Runtime.SDL;
+
+        return resouceHolderType;
+    }
+
+    /** Perform a value-returning action depending on the current runtime. */
+    public static <T> T doForRuntime(Callable<T> ifSlick, Callable<T> ifSwing, Callable<T> ifSDL) {
+        try {
+            switch (getCurrentNullpominoRuntime()) {
+                case SLICK:
+                    return ifSlick.call();
+                case SWING:
+                    return ifSwing.call();
+                case SDL:
+                    return ifSDL.call();
+                default:
+                    return null;
+            }
+        } catch (Exception e) {
+            log.error(e);
+            return null;
+        }
+    }
+
+    /** Perform an action depending on the current runtime. */
+    public static void doForRuntime(Runnable ifSlick, Runnable ifSwing, Runnable ifSDL) {
+        try {
+            switch (getCurrentNullpominoRuntime()) {
+                case SLICK:
+                    ifSlick.run();
+                    break;
+                case SWING:
+                    ifSwing.run();
+                    break;
+                case SDL:
+                    ifSDL.run();
+                    break;
+                default:
+                    return;
+            }
+        } catch (Exception e) {
+            log.error(e);
+        }
     }
 
     /**
@@ -112,7 +174,7 @@ public class CustomResourceHolder {
      * @return Main class name.
      */
     public static String getMainClassName() {
-        if (mainClassName.length() < 1 || mainClassName.equals("Unknown")) {
+        if (mainClassName.isEmpty() || mainClassName.equals("Unknown")) {
             // Thread-safe code used for when more threads are being used.
             // Warning: slower.
             Collection<StackTraceElement[]> allStackTraces = Thread.getAllStackTraces().values();
@@ -125,9 +187,9 @@ public class CustomResourceHolder {
                     }
                 }
 
-                if (mainClassName.length() >= 1) break;
+                if (!mainClassName.isEmpty()) break;
             }
-            if (mainClassName.length() < 1) mainClassName = "Unknown";
+            if (mainClassName.isEmpty()) mainClassName = "Unknown";
         }
 
         return mainClassName;
@@ -139,55 +201,76 @@ public class CustomResourceHolder {
      * @return Number of block skins.
      */
     public static int getNumberLoadedBlockSkins() {
-        switch (AnimatedBackgroundHook.getResourceHook()) {
-            case AnimatedBackgroundHook.HOLDER_SLICK:
+        switch (getCurrentNullpominoRuntime()) {
+            case SLICK:
                 return ResourceHolder.imgNormalBlockList.size();
-            case AnimatedBackgroundHook.HOLDER_SWING:
+            case SWING:
                 return ResourceHolderSwing.imgNormalBlockList.size();
-            case AnimatedBackgroundHook.HOLDER_SDL:
+            case SDL:
                 return ResourceHolderSDL.imgNormalBlockList.size();
             default:
                 return 0;
         }
     }
 
-    public static SDLSurface getGraphicsSDL(RendererSDL renderer) {
-        Class<RendererSDL> local = RendererSDL.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField("graphics");
-            localField.setAccessible(true);
-            return (SDLSurface) localField.get(renderer);
-        } catch (Exception e) {
-            log.error("Failed to extract graphics from SDL renderer.");
-            return null;
+    // There is a race condition between these variables being set and the get from WeakReference being called, but
+    // there should be no risk of a (harmful) data race as this code will usually never run past a gamemode's lifetime.
+    private WeakReference<SDLSurface> graphicsSDL = null;
+    private WeakReference<Graphics2D> graphicsSwing = null;
+    private WeakReference<Graphics> graphicsSlick = null;
+
+    public SDLSurface getGraphicsSDL(RendererSDL renderer) {
+        if (graphicsSDL == null || graphicsSDL.get() == null) {
+            Class<RendererSDL> local = RendererSDL.class;
+            Field localField;
+            try {
+                localField = local.getDeclaredField("graphics");
+                localField.setAccessible(true);
+                graphicsSDL = new WeakReference<>((SDLSurface) localField.get(renderer));
+            } catch (Exception e) {
+                log.error("Failed to extract graphics from SDL renderer.");
+                log.error(e);
+                return null;
+            }
         }
+
+        return graphicsSDL.get();
     }
 
-    public static Graphics2D getGraphicsSwing(RendererSwing renderer) {
-        Class<RendererSwing> local = RendererSwing.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField("graphics");
-            localField.setAccessible(true);
-            return (Graphics2D) localField.get(renderer);
-        } catch (Exception e) {
-            log.error("Failed to extract graphics from Swing renderer.");
-            return null;
+    public Graphics2D getGraphicsSwing(RendererSwing renderer) {
+        if (graphicsSwing == null || graphicsSwing.get() == null) {
+            Class<RendererSwing> local = RendererSwing.class;
+            Field localField;
+            try {
+                localField = local.getDeclaredField("graphics");
+                localField.setAccessible(true);
+                graphicsSwing = new WeakReference<>((Graphics2D) localField.get(renderer));
+            } catch (Exception e) {
+                log.error("Failed to extract graphics from Swing renderer.");
+                log.error(e);
+                return null;
+            }
         }
+
+        return graphicsSwing.get();
     }
 
-    public static Graphics getGraphicsSlick(RendererSlick renderer) {
-        Class<RendererSlick> local = RendererSlick.class;
-        Field localField;
-        try {
-            localField = local.getDeclaredField("graphics");
-            localField.setAccessible(true);
-            return (Graphics) localField.get(renderer);
-        } catch (Exception e) {
-            log.error("Failed to extract graphics from Slick renderer.");
-            return null;
+    public Graphics getGraphicsSlick(RendererSlick renderer) {
+        if (graphicsSlick == null || graphicsSlick.get() == null) {
+            Class<RendererSlick> local = RendererSlick.class;
+            Field localField;
+            try {
+                localField = local.getDeclaredField("graphics");
+                localField.setAccessible(true);
+                graphicsSlick = new WeakReference<>((Graphics) localField.get(renderer));
+            } catch (Exception e) {
+                log.error("Failed to extract graphics from Slick renderer.");
+                log.error(e);
+                return null;
+            }
         }
+
+        return graphicsSlick.get();
     }
 
     /**
@@ -198,13 +281,13 @@ public class CustomResourceHolder {
      */
     public void loadImage(String filePath, String name) {
         switch (holderType) {
-            case HOLDER_SLICK:
+            case SLICK:
                 loadedImages.put(name, new RuntimeImage.Slick(ResourceHolder.loadImage(filePath)));
                 break;
-            case HOLDER_SWING:
+            case SWING:
                 loadedImages.put(name, new RuntimeImage.Swing(ResourceHolderSwing.loadImage(ResourceHolderSwing.getURL(filePath))));
                 break;
-            case HOLDER_SDL:
+            case SDL:
                 loadedImages.put(name, new RuntimeImage.SDL(ResourceHolderSDL.loadImage(filePath)));
                 break;
         }
@@ -304,7 +387,7 @@ public class CustomResourceHolder {
     public void setRotationCentre(String name, float x, float y) {
         final RuntimeImage<?> image = getImageAt(name);
 
-        if (holderType == HOLDER_SLICK && image instanceof RuntimeImage.Slick) {
+        if (holderType == Runtime.SLICK && image instanceof RuntimeImage.Slick) {
             ((RuntimeImage.Slick) image).image.setCenterOfRotation(x, y);
         }
     }
@@ -318,7 +401,7 @@ public class CustomResourceHolder {
     public void setRotation(String name, float a) {
         final RuntimeImage<?> image = getImageAt(name);
 
-        if (holderType == HOLDER_SLICK && image instanceof RuntimeImage.Slick) {
+        if (holderType == Runtime.SLICK && image instanceof RuntimeImage.Slick) {
             ((RuntimeImage.Slick) image).image.setRotation(a);
         }
     }
@@ -344,7 +427,7 @@ public class CustomResourceHolder {
         final RuntimeImage<?> runtimeImage = getImageAt(name);
 
         switch (holderType) {
-            case HOLDER_SLICK:
+            case SLICK:
                 if (!(runtimeImage instanceof RuntimeImage.Slick)) {
                     log.error("Image '" + name + "' is not a Slick image!");
                     return;
@@ -360,7 +443,7 @@ public class CustomResourceHolder {
                 toDrawSlick.draw(x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
 
                 break;
-            case HOLDER_SWING:
+            case SWING:
                 if (!(runtimeImage instanceof RuntimeImage.Swing)) {
                     log.error("Image '" + name + "' is not a Swing image!");
                     return;
@@ -381,7 +464,7 @@ public class CustomResourceHolder {
                 localSwingGraphics.drawImage(toDrawSwing, x, y, fxSw, fySw, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
                 localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
                 break;
-            case HOLDER_SDL:
+            case SDL:
                 if (!(runtimeImage instanceof RuntimeImage.SDL)) {
                     log.error("Image '" + name + "' is not a SDL image!");
                     return;
@@ -425,7 +508,7 @@ public class CustomResourceHolder {
         final RuntimeImage<?> runtimeImage = getImageAt(name);
 
         switch (holderType) {
-            case HOLDER_SLICK:
+            case SLICK:
                 if (!(runtimeImage instanceof RuntimeImage.Slick)) {
                     log.error("Image '" + name + "' is not a Slick image!");
                     return;
@@ -437,7 +520,7 @@ public class CustomResourceHolder {
 
                 toDrawSlick.draw(x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
                 break;
-            case HOLDER_SWING:
+            case SWING:
                 if (!(runtimeImage instanceof RuntimeImage.Swing)) {
                     log.error("Image '" + name + "' is not a Swing image!");
                     return;
@@ -455,7 +538,7 @@ public class CustomResourceHolder {
                 localSwingGraphics.drawImage(toDrawSwing, x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
                 localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
                 break;
-            case HOLDER_SDL:
+            case SDL:
                 if (!(runtimeImage instanceof RuntimeImage.SDL)) {
                     log.error("Image '" + name + "' is not a SDL image!");
                     return;
@@ -498,7 +581,7 @@ public class CustomResourceHolder {
         final RuntimeImage<?> runtimeImage = getImageAt(name);
 
         switch (holderType) {
-            case HOLDER_SLICK:
+            case SLICK:
                 if (!(runtimeImage instanceof RuntimeImage.Slick)) {
                     log.error("Image '" + name + "' is not a Slick image!");
                     return;
@@ -514,7 +597,7 @@ public class CustomResourceHolder {
                 toDrawSlick.draw(x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
 
                 break;
-            case HOLDER_SWING:
+            case SWING:
                 if (!(runtimeImage instanceof RuntimeImage.Swing)) {
                     log.error("Image '" + name + "' is not a Swing image!");
                     return;
@@ -535,7 +618,7 @@ public class CustomResourceHolder {
                 localSwingGraphics.drawImage(toDrawSwing, x, y, fxSw, fySw, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
                 localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
                 break;
-            case HOLDER_SDL:
+            case SDL:
                 if (!(runtimeImage instanceof RuntimeImage.SDL)) {
                     log.error("Image '" + name + "' is not a SDL image!");
                     return;
@@ -644,9 +727,9 @@ public class CustomResourceHolder {
      * @param showErr  Show in log?
      */
     public void loadNewBGMAppend(String fileName, boolean noLoop, boolean showErr) {
-        if (holderType == HOLDER_SWING) {
+        if (holderType == Runtime.SWING) {
             log.warn("BGM is not supported on Swing.");
-        } else if (holderType == HOLDER_SLICK) {
+        } else if (holderType == Runtime.SLICK) {
             loadMusicWorker(
                 () -> NullpoMinoSlick.propConfig.getProperty("option.bgm", false),
                 (no, nl) -> NullpoMinoSlick.propConfig.setProperty("music.noloop." + no, nl),
@@ -663,7 +746,7 @@ public class CustomResourceHolder {
                 noLoop,
                 showErr
             );
-        } else if (holderType == HOLDER_SDL) {
+        } else if (holderType == Runtime.SDL) {
             loadMusicWorker(
                 () -> NullpoMinoSDL.propConfig.getProperty("option.bgm", false),
                 (no, nl) -> NullpoMinoSDL.propConfig.setProperty("music.noloop." + no, nl),
@@ -690,7 +773,7 @@ public class CustomResourceHolder {
      */
     public void removeBGMFromEnd(boolean showerr) {
         switch (holderType) {
-            case HOLDER_SLICK:
+            case SLICK:
                 if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
 
                 int no = ResourceHolder.bgm.length - 1;
@@ -701,10 +784,10 @@ public class CustomResourceHolder {
                 ResourceHolder.bgm = newBGM.clone();
                 if (showerr) log.info("Removed BGM at " + no);
                 return;
-            case HOLDER_SWING:
+            case SWING:
                 log.warn("BGM is not supported on Swing.");
                 return;
-            case HOLDER_SDL:
+            case SDL:
                 if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
 
                 int no2 = ResourceHolderSDL.bgm.length - 1;
@@ -726,9 +809,9 @@ public class CustomResourceHolder {
      */
     public void addCustomBGM(String name, String fileName) {
         try {
-            if (holderType == HOLDER_SLICK) {
+            if (holderType == Runtime.SLICK) {
                 loadedMusic.put(name, new RuntimeMusic.Slick(new Music(fileName, true)));
-            } else if (holderType == HOLDER_SDL) {
+            } else if (holderType == Runtime.SDL) {
                 loadedMusic.put(name, new RuntimeMusic.SDL(SDLMixer.loadMUS(fileName)));
             } else {
                 log.warn("BGM is not supported on Swing.");
@@ -750,7 +833,7 @@ public class CustomResourceHolder {
 
         if (mus != null) {
             switch (holderType) {
-                case HOLDER_SLICK:
+                case SLICK:
                     if (!NullpoMinoSlick.propConfig.getProperty("option.bgm", false)) return;
 
                     stopCustomBGM();
@@ -768,10 +851,10 @@ public class CustomResourceHolder {
                     }
 
                     return;
-                case HOLDER_SWING:
+                case SWING:
                     log.warn("BGM is not supported on Swing.");
                     return;
-                case HOLDER_SDL:
+                case SDL:
                     if (!NullpoMinoSDL.propConfig.getProperty("option.bgm", false)) return;
 
                     stopCustomBGM();
@@ -808,9 +891,9 @@ public class CustomResourceHolder {
      */
     public int getAmountManagedLoadedBGM() {
         switch (holderType) {
-            case HOLDER_SLICK:
+            case SLICK:
                 return ResourceHolder.bgm.length - BGMStatus.BGM_COUNT;
-            case HOLDER_SDL:
+            case SDL:
                 return ResourceHolderSDL.bgm.length - BGMStatus.BGM_COUNT;
             default:
                 return 0;
@@ -830,14 +913,14 @@ public class CustomResourceHolder {
      * Stops all custom BGM.
      */
     public void stopCustomBGM() {
-        if (holderType == HOLDER_SLICK) {
+        if (holderType == Runtime.SLICK) {
             for (RuntimeMusic<?> mus : loadedMusic.values()) {
                 if (mus instanceof RuntimeMusic.Slick) {
                     ((RuntimeMusic.Slick) mus).music.pause();
                     ((RuntimeMusic.Slick) mus).music.stop();
                 }
             }
-        } else if (holderType == HOLDER_SDL) {
+        } else if (holderType == Runtime.SDL) {
             try {
                 SDLMixer.haltMusic();
             } catch (Exception e) {

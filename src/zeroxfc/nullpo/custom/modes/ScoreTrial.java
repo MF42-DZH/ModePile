@@ -110,6 +110,8 @@ public class ScoreTrial extends MarathonModeBase {
     private int[][] rankingLinesPlayer;
     private int[][] rankingTimePlayer;
 
+    private RendererExtension rendererExtension;
+
     // Mode name
     public String getName() {
         return "SCORE TRIAL";
@@ -163,6 +165,8 @@ public class ScoreTrial extends MarathonModeBase {
         rankingScorePlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
         rankingLinesPlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
         rankingTimePlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
+
+        rendererExtension = new RendererExtension();
 
         netPlayerInit(engine, playerID);
 
@@ -444,7 +448,7 @@ public class ScoreTrial extends MarathonModeBase {
         engine.speed.lockDelay = 30;
 
         int total = (engine.field.getHeight() + engine.field.getHiddenHeight()) * engine.field.getWidth() * 2;
-        blockParticles = new BlockParticleCollection(total, lineClearAnimType);
+        blockParticles = new BlockParticleCollection(rendererExtension, total, lineClearAnimType);
 
         localRandom = new Random(engine.randSeed);
 
@@ -570,7 +574,7 @@ public class ScoreTrial extends MarathonModeBase {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
-                    RendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
                 }
             }
 
@@ -1140,15 +1144,15 @@ public class ScoreTrial extends MarathonModeBase {
                 int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
                 int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
             } else {
                 int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
                 int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
 
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                RendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
             }
         }
     }
