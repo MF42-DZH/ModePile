@@ -56,6 +56,7 @@ public class Accelerator extends MarathonModeBase {
     private double progressCoeffeicient;
     // score before increase
     private double scoreBeforeIncrease;
+    private boolean hardDropEffect;
     /**
      * The good hard drop effect
      */
@@ -93,6 +94,8 @@ public class Accelerator extends MarathonModeBase {
         currentBonusCharge = 0.0;
         bonusActive = false;
         scoreBeforeIncrease = 0;
+
+        hardDropEffect = true;
 
         pCoordList = new ArrayList<>();
         cPiece = null;
@@ -159,7 +162,7 @@ public class Accelerator extends MarathonModeBase {
         // Menu
         else if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 8, playerID);
+            int change = updateCursor(engine, 9, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -210,6 +213,9 @@ public class Accelerator extends MarathonModeBase {
                         break;
                     case 8:
                         big = !big;
+                        break;
+                    case 9:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
 
@@ -300,6 +306,9 @@ public class Accelerator extends MarathonModeBase {
                 "COMBO", GeneralUtil.getONorOFF(enableCombo),
                 "GOAL", (goaltype == 2) ? "ENDLESS" : GOALS[goaltype] + " PTS",
                 "BIG", GeneralUtil.getONorOFF(big));
+            drawMenu(engine, playerID, receiver, 18, EventReceiver.COLOR_PINK, 9,
+                "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+            );
         }
     }
 
@@ -412,20 +421,23 @@ public class Accelerator extends MarathonModeBase {
                 new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+        if (hardDropEffect) {
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                if (!cPiece.big) {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                } else {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                }
             }
         }
     }
@@ -528,7 +540,7 @@ public class Accelerator extends MarathonModeBase {
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
@@ -871,6 +883,7 @@ public class Accelerator extends MarathonModeBase {
         goaltype = prop.getProperty("accelerator.gametype", 0);
         big = prop.getProperty("accelerator.big", false);
         version = prop.getProperty("accelerator.version", 0);
+        hardDropEffect = prop.getProperty("accelerator.hardDropEffect", true);
     }
 
     /**
@@ -890,6 +903,7 @@ public class Accelerator extends MarathonModeBase {
         prop.setProperty("accelerator.gametype", goaltype);
         prop.setProperty("accelerator.big", big);
         prop.setProperty("accelerator.version", version);
+        prop.setProperty("accelerator.hardDropEffect", hardDropEffect);
     }
 
     /**
@@ -909,6 +923,7 @@ public class Accelerator extends MarathonModeBase {
         enableCombo = prop.getProperty("accelerator.enableCombo", true);
         goaltype = prop.getProperty("accelerator.gametype", 0);
         big = prop.getProperty("accelerator.big", false);
+        hardDropEffect = prop.getProperty("accelerator.hardDropEffect", true);
     }
 
     /**
@@ -928,6 +943,7 @@ public class Accelerator extends MarathonModeBase {
         prop.setProperty("accelerator.enableCombo", enableCombo);
         prop.setProperty("accelerator.gametype", goaltype);
         prop.setProperty("accelerator.big", big);
+        prop.setProperty("accelerator.hardDropEffect", hardDropEffect);
     }
 
     /**
