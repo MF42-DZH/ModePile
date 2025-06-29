@@ -106,6 +106,7 @@ public class MissionMode extends MarathonModeBase {
     private int rankingRankPlayer;
 
     private RendererExtension rendererExtension;
+    private boolean hardDropEffect;
 
     @Override
     public String getName() {
@@ -155,6 +156,7 @@ public class MissionMode extends MarathonModeBase {
         rankingTime = new int[RANKING_TYPE][RANKING_MAX];
 
         rendererExtension = new RendererExtension();
+        hardDropEffect = true;
 
         netPlayerInit(engine, playerID);
 
@@ -197,7 +199,7 @@ public class MissionMode extends MarathonModeBase {
         // Menu
         else if (engine.owner.replayMode == false) {
             // Configuration changes
-            int change = updateCursor(engine, 0, playerID);
+            int change = updateCursor(engine, 1, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -212,6 +214,9 @@ public class MissionMode extends MarathonModeBase {
                             startlevel = (tableGameClearLines[goaltype] - 1) / 10;
                             engine.owner.backgroundStatus.bg = startlevel;
                         }
+                        break;
+                    case 1:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
 
@@ -301,6 +306,9 @@ public class MissionMode extends MarathonModeBase {
         } else {
             drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE, 0,
                 "GOAL", (goaltype == 2) ? "ENDLESS" : tableGameClearLines[goaltype] + " MISS.");
+            drawMenu(engine, playerID, receiver, 2, EventReceiver.COLOR_PINK, 1,
+                "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+            );
         }
     }
 
@@ -415,7 +423,7 @@ public class MissionMode extends MarathonModeBase {
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
@@ -732,20 +740,23 @@ public class MissionMode extends MarathonModeBase {
                 new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+        if (hardDropEffect) {
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                if (!cPiece.big) {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                } else {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                }
             }
         }
     }
@@ -817,6 +828,7 @@ public class MissionMode extends MarathonModeBase {
     private void loadSetting(CustomProperties prop) {
         goaltype = prop.getProperty("missionmode.gametype", 0);
         version = prop.getProperty("missionmode.version", 0);
+        hardDropEffect = prop.getProperty("missionmode.hardDropEffect", true);
     }
 
 
@@ -828,6 +840,7 @@ public class MissionMode extends MarathonModeBase {
     private void saveSetting(CustomProperties prop) {
         prop.setProperty("missionmode.gametype", goaltype);
         prop.setProperty("missionmode.version", version);
+        prop.setProperty("missionmode.hardDropEffect", hardDropEffect);
     }
 
     /**
@@ -838,6 +851,7 @@ public class MissionMode extends MarathonModeBase {
     private void loadSettingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return;
         goaltype = prop.getProperty("missionmode.gametype", 0);
+        hardDropEffect = prop.getProperty("missionmode.hardDropEffect", true);
     }
 
 
@@ -849,6 +863,7 @@ public class MissionMode extends MarathonModeBase {
     private void saveSettingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return;
         prop.setProperty("missionmode.gametype", goaltype);
+        prop.setProperty("missionmode.hardDropEffect", hardDropEffect);
     }
 
 
