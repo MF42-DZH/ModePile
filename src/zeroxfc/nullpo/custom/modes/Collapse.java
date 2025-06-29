@@ -1477,27 +1477,6 @@ public class Collapse extends DummyMode {
         }
     }
 
-    /*
-     * why do i even make stuff like this
-     * people just keep asking "why?" or just straight up calling it useless (even if they don't explicitly say it)
-     * nobody's gonna look at this and think "wow this code is cool", they usually only see the surface level end product
-     * eh, whatever. might as well carry on to satiate my own wants for these modes and libraries
-     * screw everyone else
-     * i'll just make this for myself first, others later
-     * this isn't even original anyway, just piggybacking off an existing engine and other games for concepts
-     * you got people saying "your workflow is shit, your computer's OS is shit and you should be ashamed, you got people saying the sites you use are shit and you should feel bad" like
-     * what the hell do i do
-     * i just want to use my computer and develop shit for mostly fun
-     * nothing i do in my own time when i'm not interacting with you is hurting you
-     * ...fucking elitists...
-     * why the absolute FUCK do you care so much about what i do?
-     * where i source information about a game which has no official source (a game's speed difficulty ffs) does not hurt you in any way.
-     * okay then mr. "I'm-right-you're-wrong-fuck-you-and-your-choices".
-     * i'll go fuck off now so you don't have to deal with my shit.
-     * poison the well before i even get to make a point will you.
-     * fuck off
-     */
-
     /**
      * Save rankings to property file
      *
