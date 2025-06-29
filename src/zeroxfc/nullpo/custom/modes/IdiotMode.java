@@ -483,9 +483,9 @@ public class IdiotMode extends DummyMode {
 
         // Is replay?
         if (owner.replayMode == false) {
-            version = CURRENT_VERSION;
             loadSetting(owner.modeConfig, engine.ruleopt.strRuleName);
             loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+            version = CURRENT_VERSION;
 
             if (playerProperties.isLoggedIn()) {
                 loadSettingPlayer(playerProperties, engine.ruleopt.strRuleName);
