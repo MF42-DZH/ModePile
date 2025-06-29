@@ -111,6 +111,7 @@ public class ScoreTrial extends MarathonModeBase {
     private int[][] rankingTimePlayer;
 
     private RendererExtension rendererExtension;
+    private boolean hardDropEffect;
 
     // Mode name
     public String getName() {
@@ -167,6 +168,7 @@ public class ScoreTrial extends MarathonModeBase {
         rankingTimePlayer = new int[MAX_DIFFICULTIES][RANKING_MAX];
 
         rendererExtension = new RendererExtension();
+        hardDropEffect = true;
 
         netPlayerInit(engine, playerID);
 
@@ -243,7 +245,7 @@ public class ScoreTrial extends MarathonModeBase {
         // Menu
         else if (engine.owner.replayMode == false) {
             // Configuration changes
-            int change = updateCursor(engine, 3, playerID);
+            int change = updateCursor(engine, 4, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -267,6 +269,9 @@ public class ScoreTrial extends MarathonModeBase {
                         lineClearAnimType += change;
                         if (lineClearAnimType > BlockParticleCollection.ANIMATION_TYPES - 1) lineClearAnimType = 0;
                         if (lineClearAnimType < 0) lineClearAnimType = BlockParticleCollection.ANIMATION_TYPES - 1;
+                        break;
+                    case 4:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
 
@@ -353,6 +358,9 @@ public class ScoreTrial extends MarathonModeBase {
             drawMenu(engine, playerID, receiver, 4, EventReceiver.COLOR_BLUE, 2,
                 "BIG", GeneralUtil.getONorOFF(big),
                 "L.C. ANIM.", lc);
+            drawMenu(engine, playerID, receiver, 6, EventReceiver.COLOR_PINK, 3,
+                "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+            );
         }
     }
 
@@ -570,7 +578,7 @@ public class ScoreTrial extends MarathonModeBase {
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
@@ -1139,20 +1147,23 @@ public class ScoreTrial extends MarathonModeBase {
                 new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+        if (hardDropEffect) {
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                if (!cPiece.big) {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                } else {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                }
             }
         }
     }
@@ -1201,6 +1212,7 @@ public class ScoreTrial extends MarathonModeBase {
         version = prop.getProperty("scoretrial.version", 0);
         lineClearAnimType = prop.getProperty("scoretrial.lcat", 0);
         difficultySelected = prop.getProperty("scoretrial.difficulty", 0);
+        hardDropEffect = prop.getProperty("scoretrial.hardDropEffect", true);
     }
 
     /**
@@ -1215,6 +1227,7 @@ public class ScoreTrial extends MarathonModeBase {
         prop.setProperty("scoretrial.version", version);
         prop.setProperty("scoretrial.lcat", lineClearAnimType);
         prop.setProperty("scoretrial.difficulty", difficultySelected);
+        prop.setProperty("scoretrial.hardDropEffect", hardDropEffect);
     }
 
     /**
@@ -1229,6 +1242,7 @@ public class ScoreTrial extends MarathonModeBase {
         lifeOffset = prop.getProperty("scoretrial.extralives", 0);
         lineClearAnimType = prop.getProperty("scoretrial.lcat", 0);
         difficultySelected = prop.getProperty("scoretrial.difficulty", 0);
+        hardDropEffect = prop.getProperty("scoretrial.hardDropEffect", true);
     }
 
     /**
@@ -1243,6 +1257,7 @@ public class ScoreTrial extends MarathonModeBase {
         prop.setProperty("scoretrial.extralives", lifeOffset);
         prop.setProperty("scoretrial.lcat", lineClearAnimType);
         prop.setProperty("scoretrial.difficulty", difficultySelected);
+        prop.setProperty("scoretrial.hardDropEffect", hardDropEffect);
     }
 
     /**
