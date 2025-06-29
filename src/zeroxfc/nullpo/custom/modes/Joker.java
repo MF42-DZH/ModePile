@@ -1136,7 +1136,7 @@ public class Joker extends MarathonModeBase {
         startlevel = prop.getProperty("joker.startlevel", 0);
         big = prop.getProperty("joker.big", false);
         startingStock = prop.getProperty("joker.extrastock", 0);
-        version = prop.getProperty("joker.version", CURRENT_VERSION);
+        version = prop.getProperty("joker.version", CURRENT_VERSION + 1);
         lineClearAnimType = prop.getProperty("joker.lcat", 0);
         drawJevil = prop.getProperty("joker.drawjevil", false);
         useAnimBG = prop.getProperty("joker.animatedBG", false);
