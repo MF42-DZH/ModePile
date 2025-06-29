@@ -57,6 +57,7 @@ public class SingleDeathMarathon extends MarathonModeBase {
     private Piece cPiece;
 
     private RendererExtension rendererExtension;
+    private boolean hardDropEffect;
 
     /*
      * Mode name
@@ -106,6 +107,7 @@ public class SingleDeathMarathon extends MarathonModeBase {
         rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
 
         rendererExtension = new RendererExtension();
+        hardDropEffect = true;
 
         netPlayerInit(engine, playerID);
 
@@ -149,7 +151,7 @@ public class SingleDeathMarathon extends MarathonModeBase {
         // Menu
         else if (engine.owner.replayMode == false) {
             // Configuration changes
-            int change = updateCursor(engine, 7, playerID);
+            int change = updateCursor(engine, 8, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -198,6 +200,9 @@ public class SingleDeathMarathon extends MarathonModeBase {
                             startlevel = (tableGameClearLines[goaltype] - 1) / 10;
                             engine.owner.backgroundStatus.bg = startlevel;
                         }
+                        break;
+                    case 8:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
 
@@ -287,6 +292,9 @@ public class SingleDeathMarathon extends MarathonModeBase {
                 "B2B", GeneralUtil.getONorOFF(enableB2B),
                 "COMBO", GeneralUtil.getONorOFF(enableCombo),
                 "GOAL", (goaltype == 2) ? "ENDLESS" : tableGameClearLines[goaltype] + " LINES");
+            drawMenu(engine, playerID, receiver, 16, EventReceiver.COLOR_PINK, 8,
+                "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+            );
         }
     }
 
@@ -423,20 +431,23 @@ public class SingleDeathMarathon extends MarathonModeBase {
                 new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+        if (hardDropEffect) {
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                if (!cPiece.big) {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                } else {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                }
             }
         }
     }
@@ -548,7 +559,7 @@ public class SingleDeathMarathon extends MarathonModeBase {
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
@@ -1667,6 +1678,7 @@ public class SingleDeathMarathon extends MarathonModeBase {
         goaltype = prop.getProperty("singledeath.gametype", 0);
         // big = prop.getProperty("singledeath.big", false);
         version = prop.getProperty("singledeath.version", 0);
+        hardDropEffect = prop.getProperty("singledeath.hardDropEffect", true);
     }
 
     /**
@@ -1686,6 +1698,7 @@ public class SingleDeathMarathon extends MarathonModeBase {
         prop.setProperty("singledeath.gametype", goaltype);
         // prop.setProperty("singledeath.big", big);
         prop.setProperty("singledeath.version", version);
+        prop.setProperty("singledeath.hardDropEffect", hardDropEffect);
     }
 
     private void loadSettingPlayer(ProfileProperties prop) {
@@ -1699,6 +1712,7 @@ public class SingleDeathMarathon extends MarathonModeBase {
         enableB2B = prop.getProperty("singledeath.enableB2B", true);
         enableCombo = prop.getProperty("singledeath.enableCombo", true);
         goaltype = prop.getProperty("singledeath.gametype", 0);
+        hardDropEffect = prop.getProperty("singledeath.hardDropEffect", true);
     }
 
     /**
@@ -1717,6 +1731,7 @@ public class SingleDeathMarathon extends MarathonModeBase {
         prop.setProperty("singledeath.enableB2B", enableB2B);
         prop.setProperty("singledeath.enableCombo", enableCombo);
         prop.setProperty("singledeath.gametype", goaltype);
+        prop.setProperty("singledeath.hardDropEffect", hardDropEffect);
     }
 
     /**
