@@ -267,7 +267,7 @@ public class DrawMode extends MarathonModeBase {
         if (!owner.replayMode) {
             loadSetting(owner.modeConfig);
             loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
-            version = CURRENT_VERSION;
+            version = BASE_VERSION;
         } else {
             loadSetting(owner.replayProp);
             if ((version == 0) && owner.replayProp.getProperty("drawMode.endless", false)) goaltype = 2;

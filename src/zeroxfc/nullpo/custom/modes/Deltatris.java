@@ -9,7 +9,6 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
-import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
@@ -167,7 +166,7 @@ public class Deltatris extends MarathonModeBase {
                 loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
             }
 
-            version = CURRENT_VERSION;
+            version = BASE_VERSION;
             PLAYER_NAME = null;
         } else {
             loadSetting(owner.replayProp);

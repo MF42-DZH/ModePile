@@ -169,7 +169,7 @@ public class Joker extends MarathonModeBase {
                 loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
             }
 
-            version = CURRENT_VERSION + 1;
+            version = BASE_VERSION + 1;
             PLAYER_NAME = "";
         } else {
             loadSetting(owner.replayProp);
@@ -993,7 +993,7 @@ public class Joker extends MarathonModeBase {
 
         if (lines > 0) {
             // Level up, unless at level 200+, where only Fours+ increment level.
-            if (version < CURRENT_VERSION + 1 || engine.statistics.level < 200 || lines >= 4) {
+            if (version < BASE_VERSION + 1 || engine.statistics.level < 200 || lines >= 4) {
                 engine.statistics.level++;
                 engine.playSE("levelup");
             }
@@ -1136,7 +1136,7 @@ public class Joker extends MarathonModeBase {
         startlevel = prop.getProperty("joker.startlevel", 0);
         big = prop.getProperty("joker.big", false);
         startingStock = prop.getProperty("joker.extrastock", 0);
-        version = prop.getProperty("joker.version", CURRENT_VERSION + 1);
+        version = prop.getProperty("joker.version", BASE_VERSION + 1);
         lineClearAnimType = prop.getProperty("joker.lcat", 0);
         drawJevil = prop.getProperty("joker.drawjevil", false);
         useAnimBG = prop.getProperty("joker.animatedBG", false);

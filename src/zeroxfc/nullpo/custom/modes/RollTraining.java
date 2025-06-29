@@ -165,7 +165,7 @@ public class RollTraining extends MarathonModeBase {
                 loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
             }
 
-            version = CURRENT_VERSION;
+            version = BASE_VERSION;
             PLAYER_NAME = "";
         } else {
             loadSetting(owner.replayProp);

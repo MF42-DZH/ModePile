@@ -14,7 +14,6 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
-import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
@@ -801,7 +800,7 @@ public class ShadowMarathon extends MarathonModeBase {
             }
 
             PLAYER_NAME = "";
-            version = CURRENT_VERSION;
+            version = BASE_VERSION;
             scoreVersion = SCORE_VERSION;
         } else {
             loadSetting(owner.replayProp);

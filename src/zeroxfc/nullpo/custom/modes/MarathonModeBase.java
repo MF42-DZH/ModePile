@@ -45,7 +45,7 @@ public class MarathonModeBase extends NetDummyMode {
     /**
      * Current version
      */
-    public static final int CURRENT_VERSION = 2;
+    public static final int BASE_VERSION = 2;
 
     /**
      * Fall velocity table (numerators)
@@ -247,7 +247,7 @@ public class MarathonModeBase extends NetDummyMode {
         if (owner.replayMode == false) {
             loadSetting(owner.modeConfig);
             loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
-            version = CURRENT_VERSION;
+            version = BASE_VERSION;
         } else {
             loadSetting(owner.replayProp);
             if ((version == 0) && (owner.replayProp.getProperty("marathon.endless", false) == true))

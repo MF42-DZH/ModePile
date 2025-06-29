@@ -168,7 +168,7 @@ public class MissionMode extends MarathonModeBase {
             }
 
             PLAYER_NAME = "";
-            version = CURRENT_VERSION;
+            version = BASE_VERSION;
         } else {
             loadSetting(owner.replayProp);
             if ((version == 0) && (owner.replayProp.getProperty("missionmode.endless", false) == true))

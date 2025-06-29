@@ -130,7 +130,7 @@ public class Accelerator extends MarathonModeBase {
             }
 
             PLAYER_NAME = "";
-            version = CURRENT_VERSION;
+            version = BASE_VERSION;
         } else {
             loadSetting(owner.replayProp);
             if ((version == 0) && (owner.replayProp.getProperty("accelerator.endless", false))) goaltype = 2;

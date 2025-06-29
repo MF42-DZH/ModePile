@@ -22,7 +22,7 @@ import zeroxfc.nullpo.custom.libs.RendererExtension;
 
 public class ColourPower extends MarathonModeBase {
     // Power meter max
-    private static final int POWER_METER_MAX = 10;
+    private int powerMeterMax;
 
     // Power-up amounts
     private static final int POWERUP_AMOUNT = 8;
@@ -83,6 +83,9 @@ public class ColourPower extends MarathonModeBase {
     private boolean preset;
     // LastScore
     private int scoreBeforeIncrease;
+
+    private boolean hardDropEffect;
+
     /**
      * Rankings' scores
      */
@@ -179,6 +182,7 @@ public class ColourPower extends MarathonModeBase {
         rankingTime = new int[2][RANKING_TYPE][RANKING_MAX];
 
         rendererExtension = new RendererExtension();
+        hardDropEffect = true;
 
         netPlayerInit(engine, playerID);
 
@@ -192,7 +196,7 @@ public class ColourPower extends MarathonModeBase {
             }
 
             PLAYER_NAME = "";
-            version = CURRENT_VERSION;
+            version = BASE_VERSION + 1;
         } else {
             loadSetting(owner.replayProp);
             if ((version == 0) && (owner.replayProp.getProperty("colourpower.endless", false) == true))
@@ -220,7 +224,7 @@ public class ColourPower extends MarathonModeBase {
         // Menu
         else if (engine.owner.replayMode == false) {
             // Configuration changes
-            int change = updateCursor(engine, 9, playerID);
+            int change = updateCursor(engine, 10, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -275,6 +279,9 @@ public class ColourPower extends MarathonModeBase {
                         break;
                     case 9:
                         ruleboundMode = !ruleboundMode;
+                        break;
+                    case 10:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
 
@@ -390,22 +397,30 @@ public class ColourPower extends MarathonModeBase {
             } else {
                 strTSpinEnable = GeneralUtil.getONorOFF(enableTSpin);
             }
-            drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE, 0,
-                "LEVEL", String.valueOf(startlevel + 1),
-                "SPIN BONUS", strTSpinEnable,
-                "EZ SPIN", GeneralUtil.getONorOFF(enableTSpinKick),
-                "SPIN TYPE", (spinCheckType == 0) ? "4POINT" : "IMMOBILE",
-                "EZIMMOBILE", GeneralUtil.getONorOFF(tspinEnableEZ),
-                "B2B", GeneralUtil.getONorOFF(enableB2B),
-                "COMBO", GeneralUtil.getONorOFF(enableCombo),
-                "GOAL", (goaltype == 2) ? "ENDLESS" : tableGameClearLines[goaltype] + " LINES",
-                "BIG", GeneralUtil.getONorOFF(big));
-            drawMenu(engine, playerID, receiver, 18, EventReceiver.COLOR_RED, 9,
-                "RULEBOUND", GeneralUtil.getONorOFF(ruleboundMode));
+            if (engine.statc[2] < 10) {
+                drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_BLUE, 0,
+                    "LEVEL", String.valueOf(startlevel + 1),
+                    "SPIN BONUS", strTSpinEnable,
+                    "EZ SPIN", GeneralUtil.getONorOFF(enableTSpinKick),
+                    "SPIN TYPE", (spinCheckType == 0) ? "4POINT" : "IMMOBILE",
+                    "EZIMMOBILE", GeneralUtil.getONorOFF(tspinEnableEZ),
+                    "B2B", GeneralUtil.getONorOFF(enableB2B),
+                    "COMBO", GeneralUtil.getONorOFF(enableCombo),
+                    "GOAL", (goaltype == 2) ? "ENDLESS" : tableGameClearLines[goaltype] + " LINES",
+                    "BIG", GeneralUtil.getONorOFF(big));
+                drawMenu(engine, playerID, receiver, 18, EventReceiver.COLOR_RED, 9,
+                    "RULEBOUND", GeneralUtil.getONorOFF(ruleboundMode));
+            } else {
+                drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_PINK, 10,
+                    "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+                );
+            }
         }
     }
 
     public boolean onReady(GameEngine engine, int playerID) {
+        powerMeterMax = version < BASE_VERSION + 1 ? 10 : 5;
+
         if (engine.statc[0] == 1) {
             if (defaultColours == null) defaultColours = engine.ruleopt.pieceColor;
             nonRuleboundRandomiser = new Random(engine.randSeed);
@@ -512,20 +527,22 @@ public class ColourPower extends MarathonModeBase {
                 new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+        if (hardDropEffect) {
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                if (!cPiece.big) {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                } else {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                }
             }
         }
 
@@ -633,14 +650,14 @@ public class ColourPower extends MarathonModeBase {
                 base = 24;
             }
             receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base / scale), "POWER-UPS", EventReceiver.COLOR_PINK, scale);
-            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 1 / scale), "  GREY:" + String.format("%d/%d", meterValues[0], POWER_METER_MAX), POWERUP_TEXT_COLOURS[0], scale);
-            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 2 / scale), "   RED:" + String.format("%d/%d", meterValues[1], POWER_METER_MAX), POWERUP_TEXT_COLOURS[1], scale);
-            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 3 / scale), "ORANGE:" + String.format("%d/%d", meterValues[2], POWER_METER_MAX), POWERUP_TEXT_COLOURS[2], scale);
-            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 4 / scale), "YELLOW:" + String.format("%d/%d", meterValues[3], POWER_METER_MAX), POWERUP_TEXT_COLOURS[3], scale);
-            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 5 / scale), " GREEN:" + String.format("%d/%d", meterValues[4], POWER_METER_MAX), POWERUP_TEXT_COLOURS[4], scale);
-            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 6 / scale), "  CYAN:" + String.format("%d/%d", meterValues[5], POWER_METER_MAX), POWERUP_TEXT_COLOURS[5], scale);
-            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 7 / scale), "  BLUE:" + String.format("%d/%d", meterValues[6], POWER_METER_MAX), POWERUP_TEXT_COLOURS[6], scale);
-            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 8 / scale), "PURPLE:" + String.format("%d/%d", meterValues[7], POWER_METER_MAX), POWERUP_TEXT_COLOURS[7], scale);
+            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 1 / scale), "  GREY:" + String.format("%d/%d", meterValues[0], powerMeterMax), POWERUP_TEXT_COLOURS[0], scale);
+            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 2 / scale), "   RED:" + String.format("%d/%d", meterValues[1], powerMeterMax), POWERUP_TEXT_COLOURS[1], scale);
+            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 3 / scale), "ORANGE:" + String.format("%d/%d", meterValues[2], powerMeterMax), POWERUP_TEXT_COLOURS[2], scale);
+            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 4 / scale), "YELLOW:" + String.format("%d/%d", meterValues[3], powerMeterMax), POWERUP_TEXT_COLOURS[3], scale);
+            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 5 / scale), " GREEN:" + String.format("%d/%d", meterValues[4], powerMeterMax), POWERUP_TEXT_COLOURS[4], scale);
+            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 6 / scale), "  CYAN:" + String.format("%d/%d", meterValues[5], powerMeterMax), POWERUP_TEXT_COLOURS[5], scale);
+            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 7 / scale), "  BLUE:" + String.format("%d/%d", meterValues[6], powerMeterMax), POWERUP_TEXT_COLOURS[6], scale);
+            receiver.drawScoreFont(engine, playerID, (int) (10 / scale), (int) (base + 8 / scale), "PURPLE:" + String.format("%d/%d", meterValues[7], powerMeterMax), POWERUP_TEXT_COLOURS[7], scale);
 
             receiver.drawScoreFont(engine, playerID, 0, 15, "MULTI.", EventReceiver.COLOR_BLUE);
             receiver.drawScoreFont(engine, playerID, 0, 16, scoreMultiplier + "X");
@@ -655,7 +672,7 @@ public class ColourPower extends MarathonModeBase {
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
@@ -1189,8 +1206,9 @@ public class ColourPower extends MarathonModeBase {
         enableCombo = prop.getProperty("colourpower.enableCombo", true);
         goaltype = prop.getProperty("colourpower.gametype", 0);
         big = prop.getProperty("colourpower.big", false);
-        version = prop.getProperty("colourpower.version", 0);
+        version = prop.getProperty("colourpower.version", BASE_VERSION + 1);
         ruleboundMode = prop.getProperty("colourpower.rulebound", false);
+        hardDropEffect = prop.getProperty("colourpower.hardDropEffect", true);
     }
 
     /**
@@ -1211,6 +1229,7 @@ public class ColourPower extends MarathonModeBase {
         prop.setProperty("colourpower.big", big);
         prop.setProperty("colourpower.version", version);
         prop.setProperty("colourpower.rulebound", ruleboundMode);
+        prop.setProperty("colourpower.hardDropEffect", hardDropEffect);
     }
 
     /**
@@ -1231,6 +1250,7 @@ public class ColourPower extends MarathonModeBase {
         goaltype = prop.getProperty("colourpower.gametype", 0);
         big = prop.getProperty("colourpower.big", false);
         ruleboundMode = prop.getProperty("colourpower.rulebound", false);
+        hardDropEffect = prop.getProperty("colourpower.hardDropEffect", true);
     }
 
     /**
@@ -1251,6 +1271,7 @@ public class ColourPower extends MarathonModeBase {
         prop.setProperty("colourpower.gametype", goaltype);
         prop.setProperty("colourpower.big", big);
         prop.setProperty("colourpower.rulebound", ruleboundMode);
+        prop.setProperty("colourpower.hardDropEffect", hardDropEffect);
     }
 
     /**
@@ -1419,7 +1440,7 @@ public class ColourPower extends MarathonModeBase {
     private int addPowerToIndex(int index) {
         meterValues[index]++;
 
-        if (meterValues[index] >= POWER_METER_MAX) {
+        if (meterValues[index] >= powerMeterMax) {
             meterValues[index] = 0;
             return index;
         }
