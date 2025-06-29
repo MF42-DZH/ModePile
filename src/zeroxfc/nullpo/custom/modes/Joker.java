@@ -96,6 +96,7 @@ public class Joker extends MarathonModeBase {
 
     // Last amount of lines cleared;
     private int lastLine;
+    private int amountOfLineClearInstances;
 
     // Animated backgrounds
     private boolean useAnimBG;
@@ -137,6 +138,7 @@ public class Joker extends MarathonModeBase {
         startingStock = 0;
         lastLine = 0;
         useAnimBG = false;
+        amountOfLineClearInstances = 0;
 
         mainTimer = 0;
         warningText = null;
@@ -224,7 +226,7 @@ public class Joker extends MarathonModeBase {
     }
 
     private void calculateEfficiencyGrade(GameEngine engine) {
-        efficiency = (float) engine.statistics.lines / ((engine.statistics.level - 50) * 4);
+        efficiency = (float) engine.statistics.lines / (amountOfLineClearInstances * 4);
         for (int i = 0; i < GRADE_BOUNDARIES.length; i++) {
             if (efficiency >= GRADE_BOUNDARIES[i]) efficiencyGrade = i;
         }
@@ -368,6 +370,7 @@ public class Joker extends MarathonModeBase {
 
         efficiencyGrade = 0;
         efficiency = 0f;
+        amountOfLineClearInstances = 0;
 
         engine.lives = 0;
 
@@ -992,17 +995,20 @@ public class Joker extends MarathonModeBase {
         }
 
         if (lines > 0) {
+            boolean hasLevelledUp = false;
+
             // Level up, unless at level 200+, where only Fours+ increment level.
             if (version < BASE_VERSION + 1 || engine.statistics.level < 200 || lines >= 4) {
                 engine.statistics.level++;
                 engine.playSE("levelup");
+                hasLevelledUp = true;
             }
 
             // owner.backgroundStatus.fadesw = true;
             // owner.backgroundStatus.fadecount = 0;
             // owner.backgroundStatus.fadebg = engine.statistics.level / 5;
 
-            if (engine.statistics.level == 200) {
+            if (engine.statistics.level == 200 && hasLevelledUp) {
                 shouldUseTimer = false;
                 engine.playSE("medal");
                 ++engine.owner.backgroundStatus.bg;
@@ -1021,7 +1027,7 @@ public class Joker extends MarathonModeBase {
                 if (mainTimer > TIMER_MAX) mainTimer = TIMER_MAX;
             }
 
-            if (engine.statistics.level == 300) {
+            if (engine.statistics.level == 300 && hasLevelledUp) {
                 engine.playSE("endingstart");
                 int destinationX = receiver.getScoreDisplayPositionX(engine, playerID);
                 int destinationY = receiver.getScoreDisplayPositionY(engine, playerID) + (18 * (engine.displaysize == 0 ? 16 : 32));
@@ -1051,6 +1057,7 @@ public class Joker extends MarathonModeBase {
             }
 
             if (engine.statistics.level <= 300) {
+                ++amountOfLineClearInstances;
                 calculateEfficiencyGrade(engine);
             }
 
