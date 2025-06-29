@@ -229,6 +229,7 @@ public class FireworkChallenge extends DummyMode {
     private int[] rankingFireworksPlayer, rankingLevelPlayer, rankingTimePlayer;
 
     private RendererExtension rendererExtension;
+    private boolean hardDropEffect;
 
     private boolean killed;
     // TODO: debug mode meme
@@ -346,6 +347,8 @@ public class FireworkChallenge extends DummyMode {
         engine.staffrollEnable = true;
         engine.staffrollNoDeath = false;
 
+        hardDropEffect = true;
+
         if (!owner.replayMode) {
             loadSetting(owner.modeConfig);
             loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
@@ -412,7 +415,7 @@ public class FireworkChallenge extends DummyMode {
         // Menu
         if (engine.owner.replayMode == false) {
             // Configuration changes
-            int change = updateCursor(engine, 2);
+            int change = updateCursor(engine, 3);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -426,6 +429,9 @@ public class FireworkChallenge extends DummyMode {
                         break;
                     case 2:
                         big = !big;
+                        break;
+                    case 3:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
             }
@@ -504,6 +510,9 @@ public class FireworkChallenge extends DummyMode {
             "20G MODE", GeneralUtil.getONorOFF(maxGravMode),
             "SHOW STIME", GeneralUtil.getONorOFF(showST),
             "BIG", GeneralUtil.getONorOFF(big));
+        drawMenu(engine, playerID, receiver, 6, EventReceiver.COLOR_PINK, 3,
+            "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+        );
     }
 
     @Override
@@ -613,20 +622,23 @@ public class FireworkChallenge extends DummyMode {
                 new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+        if (hardDropEffect) {
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                if (!cPiece.big) {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                } else {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                }
             }
         }
     }
@@ -729,7 +741,7 @@ public class FireworkChallenge extends DummyMode {
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
@@ -1523,6 +1535,7 @@ public class FireworkChallenge extends DummyMode {
         maxGravMode = prop.getProperty("fireworkchallenge.always20g", false);
         showST = prop.getProperty("fireworkchallenge.showsectiontime", false);
         big = prop.getProperty("fireworkchallenge.big", false);
+        hardDropEffect = prop.getProperty("fireworkchallenge.hardDropEffect", true);
     }
 
     /**
@@ -1536,6 +1549,7 @@ public class FireworkChallenge extends DummyMode {
         prop.setProperty("fireworkchallenge.always20g", maxGravMode);
         prop.setProperty("fireworkchallenge.big", big);
         prop.setProperty("fireworkchallenge.showsectiontime", showST);
+        prop.setProperty("fireworkchallenge.hardDropEffect", hardDropEffect);
     }
 
     /**
@@ -1549,6 +1563,7 @@ public class FireworkChallenge extends DummyMode {
         maxGravMode = prop.getProperty("fireworkchallenge.always20g", false);
         showST = prop.getProperty("fireworkchallenge.showsectiontime", false);
         big = prop.getProperty("fireworkchallenge.big", false);
+        hardDropEffect = prop.getProperty("fireworkchallenge.hardDropEffect", true);
     }
 
     /**
@@ -1561,6 +1576,7 @@ public class FireworkChallenge extends DummyMode {
         prop.setProperty("fireworkchallenge.always20g", maxGravMode);
         prop.setProperty("fireworkchallenge.big", big);
         prop.setProperty("fireworkchallenge.showsectiontime", showST);
+        prop.setProperty("fireworkchallenge.hardDropEffect", hardDropEffect);
     }
 
     /*
