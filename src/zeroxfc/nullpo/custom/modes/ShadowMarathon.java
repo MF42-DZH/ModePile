@@ -733,6 +733,7 @@ public class ShadowMarathon extends MarathonModeBase {
     private int[][] rankingTimePlayer;
 
     private RendererExtension rendererExtension;
+    private boolean hardDropEffect;
 
     @Override
     public String getName() {
@@ -787,6 +788,7 @@ public class ShadowMarathon extends MarathonModeBase {
         rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
 
         rendererExtension = new RendererExtension();
+        hardDropEffect = true;
 
         netPlayerInit(engine, playerID);
 
@@ -828,7 +830,7 @@ public class ShadowMarathon extends MarathonModeBase {
         // Menu
         else if (engine.owner.replayMode == false) {
             // Configuration changes
-            int change = updateCursor(engine, 8, playerID);
+            int change = updateCursor(engine, 9, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -880,6 +882,9 @@ public class ShadowMarathon extends MarathonModeBase {
                         break;
                     case 8:
                         big = !big;
+                        break;
+                    case 9:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
 
@@ -970,6 +975,9 @@ public class ShadowMarathon extends MarathonModeBase {
                 "COMBO", GeneralUtil.getONorOFF(enableCombo),
                 "GOAL", (tableGameClearLines[goaltype] < 0) ? "ENDLESS" : tableGameClearLines[goaltype] + (tableGameClearLines[goaltype] > 1 ? " LINES" : " LINE"),
                 "BIG", GeneralUtil.getONorOFF(big));
+            drawMenu(engine, playerID, receiver, 18, EventReceiver.COLOR_PINK, 9,
+                "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+            );
         }
     }
 
@@ -2136,20 +2144,23 @@ public class ShadowMarathon extends MarathonModeBase {
                 new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+        if (hardDropEffect) {
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                if (!cPiece.big) {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                } else {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                }
             }
         }
     }
@@ -2221,6 +2232,16 @@ public class ShadowMarathon extends MarathonModeBase {
             if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, 10, 6, "PLAYER", EventReceiver.COLOR_BLUE);
                 receiver.drawScoreFont(engine, playerID, 10, 7, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+            }
+
+            int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+            int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
+                for (int[] loc : pCoordList) {
+                    int cx = baseX + (16 * loc[0]);
+                    int cy = baseY + (16 * loc[1]);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                }
             }
 
             receiver.drawScoreFont(engine, playerID, 0, 6, "LINE", EventReceiver.COLOR_BLUE);
@@ -2433,6 +2454,7 @@ public class ShadowMarathon extends MarathonModeBase {
         big = prop.getProperty("shadowMarathon.big", false);
         version = prop.getProperty("shadowMarathon.version", 0);
         scoreVersion = prop.getProperty("shadowMarathon.scoreVersion", 0);
+        hardDropEffect = prop.getProperty("shadowMarathon.hardDropEffect", true);
     }
 
     /**
@@ -2453,6 +2475,7 @@ public class ShadowMarathon extends MarathonModeBase {
         prop.setProperty("shadowMarathon.big", big);
         prop.setProperty("shadowMarathon.version", version);
         prop.setProperty("shadowMarathon.scoreVersion", scoreVersion);
+        prop.setProperty("shadowMarathon.hardDropEffect", hardDropEffect);
     }
 
     /**
@@ -2472,6 +2495,7 @@ public class ShadowMarathon extends MarathonModeBase {
         enableCombo = prop.getProperty("shadowMarathon.enableCombo", true);
         goaltype = prop.getProperty("shadowMarathon.gametype", 0);
         big = prop.getProperty("shadowMarathon.big", false);
+        hardDropEffect = prop.getProperty("shadowMarathon.hardDropEffect", true);
     }
 
     /**
@@ -2491,6 +2515,7 @@ public class ShadowMarathon extends MarathonModeBase {
         prop.setProperty("shadowMarathon.enableCombo", enableCombo);
         prop.setProperty("shadowMarathon.gametype", goaltype);
         prop.setProperty("shadowMarathon.big", big);
+        prop.setProperty("shadowMarathon.hardDropEffect", hardDropEffect);
     }
 
     /**
