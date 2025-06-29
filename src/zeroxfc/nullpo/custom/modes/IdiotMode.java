@@ -36,7 +36,7 @@ public class IdiotMode extends DummyMode {
      *     - Spin Single: 2
      *     - Mini/EZ Spin Double: 3
      *     - Spin Double: 4
-     *     - Spin Triple: 6
+     *     - Spin Triple: 8
      *
      *   Level stop requires spin clear.
      *
@@ -49,9 +49,12 @@ public class IdiotMode extends DummyMode {
      *       3  |  1
      *       4  |  2
      *       5  |  2
-     *      6+  |  3
+     *       6  |  3
+     *       7  |  3
+     *       8  |  4
+     *         ...
      *
-     *   B2B is counted for spin clears only, not for line clears.
+     *   B2B is counted for spin clears only, not for line clears. FOURs preserve B2B.
      *
      * - Skims: allow reduced line clear level advances (not past a level stop)
      *     - SINGLE = 1
@@ -86,7 +89,7 @@ public class IdiotMode extends DummyMode {
     public static final String DEDICATION = "THIS MODE IS CREATED BY 0XFC963F18DC21 AND IS INSPIRED BY AND IS DEDICATED TO AKARI AND HER VIDEO, \"SHIRASE IDIOT%\". SPECIAL THANKS GOES TO AKARI, OSHISAURE, RY00001, GLITCHYPSI AND THE DRAGON GOD NERROTH. CONGRATULATIONS ON REACHING THE ENDING, AND THANK YOU TOO FOR PLAYING!";
     public static final String DEDICATION_SHORT = "THANK YOU FOR PLAYING IDIOT% MODE! NOW TRY A HARDER DIFFICULTY!";
     // Current version
-    private static final int CURRENT_VERSION = 2;
+    private static final int CURRENT_VERSION = 3;
     // Default M1 torikan time. Same for all rule styles.
     private static final int[] DEFAULT_TORIKAN = { 14400, 12300, 25200 };
     // ARE Tables
@@ -228,8 +231,13 @@ public class IdiotMode extends DummyMode {
     private static final int GAMETYPE_MAX = 5;
     // Game Type Names
     private static final String[] GAMETYPE_NAMES = { "DEATH", "OMEN", "MASTERY", "ABSOLUTE", "SHORT" };
+
     // Spin chain bonus values, for use with PositiveClamp()
     private static final int[] SPIN_CHAIN_LEVELBONUS = { 0, 0, 1, 1, 2, 2, 3 };
+    private static int chainLevelBonus(int chain) {
+        return chain / 2;
+    }
+
     // Scoring event constants
     private static final int EVENT_NONE = 0,
         EVENT_SINGLE = 1,
@@ -345,6 +353,7 @@ public class IdiotMode extends DummyMode {
     private int spins;                // Number of spins.
     private boolean shouldPlayLSSE;   // should it play the level stop SE?
     private boolean daredevil;        // Daredevil mode?
+    private boolean hardDropEffect;   // Hard drop effect.
     private boolean torikaned;        // Was the player stopped?
     /**
      * The good hard drop effect
@@ -388,6 +397,7 @@ public class IdiotMode extends DummyMode {
         condescension = true;  // VERY IMPORTANT.
 
         daredevil = false;
+        hardDropEffect = true;
 
         tspinEnableType = 0;
         enableTSpinKick = false;
@@ -622,7 +632,7 @@ public class IdiotMode extends DummyMode {
         // engine.framecolor = GameEngine.FRAME_COLOR_GRAY;
         if (engine.owner.replayMode == false) {
             // Configuration changes
-            int change = updateCursor(engine, 11);
+            int change = updateCursor(engine, 12);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -691,6 +701,8 @@ public class IdiotMode extends DummyMode {
                         break;
                     case 11:
                         daredevil = !daredevil;
+                    case 12:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
             }
@@ -786,7 +798,9 @@ public class IdiotMode extends DummyMode {
         } else {
             drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_PINK, 10,
                 "CRUDENESS", GeneralUtil.getONorOFF(condescension),
-                "DEVILSPIN", GeneralUtil.getONorOFF(daredevil));
+                "DEVILSPIN", GeneralUtil.getONorOFF(daredevil),
+                "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+            );
         }
     }
 
@@ -887,20 +901,23 @@ public class IdiotMode extends DummyMode {
                 new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+        if (hardDropEffect) {
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                if (!cPiece.big) {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                } else {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                }
             }
         }
     }
@@ -1047,7 +1064,7 @@ public class IdiotMode extends DummyMode {
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
@@ -1332,12 +1349,24 @@ public class IdiotMode extends DummyMode {
         }
 
         // Combo
-        if (lines >= 1 & !engine.tspin) {
-            spinChain = 1;
-        } else if (lines >= 1) {
-            spinChain++;
-            spins++;
-            if (spinChain < 1) spinChain = 1;
+        if (version < 3) {
+            if (lines >= 1 & !engine.tspin) {
+                spinChain = 1;
+            } else if (lines >= 1) {
+                spinChain++;
+                spins++;
+                if (spinChain < 1) spinChain = 1;
+            }
+        } else {
+            if (lines >= 4 && !engine.tspin) {
+                // DO NOTHING AT ALL.
+            } else if (lines >= 1 && !engine.tspin) {
+                spinChain = 1;
+            } else if (lines >= 1) {
+                spinChain++;
+                spins++;
+                if (spinChain < 1) spinChain = 1;
+            }
         }
 
         if ((lines >= 1) && (engine.ending == 0)) {
@@ -1365,13 +1394,15 @@ public class IdiotMode extends DummyMode {
 
             }
 
-            // AC medal
-            if (engine.field.isEmpty()) {
-                engine.playSE("bravo");
+            if (version < 3) {
+                // AC medal old
+                if (engine.field.isEmpty()) {
+                    engine.playSE("bravo");
 
-                if (medalAC < 3) {
-                    engine.playSE("medal");
-                    medalAC++;
+                    if (medalAC < 3) {
+                        engine.playSE("medal");
+                        medalAC++;
+                    }
                 }
             }
 
@@ -1417,7 +1448,7 @@ public class IdiotMode extends DummyMode {
                     if (gameType == GAMETYPE_OMEN && version >= 2) levelplus *= 1.5;
                     break;
                 case EVENT_TSPIN_TRIPLE:
-                    levelplus = 6;
+                    levelplus = version < 3 ? 6 : 8;
                     if (gameType == GAMETYPE_OMEN && version >= 2) levelplus *= 1.5;
                     break;
                 case EVENT_SINGLE:
@@ -1456,17 +1487,29 @@ public class IdiotMode extends DummyMode {
             // AC medal
             if (engine.field.isEmpty()) {
                 engine.playSE("bravo");
-                levelplus += 12;
+                levelplus += version < 3 ? 12 : 20;
                 if (medalAC < 3) {
                     engine.playSE("medal");
                     medalAC++;
                 }
             }
 
-            levelplus += SPIN_CHAIN_LEVELBONUS[clamp(spinChain, 1, 6) - 1];
+            if (version < 3) {
+                levelplus += SPIN_CHAIN_LEVELBONUS[clamp(spinChain, 1, 6) - 1];
+            } else {
+                levelplus += chainLevelBonus(spinChain - 1);
+            }
+
             levelplus *= daredevil ? 2 : 1;
 
-            engine.statistics.level += levelplus;
+            if (version < 3) {
+                engine.statistics.level += levelplus;
+            } else {
+                engine.statistics.level += levelplus;
+                if (!engine.tspin && (engine.statistics.level > nextSectionLv - 1 || engine.statistics.level >= LEVEL_MAX[gameType])) {
+                    engine.statistics.level = Math.min(nextSectionLv - 1, LEVEL_MAX[gameType] - 1);
+                }
+            }
 
             levelUp(engine);
 
@@ -1552,7 +1595,7 @@ public class IdiotMode extends DummyMode {
                             break;
                     }
                 }
-            } else if (engine.statistics.level >= nextSectionLv) {
+            } else if (engine.statistics.level >= nextSectionLv && (version < 3 || engine.tspin)) {
                 // Next Section
                 engine.playSE("levelup");
 
@@ -1816,6 +1859,7 @@ public class IdiotMode extends DummyMode {
         tspinEnableEZ = prop.getProperty("idiotmode.version.EZSpin." + strRuleName, true);
         enableTSpinKick = prop.getProperty("idiotmode.version.KickSpin." + strRuleName, true);
         daredevil = prop.getProperty("idiotmode.version.daredevil." + strRuleName, false);
+        hardDropEffect = prop.getProperty("idiotmode." + version + ".hardDropEffect." + strRuleName, true);
     }
 
     // Save last settings
@@ -1834,6 +1878,7 @@ public class IdiotMode extends DummyMode {
         prop.setProperty("idiotmode.version.EZSpin." + strRuleName, tspinEnableEZ);
         prop.setProperty("idiotmode.version.KickSpin." + strRuleName, enableTSpinKick);
         prop.setProperty("idiotmode.version.daredevil." + strRuleName, daredevil);
+        prop.setProperty("idiotmode." + version + ".hardDropEffect." + strRuleName, hardDropEffect);
     }
 
     // Load last settings
@@ -1852,6 +1897,7 @@ public class IdiotMode extends DummyMode {
         tspinEnableEZ = prop.getProperty("idiotmode.version.EZSpin." + strRuleName, true);
         enableTSpinKick = prop.getProperty("idiotmode.version.KickSpin." + strRuleName, true);
         daredevil = prop.getProperty("idiotmode.version.daredevil." + strRuleName, false);
+        hardDropEffect = prop.getProperty("idiotmode." + version + ".hardDropEffect." + strRuleName, true);
     }
 
     // Save last settings
@@ -1870,6 +1916,7 @@ public class IdiotMode extends DummyMode {
         prop.setProperty("idiotmode.version.EZSpin." + strRuleName, tspinEnableEZ);
         prop.setProperty("idiotmode.version.KickSpin." + strRuleName, enableTSpinKick);
         prop.setProperty("idiotmode.version.daredevil." + strRuleName, daredevil);
+        prop.setProperty("idiotmode." + version + ".hardDropEffect." + strRuleName, hardDropEffect);
     }
 
     // Load rankings
