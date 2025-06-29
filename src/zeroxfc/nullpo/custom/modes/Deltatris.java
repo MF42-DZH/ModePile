@@ -100,6 +100,7 @@ public class Deltatris extends MarathonModeBase {
     private Piece cPiece;
 
     private RendererExtension rendererExtension;
+    private boolean hardDropEffect;
 
     /**
      * Deltatris - How fast can you go in this ΔMAX-inspired gamemode?
@@ -154,6 +155,7 @@ public class Deltatris extends MarathonModeBase {
         cPiece = null;
 
         rendererExtension = new RendererExtension();
+        hardDropEffect = true;
 
         netPlayerInit(engine, playerID);
 
@@ -216,7 +218,7 @@ public class Deltatris extends MarathonModeBase {
         // Menu
         else if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 7, playerID);
+            int change = updateCursor(engine, 8, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -252,6 +254,9 @@ public class Deltatris extends MarathonModeBase {
                         break;
                     case 7:
                         big = !big;
+                        break;
+                    case 8:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
 
@@ -353,6 +358,9 @@ public class Deltatris extends MarathonModeBase {
                 "B2B", GeneralUtil.getONorOFF(enableB2B),
                 "COMBO", GeneralUtil.getONorOFF(enableCombo),
                 "BIG", GeneralUtil.getONorOFF(big));
+            drawMenu(engine, playerID, receiver, 16, EventReceiver.COLOR_PINK, 8,
+                "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+            );
         }
     }
 
@@ -481,7 +489,7 @@ public class Deltatris extends MarathonModeBase {
         } else {
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
@@ -890,20 +898,23 @@ public class Deltatris extends MarathonModeBase {
                 new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+        if (hardDropEffect) {
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                if (!cPiece.big) {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                } else {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                }
             }
         }
     }
@@ -978,6 +989,7 @@ public class Deltatris extends MarathonModeBase {
         difficulty = prop.getProperty("deltatris.difficulty", 1);
         big = prop.getProperty("deltatris.big", false);
         version = prop.getProperty("deltatris.version", 0);
+        hardDropEffect = prop.getProperty("deltatris.hardDropEffect", true);
     }
 
     /**
@@ -996,6 +1008,7 @@ public class Deltatris extends MarathonModeBase {
         prop.setProperty("deltatris.difficulty", difficulty);
         prop.setProperty("deltatris.big", big);
         prop.setProperty("deltatris.version", version);
+        prop.setProperty("deltatris.hardDropEffect", hardDropEffect);
     }
 
     /**
@@ -1013,6 +1026,7 @@ public class Deltatris extends MarathonModeBase {
         enableCombo = prop.getProperty("deltatris.enableCombo", true);
         difficulty = prop.getProperty("deltatris.difficulty", 1);
         big = prop.getProperty("deltatris.big", false);
+        hardDropEffect = prop.getProperty("deltatris.hardDropEffect", true);
     }
 
     /**
@@ -1030,7 +1044,7 @@ public class Deltatris extends MarathonModeBase {
         prop.setProperty("deltatris.enableCombo", enableCombo);
         prop.setProperty("deltatris.difficulty", difficulty);
         prop.setProperty("deltatris.big", big);
-        prop.setProperty("deltatris.version", version);
+        prop.setProperty("deltatris.hardDropEffect", hardDropEffect);
     }
 
     /**
