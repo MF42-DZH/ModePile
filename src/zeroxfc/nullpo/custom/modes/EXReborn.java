@@ -107,6 +107,7 @@ public class EXReborn extends DummyMode {
     private int[] rankingTimePlayer;
 
     private RendererExtension rendererExtension;
+    private boolean hardDropEffect;
 
     /**
      * Mode name
@@ -155,6 +156,7 @@ public class EXReborn extends DummyMode {
         engine.bigmove = true;
 
         rendererExtension = new RendererExtension();
+        hardDropEffect = true;
 
         if (!owner.replayMode) {
             loadSetting(owner.modeConfig);
@@ -182,7 +184,7 @@ public class EXReborn extends DummyMode {
         // Menu
         if (engine.owner.replayMode == false) {
             // Configuration changes
-            int change = updateCursor(engine, 2, playerID);
+            int change = updateCursor(engine, 3, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -196,6 +198,9 @@ public class EXReborn extends DummyMode {
                         break;
                     case 2:
                         big = !big;
+                        break;
+                    case 3:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
             }
@@ -252,6 +257,9 @@ public class EXReborn extends DummyMode {
             "LVSTOPSE", GeneralUtil.getONorOFF(lvstopse),
             "FULL GHOST", GeneralUtil.getONorOFF(alwaysghost),
             "BIG", GeneralUtil.getONorOFF(big));
+        drawMenu(engine, playerID, receiver, 6, EventReceiver.COLOR_PINK, 3,
+            "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+        );
     }
 
     /*
@@ -1309,7 +1317,7 @@ public class EXReborn extends DummyMode {
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
@@ -1348,20 +1356,23 @@ public class EXReborn extends DummyMode {
                 new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+        if (hardDropEffect) {
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                if (!cPiece.big) {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                } else {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                }
             }
         }
     }
@@ -1442,6 +1453,7 @@ public class EXReborn extends DummyMode {
         big = prop.getProperty("exreborn.big", false);
         alwaysghost = prop.getProperty("exreborn.alwaysghost", false);
         version = prop.getProperty("exreborn.version", 1);
+        hardDropEffect = prop.getProperty("exreborn.hardDropEffect", true);
     }
 
     /**
@@ -1454,6 +1466,7 @@ public class EXReborn extends DummyMode {
         prop.setProperty("exreborn.big", big);
         prop.setProperty("exreborn.alwaysghost", alwaysghost);
         prop.setProperty("exreborn.version", version);
+        prop.setProperty("exreborn.hardDropEffect", hardDropEffect);
     }
 
     /**
@@ -1466,6 +1479,7 @@ public class EXReborn extends DummyMode {
         lvstopse = prop.getProperty("exreborn.lvstopse", true);
         big = prop.getProperty("exreborn.big", false);
         alwaysghost = prop.getProperty("exreborn.alwaysghost", false);
+        hardDropEffect = prop.getProperty("exreborn.hardDropEffect", true);
     }
 
     /**
@@ -1478,6 +1492,7 @@ public class EXReborn extends DummyMode {
         prop.setProperty("exreborn.lvstopse", lvstopse);
         prop.setProperty("exreborn.big", big);
         prop.setProperty("exreborn.alwaysghost", alwaysghost);
+        prop.setProperty("exreborn.hardDropEffect", hardDropEffect);
     }
 
     /**
