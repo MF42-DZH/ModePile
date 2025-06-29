@@ -102,6 +102,7 @@ public class Constantris extends MarathonModeBase {
     private Piece cPiece;
 
     private RendererExtension rendererExtension;
+    private boolean hardDropEffect;
 
     private static int sumOf(int max) {
         int sum = 0;
@@ -180,6 +181,7 @@ public class Constantris extends MarathonModeBase {
         showPlayerStats = false;
 
         rendererExtension = new RendererExtension();
+        hardDropEffect = true;
 
         netPlayerInit(engine, playerID);
 
@@ -222,7 +224,7 @@ public class Constantris extends MarathonModeBase {
         // Menu
         else if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 8, playerID);
+            int change = updateCursor(engine, 9, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -261,6 +263,9 @@ public class Constantris extends MarathonModeBase {
                         break;
                     case 8:
                         unfair = !unfair;
+                        break;
+                    case 9:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
 
@@ -350,6 +355,9 @@ public class Constantris extends MarathonModeBase {
                 "BIG", GeneralUtil.getONorOFF(big));
             drawMenu(engine, playerID, receiver, 16, EventReceiver.COLOR_RED, 8,
                 "MODIFIER", unfair ? "UNFAIR" : "FAIR");
+            drawMenu(engine, playerID, receiver, 18, EventReceiver.COLOR_PINK, 9,
+                "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+            );
         }
     }
 
@@ -649,7 +657,7 @@ public class Constantris extends MarathonModeBase {
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
@@ -998,20 +1006,22 @@ public class Constantris extends MarathonModeBase {
                 new int[] { engine.nowPieceX, engine.nowPieceY - i }
             );
         }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+        if (hardDropEffect) {
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                if (!cPiece.big) {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                } else {
+                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
 
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
+                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
+                }
             }
         }
     }
@@ -1066,6 +1076,7 @@ public class Constantris extends MarathonModeBase {
         version = prop.getProperty("constantris.version", 0);
         difficulty = prop.getProperty("constantris.difficulty", DIFFICULTY_EASY);
         unfair = prop.getProperty("constantris.unfair", false);
+        hardDropEffect = prop.getProperty("constantris.hardDropEffect", true);
     }
 
     /**
@@ -1086,6 +1097,7 @@ public class Constantris extends MarathonModeBase {
         prop.setProperty("constantris.version", version);
         prop.setProperty("constantris.difficulty", difficulty);
         prop.setProperty("constantris.unfair", unfair);
+        prop.setProperty("constantris.hardDropEffect", hardDropEffect);
     }
 
     /**
@@ -1105,6 +1117,7 @@ public class Constantris extends MarathonModeBase {
         big = prop.getProperty("constantris.big", false);
         difficulty = prop.getProperty("constantris.difficulty", DIFFICULTY_EASY);
         unfair = prop.getProperty("constantris.unfair", false);
+        hardDropEffect = prop.getProperty("constantris.hardDropEffect", true);
     }
 
     /**
@@ -1124,6 +1137,7 @@ public class Constantris extends MarathonModeBase {
         prop.setProperty("constantris.big", big);
         prop.setProperty("constantris.difficulty", difficulty);
         prop.setProperty("constantris.unfair", unfair);
+        prop.setProperty("constantris.hardDropEffect", hardDropEffect);
     }
 
     /**
