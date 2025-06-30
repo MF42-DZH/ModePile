@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.BufferedPrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
-public abstract class ParticleEmitterBase {
+public abstract class ParticleEmitterBase<P> {
     /**
      * Default colour set shared by all emitters.<br />
      * In order: Gray, Red, Orange, Yellow, Green, Cyan, Blue, Purple<br />
@@ -85,5 +85,5 @@ public abstract class ParticleEmitterBase {
      * @param num    Number of particles / particle groups.
      * @param params Parameters to pass onto the particles.
      */
-    public abstract void addNumber(int num, Object[] params);
+    public abstract void addNumber(int num, P params);
 }

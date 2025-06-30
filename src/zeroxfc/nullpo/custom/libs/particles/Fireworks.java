@@ -4,8 +4,9 @@ import java.util.Random;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.MathHelper;
 
-public class Fireworks extends ParticleEmitterBase {
+public class Fireworks extends ParticleEmitterBase<Object[]> {
     /**
      * Default max velocity
      */
@@ -90,10 +91,15 @@ public class Fireworks extends ParticleEmitterBase {
                 DoubleVector origin = new DoubleVector(Interpolation.lerp(minX, maxX, randomiser.nextDouble()), Interpolation.lerp(minY, maxY, randomiser.nextDouble()), false);
                 for (int j = 0; j < randomiser.nextInt(121) + 120; ++j) {
                     int ured, ugreen, ublue, ualpha;
-                    ured = red + (randomiser.nextInt(2 * variance) - variance);
-                    ugreen = green + (randomiser.nextInt(2 * variance) - variance);
-                    ublue = blue + (randomiser.nextInt(2 * variance) - variance);
-                    ualpha = alpha + (randomiser.nextInt(2 * variance) - variance);
+                    ured = red + (variance - randomiser.nextInt(2 * variance + 1));
+                    ugreen = green + (variance - randomiser.nextInt(2 * variance + 1));
+                    ublue = blue + (variance - randomiser.nextInt(2 * variance + 1));
+                    ualpha = alpha + (variance - randomiser.nextInt(2 * variance + 1));
+
+                    ured = MathHelper.clamp(ured, 0, 255);
+                    ugreen = MathHelper.clamp(ugreen, 0, 255);
+                    ublue = MathHelper.clamp(ublue, 0, 255);
+                    ualpha = MathHelper.clamp(ualpha, 0, 255);
 
                     int s = 1 + randomiser.nextInt(3);
                     DoubleVector v = new DoubleVector(2 * randomiser.nextDouble() * maxVelocity - maxVelocity, 2 * randomiser.nextDouble() * Math.PI, true);
