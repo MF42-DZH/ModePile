@@ -7,8 +7,8 @@
 
 # Un-ignore everything to do with the project.
 !/required files
-!/src/bin.sylveon*
-!/src/mandl*
+!/src/network/nightshade
+!/src/mandl
 !/src/zeroxfc
 !/POST_BUILD_INSTALLATION_v1.12.txt
 !/README.md
