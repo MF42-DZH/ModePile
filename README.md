@@ -1,4 +1,4 @@
-![ModePile Banner](https://github.com/Shots243/ModePile/blob/master/GitHub%20ModePile%20Banner-Final.png)
+![ModePile Banner](https://github.com/MF42-DZH/ModePile/blob/master/GitHub%20ModePile%20Banner-Final.png)
 
 # ModePile
 A set of gameplay mods for [NullpoMino](https://github.com/nullpomino/nullpomino).
@@ -69,11 +69,20 @@ Click the links that are available in the mode names to get a YouTube video demo
 
 ## Compilation Instructions:
 
-1. Install JDK 1.8.0. Either use OpenJDK by RedHat or use the official Oracle JDK.
+### With an IDE
+
+1. Install JDK 1.8.0. OpenJDK is recommended.
 2. Install your Java IDE of choice.
-3. Import the ***whole*** NullpoMino directory as a project. Make sure all the classpaths are set up.
-4. Merge the src directory from this repository and the one in the NullpoMino directory together.
-5. Compilation should be working.
+3. Download a source distribution of *specifically* NullpoMino 7.5.0. The bleeding edge commits will not work.
+4. Import the ***whole*** NullpoMino directory as a project. Make sure all the classpaths are set up.
+5. Merge the src directory from this repository and the one in the NullpoMino directory together.
+6. Compilation should be working.
+
+### Without an IDE
+
+1. Perform steps 1-3, and 5 of the steps with IDE.
+2. Set your working directory to inside the repository.
+3. Run `build.bat` or `build.sh` depending on your OS.
 
 ## Installation Notes
 
@@ -96,15 +105,15 @@ Click the links that are available in the mode names to get a YouTube video demo
 
 ## Main Contributors
 
-* 0xFC963F18DC21 (as [Shots243](https://github.com/Shots243))
+* [0xFC963F18DC21 / Azullia](https://github.com/MF42-DZH)
 * [MandL27](https://github.com/MandL27)
-* [ry00001](https://github.com/ry00001)
+* [Nightshade](https://github.com/snightshade)
 
 ## Special Thanks
 
 * Oshisaure - A main inspiration for starting this modding project, a code design helper and motivator to allow this to continue.
-* ry00001 - A main inspiration for starting this modding project, a code design helper and motivator to allow this to continue.
+* Nightshade - A main inspiration for starting this modding project, a code design helper and motivator to allow this to continue.
 * GlitchyPSI - A main inspiration for starting this modding project, a code design helper (esp. for allowing the adaptation of their custom sound loader code) and motivator to allow this to continue.
 * Akari - A main inspiration for starting this modding project (see *Idiot% Mode* above) and motivator to allow this to continue and for providing Japanese translations of the mode descriptions.
-* The original creator of *NullpoMino*.
+* The original creator of *NullpoMino*, NullNoName.
 * All others that worked on *NullpoMino* - For helping to develop the game into the extensible platform we know today.

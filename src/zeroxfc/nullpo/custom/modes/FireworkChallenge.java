@@ -115,9 +115,9 @@ public class FireworkChallenge extends DummyMode {
 
     // Credit texts
     private static final String[] CREDIT_TEXTS = {
-        "0XFC963F18DC21.",
+        "AZULLIA.",
         "TI-EASY.",
-        "GLITCHYPSI, OSHISAURE, RY00001, AKARI, THE DRAGON GOD NERROTH.",
+        "GLITCHYPSI, OSHISAURE, NIGHTSHADE, AKARI, THE DRAGON GOD NERROTH.",
         "YOU HAVE COMPLETED THE FIREWORK CHALLENGE!"
     };
 

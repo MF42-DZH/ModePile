@@ -45,7 +45,7 @@ import java.util.Random;
 
 /**
  * SUBSCRIBER CHALLENGE Mode
- * Author ry00001
+ * Author Nightshade
  *
  * Someone take IDEA away from me.
  */

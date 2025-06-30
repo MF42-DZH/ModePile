@@ -43,7 +43,7 @@ import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
 
 /**
  * RETRO MANIA 2 mode (by MandL27; edited from the original Retro Mania)
- * Modifications by ry00001
+ * Modifications by Nightshade
  */
 public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode {
 	/** Current version */
@@ -216,7 +216,7 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 	private String[] marqueeHeading = {"PORT BY", "BASED ON", "SPECIAL THANKS", "SEGA MODE/CUSTOM BGMS/CREDIT ROLL", "MUSIC FROM", ""};
 
 	/** Credit texts */
-	private String[] marqueeText = {"MANDL27/RY00001", "SEGA TETRIS (1999)", "OSHISAURE, 0XFC963F18DC21, LINEPIECE777", "RY00001", "SEGA TETRIS (1999)", "THANK YOU FOR PLAYING!"};
+	private String[] marqueeText = {"MANDL27/NIGHTSHADE", "SEGA TETRIS (1999)", "OSHISAURE, AZULLIA, LINEPIECE777", "NIGHTSHADE", "SEGA TETRIS (1999)", "THANK YOU FOR PLAYING!"};
 
 	/** Credit roll object */
 	private ScrollingMarqueeText marquee = new ScrollingMarqueeText(marqueeHeading, marqueeText, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
@@ -655,7 +655,7 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 	 * FOR
 	 * PLAYING!
 	 *
-	 * @author ry00001
+	 * @author Nightshade
 	 */
 	@Override
 	public boolean onCustom(GameEngine engine, int playerID) {

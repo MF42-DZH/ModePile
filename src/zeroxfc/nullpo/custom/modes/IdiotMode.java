@@ -85,9 +85,6 @@ public class IdiotMode extends DummyMode {
      * [--- CONST BLOCK ---]
      */
 
-    // o7
-    public static final String DEDICATION = "THIS MODE IS CREATED BY 0XFC963F18DC21 AND IS INSPIRED BY AND IS DEDICATED TO AKARI AND HER VIDEO, \"SHIRASE IDIOT%\". SPECIAL THANKS GOES TO AKARI, OSHISAURE, RY00001, GLITCHYPSI AND THE DRAGON GOD NERROTH. CONGRATULATIONS ON REACHING THE ENDING, AND THANK YOU TOO FOR PLAYING!";
-    public static final String DEDICATION_SHORT = "THANK YOU FOR PLAYING IDIOT% MODE! NOW TRY A HARDER DIFFICULTY!";
     // Current version
     private static final int CURRENT_VERSION = 3;
     // Default M1 torikan time. Same for all rule styles.
@@ -283,8 +280,8 @@ public class IdiotMode extends DummyMode {
     // Credit texts
     private static final String[] CREDIT_TEXTS = {
         "AKARI AND HER VIDEO, \"SHIRASE IDIOT%\".",
-        "0XFC963F18DC21.",
-        "AKARI, OSHISAURE, RY00001, GLITCHYPSI AND THE DRAGON GOD NERROTH.",
+        "AZULLIA.",
+        "AKARI, OSHISAURE, NIGHTSHADE, GLITCHYPSI AND THE DRAGON GOD NERROTH.",
         "YOU, FOR ENDURING AND REACHING THE ENDING!"
     };
 
