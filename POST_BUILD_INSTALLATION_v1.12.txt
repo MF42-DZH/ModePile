@@ -159,6 +159,7 @@ zeroxfc.nullpo.custom.modes.ShadowMarathon
 zeroxfc.nullpo.custom.modes.Constantris
 zeroxfc.nullpo.custom.modes.RollTraining
 zeroxfc.nullpo.custom.modes.Deltatris
+zeroxfc.nullpo.custom.modes.GradeMania4
 
 Do not add MarathonModeBase or PuzzleGameEngine, that is simply a base mode that some of these modes are deriving from.
 
@@ -175,6 +176,7 @@ EXPRESS SHIPPING
 EX REBORN
 FIREWORK CHALLENGE
 GEM SWAP
+GRADE MANIA 4
 IDIOT% MODE
 JOKER
 MARATHON II
@@ -337,6 +339,7 @@ SUBSCRIBER_CHALLENGE=git gud, get subscriber!
 CONSTANTRIS=Hope you can maintain speed.
 ROLL_TRAINING=Practice your credit roll plays here.
 DELTATRIS=How fast can you stack?
+GRADE_MANIA_4=If you beat GRADE MANIA 2, but GRADE MANIA 3 is too hard, try this.
 Folder_NIGHTSHADE'S_MODES=Nightshade's custom modes. WIP.
 Folder_AZULLIA'S_MODES=Azullia's custom modes. WIP.
 Folder_MANDL27'S_MODES=MandL27's custom modes. WIP.

@@ -21,6 +21,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * [_EX Reborn_](https://www.youtube.com/watch?v=1GJJRNpn4Zk) - A clone of \*\*\*ris-EX.
 * _Firework Challenge_ - An inaccurate version of \*\*\*ris the Grand Master 3's Easy mode.
 * _Gem Swap_ (incomplete; on hold) - A generic match-3 game.
+* _Grade Mania 4_ - Keep it clean, and get that max grade!
 * [_Idiot% Mode_](https://www.youtube.com/watch?v=LlzxPgzajTQ) - A mode inspired by [this video](https://www.youtube.com/watch?v=omaDz_w4cgg) where it emulates the TGM style of play, but normal line clears are next-to-worthless but spin line clears are boosted to be better than normal.
 * [_Joker_](https://www.youtube.com/watch?v=XW5ou46iz98) - A mode that approximates the JOKER mode from DTET.
 * [_Marathon II_](https://www.youtube.com/watch?v=QxsDKW0oUgs) - "If Marathon was so good, why isn't there a Marathon 2?"
