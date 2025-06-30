@@ -207,7 +207,6 @@ public class GradeMania4 extends DummyMode {
     private RuleOptions engineBaseRules;
     private RuleOptions engineExtraRules;
     private int gradePresentTextIndex;
-    private boolean isShowBestSectionTime;
 
     private ScrollingMarqueeText creditText;
 
@@ -325,7 +324,6 @@ public class GradeMania4 extends DummyMode {
         nextSectionLevel = 0;
         levelUpFlag = true;
         gradePresentTextIndex = 0;
-        isShowBestSectionTime = false;
 
         engine.ghost = true;
 
@@ -772,7 +770,6 @@ public class GradeMania4 extends DummyMode {
         if (engine.statistics.level <= 0) nextSectionLevel = 100;
         if (engine.statistics.level >= 900) nextSectionLevel = LEVEL_LIMIT;
 
-        isShowBestSectionTime = false;
         levelUpFlag = true;
 
         fireworkRandomiser = new Random(engine.randSeed);
@@ -1060,8 +1057,6 @@ public class GradeMania4 extends DummyMode {
                         receiver.drawScoreFont(engine, playerID, 0, 22, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 
                 }
-
-                receiver.drawScoreFont(engine, playerID, 0, 16, "F:VIEW SECTION TIME", EventReceiver.COLOR_GREEN);
             }
         } else if (engine.stat == GameEngine.STAT_CUSTOM) {
             playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
@@ -1190,11 +1185,6 @@ public class GradeMania4 extends DummyMode {
             engine.playSE("change");
         }
 
-        if (engine.ctrl.isPush(Controller.BUTTON_F)) {
-            engine.playSE("change");
-            isShowBestSectionTime = !isShowBestSectionTime;
-        }
-
         return false;
     }
 
@@ -1259,6 +1249,9 @@ public class GradeMania4 extends DummyMode {
                 engine.resetFieldVisible();
             }
         }
+
+        if (engine.statc[0] == engine.field.getHeight() + 151 && getCombinedGrade(engine) == 20) engine.playSE("cool");
+
 
         if (engine.statc[0] < engine.field.getHeight() + 1) {
             for (int i = 0; i < engine.field.getWidth(); i++) {
