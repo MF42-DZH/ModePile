@@ -973,6 +973,14 @@ public class GradeMania4 extends DummyMode {
             }
         }
 
+        if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode))) {
+            // Show rank
+            if (engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+                showPlayerStats = !showPlayerStats;
+                engine.playSE("change");
+            }
+        }
+
         fireworks.update();
     }
 
