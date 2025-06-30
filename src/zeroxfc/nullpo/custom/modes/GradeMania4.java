@@ -1012,6 +1012,12 @@ public class GradeMania4 extends DummyMode {
         else return getAER(left, right).replace(" OF ", "/");
     }
 
+    private static int rightGradeColor(int right) {
+        if (right == 10) return EventReceiver.COLOR_ORANGE;
+        else if (right == 9) return EventReceiver.COLOR_GREEN;
+        else return EventReceiver.COLOR_WHITE;
+    }
+
     @Override
     public void renderLast(GameEngine engine, int playerID) {
         receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_BLUE);
@@ -1032,7 +1038,11 @@ public class GradeMania4 extends DummyMode {
                 if (showPlayerStats) {
                     for (int i = 0; i < RANKING_MAX; i++) {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-                        receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[i], rankingGradeRightPlayer[i]), (i == rankingRankPlayer), scale);
+                        if (rankingRankPlayer != -1) {
+                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[i], rankingGradeRightPlayer[i]), (i == rankingRankPlayer), scale);
+                        } else {
+                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[i], rankingGradeRightPlayer[i]), rightGradeColor(rankingGradeRightPlayer[i]), scale);
+                        }
                         receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevelPlayer[i]), (i == rankingRankPlayer), scale);
                         receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTimePlayer[i]), (i == rankingRankPlayer), scale);
                     }
@@ -1045,7 +1055,11 @@ public class GradeMania4 extends DummyMode {
                 } else {
                     for (int i = 0; i < RANKING_MAX; i++) {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-                        receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[i], rankingGradeRight[i]), (i == rankingRank), scale);
+                        if (rankingRank != -1) {
+                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[i], rankingGradeRight[i]), (i == rankingRank), scale);
+                        } else {
+                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[i], rankingGradeRight[i]), rightGradeColor(rankingGradeRight[i]), scale);
+                        }
                         receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevel[i]), (i == rankingRank), scale);
                         receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTime[i]), (i == rankingRank), scale);
                     }

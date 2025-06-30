@@ -137,7 +137,7 @@ Press the ingame "F" (custom button) button when you hear the countdown sound to
 
 To add the gamemodes to your NullpoMino installation, add the following to 'mode.lst', located in '[NullpoMino Directory]/config/list/':
 
-network.nightsahde.nullpo.custom.mods.SubscriberChallenge
+network.nightsahde.nullpo.custom.modes.SubscriberChallenge
 mandl.nullpo.custom.modes.RetroMania2Mode
 zeroxfc.nullpo.custom.modes.IdiotMode
 zeroxfc.nullpo.custom.modes.Accelerator
