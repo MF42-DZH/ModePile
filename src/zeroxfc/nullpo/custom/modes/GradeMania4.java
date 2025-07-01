@@ -862,7 +862,7 @@ public class GradeMania4 extends DummyMode {
                         int realY = engine.nowPieceY + engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i];
 
                         if (!engine.field.getBlockEmptyF(realX, realY + 1)) {
-                            sparks.addNumber(5, new SurfaceSparks.Parameters(
+                            sparks.addNumber(8, new SurfaceSparks.Parameters(
                                 baseX + 16 * engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i],
                                 baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 1),
                                 baseY + 16 * (lowY + 1),
