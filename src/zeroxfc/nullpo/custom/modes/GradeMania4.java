@@ -294,7 +294,7 @@ public class GradeMania4 extends DummyMode {
             animBgInstances[6] = new BackgroundDiagonalRipple(6, 8, 8, 60, 1f, 2f, true, false);
             animBgInstances[7] = new BackgroundHorizontalBars(7, 60, 120, 1f, 4f, true);
             animBgInstances[8] = new BackgroundDiagonalRipple(8, 8, 8, 60, 1f, 2f, true, true);
-            animBgInstances[9] = new BackgroundCircularRipple(9, null, null, null, null, null, null, 90, null, null);
+            animBgInstances[9] = new BackgroundFakeScanlines(9);
         }
 
         SoundLoader.loadSoundset(SoundLoader.LOADTYPE_FIREWORKS);
@@ -735,8 +735,15 @@ public class GradeMania4 extends DummyMode {
 
     @Override
     public boolean onCustom(GameEngine engine, int playerID) {
-        showPlayerStats = false;
+        if (animatedBackgrounds) {
+            owner.backgroundStatus.bg = -SECTION_MAX + startLevel;
+            owner.backgroundStatus.fadebg = -SECTION_MAX + startLevel;
+        } else {
+            owner.backgroundStatus.bg = startLevel;
+            owner.backgroundStatus.fadebg = startLevel;
+        }
 
+        showPlayerStats = false;
         engine.isInGame = true;
 
         boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
