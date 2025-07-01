@@ -1,5 +1,6 @@
 package zeroxfc.nullpo.custom.modes;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -27,6 +28,7 @@ import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.*;
 import zeroxfc.nullpo.custom.libs.particles.Fireworks;
+import zeroxfc.nullpo.custom.libs.particles.SurfaceSparks;
 
 public class GradeMania4 extends DummyMode {
     private static final Logger log = Logger.getLogger(GradeMania4.class);
@@ -188,6 +190,7 @@ public class GradeMania4 extends DummyMode {
     private boolean alwaysExtra;
     private boolean hardDropEffect;
     private boolean animatedBackgrounds;
+    private boolean sparkEffect;
 
     // Playtime Variables
     private int leftGrade;
@@ -217,20 +220,29 @@ public class GradeMania4 extends DummyMode {
     private List<int[]> pCoordList;
     private Piece cPiece;
 
+    private List<int[]> sCoordList;
+
     private ProfileProperties playerProperties;
     private boolean showPlayerStats;
     private String playerName;
 
     private int rankingRank;
-    private int[] rankingGradeLeft, rankingGradeRight, rankingLevel, rankingTime;
+    private int[][] rankingGradeLeft, rankingGradeRight, rankingLevel, rankingTime;
 
     private int rankingRankPlayer;
-    private int[] rankingGradeLeftPlayer, rankingGradeRightPlayer, rankingLevelPlayer, rankingTimePlayer;
+    private int[][] rankingGradeLeftPlayer, rankingGradeRightPlayer, rankingLevelPlayer, rankingTimePlayer;
+
+    private int rankingBoard() {
+        return useModepileRuleset ? 1 : 0;
+    }
 
     private AnimatedBackgroundHook[] animBgInstances;
 
     private Random fireworkRandomiser;
     private int fireworksLeft;
+
+    private Random sparksRandomiser;
+    private SurfaceSparks sparks;
 
     // Grade recognition system.
     private int getLeftGrade(GameEngine engine) {
@@ -308,6 +320,7 @@ public class GradeMania4 extends DummyMode {
         alwaysExtra = false;
         hardDropEffect = true;
         animatedBackgrounds = false;
+        sparkEffect = true;
 
         leftGrade = 0;
         rightGrade = 0;
@@ -331,10 +344,11 @@ public class GradeMania4 extends DummyMode {
 
         customGraphics = new CustomResourceHolder();
         rendererExtension = new RendererExtension(customGraphics);
-        fireworks = new Fireworks(customGraphics);
 
         pCoordList = new LinkedList<>();
         cPiece = null;
+
+        sCoordList = new LinkedList<>();
 
         engine.comboType = GameEngine.COMBO_TYPE_DISABLE;
         engine.framecolor = GameEngine.FRAME_COLOR_BLUE;
@@ -351,16 +365,16 @@ public class GradeMania4 extends DummyMode {
         }
 
         rankingRank = -1;
-        rankingGradeLeft = new int[RANKING_MAX];
-        rankingGradeRight = new int[RANKING_MAX];
-        rankingLevel = new int[RANKING_MAX];
-        rankingTime = new int[RANKING_MAX];
+        rankingGradeLeft = new int[2][RANKING_MAX];
+        rankingGradeRight = new int[2][RANKING_MAX];
+        rankingLevel = new int[2][RANKING_MAX];
+        rankingTime = new int[2][RANKING_MAX];
 
         rankingRankPlayer = -1;
-        rankingGradeLeftPlayer = new int[RANKING_MAX];
-        rankingGradeRightPlayer = new int[RANKING_MAX];
-        rankingLevelPlayer = new int[RANKING_MAX];
-        rankingTimePlayer = new int[RANKING_MAX];
+        rankingGradeLeftPlayer = new int[2][RANKING_MAX];
+        rankingGradeRightPlayer = new int[2][RANKING_MAX];
+        rankingLevelPlayer = new int[2][RANKING_MAX];
+        rankingTimePlayer = new int[2][RANKING_MAX];
 
         if (!owner.replayMode) {
             loadSetting(owner.modeConfig);
@@ -392,6 +406,7 @@ public class GradeMania4 extends DummyMode {
         alwaysExtra = prop.getProperty("grademania4.alwaysExtra", false);
         hardDropEffect = prop.getProperty("grademania4.hardDropEffect", true);
         animatedBackgrounds = prop.getProperty("grademania4.animatedBackgrounds", false);
+        sparkEffect = prop.getProperty("grademania4.sparkEffect", true);
     }
 
     private void saveSetting(CustomProperties prop) {
@@ -404,6 +419,7 @@ public class GradeMania4 extends DummyMode {
         prop.setProperty("grademania4.alwaysExtra", alwaysExtra);
         prop.setProperty("grademania4.hardDropEffect", hardDropEffect);
         prop.setProperty("grademania4.animatedBackgrounds", animatedBackgrounds);
+        prop.setProperty("grademania4.sparkEffect", sparkEffect);
     }
 
     private void loadSettingPlayer(ProfileProperties prop) {
@@ -418,6 +434,7 @@ public class GradeMania4 extends DummyMode {
         alwaysExtra = prop.getProperty("grademania4.alwaysExtra", false);
         hardDropEffect = prop.getProperty("grademania4.hardDropEffect", true);
         animatedBackgrounds = prop.getProperty("grademania4.animatedBackgrounds", false);
+        sparkEffect = prop.getProperty("grademania4.sparkEffect", true);
     }
 
     private void saveSettingPlayer(ProfileProperties prop) {
@@ -432,23 +449,34 @@ public class GradeMania4 extends DummyMode {
         prop.setProperty("grademania4.alwaysExtra", alwaysExtra);
         prop.setProperty("grademania4.hardDropEffect", hardDropEffect);
         prop.setProperty("grademania4.animatedBackgrounds", animatedBackgrounds);
+        prop.setProperty("grademania4.sparkEffect", sparkEffect);
     }
 
     private void loadRanking(CustomProperties prop, String ruleName) {
         for (int i = 0; i < RANKING_MAX; ++i) {
-            rankingGradeLeft[i] = prop.getProperty("grademania4.ranking." + ruleName + "." + version + ".gradeL." + i, 0);
-            rankingGradeRight[i] = prop.getProperty("grademania4.ranking." + ruleName + "." + version + ".gradeR." + i, 0);
-            rankingLevel[i] = prop.getProperty("grademania4.ranking." + ruleName + "." + version + ".level." + i, 0);
-            rankingTime[i] = prop.getProperty("grademania4.ranking." + ruleName + "." + version + ".time." + i, 0);
+            rankingGradeLeft[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRight[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevel[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".level." + i, 0);
+            rankingTime[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".time." + i, 0);
+
+            rankingGradeLeft[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRight[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevel[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".level." + i, 0);
+            rankingTime[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".time." + i, 0);
         }
     }
 
     private void saveRanking(CustomProperties prop, String ruleName) {
         for (int i = 0; i < RANKING_MAX; ++i) {
-            prop.setProperty("grademania4.ranking." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeft[i]);
-            prop.setProperty("grademania4.ranking." + ruleName + "." + version + ".gradeR." + i, rankingGradeRight[i]);
-            prop.setProperty("grademania4.ranking." + ruleName + "." + version + ".level." + i, rankingLevel[i]);
-            prop.setProperty("grademania4.ranking." + ruleName + "." + version + ".time." + i, rankingTime[i]);
+            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeft[0][i]);
+            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeR." + i, rankingGradeRight[0][i]);
+            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".level." + i, rankingLevel[0][i]);
+            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".time." + i, rankingTime[0][i]);
+
+            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeft[1][i]);
+            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeR." + i, rankingGradeRight[1][i]);
+            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".level." + i, rankingLevel[1][i]);
+            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".time." + i, rankingTime[1][i]);
         }
     }
 
@@ -456,10 +484,15 @@ public class GradeMania4 extends DummyMode {
         if (!prop.isLoggedIn()) return;
 
         for (int i = 0; i < RANKING_MAX; ++i) {
-            rankingGradeLeftPlayer[i] = prop.getProperty("grademania4.ranking." + ruleName + "." + version + ".gradeL." + i, 0);
-            rankingGradeRightPlayer[i] = prop.getProperty("grademania4.ranking." + ruleName + "." + version + ".gradeR." + i, 0);
-            rankingLevelPlayer[i] = prop.getProperty("grademania4.ranking." + ruleName + "." + version + ".level." + i, 0);
-            rankingTimePlayer[i] = prop.getProperty("grademania4.ranking." + ruleName + "." + version + ".time." + i, 0);
+            rankingGradeLeftPlayer[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRightPlayer[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevelPlayer[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".level." + i, 0);
+            rankingTimePlayer[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".time." + i, 0);
+
+            rankingGradeLeftPlayer[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRightPlayer[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevelPlayer[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".level." + i, 0);
+            rankingTimePlayer[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".time." + i, 0);
         }
     }
 
@@ -467,10 +500,15 @@ public class GradeMania4 extends DummyMode {
         if (!prop.isLoggedIn()) return;
 
         for (int i = 0; i < RANKING_MAX; ++i) {
-            prop.setProperty("grademania4.ranking." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeftPlayer[i]);
-            prop.setProperty("grademania4.ranking." + ruleName + "." + version + ".gradeR." + i, rankingGradeRightPlayer[i]);
-            prop.setProperty("grademania4.ranking." + ruleName + "." + version + ".level." + i, rankingLevelPlayer[i]);
-            prop.setProperty("grademania4.ranking." + ruleName + "." + version + ".time." + i, rankingTimePlayer[i]);
+            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeftPlayer[0][i]);
+            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeR." + i, rankingGradeRightPlayer[0][i]);
+            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".level." + i, rankingLevelPlayer[0][i]);
+            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".time." + i, rankingTimePlayer[0][i]);
+
+            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeftPlayer[1][i]);
+            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeR." + i, rankingGradeRightPlayer[1][i]);
+            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".level." + i, rankingLevelPlayer[1][i]);
+            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".time." + i, rankingTimePlayer[1][i]);
         }
     }
 
@@ -503,16 +541,16 @@ public class GradeMania4 extends DummyMode {
 
         if (rankingRank != -1) {
             for (int i = RANKING_MAX - 1; i > rankingRank; i--) {
-                rankingGradeLeft[i] = rankingGradeLeft[i - 1];
-                rankingGradeRight[i] = rankingGradeRight[i - 1];
-                rankingLevel[i] = rankingLevel[i - 1];
-                rankingTime[i] = rankingTime[i - 1];
+                rankingGradeLeft[rankingBoard()][i] = rankingGradeLeft[rankingBoard()][i - 1];
+                rankingGradeRight[rankingBoard()][i] = rankingGradeRight[rankingBoard()][i - 1];
+                rankingLevel[rankingBoard()][i] = rankingLevel[rankingBoard()][i - 1];
+                rankingTime[rankingBoard()][i] = rankingTime[rankingBoard()][i - 1];
             }
 
-            rankingGradeLeft[rankingRank] = gradeL;
-            rankingGradeRight[rankingRank] = gradeR;
-            rankingLevel[rankingRank] = level;
-            rankingTime[rankingRank] = time;
+            rankingGradeLeft[rankingBoard()][rankingRank] = gradeL;
+            rankingGradeRight[rankingBoard()][rankingRank] = gradeR;
+            rankingLevel[rankingBoard()][rankingRank] = level;
+            rankingTime[rankingBoard()][rankingRank] = time;
         }
 
         if (playerProperties.isLoggedIn()) {
@@ -520,25 +558,25 @@ public class GradeMania4 extends DummyMode {
 
             if (rankingRankPlayer != -1) {
                 for (int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
-                    rankingGradeLeftPlayer[i] = rankingGradeLeftPlayer[i - 1];
-                    rankingGradeRightPlayer[i] = rankingGradeRightPlayer[i - 1];
-                    rankingLevelPlayer[i] = rankingLevelPlayer[i - 1];
-                    rankingTimePlayer[i] = rankingTimePlayer[i - 1];
+                    rankingGradeLeftPlayer[rankingBoard()][i] = rankingGradeLeftPlayer[rankingBoard()][i - 1];
+                    rankingGradeRightPlayer[rankingBoard()][i] = rankingGradeRightPlayer[rankingBoard()][i - 1];
+                    rankingLevelPlayer[rankingBoard()][i] = rankingLevelPlayer[rankingBoard()][i - 1];
+                    rankingTimePlayer[rankingBoard()][i] = rankingTimePlayer[rankingBoard()][i - 1];
                 }
 
-                rankingGradeLeftPlayer[rankingRankPlayer] = gradeL;
-                rankingGradeRightPlayer[rankingRankPlayer] = gradeR;
-                rankingLevelPlayer[rankingRankPlayer] = level;
-                rankingTimePlayer[rankingRankPlayer] = time;
+                rankingGradeLeftPlayer[rankingBoard()][rankingRankPlayer] = gradeL;
+                rankingGradeRightPlayer[rankingBoard()][rankingRankPlayer] = gradeR;
+                rankingLevelPlayer[rankingBoard()][rankingRankPlayer] = level;
+                rankingTimePlayer[rankingBoard()][rankingRankPlayer] = time;
             }
         }
     }
 
     private int checkRanking(int gradeL, int gradeR, int level, int time) {
         for (int i = 0; i < RANKING_MAX; ++i) {
-            if (gradeL + gradeR > rankingGradeLeft[i] + rankingGradeRight[i]) return i;
-            else if (gradeL + gradeR == rankingGradeLeft[i] + rankingGradeRight[i] && level > rankingLevel[i]) return i;
-            else if (gradeL + gradeR == rankingGradeLeft[i] + rankingGradeRight[i] && level == rankingLevel[i] && time < rankingTime[i]) return i;
+            if (gradeL + gradeR > rankingGradeLeft[rankingBoard()][i] + rankingGradeRight[rankingBoard()][i]) return i;
+            else if (gradeL + gradeR == rankingGradeLeft[rankingBoard()][i] + rankingGradeRight[rankingBoard()][i] && level > rankingLevel[rankingBoard()][i]) return i;
+            else if (gradeL + gradeR == rankingGradeLeft[rankingBoard()][i] + rankingGradeRight[rankingBoard()][i] && level == rankingLevel[rankingBoard()][i] && time < rankingTime[rankingBoard()][i]) return i;
         }
 
         return -1;
@@ -546,9 +584,9 @@ public class GradeMania4 extends DummyMode {
 
     private int checkRankingPlayer(int gradeL, int gradeR, int level, int time) {
         for (int i = 0; i < RANKING_MAX; ++i) {
-            if (gradeL + gradeR > rankingGradeLeftPlayer[i] + rankingGradeRightPlayer[i]) return i;
-            else if (gradeL + gradeR == rankingGradeLeftPlayer[i] + rankingGradeRightPlayer[i] && level > rankingLevelPlayer[i]) return i;
-            else if (gradeL + gradeR == rankingGradeLeftPlayer[i] + rankingGradeRightPlayer[i] && level == rankingLevelPlayer[i] && time < rankingTimePlayer[i]) return i;
+            if (gradeL + gradeR > rankingGradeLeftPlayer[rankingBoard()][i] + rankingGradeRightPlayer[rankingBoard()][i]) return i;
+            else if (gradeL + gradeR == rankingGradeLeftPlayer[rankingBoard()][i] + rankingGradeRightPlayer[rankingBoard()][i] && level > rankingLevelPlayer[rankingBoard()][i]) return i;
+            else if (gradeL + gradeR == rankingGradeLeftPlayer[rankingBoard()][i] + rankingGradeRightPlayer[rankingBoard()][i] && level == rankingLevelPlayer[rankingBoard()][i] && time < rankingTimePlayer[rankingBoard()][i]) return i;
         }
 
 
@@ -588,7 +626,7 @@ public class GradeMania4 extends DummyMode {
 
         if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 8);
+            int change = updateCursor(engine, 9);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -622,6 +660,9 @@ public class GradeMania4 extends DummyMode {
                         break;
                     case 8:
                         animatedBackgrounds = !animatedBackgrounds;
+                        break;
+                    case 9:
+                        sparkEffect = !sparkEffect;
                         break;
                 }
             }
@@ -687,7 +728,8 @@ public class GradeMania4 extends DummyMode {
         );
         drawMenu(engine, playerID, receiver, 14, EventReceiver.COLOR_PINK, 7,
             "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect),
-            "ANIM. BGS.", GeneralUtil.getONorOFF(animatedBackgrounds)
+            "ANIM. BGS.", GeneralUtil.getONorOFF(animatedBackgrounds),
+            "SPARKS", GeneralUtil.getONorOFF(sparkEffect)
         );
     }
 
@@ -773,12 +815,18 @@ public class GradeMania4 extends DummyMode {
         levelUpFlag = true;
 
         fireworkRandomiser = new Random(engine.randSeed);
+        fireworks = new Fireworks(customGraphics, fireworkRandomiser);
         fireworksLeft = 0;
+
+        sparksRandomiser = new Random(engine.randSeed * 2);
+        sparks = new SurfaceSparks(customGraphics, sparksRandomiser);
 
         setSpeed(engine);
         setStartBGMLevel(engine);
         owner.bgmStatus.bgm = bgmLevel;
     }
+
+    private boolean hasMovedFrame = false;
 
     @Override
     public boolean onMove(GameEngine engine, int playerID) {
@@ -790,6 +838,42 @@ public class GradeMania4 extends DummyMode {
             }
 
             levelUp(engine);
+        }
+
+        if (sparkEffect &&
+            engine.nowPieceObject != null &&
+            engine.getMoveDirection() != 0 &&
+            !hasMovedFrame &&
+            (engine.dasCount == 0 || engine.dasCount >= engine.getDAS())) {
+            hasMovedFrame = true;
+
+            int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+            int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+
+            if (engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY + 1, engine.field) &&
+                !engine.nowPieceObject.checkCollision(engine.nowPieceX + engine.getMoveDirection(), engine.nowPieceY, engine.field)) {
+                final int[] pieceDataY = engine.nowPieceObject.dataY[engine.nowPieceObject.direction];
+                final int lowY = Arrays.stream(pieceDataY).max().getAsInt();
+
+                sCoordList.clear();
+                for (int i = 0; i < engine.nowPieceObject.getMaxBlock(); ++i) {
+                    if (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] == lowY) {
+                        int realX = engine.nowPieceX + engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i];
+                        int realY = engine.nowPieceY + engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i];
+
+                        if (!engine.field.getBlockEmptyF(realX, realY + 1)) {
+                            sparks.addNumber(5, new SurfaceSparks.Parameters(
+                                baseX + 16 * engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i],
+                                baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 1),
+                                baseY + 16 * (lowY + 1),
+                                engine.getMoveDirection() * -1)
+                            );
+                        }
+                    }
+                }
+            }
+        } else {
+            hasMovedFrame = false;
         }
 
         if ((engine.ending == 0) && (engine.statc[0] > 0)) {
@@ -919,7 +1003,7 @@ public class GradeMania4 extends DummyMode {
     }
 
     @Override
-    public void onLast( GameEngine engine, int playerID ) {
+    public void onLast(GameEngine engine, int playerID) {
         final int oldGrade = leftGrade + rightGrade;
 
         leftGrade = getLeftGrade(engine);
@@ -981,7 +1065,8 @@ public class GradeMania4 extends DummyMode {
             }
         }
 
-        fireworks.update();
+        if (fireworks != null) fireworks.update();
+        if (sparks != null) sparks.update();
     }
 
     @Override
@@ -1047,12 +1132,12 @@ public class GradeMania4 extends DummyMode {
                     for (int i = 0; i < RANKING_MAX; i++) {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
                         if (rankingRankPlayer != -1) {
-                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[i], rankingGradeRightPlayer[i]), (i == rankingRankPlayer), scale);
+                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i]), (i == rankingRankPlayer), scale);
                         } else {
-                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[i], rankingGradeRightPlayer[i]), rightGradeColor(rankingGradeRightPlayer[i]), scale);
+                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i]), rightGradeColor(rankingGradeRightPlayer[rankingBoard()][i]), scale);
                         }
-                        receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevelPlayer[i]), (i == rankingRankPlayer), scale);
-                        receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTimePlayer[i]), (i == rankingRankPlayer), scale);
+                        receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevelPlayer[rankingBoard()][i]), (i == rankingRankPlayer), scale);
+                        receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTimePlayer[rankingBoard()][i]), (i == rankingRankPlayer), scale);
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
@@ -1064,12 +1149,12 @@ public class GradeMania4 extends DummyMode {
                     for (int i = 0; i < RANKING_MAX; i++) {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
                         if (rankingRank != -1) {
-                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[i], rankingGradeRight[i]), (i == rankingRank), scale);
+                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i]), (i == rankingRank), scale);
                         } else {
-                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[i], rankingGradeRight[i]), rightGradeColor(rankingGradeRight[i]), scale);
+                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i]), rightGradeColor(rankingGradeRight[rankingBoard()][i]), scale);
                         }
-                        receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevel[i]), (i == rankingRank), scale);
-                        receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTime[i]), (i == rankingRank), scale);
+                        receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevel[rankingBoard()][i]), (i == rankingRank), scale);
+                        receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTime[rankingBoard()][i]), (i == rankingRank), scale);
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, 18, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
@@ -1121,9 +1206,9 @@ public class GradeMania4 extends DummyMode {
                     float value = Math.min(1f, fullGameQuota / (float) FULL_GAME_QUOTA_LIMIT);
 
                     rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
-                        RendererExtension.ALIGN_TOP_LEFT,
-                        1f - value,
-                        2f
+                        RendererExtension.ALIGN_TOP_LEFT, value,
+                        4f, 2f,
+                        RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
                     );
                 } else {
                     int section = engine.statistics.level / 100 - 1;
@@ -1134,16 +1219,21 @@ public class GradeMania4 extends DummyMode {
                     float value = Math.min(1f, sectionPoints[section] / 1000f);
 
                     rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
-                        RendererExtension.ALIGN_TOP_LEFT,
-                        1f - value,
-                        2f
+                        RendererExtension.ALIGN_TOP_LEFT, value,
+                        4f, 2f,
+                        RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
                     );
                 }
             }
 
-            if (playerProperties.isLoggedIn() || playerName.length() > 0) {
-                receiver.drawScoreFont(engine, playerID, 0, 17, "PLAYER", EventReceiver.COLOR_BLUE);
-                receiver.drawScoreFont(engine, playerID, 0, 18, owner.replayMode ? playerName : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+            if (playerProperties.isLoggedIn() || !playerName.isEmpty()) {
+                if (showGrade) {
+                    receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER", EventReceiver.COLOR_BLUE);
+                    receiver.drawScoreFont(engine, playerID, 0, 19, owner.replayMode ? playerName : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                } else {
+                    receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
+                    receiver.drawScoreFont(engine, playerID, 0, 16, owner.replayMode ? playerName : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                }
             }
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
@@ -1191,6 +1281,7 @@ public class GradeMania4 extends DummyMode {
         }
 
         if (fireworks != null) fireworks.draw(receiver);
+        if (sparks != null) sparks.draw(receiver);
     }
 
     @Override
@@ -1342,9 +1433,9 @@ public class GradeMania4 extends DummyMode {
                 receiver,
                 engine,
                 playerID,
-                offsetX + (16 * engine.field.getWidth() / 2) + 8,
-                offsetY + 300,
-                GameTextUtilities.ALIGN_TOP_MIDDLE,
+                offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                offsetY + 284,
+                GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
                     useClassicGrades ? TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)] : getAER(getLeftGrade(engine), getRightGrade(engine)),
                 getCombinedGrade(engine) >= 20 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE,
                 useClassicGrades ? 2.5f : 1.5f
@@ -1393,21 +1484,23 @@ public class GradeMania4 extends DummyMode {
     }
 
     private void launchFirework(GameEngine engine, int playerID) {
-        final int[] colour = Fireworks.DEF_COLOURS[fireworkRandomiser.nextInt(Fireworks.DEF_COLOURS.length)];
+        if (fireworks != null) {
+            final int[] colour = Fireworks.DEF_COLOURS[fireworkRandomiser.nextInt(Fireworks.DEF_COLOURS.length)];
 
-        int minx = receiver.getFieldDisplayPositionX(engine, playerID) - 48;
-        int maxx = receiver.getFieldDisplayPositionX(engine, playerID) + (engine.field.getWidth() * 16) + 48;
-        int miny = receiver.getFieldDisplayPositionY(engine, playerID) - 48;
-        int maxy = receiver.getFieldDisplayPositionY(engine, playerID) + (16 * 7);
+            int minx = receiver.getFieldDisplayPositionX(engine, playerID) - 48;
+            int maxx = receiver.getFieldDisplayPositionX(engine, playerID) + (engine.field.getWidth() * 16) + 48;
+            int miny = receiver.getFieldDisplayPositionY(engine, playerID) - 48;
+            int maxy = receiver.getFieldDisplayPositionY(engine, playerID) + (16 * 7);
 
-        fireworks.addNumber(
-            1,
-            new Object[] {
-                minx, maxx, miny, maxy,
-                colour[0], colour[1], colour[2], colour[3], colour[4],
-                Fireworks.DEF_MAX_VEL,
-                45, 75
-            }
-        );
+            fireworks.addNumber(
+                1,
+                new Object[] {
+                    minx, maxx, miny, maxy,
+                    colour[0], colour[1], colour[2], colour[3], colour[4],
+                    Fireworks.DEF_MAX_VEL,
+                    45, 75
+                }
+            );
+        }
     }
 }

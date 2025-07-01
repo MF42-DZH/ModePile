@@ -542,7 +542,7 @@ public class Deltatris extends MarathonModeBase {
             rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
                 RendererExtension.ALIGN_TOP_LEFT,
                 engine.statistics.totalPieceLocked < PIECES_MAX[difficulty] ? (float) Math.min(1, engine.statistics.totalPieceLocked / (double) PIECES_MAX[difficulty]) : (engine.statistics.time / 12 % 2 == 0 ? 1f : 0f),
-                2f);
+                2f, 2f);
 
             if ((lastevent != EVENT_NONE) && (scgettime < 120)) {
                 String strPieceName = Piece.getPieceName(lastpiece);

@@ -84,6 +84,10 @@ public class RendererExtension {
      */
     private static final boolean DEBUG = true;
 
+    // Default speed meter colours.
+    public static final int[] SPEED_METER_GREEN = { 0, 255, 0 };
+    public static final int[] SPEED_METER_RED = { 255, 0, 0 };
+
     // Local instance for custom resource holder.
     private final CustomResourceHolder customGraphics;
 
@@ -774,38 +778,47 @@ public class RendererExtension {
         drawScaledBlock(receiver, x - offsetX, y - offsetY, color, skin, bone, darkness, alpha, scale, attr);
     }
 
+    public void drawDirectSpeedMeter(EventReceiver receiver, int x, int y, float value, float scaleX, float scaleY) {
+        drawDirectSpeedMeter(receiver, x, y, value, scaleX, scaleY, SPEED_METER_GREEN, SPEED_METER_RED);
+    }
+
     /**
      * Draws a speed meter at any pixel location on the screen, with any scale.
      *
-     * @param receiver Renderer to draw with
-     * @param x        X-coordinate of top-left corner
-     * @param y        Y-coordinate of top-left corner
-     * @param value    Float in the range <code>0 <= value <= 1</code> that denotes how full the meter is
-     * @param scale    Scale factor of speed meter drawn
+     * @param receiver   Renderer to draw with
+     * @param x          X-coordinate of top-left corner
+     * @param y          Y-coordinate of top-left corner
+     * @param value      Float in the range <code>0 <= value <= 1</code> that denotes how full the meter is
+     * @param scaleX     Horizontal scale factor of speed meter drawn
+     * @param scaleY     Vertical scale factor of speed meter drawn
+     * @param colorBack  Base color (default: green)
+     * @param colorFront Fill color (default: red)
      */
-    public void drawDirectSpeedMeter(EventReceiver receiver, int x, int y, float value, float scale) {
+    public void drawDirectSpeedMeter(EventReceiver receiver, int x, int y, float value, float scaleX, float scaleY, int[] colorBack, int[] colorFront) {
         final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
 
-        final int baseWidth = (int) (42 * scale);
+        final int baseWidth = (int) (42 * scaleX);
         final int meterMax = baseWidth - 2;
-        final int baseHeight = (int) (4 * scale);
+        final int baseHeight = (int) (4 * scaleY);
 
         if (renderer == CustomResourceHolder.Runtime.SLICK) {
             //region Slick Case
             Graphics graphics = customGraphics.getGraphicsSlick((RendererSlick) receiver);
+            final Color colorBase = new org.newdawn.slick.Color(colorBack[0], colorBack[1], colorBack[2]);
+            final Color colorFill = new org.newdawn.slick.Color(colorFront[0], colorFront[1], colorFront[2]);
 
             if (graphics == null) return;
 
             graphics.setColor(Color.black);
             graphics.drawRect(x, y, baseWidth - 1, baseHeight - 1);
-            graphics.setColor(Color.green);
+            graphics.setColor(colorBase);
             graphics.fillRect(x + 1, y + 1, baseWidth - 2, baseHeight - 2);
 
             int tempSpeedMeter = (int) (value * meterMax);
             if ((tempSpeedMeter < 0) || (tempSpeedMeter > meterMax)) tempSpeedMeter = meterMax;
 
             if (tempSpeedMeter > 0) {
-                graphics.setColor(Color.red);
+                graphics.setColor(colorFill);
                 graphics.fillRect(x + 1, y + 1, tempSpeedMeter, baseHeight - 2);
             }
 
@@ -814,19 +827,21 @@ public class RendererExtension {
         } else if (renderer == CustomResourceHolder.Runtime.SWING) {
             //region Swing Case
             Graphics2D graphics = customGraphics.getGraphicsSwing((RendererSwing) receiver);
+            final java.awt.Color colorBase = new java.awt.Color(colorBack[0], colorBack[1], colorBack[2]);
+            final java.awt.Color colorFill = new java.awt.Color(colorFront[0], colorFront[1], colorFront[2]);
 
             if (graphics == null) return;
 
             graphics.setColor(java.awt.Color.black);
             graphics.drawRect(x, y, baseWidth - 1, baseHeight - 1);
-            graphics.setColor(java.awt.Color.green);
+            graphics.setColor(colorBase);
             graphics.fillRect(x + 1, y + 1, baseWidth - 2, baseHeight - 2);
 
             int tempSpeedMeter = (int) (value * meterMax);
             if ((tempSpeedMeter < 0) || (tempSpeedMeter > meterMax)) tempSpeedMeter = meterMax;
 
             if (tempSpeedMeter > 0) {
-                graphics.setColor(java.awt.Color.red);
+                graphics.setColor(colorFill);
                 graphics.fillRect(x + 1, y + 1, tempSpeedMeter + 1, baseHeight - 1);
             }
 
@@ -868,6 +883,10 @@ public class RendererExtension {
         }
     }
 
+    public void drawAlignedSpeedMeter(EventReceiver receiver, int x, int y, int alignment, float value, float scaleX, float scaleY) {
+        drawAlignedSpeedMeter(receiver, x, y, alignment, value, scaleX, scaleY, SPEED_METER_GREEN, SPEED_METER_RED);
+    }
+
     /**
      * Draws a speed meter aligned to one of its corners, a midpoint of one of its sides or its centre.
      *
@@ -876,23 +895,26 @@ public class RendererExtension {
      * @param y         Y-coordinate of anchor point
      * @param alignment Alignment setting ID (use the ones in this class)
      * @param value     Float in the range <code>0 <= value <= 1</code> that denotes how full the meter is
-     * @param scale     Scale factor of speed meter drawn
+     * @param scaleX   Horizontal scale factor of speed meter drawn
+     * @param scaleY   Vertical scale factor of speed meter drawn
+     * @param colorBack  Base color (default: green)
+     * @param colorFront Fill color (default: red)
      */
-    public void drawAlignedSpeedMeter(EventReceiver receiver, int x, int y, int alignment, float value, float scale) {
-        final int baseWidth = (int) (42 * scale);
-        final int baseHeight = (int) (4 * scale);
+    public void drawAlignedSpeedMeter(EventReceiver receiver, int x, int y, int alignment, float value, float scaleX, float scaleY, int[] colorBack, int[] colorFront) {
+        final int baseWidth = (int) (42 * scaleX);
+        final int baseHeight = (int) (4 * scaleY);
 
         int offsetX, offsetY;
         switch (alignment) {
             case ALIGN_TOP_MIDDLE:
             case ALIGN_MIDDLE_MIDDLE:
             case ALIGN_BOTTOM_MIDDLE:
-                offsetX = (int) (baseWidth * 0.5f * scale);
+                offsetX = (int) (baseWidth * 0.5f * scaleX);
                 break;
             case ALIGN_TOP_RIGHT:
             case ALIGN_MIDDLE_RIGHT:
             case ALIGN_BOTTOM_RIGHT:
-                offsetX = (int) (baseWidth * scale);
+                offsetX = (int) (baseWidth * scaleX);
                 break;
             default:
                 offsetX = 0;
@@ -903,18 +925,18 @@ public class RendererExtension {
             case ALIGN_MIDDLE_LEFT:
             case ALIGN_MIDDLE_MIDDLE:
             case ALIGN_MIDDLE_RIGHT:
-                offsetY = (int) (baseHeight * 0.5f * scale);
+                offsetY = (int) (baseHeight * 0.5f * scaleY);
                 break;
             case ALIGN_BOTTOM_LEFT:
             case ALIGN_BOTTOM_MIDDLE:
             case ALIGN_BOTTOM_RIGHT:
-                offsetY = (int) (baseHeight * scale);
+                offsetY = (int) (baseHeight * scaleY);
                 break;
             default:
                 offsetY = 0;
                 break;
         }
 
-        drawDirectSpeedMeter(receiver, x - offsetX, y - offsetY, value, scale);
+        drawDirectSpeedMeter(receiver, x - offsetX, y - offsetY, value, scaleX, scaleY, colorBack, colorFront);
     }
 }
