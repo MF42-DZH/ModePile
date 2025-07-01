@@ -604,8 +604,8 @@ public class GradeMania4 extends DummyMode {
 
         // Extra shortens ARE.
         if (alwaysExtra || engine.ctrl.isPress(Controller.BUTTON_F)) {
-            engine.speed.are = EXTRA_ARE;
-            engine.speed.areLine = EXTRA_ARE;
+            engine.speed.are = Math.min(EXTRA_ARE, speed.are);
+            engine.speed.areLine = Math.min(EXTRA_ARE, speed.areLine);
         }
     }
 
