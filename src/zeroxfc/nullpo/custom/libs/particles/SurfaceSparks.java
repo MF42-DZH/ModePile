@@ -54,8 +54,8 @@ public class SurfaceSparks extends ParticleEmitterBase<SurfaceSparks.Parameters>
             );
 
             final DoubleVector v = new DoubleVector(
-                Interpolation.lerp(1.5 * params.direction, 3 * params.direction, randomiser.nextDouble()),
-                0.0d,
+                Interpolation.lerp(0.25 * params.direction, 3.0 * params.direction, randomiser.nextDouble()),
+                Interpolation.lerp(-0.75, 0.25, randomiser.nextDouble()),
                 false
             );
 
@@ -65,7 +65,7 @@ public class SurfaceSparks extends ParticleEmitterBase<SurfaceSparks.Parameters>
                 p,
                 v,
                 new DoubleVector(0, 9.80665d / 60, false),
-                4, 2,
+                randomiser.nextInt(3) + 2, 2,
                 ured, ugreen, ublue, 255,
                 255, 255, 255, 64
             );

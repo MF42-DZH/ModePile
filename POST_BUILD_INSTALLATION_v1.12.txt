@@ -314,6 +314,10 @@ config/rule/StandardHard.rul
 config/rule/Classic3.rul
 config/rule/SRSRS.rul
 
+:GRADE MANIA 4
+config/rule/StandardHardAE.rul
+config/rule/Classic4.rul
+
 Lastly add the following lines to 'modedesc_default.properties' which is in '[NullpoMino Directory]/config/lang/':
 
 IDIOT%_MODE=Spin TGM?

@@ -1344,7 +1344,7 @@ public class GradeMania4 extends DummyMode {
             engine.blockOutlineType = GameEngine.BLOCK_OUTLINE_NORMAL;
             secretGrade = engine.field.getSecretGrade();
 
-            gradePresentTextIndex = fireworkRandomiser.nextInt(10);
+            gradePresentTextIndex = fireworkRandomiser.nextInt(6) + sparksRandomiser.nextInt(4);
 
             if (gradePresentTextIndex >= 9) gradePresentTextIndex = 2;
             else if (gradePresentTextIndex >= 7) gradePresentTextIndex = 1;
