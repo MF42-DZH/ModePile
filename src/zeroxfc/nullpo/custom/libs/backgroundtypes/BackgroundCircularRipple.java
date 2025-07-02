@@ -38,16 +38,16 @@ import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 
 public class BackgroundCircularRipple extends AnimatedBackgroundHook {
-    private static final int DEF_FIELD_DIM = 8;
-    private static final int DEF_GRID_WIDTH = 640 / DEF_FIELD_DIM;
-    private static final int DEF_GRID_HEIGHT = 480 / DEF_FIELD_DIM;
-    private static final int DEF_PULSE_CENTRE_X = 640 / 2;
-    private static final int DEF_PULSE_CENTRE_Y = 480 / 2;
-    private static final int DEF_WAVESPEED = 8;
+    public static final int DEF_FIELD_DIM = 8;
+    public static final int DEF_GRID_WIDTH = 640 / DEF_FIELD_DIM;
+    public static final int DEF_GRID_HEIGHT = 480 / DEF_FIELD_DIM;
+    public static final int DEF_PULSE_CENTRE_X = 640 / 2;
+    public static final int DEF_PULSE_CENTRE_Y = 480 / 2;
+    public static final int DEF_WAVESPEED = 8;
     private static final int MAX_RADIUS = 960;
-    private static final float DEF_WAVELENGTH = 80;
-    private static final float BASE_SCALE = 1f;
-    private static final float SCALE_VARIANCE = 1f;
+    public static final float DEF_WAVELENGTH = 80;
+    public static final float DEF_BASE_SCALE = 1f;
+    public static final float DEF_SCALE_VARIANCE = 1f;
 
     private ImageChunk[][] chunkGrid;
     private int pulseTimerMax, currentPulseTimer;
@@ -106,22 +106,23 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
         pulseTimerMax = pulseFrames;
         currentPulseTimer = pulseTimerMax;
 
-        if (pulseBaseScale == null || pulseScaleVariance == null || pulseCentreX == null || pulseCentreY == null || wavelength == null || waveSpeed == null || cellWidth == null || cellHeight == null) {
+        this.pulseScaleVariance = pulseScaleVariance;
+        this.centreX = pulseCentreX;
+        this.centreY = pulseCentreY;
+
+        if (pulseBaseScale == null || wavelength == null || waveSpeed == null || cellWidth == null || cellHeight == null) {
             chunkGrid = new ImageChunk[DEF_GRID_HEIGHT][DEF_GRID_WIDTH];
             for (int y = 0; y < DEF_GRID_HEIGHT; y++) {
                 for (int x = 0; x < DEF_GRID_WIDTH; x++) {
-                    chunkGrid[y][x] = new ImageChunk(ImageChunk.ANCHOR_POINT_MM, new int[] { (DEF_FIELD_DIM * x) + (DEF_FIELD_DIM / 2), (DEF_FIELD_DIM * y) + (DEF_FIELD_DIM / 2) }, new int[] { (DEF_FIELD_DIM * x), (DEF_FIELD_DIM * y) }, new int[] { DEF_FIELD_DIM, DEF_FIELD_DIM }, new float[] { BASE_SCALE, BASE_SCALE });
+                    chunkGrid[y][x] = new ImageChunk(ImageChunk.ANCHOR_POINT_MM, new int[] { (DEF_FIELD_DIM * x) + (DEF_FIELD_DIM / 2), (DEF_FIELD_DIM * y) + (DEF_FIELD_DIM / 2) }, new int[] { (DEF_FIELD_DIM * x), (DEF_FIELD_DIM * y) }, new int[] { DEF_FIELD_DIM, DEF_FIELD_DIM }, new float[] { DEF_BASE_SCALE, DEF_BASE_SCALE });
                 }
             }
         } else {
             if (wavelength <= 0) wavelength = DEF_WAVELENGTH;
             if (waveSpeed <= 0) waveSpeed = DEF_WAVESPEED;
 
-            this.pulseBaseScale = pulseBaseScale;
-            this.pulseScaleVariance = pulseScaleVariance;
             this.wavelength = wavelength;
-            this.centreX = pulseCentreX;
-            this.centreY = pulseCentreY;
+            this.pulseBaseScale = pulseBaseScale;
             this.waveSpeed = waveSpeed;
 
             int w;
@@ -144,8 +145,8 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
 
     @Override
     public void update() {
-        if (pulseTimerMax >= 0) currentPulseTimer++;
-        if (currentPulseTimer >= pulseTimerMax && pulseTimerMax >= 0) {
+        if (pulseTimerMax > 0) currentPulseTimer++;
+        if (currentPulseTimer >= pulseTimerMax && pulseTimerMax > 0) {
             currentPulseTimer = 0;
             pulseRadii.add(0);
             pulseCentres.add(new int[] { (centreX == null) ? DEF_PULSE_CENTRE_X : centreX, (centreY == null) ? DEF_PULSE_CENTRE_Y : centreY });
@@ -155,11 +156,11 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
         if (waveSpeed == null) ws = DEF_WAVESPEED;
         else ws = waveSpeed;
 
-        float baseScale = (pulseBaseScale == null) ? BASE_SCALE : pulseBaseScale;
-        float scaleVariance = (pulseScaleVariance == null) ? SCALE_VARIANCE : pulseScaleVariance;
+        float baseScale = (pulseBaseScale == null) ? DEF_BASE_SCALE : pulseBaseScale;
+        float scaleVariance = (pulseScaleVariance == null) ? DEF_SCALE_VARIANCE : pulseScaleVariance;
         float wl = (wavelength == null) ? DEF_WAVELENGTH : wavelength;
 
-        if (pulseRadii.size() > 0) {
+        if (!pulseRadii.isEmpty()) {
             for (int i = 0; i < pulseRadii.size(); i++) {
                 pulseRadii.set(i, pulseRadii.get(i) + ws);
                 int cx = pulseCentres.get(i)[0];
@@ -190,7 +191,6 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
             }
         }
 
-        // pulseRadii.removeIf(integer -> (integer > MAX_RADIUS));
         for (int i = pulseRadii.size() - 1; i >= 0; i--) {
             if (pulseRadii.get(i) > MAX_RADIUS) {
                 pulseRadii.remove(i);
@@ -220,7 +220,7 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
         }
         priorityList.sort((c1, c2) -> Float.compare(c1.getScale()[0], c2.getScale()[0]));
 
-        float baseScale = (pulseBaseScale == null) ? BASE_SCALE : pulseBaseScale;
+        float baseScale = (pulseBaseScale == null) ? DEF_BASE_SCALE : pulseBaseScale;
         if (almostEqual(baseScale, 1, 0.005)) {
             customHolder.drawImage(engine, imageName, 0, 0);
             priorityList.removeIf(imageChunk -> almostEqual(imageChunk.getScale()[0], 1, 0.005));

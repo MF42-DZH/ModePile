@@ -9,10 +9,10 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
     private static final int PERIOD = 480;  // Frames
     private static final float BASE_LUMINANCE_OFFSET = 0.25f;
 
-    // private CustomResourceHolder customHolder;
     private Random colourRandom;
     private ImageChunk[] chunks;
     private int phase;
+    private float phaseMult;
 
     {
         ID = AnimatedBackgroundHook.ANIMATION_FAKE_SCANLINES;
@@ -73,6 +73,11 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
         }
 
         phase = 0;
+        phaseMult = 1f;
+    }
+
+    public void updatePhaseMult(float phaseMult) {
+        this.phaseMult = phaseMult;
     }
 
     @Override
@@ -98,12 +103,13 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
             float col = 1f - BASE_LUMINANCE_OFFSET;
             if ((id & 2) == 0) col -= BASE_LUMINANCE_OFFSET;
 
-            if (phase >= PERIOD / 2 && (id == phase - (PERIOD / 2) || id == 1 + phase - (PERIOD / 2) || id == -1 + phase - (PERIOD / 2))) {
+            final int usedPhase = (int) (phase * phaseMult);
+            if (usedPhase >= PERIOD / 2 && (id == usedPhase - (PERIOD / 2) || id == 1 + usedPhase - (PERIOD / 2) || id == -1 + usedPhase - (PERIOD / 2))) {
                 col += BASE_LUMINANCE_OFFSET;
             }
 
             // Randomness offset
-            col -= (0.025 * colourRandom.nextDouble());
+            col -= (float) (0.025 * colourRandom.nextDouble());
             int colour = (int) (255 * col);
 
             int[] pos = chunks[id].getDrawLocation();

@@ -81,8 +81,7 @@ public class GradeMania4 extends DummyMode {
         .addLineDelay(12, 800)
         .addLineDelay(6, 900)
         .addLineDelay(6, Integer.MAX_VALUE)
-        .addLockDelay(31, 900)
-        .addLockDelay(18, Integer.MAX_VALUE)
+        .addLockDelay(31, Integer.MAX_VALUE)
         .addDAS(15, 500)
         .addDAS(9, 900)
         .addDAS(7, Integer.MAX_VALUE)
@@ -93,7 +92,7 @@ public class GradeMania4 extends DummyMode {
     private static final int[] TABLE_BGM_CHANGE = { 300, 500, -1 };
 
     private static final String[] TABLE_CLASSIC_GRADE_NAME = {
-        "N/A", "9", "8", "7", "6", "5", "4", "3", "2", "1",
+        "", "9", "8", "7", "6", "5", "4", "3", "2", "1",
         "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9",
         "M", "GM"
     };
@@ -285,7 +284,7 @@ public class GradeMania4 extends DummyMode {
         if (animBgInstances == null) {
             animBgInstances = new AnimatedBackgroundHook[SECTION_MAX];
 
-            animBgInstances[0] = new BackgroundCircularRipple(0, null, null, null, null, null, null, 90, null, null);
+            animBgInstances[0] = new BackgroundCircularRipple(0, BackgroundCircularRipple.DEF_FIELD_DIM, BackgroundCircularRipple.DEF_FIELD_DIM, null, null, BackgroundCircularRipple.DEF_WAVELENGTH, BackgroundCircularRipple.DEF_WAVESPEED, 180, BackgroundCircularRipple.DEF_BASE_SCALE, 0.5f);
             animBgInstances[1] = new BackgroundVerticalBars(1, 60, 160, 1f, 4f, false);
             animBgInstances[2] = new BackgroundDiagonalRipple(2, 8, 8, 60, 1f, 2f, false, false);
             animBgInstances[3] = new BackgroundHorizontalBars(3, 60, 120, 1f, 4f, false);
@@ -815,7 +814,7 @@ public class GradeMania4 extends DummyMode {
         super.startGame(engine, playerID);
         engine.statistics.level = startLevel * 100;
 
-        nextSectionLevel = 100;
+        nextSectionLevel = startLevel * 100 + 100;
         if (engine.statistics.level <= 0) nextSectionLevel = 100;
         if (engine.statistics.level >= 900) nextSectionLevel = LEVEL_LIMIT;
 
@@ -828,8 +827,8 @@ public class GradeMania4 extends DummyMode {
         sparksRandomiser = new Random(engine.randSeed * 2);
         sparks = new SurfaceSparks(customGraphics, sparksRandomiser);
 
-        setSpeed(engine);
         setStartBGMLevel(engine);
+        levelUp(engine);
         owner.bgmStatus.bgm = bgmLevel;
     }
 
@@ -916,8 +915,35 @@ public class GradeMania4 extends DummyMode {
         return false;
     }
 
+    private void updateBGPulseFrames(GameEngine engine, int barFrames, int rippleFrames, float scPeriodMult) {
+        for (AnimatedBackgroundHook bg : animBgInstances) {
+            if (bg instanceof BackgroundHorizontalBars) {
+                ((BackgroundHorizontalBars) bg).modifyValues(barFrames, null, null, null);
+            } else if (bg instanceof BackgroundVerticalBars) {
+                ((BackgroundVerticalBars) bg).modifyValues(barFrames, null, null, null);
+            } else if (bg instanceof BackgroundDiagonalRipple) {
+                ((BackgroundDiagonalRipple) bg).modifyValues(barFrames, null, null, null, null);
+            } else if (bg instanceof BackgroundCircularRipple) {
+                ((BackgroundCircularRipple) bg).modifyValues(null, (hardDropEffect && engine.ending == 0) ? 0 : rippleFrames, null, null, null, null, null);
+            } else if (bg instanceof BackgroundFakeScanlines) {
+                ((BackgroundFakeScanlines) bg).updatePhaseMult(scPeriodMult);
+            }
+        }
+    }
+
     private void levelUp(GameEngine engine) {
-        engine.meterValue = ((engine.statistics.level % 100) * receiver.getMeterMax(engine)) / 99;
+        if (engine.statistics.level < 900) {
+            engine.meterValue = ((engine.statistics.level % 100) * receiver.getMeterMax(engine)) / 99;
+        } else {
+            engine.meterValue = ((engine.statistics.level % 100) * receiver.getMeterMax(engine)) / 98;
+        }
+
+        if (animatedBackgrounds && (engine.statistics.level % 100 > 50) && engine.ending <= 0) {
+            updateBGPulseFrames(engine, 40, 120, 2f);
+        } else if (animatedBackgrounds) {
+            updateBGPulseFrames(engine, 60, 180, 1f);
+        }
+
         engine.meterColor = GameEngine.METER_COLOR_GREEN;
         if (engine.statistics.level % 100 >= 50) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
         if (engine.statistics.level % 100 >= 80) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
@@ -1058,10 +1084,8 @@ public class GradeMania4 extends DummyMode {
             }
         }
 
-        if (animatedBackgrounds) {
-            for (AnimatedBackgroundHook bg : animBgInstances) {
-                bg.update();
-            }
+        if (animatedBackgrounds && (owner.backgroundStatus.bg + SECTION_MAX < 10)) {
+            animBgInstances[owner.backgroundStatus.bg + SECTION_MAX].update();
         }
 
         if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode))) {
@@ -1076,6 +1100,9 @@ public class GradeMania4 extends DummyMode {
         if (sparks != null) sparks.update();
     }
 
+    private static final List<Integer> avgX = new LinkedList<>();
+    private static final List<Integer> avgY = new LinkedList<>();
+
     @Override
     public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
         int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
@@ -1088,21 +1115,36 @@ public class GradeMania4 extends DummyMode {
         }
 
         if (hardDropEffect) {
+            int x2, y2;
+
+            avgX.clear();
+            avgY.clear();
+
             for (int i = 0; i < cPiece.getMaxBlock(); i++) {
                 if (!cPiece.big) {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
+                    x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
+                    y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
                     rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
                 } else {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
+                    x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
+                    y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
 
                     rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
                     rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
                     rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
                     rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
                 }
+
+                avgX.add(x2 + 8);
+                avgY.add(y2 + 8);
+            }
+
+            if (animatedBackgrounds && engine.statistics.level < 100) {
+                final int avgXVal = avgX.stream().mapToInt(Integer::intValue).sum() / avgX.size();
+                final int avgYVal = avgY.stream().mapToInt(Integer::intValue).sum() / avgY.size();
+
+                ((BackgroundCircularRipple) animBgInstances[0]).manualRipple(avgXVal, avgYVal);
             }
         }
     }
@@ -1191,9 +1233,27 @@ public class GradeMania4 extends DummyMode {
             String strLevel = String.format("%3d", tempLevel);
             receiver.drawScoreFont(engine, playerID, 0, 7, strLevel);
 
-            int speed = engine.speed.gravity / 128;
-            if (engine.speed.gravity < 0) speed = 40;
-            receiver.drawSpeedMeter(engine, playerID, 0, 8, speed);
+            {
+                int ix, iy;
+                ix = receiver.getScoreDisplayPositionX(engine, playerID);
+                iy = receiver.getScoreDisplayPositionY(engine, playerID) + 16 * 8 + 8;
+
+                float speed = engine.speed.gravity / (float) engine.speed.denominator;
+
+                int[] colorFront, colorBack;
+                if (speed >= 1.0f || engine.speed.gravity < 0) {
+                    colorBack = RendererExtension.SPEED_METER_GREEN;
+                    colorFront = RendererExtension.SPEED_METER_RED;
+                } else {
+                    colorBack = new int[] { 255, 255, 255 };
+                    colorFront = new int[] { 225, 225, 0 };
+                }
+
+                if (speed >= 1.0f) speed = speed / 20;
+                if (engine.speed.gravity < 0) speed = 1f;
+
+                rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy, RendererExtension.ALIGN_MIDDLE_LEFT, speed, 1.25f, 1f, colorBack, colorFront);
+            }
 
             receiver.drawScoreFont(engine, playerID, 0, 9, String.format("%3d", nextSectionLevel));
 
@@ -1371,7 +1431,6 @@ public class GradeMania4 extends DummyMode {
         }
 
         if (engine.statc[0] == engine.field.getHeight() + 151 && getCombinedGrade(engine) == 20) engine.playSE("cool");
-
 
         if (engine.statc[0] < engine.field.getHeight() + 1) {
             for (int i = 0; i < engine.field.getWidth(); i++) {

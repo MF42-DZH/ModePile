@@ -358,7 +358,7 @@ public class ScoreTrial extends MarathonModeBase {
             drawMenu(engine, playerID, receiver, 4, EventReceiver.COLOR_BLUE, 2,
                 "BIG", GeneralUtil.getONorOFF(big),
                 "L.C. ANIM.", lc);
-            drawMenu(engine, playerID, receiver, 6, EventReceiver.COLOR_PINK, 3,
+            drawMenu(engine, playerID, receiver, 8, EventReceiver.COLOR_PINK, 4,
                 "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
             );
         }
