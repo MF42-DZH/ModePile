@@ -1491,7 +1491,9 @@ public class GradeMania4 extends DummyMode {
         int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
         int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
 
-        NormalFont.printFont(offsetX + 12, offsetY + 204, "GAME OVER", EventReceiver.COLOR_WHITE, 1.0f);
+        if (engine.statc[0] > engine.field.getHeight()) {
+            NormalFont.printFont(offsetX + 12, offsetY + 204, "GAME OVER", EventReceiver.COLOR_WHITE, 1.0f);
+        }
 
         if (engine.statc[0] > engine.field.getHeight() + 90) {
             GameTextUtilities.drawDirectTextAlign(
@@ -1499,7 +1501,7 @@ public class GradeMania4 extends DummyMode {
                 engine,
                 playerID,
                 offsetX + (16 * engine.field.getWidth() / 2) + 4,
-                offsetY + 252,
+                offsetY + (useClassicGrades ? 252 : 254),
                 GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
                 useClassicGrades ? headingClassic : headingAER[gradePresentTextIndex],
                 EventReceiver.COLOR_WHITE,
@@ -1517,7 +1519,7 @@ public class GradeMania4 extends DummyMode {
                 GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
                     useClassicGrades ? TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)] : getAER(getLeftGrade(engine), getRightGrade(engine)),
                 getCombinedGrade(engine) >= 20 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE,
-                useClassicGrades ? 2.5f : 1.5f
+                useClassicGrades ? 2.5f : 1.75f
             );
         }
     }
