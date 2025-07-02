@@ -677,6 +677,10 @@ public class GradeMania4 extends DummyMode {
                     receiver.saveModeConfig(owner.modeConfig);
                 }
 
+                if (animatedBackgrounds) {
+                    for (AnimatedBackgroundHook bg : animBgInstances) bg.reset();
+                }
+
                 return false;
             }
 
@@ -701,6 +705,10 @@ public class GradeMania4 extends DummyMode {
             engine.statc[2] = -1;
 
             if (engine.statc[3] >= 60) {
+                if (animatedBackgrounds) {
+                    for (AnimatedBackgroundHook bg : animBgInstances) bg.reset();
+                }
+
                 return false;
             }
         }
@@ -868,7 +876,7 @@ public class GradeMania4 extends DummyMode {
                         int realY = engine.nowPieceY + engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i];
 
                         if (!engine.field.getBlockEmptyF(realX, realY + 1)) {
-                            sparks.addNumber(8, new SurfaceSparks.Parameters(
+                            sparks.addNumber(16, new SurfaceSparks.Parameters(
                                 baseX + 16 * engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i],
                                 baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 1),
                                 baseY + 16 * (lowY + 1),
@@ -1221,9 +1229,9 @@ public class GradeMania4 extends DummyMode {
                 receiver.drawScoreFont(engine, playerID, 0, 3, useClassicGrades ? "GRADE" : "AER", EventReceiver.COLOR_BLUE);
 
                 if (useClassicGrades) {
-                    receiver.drawScoreFont(engine, playerID, 0, 4, TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)], ((gradeFlash % 2) == 1));
+                    receiver.drawScoreFont(engine, playerID, 0, 4, TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)], (((gradeFlash >>> 1) % 2) == 1));
                 } else {
-                    receiver.drawScoreFont(engine, playerID, 0, 4, getAER(leftGrade, rightGrade), ((gradeFlash % 2) == 1));
+                    receiver.drawScoreFont(engine, playerID, 0, 4, getAER(leftGrade, rightGrade), (((gradeFlash >>> 1) % 2) == 1));
                 }
             }
 
@@ -1235,7 +1243,7 @@ public class GradeMania4 extends DummyMode {
 
             {
                 int ix, iy;
-                ix = receiver.getScoreDisplayPositionX(engine, playerID);
+                ix = receiver.getScoreDisplayPositionX(engine, playerID) - 3;
                 iy = receiver.getScoreDisplayPositionY(engine, playerID) + 16 * 8 + 8;
 
                 float speed = engine.speed.gravity / (float) engine.speed.denominator;
@@ -1252,7 +1260,7 @@ public class GradeMania4 extends DummyMode {
                 if (speed >= 1.0f) speed = speed / 20;
                 if (engine.speed.gravity < 0) speed = 1f;
 
-                rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy, RendererExtension.ALIGN_MIDDLE_LEFT, speed, 1.25f, 1f, colorBack, colorFront);
+                rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy, RendererExtension.ALIGN_MIDDLE_LEFT, speed, 1.26f, 1.25f, colorBack, colorFront);
             }
 
             receiver.drawScoreFont(engine, playerID, 0, 9, String.format("%3d", nextSectionLevel));

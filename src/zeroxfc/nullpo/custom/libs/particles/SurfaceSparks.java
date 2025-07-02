@@ -49,25 +49,29 @@ public class SurfaceSparks extends ParticleEmitterBase<SurfaceSparks.Parameters>
 
             final DoubleVector p = new DoubleVector(
                 Interpolation.lerp(params.minX, params.maxX, randomiser.nextDouble()),
-                Interpolation.lerp(params.startY - 1, params.startY + 1, randomiser.nextDouble()),
+                Interpolation.lerp(params.startY - 1.5, params.startY + 1.5, randomiser.nextDouble()),
                 false
             );
 
             final DoubleVector v = new DoubleVector(
-                Interpolation.lerp(0.25 * params.direction, 3.0 * params.direction, randomiser.nextDouble()),
-                Interpolation.lerp(-0.75, 0.25, randomiser.nextDouble()),
+                Interpolation.lerp(-0.6 * params.direction, 6 * params.direction, randomiser.nextDouble()),
+                Interpolation.lerp(-3, 0.25, randomiser.nextDouble()),
                 false
             );
 
+            final DoubleVector a = new DoubleVector(v.getX(), v.getY(), false);
+            a.mul(-1d / 90d);
+            a.setY(9.80665 / 60d);
+
             final Particle particle = new Particle(
                 Particle.ParticleShape.Rectangle,
-                Interpolation.lerp(9, 15, randomiser.nextDouble()),
+                Interpolation.lerp(12, 20, randomiser.nextDouble()),
                 p,
                 v,
-                new DoubleVector(0, 9.80665d / 60, false),
+                a,
                 randomiser.nextInt(3) + 2, 2,
                 ured, ugreen, ublue, 255,
-                255, 255, 255, 64
+                ured, ugreen, ublue, 64
             );
 
             particles.add(particle);
