@@ -656,6 +656,11 @@ public class GradeMania4 extends DummyMode {
                         break;
                     case 7:
                         hardDropEffect = !hardDropEffect;
+
+                        if (animatedBackgrounds) {
+                            updateBGPulseFrames(engine, 60, 180, 1f);
+                        }
+
                         break;
                     case 8:
                         animatedBackgrounds = !animatedBackgrounds;
