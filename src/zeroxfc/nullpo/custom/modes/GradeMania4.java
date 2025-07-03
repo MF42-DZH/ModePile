@@ -219,8 +219,6 @@ public class GradeMania4 extends DummyMode {
     private List<int[]> pCoordList;
     private Piece cPiece;
 
-    private List<int[]> sCoordList;
-
     private ProfileProperties playerProperties;
     private boolean showPlayerStats;
     private String playerName;
@@ -346,8 +344,6 @@ public class GradeMania4 extends DummyMode {
 
         pCoordList = new LinkedList<>();
         cPiece = null;
-
-        sCoordList = new LinkedList<>();
 
         engine.comboType = GameEngine.COMBO_TYPE_DISABLE;
         engine.framecolor = GameEngine.FRAME_COLOR_BLUE;
@@ -859,38 +855,9 @@ public class GradeMania4 extends DummyMode {
             levelUp(engine);
         }
 
-        if (sparkEffect &&
-            engine.nowPieceObject != null &&
-            engine.getMoveDirection() != 0 &&
-            !hasMovedFrame &&
-            (engine.dasCount == 0 || engine.dasCount >= engine.getDAS())) {
-            hasMovedFrame = true;
-
-            int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
-            int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
-
-            if (engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY + 1, engine.field) &&
-                !engine.nowPieceObject.checkCollision(engine.nowPieceX + engine.getMoveDirection(), engine.nowPieceY, engine.field)) {
-                final int[] pieceDataY = engine.nowPieceObject.dataY[engine.nowPieceObject.direction];
-                final int lowY = Arrays.stream(pieceDataY).max().getAsInt();
-
-                sCoordList.clear();
-                for (int i = 0; i < engine.nowPieceObject.getMaxBlock(); ++i) {
-                    if (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] == lowY) {
-                        int realX = engine.nowPieceX + engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i];
-                        int realY = engine.nowPieceY + engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i];
-
-                        if (!engine.field.getBlockEmptyF(realX, realY + 1)) {
-                            sparks.addNumber(16, new SurfaceSparks.Parameters(
-                                baseX + 16 * engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i],
-                                baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 1),
-                                baseY + 16 * (lowY + 1),
-                                engine.getMoveDirection() * -1)
-                            );
-                        }
-                    }
-                }
-            }
+        if (sparkEffect && !hasMovedFrame) {
+//            hasMovedFrame = true;
+            sparks.addNumber(engine, receiver, playerID, 12);
         } else {
             hasMovedFrame = false;
         }
@@ -1007,14 +974,17 @@ public class GradeMania4 extends DummyMode {
                 engine.timerActive = false;
                 engine.ending = 1;
 
-                if (sectionTime[8] <= SECTION_COOL_TIMES[8]) {
-                    sectionAllClearAchieved[8] = true;
+                // Update Section "COOL"
+                if (sectionTime[sectionTime.length - 1] <= SECTION_COOL_TIMES[SECTION_COOL_TIMES.length - 1]) {
+                    sectionPoints[sectionPoints.length - 1] += 125;
+
+                    if (showGrade) engine.playSE("cool");
                 }
             } else if (engine.statistics.level >= nextSectionLevel) {
                 engine.playSE("levelup");
 
                 // Update Section "COOL"
-                if (engine.statistics.level >= 200) {
+                 if (engine.statistics.level >= 200) {
                     int section = engine.statistics.level / 100 - 2;
                     if (sectionTime[section] <= SECTION_COOL_TIMES[section]) {
                         sectionPoints[section] += 125;
@@ -1234,7 +1204,7 @@ public class GradeMania4 extends DummyMode {
                 receiver.drawScoreFont(engine, playerID, 0, 3, useClassicGrades ? "GRADE" : "AER", EventReceiver.COLOR_BLUE);
 
                 if (useClassicGrades) {
-                    receiver.drawScoreFont(engine, playerID, 0, 4, TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)], (((gradeFlash >>> 1) % 2) == 1));
+                    receiver.drawScoreFont(engine, playerID, 0, 4, TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)], ((((gradeFlash >>> 1) + (gradeFlash >>> 2)) % 2) == 1));
                 } else {
                     receiver.drawScoreFont(engine, playerID, 0, 4, getAER(leftGrade, rightGrade), (((gradeFlash >>> 1) % 2) == 1));
                 }
@@ -1388,6 +1358,7 @@ public class GradeMania4 extends DummyMode {
         if (engine.statc[1] == 0) {
             int gcolor = EventReceiver.COLOR_WHITE;
             if (getCombinedGrade(engine) >= 20) gcolor = EventReceiver.COLOR_YELLOW;
+            if (getCombinedGrade(engine) >= 19) gcolor = EventReceiver.COLOR_GREEN;
 
             receiver.drawMenuFont(engine, playerID, 0, 2, useClassicGrades ? "GRADE" : "AER", EventReceiver.COLOR_BLUE);
             String strGrade = useClassicGrades ? String.format("%10s", TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)]) : String.format("%10s", getAER(getLeftGrade(engine), getRightGrade(engine)));
@@ -1443,7 +1414,12 @@ public class GradeMania4 extends DummyMode {
             }
         }
 
-        if (engine.statc[0] == engine.field.getHeight() + 151 && getCombinedGrade(engine) == 20) engine.playSE("cool");
+        if (engine.statc[0] == engine.field.getHeight() + 151) {
+            final int finalGrade = getCombinedGrade(engine);
+
+            if (finalGrade >= 20) engine.playSE("cool");
+            else if (finalGrade == 19) engine.playSE("medal");
+        }
 
         if (engine.statc[0] < engine.field.getHeight() + 1) {
             for (int i = 0; i < engine.field.getWidth(); i++) {
@@ -1495,6 +1471,12 @@ public class GradeMania4 extends DummyMode {
             NormalFont.printFont(offsetX + 12, offsetY + 204, "GAME OVER", EventReceiver.COLOR_WHITE, 1.0f);
         }
 
+        final int finalGrade = getCombinedGrade(engine);
+        int gradeColor = EventReceiver.COLOR_WHITE;
+
+        if (finalGrade >= 20) gradeColor = EventReceiver.COLOR_YELLOW;
+        else if (finalGrade == 19) gradeColor = EventReceiver.COLOR_GREEN;
+
         if (engine.statc[0] > engine.field.getHeight() + 90) {
             GameTextUtilities.drawDirectTextAlign(
                 receiver,
@@ -1518,7 +1500,7 @@ public class GradeMania4 extends DummyMode {
                 offsetY + 284,
                 GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
                     useClassicGrades ? TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)] : getAER(getLeftGrade(engine), getRightGrade(engine)),
-                getCombinedGrade(engine) >= 20 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE,
+                gradeColor,
                 useClassicGrades ? 2.5f : 1.75f
             );
         }

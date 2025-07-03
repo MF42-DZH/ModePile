@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
+import zeroxfc.nullpo.custom.libs.MathHelper;
 
 public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
     private static final double TWO_PI = Math.PI * 2;
@@ -141,8 +142,7 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
                     j += (x + y);
                 }
 
-                int ppu = j % pulsePhaseMax;
-                if (ppu < 0) ppu = pulsePhaseMax - ppu;
+                int ppu = MathHelper.pythonModulo(j, pulsePhaseMax);
 
                 float baseScale = (pulseBaseScale == null) ? BASE_SCALE : pulseBaseScale;
                 float scaleVariance = (pulseScaleVariance == null) ? SCALE_VARIANCE : pulseScaleVariance;
