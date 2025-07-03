@@ -1164,7 +1164,7 @@ public class GradeMania4 extends DummyMode {
                     for (int i = 0; i < RANKING_MAX; i++) {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
                         if (rankingRankPlayer != -1) {
-                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i]), (i == rankingRankPlayer), scale);
+                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i]), (i == rankingRankPlayer) ? EventReceiver.COLOR_RED : rightGradeColor(rankingGradeRightPlayer[rankingBoard()][i]), scale);
                         } else {
                             receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i]), rightGradeColor(rankingGradeRightPlayer[rankingBoard()][i]), scale);
                         }
@@ -1181,7 +1181,7 @@ public class GradeMania4 extends DummyMode {
                     for (int i = 0; i < RANKING_MAX; i++) {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
                         if (rankingRank != -1) {
-                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i]), (i == rankingRank), scale);
+                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i]), (i == rankingRank) ? EventReceiver.COLOR_RED : rightGradeColor(rankingGradeRight[rankingBoard()][i]), scale);
                         } else {
                             receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i]), rightGradeColor(rankingGradeRight[rankingBoard()][i]), scale);
                         }
@@ -1204,7 +1204,7 @@ public class GradeMania4 extends DummyMode {
                 receiver.drawScoreFont(engine, playerID, 0, 3, useClassicGrades ? "GRADE" : "AER", EventReceiver.COLOR_BLUE);
 
                 if (useClassicGrades) {
-                    receiver.drawScoreFont(engine, playerID, 0, 4, TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)], ((((gradeFlash >>> 1) + (gradeFlash >>> 2)) % 2) == 1));
+                    receiver.drawScoreFont(engine, playerID, 0, 4, TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)], ((gradeFlash % 2) == 1));
                 } else {
                     receiver.drawScoreFont(engine, playerID, 0, 4, getAER(leftGrade, rightGrade), (((gradeFlash >>> 1) % 2) == 1));
                 }
