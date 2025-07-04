@@ -28,6 +28,7 @@ import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.*;
 import zeroxfc.nullpo.custom.libs.particles.Fireworks;
+import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
 import zeroxfc.nullpo.custom.libs.particles.SurfaceSparks;
 
 public class GradeMania4 extends DummyMode {
@@ -237,6 +238,9 @@ public class GradeMania4 extends DummyMode {
 
     private Random fireworkRandomiser;
     private int fireworksLeft;
+
+    private Random lpRandomiser;
+    private LandingParticles landingParticles;
 
     private Random sparksRandomiser;
     private SurfaceSparks sparks;
@@ -596,12 +600,6 @@ public class GradeMania4 extends DummyMode {
         engine.speed = speed;
 
         if (always20g) engine.speed.gravity = -1;
-
-        // Extra shortens ARE.
-        if (alwaysExtra || engine.ctrl.isPress(Controller.BUTTON_F)) {
-            engine.speed.are = Math.min(EXTRA_ARE, speed.are);
-            engine.speed.areLine = Math.min(EXTRA_ARE, speed.areLine);
-        }
     }
 
     private void setStartBGMLevel(GameEngine engine) {
@@ -772,10 +770,15 @@ public class GradeMania4 extends DummyMode {
 
         final SpeedParam currentParam = SPEED_TABLE.apply(engine.statistics.level);
 
+        // Extra shortens ARE if it is longer than Extra's ARE.
         if (engine.ctrl.isPress(Controller.BUTTON_F) || alwaysExtra) {
+            engine.speed.are = Math.min(EXTRA_ARE, currentParam.are);
+            engine.speed.areLine = Math.min(EXTRA_ARE, currentParam.areLine);
             engine.ruleopt = engineExtraRules;
             engine.speed.das = Math.min(EXTRA_ARE, currentParam.das);
         } else {
+            engine.speed.are = currentParam.are;
+            engine.speed.areLine = currentParam.areLine;
             engine.ruleopt = engineBaseRules;
             engine.speed.das = currentParam.das;
         }
@@ -835,6 +838,9 @@ public class GradeMania4 extends DummyMode {
 
         sparksRandomiser = new Random(engine.randSeed * 2);
         sparks = new SurfaceSparks(customGraphics, sparksRandomiser);
+
+        lpRandomiser = new Random(engine.randSeed * 3);
+        landingParticles = new LandingParticles(customGraphics, lpRandomiser);
 
         setStartBGMLevel(engine);
         levelUp(engine);
@@ -1081,6 +1087,7 @@ public class GradeMania4 extends DummyMode {
 
         if (fireworks != null) fireworks.update();
         if (sparks != null) sparks.update();
+        if (landingParticles != null) landingParticles.update();
     }
 
     private static final List<Integer> avgX = new LinkedList<>();
@@ -1108,19 +1115,28 @@ public class GradeMania4 extends DummyMode {
                     x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
                     y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
+                    landingParticles.addNumber(engine, receiver, playerID, 12);
+
+                    avgX.add(x2 + 8);
+                    avgY.add(y2 + 8);
                 } else {
                     x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
                     y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
 
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
-                }
+                    landingParticles.addNumber(engine, receiver, playerID, 12);
 
-                avgX.add(x2 + 8);
-                avgY.add(y2 + 8);
+                    avgX.add(x2 + 8);
+                    avgY.add(y2 + 8);
+
+                    avgX.add(x2 + 8);
+                    avgY.add(y2 + 24);
+
+                    avgX.add(x2 + 24);
+                    avgY.add(y2 + 8);
+
+                    avgX.add(x2 + 24);
+                    avgY.add(y2 + 24);
+                }
             }
 
             if (animatedBackgrounds && engine.statistics.level < 100) {
@@ -1204,7 +1220,7 @@ public class GradeMania4 extends DummyMode {
                 receiver.drawScoreFont(engine, playerID, 0, 3, useClassicGrades ? "GRADE" : "AER", EventReceiver.COLOR_BLUE);
 
                 if (useClassicGrades) {
-                    receiver.drawScoreFont(engine, playerID, 0, 4, TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)], ((gradeFlash % 2) == 1));
+                    receiver.drawScoreFont(engine, playerID, 0, 4, TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)], (((gradeFlash >>> 1) % 2) == 1));
                 } else {
                     receiver.drawScoreFont(engine, playerID, 0, 4, getAER(leftGrade, rightGrade), (((gradeFlash >>> 1) % 2) == 1));
                 }
@@ -1332,6 +1348,7 @@ public class GradeMania4 extends DummyMode {
 
         if (fireworks != null) fireworks.draw(receiver);
         if (sparks != null) sparks.draw(receiver);
+        if (landingParticles != null) landingParticles.draw(receiver);
     }
 
     @Override
@@ -1414,7 +1431,7 @@ public class GradeMania4 extends DummyMode {
             }
         }
 
-        if (engine.statc[0] == engine.field.getHeight() + 151) {
+        if (engine.statc[0] == engine.field.getHeight() + 241) {
             final int finalGrade = getCombinedGrade(engine);
 
             if (finalGrade >= 20) engine.playSE("cool");
@@ -1441,7 +1458,7 @@ public class GradeMania4 extends DummyMode {
         } else if (engine.statc[0] == engine.field.getHeight() + 1) {
             engine.playSE("gameover");
             engine.statc[0]++;
-        } else if (engine.statc[0] < engine.field.getHeight() + 1 + 420) {
+        } else if (engine.statc[0] < engine.field.getHeight() + 1 + 480) {
             engine.statc[0]++;
         } else {
             if(!owner.replayMode || owner.replayRerecord) owner.saveReplay();
@@ -1477,7 +1494,7 @@ public class GradeMania4 extends DummyMode {
         if (finalGrade >= 20) gradeColor = EventReceiver.COLOR_YELLOW;
         else if (finalGrade == 19) gradeColor = EventReceiver.COLOR_GREEN;
 
-        if (engine.statc[0] > engine.field.getHeight() + 90) {
+        if (engine.statc[0] > engine.field.getHeight() + 150) {
             GameTextUtilities.drawDirectTextAlign(
                 receiver,
                 engine,
@@ -1491,7 +1508,7 @@ public class GradeMania4 extends DummyMode {
             );
         }
 
-        if (engine.statc[0] > engine.field.getHeight() + 150) {
+        if (engine.statc[0] > engine.field.getHeight() + 240) {
             GameTextUtilities.drawDirectTextAlign(
                 receiver,
                 engine,

@@ -1,8 +1,6 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Random;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
@@ -10,7 +8,7 @@ import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 
-public class SurfaceSparks extends ParticleEmitterBase<SurfaceSparks.Parameters> {
+public class SurfaceSparks extends ParticleEmitterBase<SurfaceSparks.Parameters> implements BlockBasedEmitter {
     private final Random randomiser;
 
     public SurfaceSparks(CustomResourceHolder customGraphics) {
@@ -53,21 +51,39 @@ public class SurfaceSparks extends ParticleEmitterBase<SurfaceSparks.Parameters>
             (engine.dasCount == 0 || engine.dasCount >= engine.getDAS())) {
             if (engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY + 1, engine.field) &&
                 !engine.nowPieceObject.checkCollision(engine.nowPieceX + engine.getMoveDirection(), engine.nowPieceY, engine.field)) {
-                final int[] pieceDataY = engine.nowPieceObject.dataY[engine.nowPieceObject.direction];
-                final int lowY = Arrays.stream(pieceDataY).max().getAsInt();
 
                 for (int i = 0; i < engine.nowPieceObject.getMaxBlock(); ++i) {
-                    if (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] == lowY) {
+                    if (checkLowestBlock(engine.nowPieceObject, i)) {
                         int realX = engine.nowPieceX + engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i];
                         int realY = engine.nowPieceY + engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i];
 
-                        if (!engine.field.getBlockEmptyF(realX, realY + 1)) {
-                            addNumber(num, new SurfaceSparks.Parameters(
-                                baseX + 16 * engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i],
-                                baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 1),
-                                baseY + 16 * (lowY + 1),
-                                engine.getMoveDirection() * -1)
-                            );
+                        if (engine.nowPieceObject.big) {
+                            if (!engine.field.getBlockEmptyF(realX, realY + 2)) {
+                                addNumber(num, new SurfaceSparks.Parameters(
+                                    baseX + 16 * engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i],
+                                    baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 1),
+                                    baseY + 16 * (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] + 2),
+                                    engine.getMoveDirection() * -1)
+                                );
+                            }
+
+                            if (!engine.field.getBlockEmptyF(realX + 1, realY + 2)) {
+                                addNumber(num, new SurfaceSparks.Parameters(
+                                    baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 1),
+                                    baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 2),
+                                    baseY + 16 * (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] + 2),
+                                    engine.getMoveDirection() * -1)
+                                );
+                            }
+                        } else {
+                            if (!engine.field.getBlockEmptyF(realX, realY + 1)) {
+                                addNumber(num, new SurfaceSparks.Parameters(
+                                    baseX + 16 * engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i],
+                                    baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 1),
+                                    baseY + 16 * (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] + 1),
+                                    engine.getMoveDirection() * -1)
+                                );
+                            }
                         }
                     }
                 }

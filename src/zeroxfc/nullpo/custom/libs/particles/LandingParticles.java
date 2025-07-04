@@ -1,17 +1,20 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
+import java.util.Arrays;
 import java.util.Random;
 import mu.nu.nullpo.game.component.Block;
+import mu.nu.nullpo.game.event.EventReceiver;
+import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.MathHelper;
 
-public class LandingParticles extends ParticleEmitterBase<LandingParticles.Parameters> {
+public class LandingParticles extends ParticleEmitterBase<LandingParticles.Parameters> implements BlockBasedEmitter {
     /**
      * Default max velocity
      */
-    public static final double DEF_MAX_VEL = 1.25d;
+    public static final double DEF_MAX_VEL = 2.5d;
 
     /**
      * Default min lifetime
@@ -67,9 +70,8 @@ public class LandingParticles extends ParticleEmitterBase<LandingParticles.Param
         public final int alpha;
         public final int variance;
         public final double maxVel;
-        public final double upChance;
 
-        public Parameters(int minX, int maxX, int startY, int yVar, int red, int green, int blue, int alpha, int variance, double maxVel, double upChance) {
+        public Parameters(int minX, int maxX, int startY, int yVar, int red, int green, int blue, int alpha, int variance, double maxVel) {
             this.minX = minX;
             this.maxX = maxX;
             this.startY = startY;
@@ -80,80 +82,52 @@ public class LandingParticles extends ParticleEmitterBase<LandingParticles.Param
             this.alpha = alpha;
             this.variance = variance;
             this.maxVel = maxVel;
-            this.upChance = upChance;
         }
 
-        public Parameters(int minX, int maxX, int startY, int yVar, int red, int green, int blue, int alpha, int variance, double upChance) {
-            this(minX, maxX, startY, yVar, red, green, blue, alpha, variance, DEF_MAX_VEL, upChance);
+        public Parameters(int minX, int maxX, int startY, int yVar, int red, int green, int blue, int alpha, int variance) {
+            this(minX, maxX, startY, yVar, red, green, blue, alpha, variance, DEF_MAX_VEL);
+        }
+    }
+
+    public void addNumber(GameEngine engine, EventReceiver receiver, int playerID, int num) {
+        int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+        int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+
+        if (engine.nowPieceObject != null) {
+            for (int i = 0; i < engine.nowPieceObject.getMaxBlock(); ++i) {
+                if (checkLowestBlock(engine.nowPieceObject, i)) {
+                    if (engine.nowPieceObject.big) {
+                        addNumber(
+                            num * 2,
+                            baseX + 16 * engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i],
+                            baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 2),
+                            baseY + 16 * (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] + 2),
+                            2,
+                            engine.nowPieceObject.block[i]
+                        );
+                    } else {
+                        addNumber(
+                            num,
+                            baseX + 16 * engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i],
+                            baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 1),
+                            baseY + 16 * (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] + 1),
+                            2,
+                            engine.nowPieceObject.block[i]
+                        );
+                    }
+                }
+            }
         }
     }
 
     /** Add a number of particles based on a block. */
     public void addNumber(int num, int minX, int maxX, int startY, int yVar, Block block) {
-        int red, green, blue;
-        switch (block.color) {
-            case Block.BLOCK_COLOR_RED:
-            case Block.BLOCK_COLOR_GEM_RED:
-                red = 255;
-                green = 32;
-                blue = 32;
-                break;
-            case Block.BLOCK_COLOR_ORANGE:
-            case Block.BLOCK_COLOR_GEM_ORANGE:
-                red = 255;
-                green = 128;
-                blue = 0;
-                break;
-            case Block.BLOCK_COLOR_SQUARE_GOLD_1:
-            case Block.BLOCK_COLOR_SQUARE_GOLD_2:
-            case Block.BLOCK_COLOR_SQUARE_GOLD_3:
-            case Block.BLOCK_COLOR_SQUARE_GOLD_4:
-            case Block.BLOCK_COLOR_SQUARE_GOLD_5:
-            case Block.BLOCK_COLOR_SQUARE_GOLD_6:
-            case Block.BLOCK_COLOR_SQUARE_GOLD_7:
-            case Block.BLOCK_COLOR_SQUARE_GOLD_8:
-            case Block.BLOCK_COLOR_SQUARE_GOLD_9:
-            case Block.BLOCK_COLOR_YELLOW:
-            case Block.BLOCK_COLOR_GEM_YELLOW:
-                red = 255;
-                green = 255;
-                blue = 0;
-                break;
-            case Block.BLOCK_COLOR_GREEN:
-            case Block.BLOCK_COLOR_GEM_GREEN:
-                red = 32;
-                green = 255;
-                blue = 32;
-                break;
-            case Block.BLOCK_COLOR_CYAN:
-            case Block.BLOCK_COLOR_GEM_CYAN:
-                red = 0;
-                green = 255;
-                blue = 255;
-                break;
-            case Block.BLOCK_COLOR_BLUE:
-            case Block.BLOCK_COLOR_GEM_BLUE:
-                red = 32;
-                green = 32;
-                blue = 255;
-                break;
-            case Block.BLOCK_COLOR_PURPLE:
-            case Block.BLOCK_COLOR_GEM_PURPLE:
-                red = 128;
-                green = 32;
-                blue = 255;
-                break;
-            default:
-                red = 255;
-                green = 255;
-                blue = 255;
-                break;
-        }
+        final int[] rgb = getColorForBlock(block);
 
-        int alpha = (block.color == Block.BLOCK_COLOR_INVALID || block.color == Block.BLOCK_COLOR_NONE) ? 0 : 255;
-        int variance = (block.color == Block.BLOCK_COLOR_RAINBOW || block.color == Block.BLOCK_COLOR_GEM_RAINBOW) ? 255 : 16;
+        final int alpha = (block.color == Block.BLOCK_COLOR_INVALID || block.color == Block.BLOCK_COLOR_NONE) ? 0 : 255;
+        final int variance = (block.color == Block.BLOCK_COLOR_RAINBOW || block.color == Block.BLOCK_COLOR_GEM_RAINBOW) ? 255 : 16;
 
-        addNumber(num, new Parameters(minX, maxX, startY, yVar, red, green, blue, alpha, variance, 1d / 3d));
+        addNumber(num, new Parameters(minX, maxX, startY, yVar, rgb[0], rgb[1], rgb[2], alpha, variance));
     }
 
     /**
@@ -167,22 +141,18 @@ public class LandingParticles extends ParticleEmitterBase<LandingParticles.Param
      */
     @Override
     public void addNumber(int num, Parameters params) {
-        int minX, maxX, startY, yVar, red, green, blue, alpha, variance;
-        double maxVel, upChance;
-
         try {
-            minX = params.minX;
-            maxX = params.maxX;
-            startY = params.startY;
-            yVar = params.yVar;
-            red = params.red;
-            green = params.green;
-            blue = params.blue;
-            alpha = params.alpha;
-            variance = params.variance;
+            final int minX = params.minX;
+            final int maxX = params.maxX;
+            final int startY = params.startY;
+            final int yVar = params.yVar;
+            final int red = params.red;
+            final int green = params.green;
+            final int blue = params.blue;
+            final int alpha = params.alpha;
+            final int variance = params.variance;
 
-            maxVel = params.maxVel;
-            upChance = params.upChance;
+            final double maxVel = params.maxVel;
 
             for (int i = 0; i < num; i++) {
                 int ured, ugreen, ublue, ualpha;
@@ -196,27 +166,27 @@ public class LandingParticles extends ParticleEmitterBase<LandingParticles.Param
                 ublue = MathHelper.clamp(ublue, 0, 255);
                 ualpha = MathHelper.clamp(ualpha, 0, 255);
 
-                DoubleVector p = new DoubleVector(
-                    Interpolation.lerp(minX, maxX, randomiser.nextDouble()),
+                final DoubleVector p = new DoubleVector(
+                    Interpolation.lerp(minX, maxX, (double) i / (num - 1)),
                     Interpolation.lerp(startY - yVar, startY + yVar, randomiser.nextDouble()),
                     false
                 );
 
-                DoubleVector v = new DoubleVector(
-                    Interpolation.lerp(-maxVel / 2, maxVel / 2, randomiser.nextDouble()),
-                    Interpolation.lerp(0, maxVel, randomiser.nextDouble()) * (randomiser.nextDouble() < upChance ? -0.5 : 1),
+                final DoubleVector v = new DoubleVector(
+                    0,
+                    Interpolation.lerp(0, maxVel, randomiser.nextDouble()),
                     false
                 );
 
-                Particle particle = new Particle(
+                final Particle particle = new Particle(
                     Particle.ParticleShape.Rectangle,
                     Interpolation.lerp(DEF_MIN_LIFE, DEF_MAX_LIFE, randomiser.nextDouble()),
                     p,
                     v,
-                    new DoubleVector(0, 9.80665d / 60, false),
+                    DoubleVector.zero(),
                     2, 2,
                     ured, ugreen, ublue, ualpha,
-                    (int) (ured / 1.5), (int) (ugreen / 1.5), (int) (ublue / 1.5), 64
+                    255, 255, 255, 32
                 );
 
                 particles.add(particle);
