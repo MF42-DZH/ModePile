@@ -1403,6 +1403,10 @@ public class GradeMania4 extends DummyMode {
             if (getCombinedGrade(engine) >= 20) gcolor = EventReceiver.COLOR_YELLOW;
             else if (getCombinedGrade(engine) >= 19) gcolor = EventReceiver.COLOR_GREEN;
 
+            int sgcolor = EventReceiver.COLOR_WHITE;
+            if (secretGrade >= 19) sgcolor = EventReceiver.COLOR_YELLOW;
+            else if (secretGrade >= 18) sgcolor = EventReceiver.COLOR_GREEN;
+
             receiver.drawMenuFont(engine, playerID, 0, 2, useClassicGrades ? "GRADE" : "AER", EventReceiver.COLOR_BLUE);
             String strGrade = useClassicGrades ? String.format("%10s", TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)]) : String.format("%10s", getAER(getLeftGrade(engine), getRightGrade(engine)));
 
@@ -1415,13 +1419,11 @@ public class GradeMania4 extends DummyMode {
             drawResultRank(engine, playerID, receiver, 12, EventReceiver.COLOR_BLUE, rankingRank);
             if (secretGrade > 4) {
                 if (useClassicGrades) {
-                    drawResult(engine, playerID, receiver, 14, EventReceiver.COLOR_BLUE,
-                        "S. GRADE", String.format("%10s", TABLE_SECRET_GRADE_NAME[secretGrade - 1])
-                    );
+                    receiver.drawMenuFont(engine, playerID, 0, 14, "S. GRADE", EventReceiver.COLOR_BLUE);
+                    receiver.drawMenuFont(engine, playerID, 0, 15, String.format("%10s", TABLE_SECRET_GRADE_NAME[secretGrade - 1]), sgcolor);
                 } else {
-                    drawResult(engine, playerID, receiver, 14, EventReceiver.COLOR_BLUE,
-                        "S. AER", String.format("%10s", SECRET_AER[secretGrade])
-                    );
+                    receiver.drawMenuFont(engine, playerID, 0, 14, "S. AER", EventReceiver.COLOR_BLUE);
+                    receiver.drawMenuFont(engine, playerID, 0, 15, String.format("%10s", SECRET_AER[secretGrade]), sgcolor);
                 }
             }
         } else if (engine.statc[1] == 1) {
