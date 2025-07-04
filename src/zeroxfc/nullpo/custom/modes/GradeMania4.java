@@ -1576,7 +1576,7 @@ public class GradeMania4 extends DummyMode {
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
                     offsetY + 126,
                     GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
-                    useClassicGrades ? TABLE_CLASSIC_GRADE_NAME[secretGrade - 1] : SECRET_AER[secretGrade],
+                    useClassicGrades ? TABLE_SECRET_GRADE_NAME[secretGrade - 1] : SECRET_AER[secretGrade],
                     secretGrade == 18 ? EventReceiver.COLOR_GREEN : (secretGrade == 19 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE),
                     useClassicGrades ? 2.5f : 1.75f
                 );
