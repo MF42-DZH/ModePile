@@ -1,6 +1,5 @@
 package zeroxfc.nullpo.custom.modes;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -165,13 +164,36 @@ public class GradeMania4 extends DummyMode {
         "YOU HAVE COMPLETED GRADE MANIA 4!"
     };
 
-    private static final String[] headingAER = {
+    private static final String[] HEADING_AER = {
         "YOUR AER",
         "YOU ARE",
         "YOU AER"
     };
 
-    private static final String headingClassic = "YOUR GRADE";
+    private static final String HEADING_CLASSIC = "YOUR GRADE";
+
+    private static final String[] SECRET_AER = {
+        "0 OF 1",
+        "0 OF 2",
+        "0 OF 3",
+        "0 OF 4",
+        "0 OF 5",
+        "0 OF 6",
+        "0 OF 7",
+        "0 OF 8",
+        "0 OF 9",
+        "0 OF 10",
+        "1 OF 10",
+        "2 OF 10",
+        "3 OF 10",
+        "4 OF 10",
+        "5 OF 10",
+        "6 OF 10",
+        "7 OF 10",
+        "8 OF 10",
+        "9 OF 10",
+        "10 OF 10"
+    };
 
     private static int getFireworkLaunchCount(int totalGrade) {
         if (totalGrade >= 20) return 50;
@@ -210,6 +232,7 @@ public class GradeMania4 extends DummyMode {
     private RuleOptions engineBaseRules;
     private RuleOptions engineExtraRules;
     private int gradePresentTextIndex;
+    private int nextTimeTextIndex;
 
     private ScrollingMarqueeText creditText;
 
@@ -290,11 +313,11 @@ public class GradeMania4 extends DummyMode {
             animBgInstances[1] = new BackgroundVerticalBars(1, 60, 160, 1f, 4f, false);
             animBgInstances[2] = new BackgroundDiagonalRipple(2, 8, 8, 60, 1f, 2f, false, false);
             animBgInstances[3] = new BackgroundHorizontalBars(3, 60, 120, 1f, 4f, false);
-            animBgInstances[4] = new BackgroundDiagonalRipple(4, 8, 8, 60, 1f, 2f, false, true);
+            animBgInstances[4] = new BackgroundDiagonalRipple(4, 8, 8, 60, 1f, 2f, true, true);
             animBgInstances[5] = new BackgroundVerticalBars(5, 60, 160, 1f, 4f, true);
             animBgInstances[6] = new BackgroundDiagonalRipple(6, 8, 8, 60, 1f, 2f, true, false);
             animBgInstances[7] = new BackgroundHorizontalBars(7, 60, 120, 1f, 4f, true);
-            animBgInstances[8] = new BackgroundDiagonalRipple(8, 8, 8, 60, 1f, 2f, true, true);
+            animBgInstances[8] = new BackgroundDiagonalRipple(8, 8, 8, 60, 1f, 2f, false, true);
             animBgInstances[9] = new BackgroundFakeScanlines(9);
         }
 
@@ -338,6 +361,7 @@ public class GradeMania4 extends DummyMode {
         nextSectionLevel = 0;
         levelUpFlag = true;
         gradePresentTextIndex = 0;
+        nextTimeTextIndex = 0;
 
         engine.ghost = true;
 
@@ -961,17 +985,19 @@ public class GradeMania4 extends DummyMode {
                 else sectionPoints[currentSection] += 175;
             }
 
-            if (fullGameQuota > FULL_GAME_QUOTA_LIMIT) fullGameQuota = FULL_GAME_QUOTA_LIMIT;
-
             // AC bonus
             if (engine.field.isEmpty()) {
                 engine.playSE("bravo");
 
                 if (!sectionAllClearAchieved[currentSection]) {
                     sectionAllClearAchieved[currentSection] = true;
+
                     sectionPoints[currentSection] += 350;
+                    fullGameQuota += 350;
                 }
             }
+
+            if (fullGameQuota > FULL_GAME_QUOTA_LIMIT) fullGameQuota = FULL_GAME_QUOTA_LIMIT;
 
             levelUp(engine);
 
@@ -1388,9 +1414,15 @@ public class GradeMania4 extends DummyMode {
             );
             drawResultRank(engine, playerID, receiver, 12, EventReceiver.COLOR_BLUE, rankingRank);
             if (secretGrade > 4) {
-                drawResult(engine, playerID, receiver, 14, EventReceiver.COLOR_BLUE,
-                    "S. GRADE", String.format("%10s", TABLE_SECRET_GRADE_NAME[secretGrade - 1])
-                );
+                if (useClassicGrades) {
+                    drawResult(engine, playerID, receiver, 14, EventReceiver.COLOR_BLUE,
+                        "S. GRADE", String.format("%10s", TABLE_SECRET_GRADE_NAME[secretGrade - 1])
+                    );
+                } else {
+                    drawResult(engine, playerID, receiver, 14, EventReceiver.COLOR_BLUE,
+                        "S. AER", String.format("%10s", SECRET_AER[secretGrade])
+                    );
+                }
             }
         } else if (engine.statc[1] == 1) {
             receiver.drawMenuFont(engine, playerID, 0, 2, "SECTION", EventReceiver.COLOR_BLUE);
@@ -1412,7 +1444,8 @@ public class GradeMania4 extends DummyMode {
             engine.blockOutlineType = GameEngine.BLOCK_OUTLINE_NORMAL;
             secretGrade = engine.field.getSecretGrade();
 
-            gradePresentTextIndex = fireworkRandomiser.nextInt(6) + sparksRandomiser.nextInt(4);
+            gradePresentTextIndex = fireworkRandomiser.nextInt(10);
+            nextTimeTextIndex = lpRandomiser.nextInt(5);
 
             if (gradePresentTextIndex >= 9) gradePresentTextIndex = 2;
             else if (gradePresentTextIndex >= 7) gradePresentTextIndex = 1;
@@ -1502,10 +1535,24 @@ public class GradeMania4 extends DummyMode {
                 offsetX + (16 * engine.field.getWidth() / 2) + 4,
                 offsetY + (useClassicGrades ? 252 : 254),
                 GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
-                useClassicGrades ? headingClassic : headingAER[gradePresentTextIndex],
+                useClassicGrades ? HEADING_CLASSIC : HEADING_AER[gradePresentTextIndex],
                 EventReceiver.COLOR_WHITE,
                 0.75f
             );
+
+            if (secretGrade > 4) {
+                GameTextUtilities.drawDirectTextAlign(
+                    receiver,
+                    engine,
+                    playerID,
+                    offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                    offsetY + (useClassicGrades ? 92 : 96),
+                    GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                    useClassicGrades ? "SECRET GRADE" : "SECRET AER",
+                    EventReceiver.COLOR_WHITE,
+                    0.75f
+                );
+            }
         }
 
         if (engine.statc[0] > engine.field.getHeight() + 240) {
@@ -1516,10 +1563,88 @@ public class GradeMania4 extends DummyMode {
                 offsetX + (16 * engine.field.getWidth() / 2) + 4,
                 offsetY + 284,
                 GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
-                    useClassicGrades ? TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)] : getAER(getLeftGrade(engine), getRightGrade(engine)),
+                useClassicGrades ? TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)] : getAER(getLeftGrade(engine), getRightGrade(engine)),
                 gradeColor,
                 useClassicGrades ? 2.5f : 1.75f
             );
+
+            if (secretGrade > 4) {
+                GameTextUtilities.drawDirectTextAlign(
+                    receiver,
+                    engine,
+                    playerID,
+                    offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                    offsetY + 126,
+                    GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                    useClassicGrades ? TABLE_CLASSIC_GRADE_NAME[secretGrade - 1] : SECRET_AER[secretGrade],
+                    secretGrade == 18 ? EventReceiver.COLOR_GREEN : (secretGrade == 19 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE),
+                    useClassicGrades ? 2.5f : 1.75f
+                );
+            }
+        }
+
+        if (engine.statc[0] > engine.field.getHeight() + 300 && getRightGrade(engine) == 10 && getLeftGrade(engine) < 10 && engine.statistics.level >= LEVEL_LIMIT) {
+            if (nextTimeTextIndex == 4) {
+                GameTextUtilities.drawDirectTextAlign(
+                    receiver,
+                    engine,
+                    playerID,
+                    offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                    offsetY + (useClassicGrades ? 332 : 324),
+                    GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                    "BUT, LET'S GO BETTER",
+                    EventReceiver.COLOR_ORANGE,
+                    0.7f
+                );
+
+                GameTextUtilities.drawDirectTextAlign(
+                    receiver,
+                    engine,
+                    playerID,
+                    offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                    offsetY + (useClassicGrades ? 348 : 340),
+                    GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                    "NEXT TIME TO BE",
+                    EventReceiver.COLOR_ORANGE,
+                    0.7f
+                );
+
+                GameTextUtilities.drawDirectTextAlign(
+                    receiver,
+                    engine,
+                    playerID,
+                    offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                    offsetY + (useClassicGrades ? 364 : 356),
+                    GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                    "A " + (useClassicGrades ? "GRAND MASTER" : "10 OF 10 PLAYER") + "!",
+                    EventReceiver.COLOR_ORANGE,
+                    0.7f
+                );
+            } else {
+                GameTextUtilities.drawDirectTextAlign(
+                    receiver,
+                    engine,
+                    playerID,
+                    offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                    offsetY + (useClassicGrades ? 332 : 324),
+                    GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                    "NOW TRY AGAIN TO BE",
+                    EventReceiver.COLOR_ORANGE,
+                    0.7f
+                );
+
+                GameTextUtilities.drawDirectTextAlign(
+                    receiver,
+                    engine,
+                    playerID,
+                    offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                    offsetY + (useClassicGrades ? 348 : 340),
+                    GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                    "A " + (useClassicGrades ? "GRAND MASTER" : "10 OF 10 PLAYER") + "!",
+                    EventReceiver.COLOR_ORANGE,
+                    0.7f
+                );
+            }
         }
     }
 

@@ -137,7 +137,7 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
                 if (reverse) j = pulsePhaseMax - currentPulsePhase - 1;
 
                 if (reverseSlant) {
-                    j -= (x + y);
+                    j += (x - y);
                 } else {
                     j += (x + y);
                 }
