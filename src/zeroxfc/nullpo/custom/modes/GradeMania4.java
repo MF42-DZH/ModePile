@@ -1401,7 +1401,7 @@ public class GradeMania4 extends DummyMode {
         if (engine.statc[1] == 0) {
             int gcolor = EventReceiver.COLOR_WHITE;
             if (getCombinedGrade(engine) >= 20) gcolor = EventReceiver.COLOR_YELLOW;
-            if (getCombinedGrade(engine) >= 19) gcolor = EventReceiver.COLOR_GREEN;
+            else if (getCombinedGrade(engine) >= 19) gcolor = EventReceiver.COLOR_GREEN;
 
             receiver.drawMenuFont(engine, playerID, 0, 2, useClassicGrades ? "GRADE" : "AER", EventReceiver.COLOR_BLUE);
             String strGrade = useClassicGrades ? String.format("%10s", TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)]) : String.format("%10s", getAER(getLeftGrade(engine), getRightGrade(engine)));
