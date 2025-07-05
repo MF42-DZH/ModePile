@@ -1296,13 +1296,13 @@ public class GradeMania4 extends DummyMode {
                     colorFront = RendererExtension.SPEED_METER_RED;
                 } else {
                     colorBack = new int[] { 255, 255, 255 };
-                    colorFront = new int[] { 225, 225, 0 };
+                    colorFront = new int[] { 255, 128, 0 };
                 }
 
-                if (speed >= 1.0f) speed = speed / 20;
+                if (speed >= 1.0f) speed = speed / 10;
                 if (engine.speed.gravity < 0) speed = 1f;
 
-                rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy, RendererExtension.ALIGN_MIDDLE_LEFT, speed, 1.26f, 1.25f, colorBack, colorFront);
+                rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy, RendererExtension.ALIGN_MIDDLE_LEFT, speed, 1.325f, 1.25f, colorBack, colorFront);
             }
 
             receiver.drawScoreFont(engine, playerID, 0, 9, String.format("%3d", nextSectionLevel));
