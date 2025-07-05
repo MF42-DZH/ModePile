@@ -19,6 +19,7 @@ import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.FieldScatter;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
@@ -26,6 +27,7 @@ import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.WeightedRandomiser;
+import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
 
 public class MarathonTwo extends MarathonModeBase {
     // region Imported Fields
@@ -266,7 +268,9 @@ public class MarathonTwo extends MarathonModeBase {
     private ArrayList<int[]> pCoordList;
     private Piece cPiece;
 
+    private CustomResourceHolder customGraphics;
     private RendererExtension rendererExtension;
+    private LandingParticles landingParticles;
     private boolean hardDropEffect;
 
     // endregion Private Fields
@@ -335,7 +339,8 @@ public class MarathonTwo extends MarathonModeBase {
         SoundLoader.loadSoundset(SoundLoader.LOADTYPE_COLLAPSE);
         SoundLoader.loadSoundset(SoundLoader.LOADTYPE_CONSTANTRIS);
 
-        rendererExtension = new RendererExtension();
+        customGraphics = new CustomResourceHolder(1);
+        rendererExtension = new RendererExtension(customGraphics);
         hardDropEffect = true;
 
         soundList = new ArrayList<>(SoundLoader.getSoundNames());
@@ -707,6 +712,8 @@ public class MarathonTwo extends MarathonModeBase {
         if (netIsWatch) {
             owner.bgmStatus.bgm = BGMStatus.BGM_NOTHING;
         }
+
+        landingParticles = new LandingParticles(customGraphics, engine.randSeed);
     }
 
     @Override
@@ -789,22 +796,7 @@ public class MarathonTwo extends MarathonModeBase {
             }
 
             if (hardDropEffect) {
-                for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-                    if (!cPiece.big) {
-                        int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                        int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
-
-                        rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                    } else {
-                        int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                        int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
-
-                        rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                        rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                        rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                        rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
-                    }
-                }
+                landingParticles.addNumber(receiver, engine, playerID, 32);
             }
         }
     }
@@ -1100,6 +1092,8 @@ public class MarathonTwo extends MarathonModeBase {
         }
         // NET: Player name (It may also appear in offline replay)
         netDrawPlayerName(engine);
+
+        if (blackoutTimer <= 0 && landingParticles != null) landingParticles.draw(receiver);
     }
 
     @Override
@@ -1411,6 +1405,8 @@ public class MarathonTwo extends MarathonModeBase {
         if (engine.quitflag) {
             playerProperties = new ProfileProperties(headerColour);
         }
+
+        if (landingParticles != null) landingParticles.update();
     }
 
     /*

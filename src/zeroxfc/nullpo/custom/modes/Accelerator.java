@@ -10,10 +10,12 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
+import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
 
 public class Accelerator extends MarathonModeBase {
     // Speed check time.
@@ -66,7 +68,10 @@ public class Accelerator extends MarathonModeBase {
 
     private String PLAYER_NAME;
 
+    private CustomResourceHolder customGraphics;
     private RendererExtension rendererExtension;
+
+    private LandingParticles landingParticles;
 
     /*
      * Get mode name.
@@ -117,7 +122,8 @@ public class Accelerator extends MarathonModeBase {
         rankingLines = new double[RANKING_TYPE][RANKING_MAX];
         rankingTime = new int[RANKING_TYPE][RANKING_MAX];
 
-        rendererExtension = new RendererExtension();
+        customGraphics = new CustomResourceHolder(1);
+        rendererExtension = new RendererExtension(customGraphics);
 
         netPlayerInit(engine, playerID);
 
@@ -352,6 +358,8 @@ public class Accelerator extends MarathonModeBase {
             engine.tspinEnable = enableTSpin;
         }
 
+        landingParticles = new LandingParticles(customGraphics, engine.randSeed);
+
         engine.spinCheckType = spinCheckType;
         engine.tspinEnableEZ = tspinEnableEZ;
         scoreBeforeIncrease = 0;
@@ -401,6 +409,8 @@ public class Accelerator extends MarathonModeBase {
             }
         }
 
+        if (landingParticles != null) landingParticles.update();
+
         if (engine.quitflag) {
             playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
         }
@@ -424,22 +434,7 @@ public class Accelerator extends MarathonModeBase {
         }
 
         if (hardDropEffect) {
-            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-                if (!cPiece.big) {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
-
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                } else {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
-
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
-                }
-            }
+            landingParticles.addNumber(receiver, engine, playerID, 32);
         }
     }
 
@@ -625,6 +620,8 @@ public class Accelerator extends MarathonModeBase {
         }
         // NET: Player name (It may also appear in offline replay)
         netDrawPlayerName(engine);
+
+        if (landingParticles != null) landingParticles.draw(receiver);
     }
 
     /*

@@ -1,6 +1,5 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
-import java.util.Arrays;
 import java.util.Random;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.event.EventReceiver;
@@ -89,7 +88,7 @@ public class LandingParticles extends ParticleEmitterBase<LandingParticles.Param
         }
     }
 
-    public void addNumber(GameEngine engine, EventReceiver receiver, int playerID, int num) {
+    public void addNumber(EventReceiver receiver, GameEngine engine, int playerID, int num) {
         int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
         int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
 
@@ -99,9 +98,9 @@ public class LandingParticles extends ParticleEmitterBase<LandingParticles.Param
                     if (engine.nowPieceObject.big) {
                         addNumber(
                             num * 2,
-                            baseX + 16 * engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i],
-                            baseX + 16 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 2),
-                            baseY + 16 * (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] + 2),
+                            baseX + 32 * engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i],
+                            baseX + 32 * (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] + 1),
+                            baseY + 32 * (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] + 1),
                             2,
                             engine.nowPieceObject.block[i]
                         );

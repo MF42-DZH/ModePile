@@ -97,6 +97,7 @@ public class Joker extends MarathonModeBase {
 
     // Last amount of lines cleared;
     private int lastLine;
+    private int amountOfFours;
     private int amountOfLineClearInstances;
 
     // Animated backgrounds
@@ -139,6 +140,7 @@ public class Joker extends MarathonModeBase {
         startingStock = 0;
         lastLine = 0;
         useAnimBG = false;
+        amountOfFours = 0;
         amountOfLineClearInstances = 0;
 
         mainTimer = 0;
@@ -227,7 +229,7 @@ public class Joker extends MarathonModeBase {
     }
 
     private void calculateEfficiencyGrade(GameEngine engine) {
-        efficiency = (float) engine.statistics.lines / (amountOfLineClearInstances * 4);
+        efficiency = (float) amountOfFours / amountOfLineClearInstances;
         for (int i = 0; i < GRADE_BOUNDARIES.length; i++) {
             if (efficiency >= GRADE_BOUNDARIES[i]) efficiencyGrade = i;
         }
@@ -371,6 +373,7 @@ public class Joker extends MarathonModeBase {
 
         efficiencyGrade = 0;
         efficiency = 0f;
+        amountOfFours = 0;
         amountOfLineClearInstances = 0;
 
         engine.lives = 0;
@@ -1059,6 +1062,8 @@ public class Joker extends MarathonModeBase {
 
             if (engine.statistics.level <= 300) {
                 ++amountOfLineClearInstances;
+                if (lines >= 4) ++amountOfFours;
+
                 calculateEfficiencyGrade(engine);
             }
 

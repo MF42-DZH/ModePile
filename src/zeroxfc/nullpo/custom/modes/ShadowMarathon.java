@@ -14,11 +14,13 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
+import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
 
 public class ShadowMarathon extends MarathonModeBase {
     /**
@@ -732,7 +734,9 @@ public class ShadowMarathon extends MarathonModeBase {
     private int[][] rankingLinesPlayer;
     private int[][] rankingTimePlayer;
 
+    private CustomResourceHolder customGraphics;
     private RendererExtension rendererExtension;
+    private LandingParticles landingParticles;
     private boolean hardDropEffect;
 
     @Override
@@ -787,7 +791,8 @@ public class ShadowMarathon extends MarathonModeBase {
         rankingLinesPlayer = new int[RANKING_TYPE][RANKING_MAX];
         rankingTimePlayer = new int[RANKING_TYPE][RANKING_MAX];
 
-        rendererExtension = new RendererExtension();
+        customGraphics = new CustomResourceHolder(1);
+        rendererExtension = new RendererExtension(customGraphics);
         hardDropEffect = true;
 
         netPlayerInit(engine, playerID);
@@ -1003,6 +1008,8 @@ public class ShadowMarathon extends MarathonModeBase {
             pieceSet.clear();
             pieceDirections.clear();
             pieceRandomDirection.clear();
+
+            landingParticles = new LandingParticles(customGraphics, engine.randSeed);
 
             for (int i = 0; i <= 6; i++) {
                 pieceSet.add(new Piece(i));
@@ -1923,6 +1930,8 @@ public class ShadowMarathon extends MarathonModeBase {
         if (engine.quitflag) {
             playerProperties = new ProfileProperties(headerColour);
         }
+
+        if (landingParticles != null) landingParticles.update();
     }
 
     /*
@@ -2146,22 +2155,7 @@ public class ShadowMarathon extends MarathonModeBase {
         }
 
         if (hardDropEffect) {
-            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-                if (!cPiece.big) {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
-
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                } else {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
-
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
-                }
-            }
+            landingParticles.addNumber(receiver, engine, playerID, 32);
         }
     }
 
@@ -2358,6 +2352,8 @@ public class ShadowMarathon extends MarathonModeBase {
         }
         // NET: Player name (It may also appear in offline replay)
         netDrawPlayerName(engine);
+
+        if (landingParticles != null) landingParticles.draw(receiver);
     }
 
     /*

@@ -1168,15 +1168,11 @@ public class GradeMania4 extends DummyMode {
                     x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
                     y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
 
-                    landingParticles.addNumber(engine, receiver, playerID, 12);
-
                     avgX.add(x2 + 8);
                     avgY.add(y2 + 8);
                 } else {
                     x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
                     y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
-
-                    landingParticles.addNumber(engine, receiver, playerID, 12);
 
                     avgX.add(x2 + 8);
                     avgY.add(y2 + 8);
@@ -1191,6 +1187,8 @@ public class GradeMania4 extends DummyMode {
                     avgY.add(y2 + 24);
                 }
             }
+
+            landingParticles.addNumber(receiver, engine, playerID, 32);
 
             if (animatedBackgrounds && engine.statistics.level < 100) {
                 final int avgXVal = avgX.stream().mapToInt(Integer::intValue).sum() / avgX.size();

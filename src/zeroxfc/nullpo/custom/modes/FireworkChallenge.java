@@ -28,6 +28,7 @@ import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.particles.BlockParticleCollection;
 import zeroxfc.nullpo.custom.libs.particles.Fireworks;
+import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
 
 public class FireworkChallenge extends DummyMode {
     private static final Logger log = Logger.getLogger(FireworkChallenge.class);
@@ -229,7 +230,9 @@ public class FireworkChallenge extends DummyMode {
     private int rankingRankPlayer;
     private int[] rankingFireworksPlayer, rankingLevelPlayer, rankingTimePlayer;
 
+    private CustomResourceHolder customGraphics;
     private RendererExtension rendererExtension;
+    private LandingParticles landingParticles;
     private boolean hardDropEffect;
 
     private boolean killed;
@@ -349,6 +352,9 @@ public class FireworkChallenge extends DummyMode {
         engine.staffrollNoDeath = false;
 
         hardDropEffect = true;
+
+        customGraphics = new CustomResourceHolder(1);
+        rendererExtension = new RendererExtension(customGraphics);
 
         if (!owner.replayMode) {
             loadSetting(owner.modeConfig);
@@ -528,12 +534,12 @@ public class FireworkChallenge extends DummyMode {
     // called onStart
     @Override
     public void startGame(GameEngine engine, int playerID) {
-        final CustomResourceHolder usedCRH = new CustomResourceHolder(1);
-
         killed = false;
         addedCompletionFireworks = false;
-        fireworkEmitter = new Fireworks(usedCRH, engine.randSeed + 31415L);
+        fireworkEmitter = new Fireworks(customGraphics, engine.randSeed + 31415L);
         fireworkRandomiser = new Random(engine.randSeed);
+
+        landingParticles = new LandingParticles(customGraphics, engine.randSeed);
 
         ArrayRandomiser creditScrambler = new ArrayRandomiser(engine.randSeed);
         int[] arr = new int[CREDIT_HEADINGS.length - 1];
@@ -595,8 +601,6 @@ public class FireworkChallenge extends DummyMode {
         lastPiece = -1;
         engine.big = big;
 
-        rendererExtension = new RendererExtension(usedCRH);
-
         int total = (engine.field.getHeight() + engine.field.getHiddenHeight()) * engine.field.getWidth() * 2;
         blockParticles = new BlockParticleCollection(rendererExtension, total, 1);
 
@@ -625,22 +629,7 @@ public class FireworkChallenge extends DummyMode {
         }
 
         if (hardDropEffect) {
-            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-                if (!cPiece.big) {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
-
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                } else {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
-
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
-                }
-            }
+            landingParticles.addNumber(receiver, engine, playerID, 32);
         }
     }
 
@@ -793,6 +782,7 @@ public class FireworkChallenge extends DummyMode {
         }
 
         if (fireworkEmitter != null) fireworkEmitter.draw(receiver);
+        if (landingParticles != null) landingParticles.draw(receiver);
     }
 
     /*
@@ -1337,6 +1327,7 @@ public class FireworkChallenge extends DummyMode {
         }
 
         if (fireworkEmitter != null) fireworkEmitter.update();
+        if (landingParticles != null) landingParticles.update();
     }
 
     /*

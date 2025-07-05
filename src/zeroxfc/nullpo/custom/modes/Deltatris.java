@@ -9,11 +9,13 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.ShakingText;
+import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
 
 public class Deltatris extends MarathonModeBase {
     /**
@@ -99,7 +101,9 @@ public class Deltatris extends MarathonModeBase {
     private ArrayList<int[]> pCoordList;
     private Piece cPiece;
 
+    private CustomResourceHolder customGraphics;
     private RendererExtension rendererExtension;
+    private LandingParticles landingParticles;
     private boolean hardDropEffect;
 
     /**
@@ -154,7 +158,8 @@ public class Deltatris extends MarathonModeBase {
         pCoordList = new ArrayList<>();
         cPiece = null;
 
-        rendererExtension = new RendererExtension();
+        customGraphics = new CustomResourceHolder(1);
+        rendererExtension = new RendererExtension(customGraphics);
         hardDropEffect = true;
 
         netPlayerInit(engine, playerID);
@@ -428,6 +433,8 @@ public class Deltatris extends MarathonModeBase {
         setSpeed(engine);
         grav = START_GRAVITY;
 
+        landingParticles = new LandingParticles(customGraphics, engine.randSeed);
+
         if (netIsWatch) {
             owner.bgmStatus.bgm = BGMStatus.BGM_NOTHING;
         }
@@ -624,6 +631,8 @@ public class Deltatris extends MarathonModeBase {
         }
         // NET: Player name (It may also appear in offline replay)
         netDrawPlayerName(engine);
+
+        if (landingParticles != null) landingParticles.draw(receiver);
     }
 
     /*
@@ -648,6 +657,8 @@ public class Deltatris extends MarathonModeBase {
                 engine.playSE("change");
             }
         }
+
+        if (landingParticles != null) landingParticles.update();
     }
 
     /*
@@ -900,22 +911,7 @@ public class Deltatris extends MarathonModeBase {
         }
 
         if (hardDropEffect) {
-            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-                if (!cPiece.big) {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
-
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                } else {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
-
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
-                }
-            }
+            landingParticles.addNumber(receiver, engine, playerID, 32);
         }
     }
 

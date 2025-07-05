@@ -17,10 +17,12 @@ import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
+import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
 
 public class IdiotMode extends DummyMode {
     /*
@@ -364,7 +366,9 @@ public class IdiotMode extends DummyMode {
     private int[][] rankingGradePlayer;     // Grade rankings
     private int[][] rankingLevelPlayer;     // Level rankings
 
+    private CustomResourceHolder customGraphics;
     private RendererExtension rendererExtension;
+    private LandingParticles landingParticles;
 
     /*
      * [--- OVERRIDE METHOD BLOCK ---]
@@ -476,7 +480,8 @@ public class IdiotMode extends DummyMode {
         engine.staffrollEnable = true;
         engine.staffrollNoDeath = false;
 
-        rendererExtension = new RendererExtension();
+        customGraphics = new CustomResourceHolder(1);
+        rendererExtension = new RendererExtension(customGraphics);
 
         // Is replay?
         if (owner.replayMode == false) {
@@ -877,6 +882,8 @@ public class IdiotMode extends DummyMode {
         setSpeed(engine, gameType);
         setStartBgmlv(engine, gameType);
         owner.bgmStatus.bgm = tableBGMNumber[gameType][currentBGM];
+
+        landingParticles = new LandingParticles(customGraphics, engine.randSeed);
     }
 
     @Override
@@ -900,22 +907,7 @@ public class IdiotMode extends DummyMode {
         }
 
         if (hardDropEffect) {
-            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-                if (!cPiece.big) {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
-
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                } else {
-                    int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                    int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
-
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                    rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
-                }
-            }
+            landingParticles.addNumber(receiver, engine, playerID, 32);
         }
     }
 
@@ -1174,6 +1166,8 @@ public class IdiotMode extends DummyMode {
                 receiver.drawMenuFont(engine, playerID, 0, lineOne + 3, "NEXT TIME!");
             }
         }
+
+        if (landingParticles != null) landingParticles.draw(receiver);
     }
 
     // Called on move (in-game?)
@@ -1721,6 +1715,8 @@ public class IdiotMode extends DummyMode {
         if (engine.quitflag) {
             playerProperties = new ProfileProperties(headerColour);
         }
+
+        if (landingParticles != null) landingParticles.update();
     }
 
     // GAME OVER

@@ -15,6 +15,7 @@ import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
+import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
 
 public class Scanline extends MarathonModeBase {
     // Scan grace max
@@ -84,6 +85,7 @@ public class Scanline extends MarathonModeBase {
     private String PLAYER_NAME;
 
     private RendererExtension rendererExtension;
+    private LandingParticles landingParticles;
 
     @Override
     public String getName() {
@@ -221,6 +223,8 @@ public class Scanline extends MarathonModeBase {
         setLLFalse();
         scannerLocation = engine.field.getHeight() - 1;
 
+        landingParticles = new LandingParticles(customHolder, engine.randSeed);
+
         setSpeed(engine);
 
         if (netIsWatch) {
@@ -245,20 +249,7 @@ public class Scanline extends MarathonModeBase {
             );
         }
         for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            if (!cPiece.big) {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 16);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 16);
-
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-            } else {
-                int x2 = baseX + (cPiece.dataX[cPiece.direction][i] * 32);
-                int y2 = baseY + (cPiece.dataY[cPiece.direction][i] * 32);
-
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2, y2 + 16, cPiece.block[i]);
-                rendererExtension.addBlockBreakEffect(receiver, x2 + 16, y2 + 16, cPiece.block[i]);
-            }
+            landingParticles.addNumber(receiver, engine, playerID, 32);
         }
     }
 
@@ -397,6 +388,8 @@ public class Scanline extends MarathonModeBase {
         }
         // NET: Player name (It may also appear in offline replay)
         netDrawPlayerName(engine);
+
+        if (landingParticles != null) landingParticles.draw(receiver);
     }
 
     @Override
@@ -437,6 +430,8 @@ public class Scanline extends MarathonModeBase {
         if (engine.quitflag) {
             playerProperties = new ProfileProperties(headerColour);
         }
+
+        if (landingParticles != null) landingParticles.update();
     }
 
     @Override
