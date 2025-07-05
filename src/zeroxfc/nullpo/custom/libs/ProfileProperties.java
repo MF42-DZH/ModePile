@@ -729,10 +729,10 @@ public class ProfileProperties {
                         GameTextUtilities.ALIGN_TOP_MIDDLE, "ENTRY", colourHeading,
                         2f);
 
-                    receiver.drawMenuFont(engine, playerID, 2, 8, nameEntry, 2f);
+                    GameTextUtilities.drawAlignedMenuText(receiver, engine, playerID, false, 2, 8, GameTextUtilities.Text.ofBig(nameEntry), GameTextUtilities.ALIGN_TOP_LEFT);
                     int c = 0;
                     if ((engine.statc[0] / 6) % 2 == 0) c = EventReceiver.COLOR_YELLOW;
-                    receiver.drawMenuFont(engine, playerID, 2 + (nameEntry.length() * 2), 8, ProfileProperties.getCharAt(currentChar), c, 2f);
+                    GameTextUtilities.drawAlignedMenuText(receiver, engine, playerID, false, 2 + (nameEntry.length() * 2), 8, GameTextUtilities.Text.custom(ProfileProperties.getCharAt(currentChar), c, 2f), GameTextUtilities.ALIGN_TOP_LEFT);
 
                     receiver.drawMenuFont(engine, playerID, 0, 18, "ENTER ACCOUNT\nNAME.");
                     // endregion
@@ -746,7 +746,7 @@ public class ProfileProperties {
                         GameTextUtilities.ALIGN_TOP_MIDDLE, "ENTRY", colourHeading,
                         2f);
 
-                    receiver.drawMenuFont(engine, playerID, 2, 8, nameEntry, 2f);
+                    GameTextUtilities.drawAlignedMenuText(receiver, engine, playerID, false, 2, 8, GameTextUtilities.Text.ofBig(nameEntry), GameTextUtilities.ALIGN_TOP_LEFT);
 
                     for (int x = 0; x < 6; x++) {
                         String chr = "c";

@@ -14,6 +14,7 @@ import mu.nu.nullpo.gui.slick.MouseInput;
 import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
@@ -1301,7 +1302,7 @@ public class Collapse extends DummyMode {
 
             if (playerProperties.isLoggedIn()) {
                 receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
-                receiver.drawScoreFont(engine, playerID, 0, 16, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 16, GameTextUtilities.Text.ofBig(playerProperties.getNameDisplay()));
             }
 
             for (int i = 0; i < sTextArr.length; i++) {

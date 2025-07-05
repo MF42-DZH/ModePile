@@ -18,6 +18,7 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
+import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
@@ -1094,7 +1095,7 @@ public class IdiotMode extends DummyMode {
 
             if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, 6, 21, "PLAYER", EventReceiver.COLOR_BLUE);
-                receiver.drawScoreFont(engine, playerID, 6, 22, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 6, 22, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
             }
 
             // Section Time
@@ -1161,15 +1162,6 @@ public class IdiotMode extends DummyMode {
             }
 
             if (rollStarted) {
-                // go from -length to 40 + length
-				/*
-				int min = 39;
-				String dedicationUsed = (gameType == GAMETYPE_NORMAL) ? DEDICATION_SHORT : DEDICATION;
-				int max = -dedicationUsed.length() - 4;
-				int currentX = (int)(min + (max - min) * ((float)rollTime / ROLLTIMELIMIT[gameType]));
-				receiver.drawMenuFont(engine, playerID, currentX, 22, dedicationUsed, EventReceiver.COLOR_PINK);
-				*/
-
                 ScrollingMarqueeText usedText = (gameType == GAMETYPE_NORMAL) ? creditObjectShort : creditObjectDefault;
                 usedText.drawAtY(engine, receiver, playerID, 27.25, engine.displaysize + 1, (double) rollTime / ROLLTIMELIMIT[gameType]);
             }

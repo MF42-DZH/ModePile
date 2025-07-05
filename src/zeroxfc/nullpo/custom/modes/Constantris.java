@@ -644,15 +644,15 @@ public class Constantris extends MarathonModeBase {
             if (restrictionViolationFrame > 0 && bonusFrame <= 0) {
                 int xx = receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (engine.field.getWidth() / 2) * 16;
                 int yy = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-                GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, xx, yy + 8, GameTextUtilities.ALIGN_TOP_MIDDLE, "RESTRICTION", EventReceiver.COLOR_RED, 1f);
-                GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, xx, yy + 24, GameTextUtilities.ALIGN_TOP_MIDDLE, "VIOLATION", EventReceiver.COLOR_RED, 1f);
+                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 8, GameTextUtilities.ALIGN_TOP_MIDDLE, "RESTRICTION", EventReceiver.COLOR_RED, 1f);
+                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 24, GameTextUtilities.ALIGN_TOP_MIDDLE, "VIOLATION", EventReceiver.COLOR_RED, 1f);
             }
 
             if (bonusFrame > 0) {
                 int xx = receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (engine.field.getWidth() / 2) * 16;
                 int yy = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-                GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, xx, yy + 8, GameTextUtilities.ALIGN_TOP_MIDDLE, "TARGET", EventReceiver.COLOR_GREEN, 1f);
-                GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, xx, yy + 24, GameTextUtilities.ALIGN_TOP_MIDDLE, "BONUS", EventReceiver.COLOR_GREEN, 1f);
+                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 8, GameTextUtilities.ALIGN_TOP_MIDDLE, "TARGET", EventReceiver.COLOR_GREEN, 1f);
+                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 24, GameTextUtilities.ALIGN_TOP_MIDDLE, "BONUS", EventReceiver.COLOR_GREEN, 1f);
             }
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
@@ -705,7 +705,7 @@ public class Constantris extends MarathonModeBase {
 
             if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, 0, 19, "PLAYER", EventReceiver.COLOR_BLUE);
-                receiver.drawScoreFont(engine, playerID, 0, 20, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 20, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
             }
 
             if ((lastevent != EVENT_NONE) && (scgettime < 120)) {

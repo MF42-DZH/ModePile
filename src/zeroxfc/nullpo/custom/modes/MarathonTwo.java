@@ -2,9 +2,7 @@ package zeroxfc.nullpo.custom.modes;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
-import javax.sound.sampled.Clip;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
@@ -14,24 +12,18 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.gui.sdl.NullpoMinoSDL;
 import mu.nu.nullpo.gui.sdl.ResourceHolderSDL;
-import mu.nu.nullpo.gui.sdl.SoundManagerSDL;
 import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
 import mu.nu.nullpo.gui.slick.ResourceHolder;
-import mu.nu.nullpo.gui.slick.SoundManager;
 import mu.nu.nullpo.gui.swing.NullpoMinoSwing;
 import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
-import mu.nu.nullpo.gui.swing.WaveEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
-import org.newdawn.slick.Sound;
-import sdljava.mixer.MixChunk;
 import zeroxfc.nullpo.custom.libs.FieldScatter;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
-import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.WeightedRandomiser;
 
@@ -742,7 +734,7 @@ public class MarathonTwo extends MarathonModeBase {
 
     @Override
     public void renderGameOver(GameEngine engine, int playerID) {
-        if (engine.statistics.lines >= 100 && engine.statistics.lines < tableGameClearLines[goaltype]) {
+        if (engine.statistics.lines >= 100 && (engine.statistics.lines < tableGameClearLines[goaltype] || tableGameClearLines[goaltype] < 0)) {
             for (int y = 0; y < 480 / 32; y++) {
                 for (int x = 0; x < 640 / 32; x++) {
                     receiver.drawSingleBlock(engine, playerID,
@@ -754,7 +746,7 @@ public class MarathonTwo extends MarathonModeBase {
                 StringBuilder sb = new StringBuilder();
                 long seed = (System.nanoTime() + i) * ((long) engine.statistics.time - i);
                 sb.append(GameTextUtilities.randomString(640 / 16, new Random(seed))).append("\n");
-                GameTextUtilities.drawRandomRainbowDirectString(receiver, engine, playerID, 0, i * 16, sb.toString(), new Random(seed + (i * i)), 1f);
+                GameTextUtilities.drawRandomRainbowDirectString(engine, 0, i * 16, sb.toString(), new Random(seed + (i * i)), 1f);
             }
         }
     }
@@ -958,7 +950,7 @@ public class MarathonTwo extends MarathonModeBase {
             if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
                 if (glitchTimer == 0) {
                     receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, 0, 16, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 16, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
                 } else {
                     GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 15, GameTextUtilities.randomString(6, renderRandomiser), renderRandomiser, 1f);
                     GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 16, GameTextUtilities.randomString(3, renderRandomiser), renderRandomiser, 2f);

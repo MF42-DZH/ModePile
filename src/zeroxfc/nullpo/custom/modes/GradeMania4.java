@@ -1132,7 +1132,7 @@ public class GradeMania4 extends DummyMode {
 
         if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode))) {
             // Show rank
-            if (engine.ctrl.isPush(Controller.BUTTON_F) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
+            if (engine.ctrl.isPush(Controller.BUTTON_D) && playerProperties.isLoggedIn() && engine.stat != GameEngine.STAT_CUSTOM) {
                 showPlayerStats = !showPlayerStats;
                 engine.playSE("change");
             }
@@ -1242,10 +1242,10 @@ public class GradeMania4 extends DummyMode {
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                    GameTextUtilities.drawScoreTextBlockAlign(
+                    GameTextUtilities.drawAlignedScoreText(
                         receiver, engine, playerID,
-                        false, 0, 19, false,
-                        GameTextUtilities.TextBlock.single(GameTextUtilities.Text.ofBig(playerProperties.getNameDisplay())),
+                        false, 0, 19,
+                        GameTextUtilities.Text.ofBig(playerProperties.getNameDisplay()),
                         GameTextUtilities.ALIGN_TOP_LEFT
                     );
 
@@ -1353,18 +1353,18 @@ public class GradeMania4 extends DummyMode {
             if (playerProperties.isLoggedIn() || !playerName.isEmpty()) {
                 if (showGrade) {
                     receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER", EventReceiver.COLOR_BLUE);
-                    GameTextUtilities.drawScoreTextBlockAlign(
+                    GameTextUtilities.drawAlignedScoreText(
                         receiver, engine, playerID,
-                        false, 0, 19, false,
-                        GameTextUtilities.TextBlock.single(GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay())),
+                        false, 0, 19,
+                        GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()),
                         GameTextUtilities.ALIGN_TOP_LEFT
                     );
                 } else {
                     receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
-                    GameTextUtilities.drawScoreTextBlockAlign(
+                    GameTextUtilities.drawAlignedScoreText(
                         receiver, engine, playerID,
-                        false, 0, 16, false,
-                        GameTextUtilities.TextBlock.single(GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay())),
+                        false, 0, 16,
+                        GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()),
                         GameTextUtilities.ALIGN_TOP_LEFT
                     );
                 }
@@ -1581,9 +1581,7 @@ public class GradeMania4 extends DummyMode {
 
         if (engine.statc[0] > engine.field.getHeight() + 150) {
             GameTextUtilities.drawDirectTextAlign(
-                receiver,
                 engine,
-                playerID,
                 offsetX + (16 * engine.field.getWidth() / 2) + 4,
                 offsetY + 242,
                 GameTextUtilities.ALIGN_TOP_MIDDLE,
@@ -1594,9 +1592,7 @@ public class GradeMania4 extends DummyMode {
 
             if (secretGrade > 4) {
                 GameTextUtilities.drawDirectTextAlign(
-                    receiver,
                     engine,
-                    playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
                     offsetY + 86,
                     GameTextUtilities.ALIGN_TOP_MIDDLE,
@@ -1610,9 +1606,7 @@ public class GradeMania4 extends DummyMode {
         if (engine.statc[0] > engine.field.getHeight() + 240) {
             if (useClassicGrades && getCombinedGrade(engine) < 20) {
                 GameTextUtilities.drawDirectTextAlign(
-                    receiver,
                     engine,
-                    playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
                     offsetY + 264,
                     GameTextUtilities.ALIGN_TOP_MIDDLE,
@@ -1643,9 +1637,7 @@ public class GradeMania4 extends DummyMode {
             if (secretGrade > 4) {
                 if (useClassicGrades) {
                     GameTextUtilities.drawDirectTextAlign(
-                        receiver,
                         engine,
-                        playerID,
                         offsetX + (16 * engine.field.getWidth() / 2) + 4,
                         offsetY + 106,
                         GameTextUtilities.ALIGN_TOP_MIDDLE,
@@ -1682,9 +1674,7 @@ public class GradeMania4 extends DummyMode {
                 );
 
                 GameTextUtilities.drawDirectTextAlign(
-                    receiver,
                     engine,
-                    playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
                     offsetY + 342,
                     GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
@@ -1694,9 +1684,7 @@ public class GradeMania4 extends DummyMode {
                 );
 
                 GameTextUtilities.drawDirectTextAlign(
-                    receiver,
                     engine,
-                    playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
                     offsetY + 358,
                     GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
@@ -1706,9 +1694,7 @@ public class GradeMania4 extends DummyMode {
                 );
             } else {
                 GameTextUtilities.drawDirectTextAlign(
-                    receiver,
                     engine,
-                    playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
                     offsetY + 326,
                     GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
@@ -1718,9 +1704,7 @@ public class GradeMania4 extends DummyMode {
                 );
 
                 GameTextUtilities.drawDirectTextAlign(
-                    receiver,
                     engine,
-                    playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
                     offsetY + 342,
                     GameTextUtilities.ALIGN_MIDDLE_MIDDLE,

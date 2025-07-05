@@ -120,7 +120,7 @@ public class SideWaveText {
             scale = baseScale - (baseScale * ((float) (lifeTime - 24) / 96));
         }
 
-        GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, x, y, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, text, color, scale);
+        GameTextUtilities.drawDirectTextAlign(engine, x, y, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, text, color, scale);
     }
 
     public int getLifeTime() {

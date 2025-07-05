@@ -10,6 +10,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.util.CustomProperties;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
+import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.PhysicsObject;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 
@@ -721,7 +722,7 @@ public class Pong extends PuzzleGameEngine {
 
             if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, 8, 9, "PLAYER", EventReceiver.COLOR_BLUE);
-                receiver.drawScoreFont(engine, playerID, 8, 10, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 8, 10, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
             }
 
             if (engine.stat != GameEngine.STAT_RESULT) {

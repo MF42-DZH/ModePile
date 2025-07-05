@@ -514,7 +514,7 @@ public class Deltatris extends MarathonModeBase {
             rix = receiver.getScoreDisplayPositionX(engine, playerID);
             riy = receiver.getScoreDisplayPositionY(engine, playerID) + 13 * 16;
 
-            GameTextUtilities.drawDirectTextAlign(receiver, engine, playerID, rix, riy,
+            GameTextUtilities.drawDirectTextAlign(engine, rix, riy,
                 GameTextUtilities.ALIGN_TOP_LEFT,
                 String.format("%.2f", multiplier) + "X",
                 (engine.stat == GameEngine.STAT_MOVE && engine.statc[0] > engine.speed.lockDelay * 3) ? EventReceiver.COLOR_RED : (mScale > 1 ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_WHITE),
@@ -533,7 +533,7 @@ public class Deltatris extends MarathonModeBase {
 
             if ((playerProperties != null && playerProperties.isLoggedIn()) || (PLAYER_NAME != null && PLAYER_NAME.length() > 0)) {
                 receiver.drawScoreFont(engine, playerID, 8, 17, "PLAYER", EventReceiver.COLOR_BLUE);
-                receiver.drawScoreFont(engine, playerID, 8, 18, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 8, 18, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
             }
 
             int ix, iy;
