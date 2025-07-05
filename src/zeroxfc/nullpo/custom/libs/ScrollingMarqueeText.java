@@ -32,7 +32,6 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
-import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 
 public class ScrollingMarqueeText {
@@ -89,16 +88,14 @@ public class ScrollingMarqueeText {
      * Automatically draw the roll at a certain Y value.
      *
      * @param engine   Current GameEngine instance
-     * @param receiver Current renderer
-     * @param playerID Current player ID
      * @param y        Y-coordinate to draw on
      * @param size     Size of text to draw with
      * @param progress Progress of the roll (0: start, 1: end)
      */
-    public void drawAtY(GameEngine engine, EventReceiver receiver, int playerID, double y, int size, double progress) {
+    public void drawAtY(GameEngine engine, double y, int size, double progress) {
         int mainOffset1 = (int) (40 * SIZES[size] / SCALES_FLOAT[size]) - (int) ((progress) * ((40 * SIZES[size]) + ((mainHeadingString.length() + EXCESS_LENGTH) * SIZES[size])));
         int mainOffset2 = (int) (40 * SIZES[size] / SCALES_FLOAT[size]) - (int) ((progress) * ((40 * SIZES[size]) + ((mainTextString.length() + EXCESS_LENGTH) * SIZES[size])));
-        receiver.drawDirectFont(engine, playerID, mainOffset1, (int) (y * SIZES[size]), mainHeadingString, headingColour, SCALES_FLOAT[size]);
-        receiver.drawDirectFont(engine, playerID, mainOffset2, (int) (y * SIZES[size]), mainTextString, textColour, SCALES_FLOAT[size]);
+        GameTextUtilities.drawDirectText(engine, mainOffset1, (int) (y * SIZES[size]), GameTextUtilities.Text.custom(mainHeadingString, headingColour, SCALES_FLOAT[size]));
+        GameTextUtilities.drawDirectText(engine, mainOffset2, (int) (y * SIZES[size]), GameTextUtilities.Text.custom(mainTextString, textColour, SCALES_FLOAT[size]));
     }
 }

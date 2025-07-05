@@ -755,7 +755,7 @@ public class FireworkChallenge extends DummyMode {
                 if (time < 0) time = 0;
                 receiver.drawScoreFont(engine, playerID, 0, 13, "ROLL TIME", EventReceiver.COLOR_BLUE);
                 receiver.drawScoreFont(engine, playerID, 0, 14, GeneralUtil.getTime(time), ((time > 0) && (time < 10 * 60)));
-                creditObject.drawAtY(engine, receiver, playerID, 27.25, engine.displaysize + 1, (double) rollTime / MAX_ROLL_TIME);
+                creditObject.drawAtY(engine, 27.25, engine.displaysize + 1, (double) rollTime / MAX_ROLL_TIME);
             } /* else {
 				receiver.drawScoreFont(engine, playerID, 0, 13, "PENDING FIREWORKS", EventReceiver.COLOR_BLUE);
 				receiver.drawScoreFont(engine, playerID, 0, 14, String.valueOf(totalFireworkQueue));

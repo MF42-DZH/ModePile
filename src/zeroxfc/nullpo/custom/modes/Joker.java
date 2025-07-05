@@ -551,11 +551,11 @@ public class Joker extends MarathonModeBase {
             if (blockParticles != null) blockParticles.drawAll(engine, receiver, playerID);
 
             if (warningText != null) {
-                warningText.draw(engine, receiver, playerID);
+                warningText.draw(engine);
             }
 
             if (warningTextSecondLine != null) {
-                warningTextSecondLine.draw(engine, receiver, playerID);
+                warningTextSecondLine.draw(engine);
             }
         }
 

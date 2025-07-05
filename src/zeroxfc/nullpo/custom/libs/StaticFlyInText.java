@@ -33,7 +33,6 @@
 package zeroxfc.nullpo.custom.libs;
 
 import java.util.Random;
-import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 
 public class StaticFlyInText {
@@ -138,12 +137,13 @@ public class StaticFlyInText {
     /**
      * Draws the text at its current position.
      */
-    public void draw(GameEngine engine, EventReceiver receiver, int playerID) {
+    public void draw(GameEngine engine) {
         for (int j = 0; j < letterPositions.length; j++) {
-            receiver.drawDirectFont(engine, playerID,
+            GameTextUtilities.drawDirectText(
+                engine,
                 (int) letterPositions[j].getX(), (int) letterPositions[j].getY(),
-                String.valueOf(mainString.charAt(j)),
-                textColour, textScale);
+                GameTextUtilities.Text.custom(String.valueOf(mainString.charAt(j)), textColour, textScale)
+            );
         }
     }
 }

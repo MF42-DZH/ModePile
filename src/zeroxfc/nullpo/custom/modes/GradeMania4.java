@@ -1385,7 +1385,7 @@ public class GradeMania4 extends DummyMode {
                 if (time < 0) time = 0;
                 receiver.drawScoreFont(engine, playerID, 0, 14, "ROLL TIME", EventReceiver.COLOR_BLUE);
                 receiver.drawScoreFont(engine, playerID, 0, 15, GeneralUtil.getTime(time), ((time > 0) && (time < 10 * 60)));
-                creditText.drawAtY(engine, receiver, playerID, 27.25, engine.displaysize + 1, (double) rollTime / ROLL_TIME_LIMIT);
+                creditText.drawAtY(engine, 27.25, engine.displaysize + 1, (double) rollTime / ROLL_TIME_LIMIT);
             }
 
             // Section Time

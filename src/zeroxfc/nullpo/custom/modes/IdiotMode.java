@@ -17,7 +17,6 @@ import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
-import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
@@ -1163,7 +1162,7 @@ public class IdiotMode extends DummyMode {
 
             if (rollStarted) {
                 ScrollingMarqueeText usedText = (gameType == GAMETYPE_NORMAL) ? creditObjectShort : creditObjectDefault;
-                usedText.drawAtY(engine, receiver, playerID, 27.25, engine.displaysize + 1, (double) rollTime / ROLLTIMELIMIT[gameType]);
+                usedText.drawAtY(engine, 27.25, engine.displaysize + 1, (double) rollTime / ROLLTIMELIMIT[gameType]);
             }
 
             torikaned = (engine.statistics.level == 500) && (engine.stat == GameEngine.STAT_EXCELLENT);

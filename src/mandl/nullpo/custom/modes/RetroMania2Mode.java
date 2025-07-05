@@ -518,7 +518,7 @@ public class RetroMania2Mode extends mu.nu.nullpo.game.subsystem.mode.DummyMode 
 				final int tMax = 60 * 35;
 				if (time <= tMax) {
 					double prog = Math.abs(time - tMax) / (double)tMax;
-					marquee.drawAtY(engine, receiver, playerID, 26, 1, prog);
+					marquee.drawAtY(engine, 26, 1, prog);
 				}
 			} else {
 				receiver.drawScoreFont(engine, playerID, 0, 14, GeneralUtil.getTime(engine.statistics.time));

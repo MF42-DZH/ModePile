@@ -595,15 +595,15 @@ public class ScoreTrial extends MarathonModeBase {
             if (blockParticles != null) blockParticles.drawAll(engine, receiver, playerID);
 
             if (congratulationsText != null) {
-                congratulationsText.draw(engine, receiver, playerID);
+                congratulationsText.draw(engine);
             }
 
             if (comboTextAward != null) {
-                comboTextAward.draw(engine, receiver, playerID);
+                comboTextAward.draw(engine);
             }
 
             if (comboTextNumber != null) {
-                comboTextNumber.draw(engine, receiver, playerID);
+                comboTextNumber.draw(engine);
             }
         }
 

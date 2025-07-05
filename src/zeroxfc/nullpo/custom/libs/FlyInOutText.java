@@ -122,13 +122,14 @@ public class FlyInOutText {
         }
     }
 
-    public void draw(GameEngine engine, EventReceiver receiver, int playerID) {
+    public void draw(GameEngine engine) {
         for (int i = letterPositions.length - 1; i >= 0; i--) {
             for (int j = 0; j < letterPositions[i].length; j++) {
-                receiver.drawDirectFont(engine, playerID,
+                GameTextUtilities.drawDirectText(
+                    engine,
                     (int) letterPositions[i][j].getX(), (int) letterPositions[i][j].getY(),
-                    String.valueOf(mainString.charAt(j)),
-                    ((((currentLifetime - i) / 4) % 2 == 0) && flash) ? EventReceiver.COLOR_WHITE : textColours[i], textScale);
+                    GameTextUtilities.Text.custom(String.valueOf(mainString.charAt(j)), ((((currentLifetime - i) / 4) % 2 == 0) && flash) ? EventReceiver.COLOR_WHITE : textColours[i], textScale)
+                );
             }
         }
     }

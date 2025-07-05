@@ -58,9 +58,7 @@ public class ShakingText {
     /**
      * Draws some shaken text at some pixel coordinates.
      *
-     * @param receiver     <code>EventReceiver</code> instance to draw on
      * @param engine       Current <code>GameEngine</code> instance
-     * @param playerID     Current player ID (1P = 0)
      * @param x            X-coordinate (pixel) of the top-left of the text anchor
      * @param y            Y-coordinate (pixel) of the top-left of the text anchor
      * @param maxDevianceX Maximum x-pixel-coordinate deviance in text
@@ -69,7 +67,7 @@ public class ShakingText {
      * @param colour       Colour of text. Use colours from <code>EventReceiver</code>
      * @param scale        Scale of drawn text.
      */
-    public void drawDirectText(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int maxDevianceX, int maxDevianceY, String text, int colour, float scale) {
+    public void drawDirectText(GameEngine engine, int x, int y, int maxDevianceX, int maxDevianceY, String text, int colour, float scale) {
         final double offset = 16d * scale;
         if (maxDevianceX < 0) maxDevianceX *= -1;
         if (maxDevianceY < 0) maxDevianceY *= -1;
@@ -80,7 +78,7 @@ public class ShakingText {
             if (maxDevianceX > 0) xDiff = textPositionRandomiser.nextInt(maxDevianceX * 2 + 1) - maxDevianceX;
             if (maxDevianceY > 0) yDiff = textPositionRandomiser.nextInt(maxDevianceY * 2 + 1) - maxDevianceY;
 
-            receiver.drawDirectFont(engine, playerID, x + offsetUsed + xDiff, y + yDiff, text.substring(i, i + 1), colour, scale);
+            GameTextUtilities.drawDirectText(engine, x + offsetUsed + xDiff, y + yDiff, GameTextUtilities.Text.custom(text.substring(i, i + 1), colour, scale));
         }
     }
 
@@ -103,7 +101,7 @@ public class ShakingText {
         nx = receiver.getScoreDisplayPositionX(engine, playerID) + (x * ((scale <= 0.5f) ? 8 : 16));
         ny = receiver.getScoreDisplayPositionY(engine, playerID) + (y * ((scale <= 0.5f) ? 8 : 16));
 
-        drawDirectText(receiver, engine, playerID, nx, ny, maxDevianceX, maxDevianceY, text, colour, scale);
+        drawDirectText(engine, nx, ny, maxDevianceX, maxDevianceY, text, colour, scale);
     }
 
     /**
@@ -125,6 +123,6 @@ public class ShakingText {
         nx = receiver.getFieldDisplayPositionX(engine, playerID) + (x * ((scale <= 0.5f) ? 8 : 16)) + 4;
         ny = receiver.getFieldDisplayPositionY(engine, playerID) + (y * ((scale <= 0.5f) ? 8 : 16)) + 52;
 
-        drawDirectText(receiver, engine, playerID, nx, ny, maxDevianceX, maxDevianceY, text, colour, scale);
+        drawDirectText(engine, nx, ny, maxDevianceX, maxDevianceY, text, colour, scale);
     }
 }
