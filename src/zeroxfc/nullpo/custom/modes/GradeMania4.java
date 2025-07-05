@@ -898,8 +898,6 @@ public class GradeMania4 extends DummyMode {
         owner.bgmStatus.bgm = bgmLevel;
     }
 
-    private boolean hasMovedFrame = false;
-
     @Override
     public boolean onMove(GameEngine engine, int playerID) {
         if ((engine.ending == 0) && (engine.statc[0] == 0) && (!engine.holdDisable) && (!levelUpFlag)) {
@@ -912,11 +910,8 @@ public class GradeMania4 extends DummyMode {
             levelUp(engine);
         }
 
-        if (sparkEffect && !hasMovedFrame) {
-//            hasMovedFrame = true;
+        if (sparkEffect) {
             sparks.addNumber(engine, receiver, playerID, 12);
-        } else {
-            hasMovedFrame = false;
         }
 
         if ((engine.ending == 0) && (engine.statc[0] > 0)) {
@@ -976,7 +971,7 @@ public class GradeMania4 extends DummyMode {
         }
 
         if (animatedBackgrounds && (engine.statistics.level % 100 > 50) && engine.ending <= 0) {
-            updateBGPulseFrames(engine, 40, 120, 2f);
+            updateBGPulseFrames(engine, 40, 120, 4f);
         } else if (animatedBackgrounds) {
             updateBGPulseFrames(engine, 60, 180, 1f);
         }
