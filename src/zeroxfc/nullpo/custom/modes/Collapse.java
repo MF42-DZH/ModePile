@@ -1305,34 +1305,34 @@ public class Collapse extends DummyMode {
                 GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 16, GameTextUtilities.Text.ofBig(playerProperties.getNameDisplay()));
             }
 
-            for (int i = 0; i < sTextArr.length; i++) {
-                if (sTextArr[i] != null) {
+            for (SideWaveText sideWaveText : sTextArr) {
+                if (sideWaveText != null) {
                     int x = 0, y = 0;
-                    int[] h = sTextArr[i].getLocation();
+                    int[] h = sideWaveText.getLocation();
                     x = h[0];
                     y = h[1];
 
                     float scale = 0;
                     float rs = 0;
-                    float baseScale = sTextArr[i].getBig() ? 2 : 1;
-                    double baseDim = sTextArr[i].getBig() ? 32.0 : 16.0;
-                    if (sTextArr[i].getLifeTime() < 24) {
+                    float baseScale = sideWaveText.getBig() ? 2 : 1;
+                    double baseDim = sideWaveText.getBig() ? 32.0 : 16.0;
+                    if (sideWaveText.getLifeTime() < 24) {
                         scale = baseScale;
                         rs = 1;
                     } else {
-                        scale = baseScale - (baseScale * ((float) (sTextArr[i].getLifeTime() - 24) / 96));
-                        rs = 1 - (((float) (sTextArr[i].getLifeTime() - 24) / 96));
+                        scale = baseScale - (baseScale * ((float) (sideWaveText.getLifeTime() - 24) / 96));
+                        rs = 1 - (((float) (sideWaveText.getLifeTime() - 24) / 96));
                     }
                     int nOffX = 0, nOffY = 0;
                     if (rs < 1) {
-                        nOffX = (int) (((baseDim * sTextArr[i].getText().length()) - ((baseDim * sTextArr[i].getText().length()) * rs)) / 2);
+                        nOffX = (int) (((baseDim * sideWaveText.getText().length()) - ((baseDim * sideWaveText.getText().length()) * rs)) / 2);
                         nOffY = (int) ((baseDim - (baseDim * rs)) / 2);
                     }
 
-                    if ((sTextArr[i].getLifeTime() / 2) % 2 == 0 && sTextArr[i].getLargeClear()) {
-                        receiver.drawDirectFont(engine, playerID, x + nOffX, y + nOffY, sTextArr[i].getText(), EventReceiver.COLOR_YELLOW, scale);
+                    if ((sideWaveText.getLifeTime() / 2) % 2 == 0 && sideWaveText.getLargeClear()) {
+                        GameTextUtilities.drawDirectText(engine, x + nOffX, y + nOffY, GameTextUtilities.Text.custom(sideWaveText.getText(), EventReceiver.COLOR_YELLOW, scale));
                     } else {
-                        receiver.drawDirectFont(engine, playerID, x + nOffX, y + nOffY, sTextArr[i].getText(), EventReceiver.COLOR_ORANGE, scale);
+                        GameTextUtilities.drawDirectText(engine, x + nOffX, y + nOffY, GameTextUtilities.Text.custom(sideWaveText.getText(), EventReceiver.COLOR_ORANGE, scale));
                     }
                 }
             }
