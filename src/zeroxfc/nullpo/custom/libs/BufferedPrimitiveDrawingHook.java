@@ -88,15 +88,15 @@ public class BufferedPrimitiveDrawingHook {
             switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
                 case SLICK:
                     // Slick graphics object
-                    userGraphicsObject = customGraphics.getGraphicsSlick((RendererSlick) receiver);
+                    userGraphicsObject = customGraphics.getGraphicsSlick((RendererSlick) receiver, true);
                     break;
                 case SWING:
                     // Swing graphics object
-                    userGraphicsObject = customGraphics.getGraphicsSwing((RendererSwing) receiver);
+                    userGraphicsObject = customGraphics.getGraphicsSwing((RendererSwing) receiver, true);
                     break;
                 case SDL:
                     // SDL graphics object
-                    userGraphicsObject = customGraphics.getGraphicsSDL((RendererSDL) receiver);
+                    userGraphicsObject = customGraphics.getGraphicsSDL((RendererSDL) receiver, true);
                     break;
                 default:
                     throw new LazyLoadException("Cannot find renderer!");

@@ -41,7 +41,7 @@ public class PrimitiveDrawingHook {
         switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
             case SLICK:
                 // Slick graphics object
-                Graphics graphicsSlick = customGraphics.getGraphicsSlick((RendererSlick) receiver);
+                Graphics graphicsSlick = customGraphics.getGraphicsSlick((RendererSlick) receiver, true);
                 if (graphicsSlick == null) return;
 
                 graphicsSlick.setColor(new Color(red, green, blue, alpha));
@@ -51,7 +51,7 @@ public class PrimitiveDrawingHook {
                 break;
             case SWING:
                 // Swing graphics object
-                Graphics2D graphicsSwing = customGraphics.getGraphicsSwing((RendererSwing) receiver);
+                Graphics2D graphicsSwing = customGraphics.getGraphicsSwing((RendererSwing) receiver, true);
                 if (graphicsSwing == null) return;
 
                 graphicsSwing.setColor(new java.awt.Color(red, green, blue, alpha));
@@ -61,7 +61,7 @@ public class PrimitiveDrawingHook {
                 break;
             case SDL:
                 // SDL graphics object
-                SDLSurface graphicsSDL = customGraphics.getGraphicsSDL((RendererSDL) receiver);
+                SDLSurface graphicsSDL = customGraphics.getGraphicsSDL((RendererSDL) receiver, true);
                 if (graphicsSDL == null) return;
 
                 SDLRect rectDst = new SDLRect(x, y, sizeX, sizeY);
@@ -100,7 +100,7 @@ public class PrimitiveDrawingHook {
         switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
             case SLICK:
                 // Slick graphics object
-                Graphics graphicsSlick = customGraphics.getGraphicsSlick((RendererSlick) receiver);
+                Graphics graphicsSlick = customGraphics.getGraphicsSlick((RendererSlick) receiver, true);
                 if (graphicsSlick == null) return;
 
                 graphicsSlick.setColor(new Color(red, green, blue, alpha));
@@ -111,7 +111,7 @@ public class PrimitiveDrawingHook {
                 break;
             case SWING:
                 // Swing graphics object
-                Graphics2D graphicsSwing = customGraphics.getGraphicsSwing((RendererSwing) receiver);
+                Graphics2D graphicsSwing = customGraphics.getGraphicsSwing((RendererSwing) receiver, true);
                 if (graphicsSwing == null) return;
 
                 graphicsSwing.setColor(new java.awt.Color(red, green, blue, alpha));
@@ -145,7 +145,7 @@ public class PrimitiveDrawingHook {
         switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
             case SLICK:
                 // Slick graphics object
-                Graphics graphicsSlick = customGraphics.getGraphicsSlick((RendererSlick) receiver);
+                Graphics graphicsSlick = customGraphics.getGraphicsSlick((RendererSlick) receiver, true);
                 if (graphicsSlick == null) return;
 
                 graphicsSlick.setColor(new Color(red, green, blue, alpha));
@@ -156,7 +156,7 @@ public class PrimitiveDrawingHook {
                 break;
             case SWING:
                 // Swing graphics object
-                Graphics2D graphicsSwing = customGraphics.getGraphicsSwing((RendererSwing) receiver);
+                Graphics2D graphicsSwing = customGraphics.getGraphicsSwing((RendererSwing) receiver, true);
                 if (graphicsSwing == null) return;
 
                 graphicsSwing.setColor(new java.awt.Color(red, green, blue, alpha));

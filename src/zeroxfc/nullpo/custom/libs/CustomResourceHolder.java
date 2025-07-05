@@ -35,6 +35,7 @@ package zeroxfc.nullpo.custom.libs;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
@@ -70,12 +71,6 @@ public class CustomResourceHolder {
         SLICK, SWING, SDL, UNKNOWN
     }
 
-    /**
-     * Internal used ResourceHolder class.
-     */
-    private static final int HOLDER_SLICK = 0,
-        HOLDER_SWING = 1,
-        HOLDER_SDL = 2;
     private static final Logger log = Logger.getLogger(CustomResourceHolder.class);
     private static int bgmPrevious = -1;
 
@@ -108,6 +103,7 @@ public class CustomResourceHolder {
 
         loadedImages = new HashMap<>(initialCapacity);
         loadedMusic = new HashMap<>(initialCapacity);
+        getBigFont(); // To eliminate stutter from File I/O in Slick and Swing.
     }
 
     /**
@@ -219,14 +215,16 @@ public class CustomResourceHolder {
     private WeakReference<Graphics2D> graphicsSwing = null;
     private WeakReference<Graphics> graphicsSlick = null;
 
-    public SDLSurface getGraphicsSDL(RendererSDL renderer) {
-        if (graphicsSDL == null || graphicsSDL.get() == null) {
+    public SDLSurface getGraphicsSDL(RendererSDL renderer, boolean useCache) {
+        if (!useCache || graphicsSDL == null || graphicsSDL.get() == null) {
             Class<RendererSDL> local = RendererSDL.class;
             Field localField;
             try {
                 localField = local.getDeclaredField("graphics");
                 localField.setAccessible(true);
-                graphicsSDL = new WeakReference<>((SDLSurface) localField.get(renderer));
+
+                if (useCache) graphicsSDL = new WeakReference<>((SDLSurface) localField.get(renderer));
+                else return (SDLSurface) localField.get(renderer);
             } catch (Exception e) {
                 log.error("Failed to extract graphics from SDL renderer.");
                 log.error(e);
@@ -237,14 +235,16 @@ public class CustomResourceHolder {
         return graphicsSDL.get();
     }
 
-    public Graphics2D getGraphicsSwing(RendererSwing renderer) {
-        if (graphicsSwing == null || graphicsSwing.get() == null) {
+    public Graphics2D getGraphicsSwing(RendererSwing renderer, boolean useCache) {
+        if (!useCache || graphicsSwing == null || graphicsSwing.get() == null) {
             Class<RendererSwing> local = RendererSwing.class;
             Field localField;
             try {
                 localField = local.getDeclaredField("graphics");
                 localField.setAccessible(true);
-                graphicsSwing = new WeakReference<>((Graphics2D) localField.get(renderer));
+
+                if (useCache) graphicsSwing = new WeakReference<>((Graphics2D) localField.get(renderer));
+                else return (Graphics2D) localField.get(renderer);
             } catch (Exception e) {
                 log.error("Failed to extract graphics from Swing renderer.");
                 log.error(e);
@@ -255,14 +255,16 @@ public class CustomResourceHolder {
         return graphicsSwing.get();
     }
 
-    public Graphics getGraphicsSlick(RendererSlick renderer) {
-        if (graphicsSlick == null || graphicsSlick.get() == null) {
+    public Graphics getGraphicsSlick(RendererSlick renderer, boolean useCache) {
+        if (!useCache || graphicsSlick == null || graphicsSlick.get() == null) {
             Class<RendererSlick> local = RendererSlick.class;
             Field localField;
             try {
                 localField = local.getDeclaredField("graphics");
                 localField.setAccessible(true);
-                graphicsSlick = new WeakReference<>((Graphics) localField.get(renderer));
+
+                if (useCache) graphicsSlick = new WeakReference<>((Graphics) localField.get(renderer));
+                else return (Graphics) localField.get(renderer);
             } catch (Exception e) {
                 log.error("Failed to extract graphics from Slick renderer.");
                 log.error(e);
@@ -406,50 +408,175 @@ public class CustomResourceHolder {
         }
     }
 
-    /**
-     * Draws image to game.
-     *
-     * @param engine   GameEngine to draw with.
-     * @param name     Identifier of image.
-     * @param x        X position
-     * @param y        Y position
-     * @param srcX     Source X position
-     * @param srcY     Source Y position
-     * @param srcSizeX Source X size
-     * @param srcSizeY Source Y size
-     * @param red      Red component
-     * @param green    Green component
-     * @param blue     Blue component
-     * @param alpha    Alpha component
-     * @param scale    Image scale
-     */
-    public void drawImage(GameEngine engine, String name, int x, int y, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha, float scale) {
-        final RuntimeImage<?> runtimeImage = getImageAt(name);
+    private RuntimeImage<?> smallFont;
+    private RuntimeImage<?> normalFont;
+    private RuntimeImage<?> bigFont;
+
+    private RuntimeImage<?> getSmallFont() {
+        if (smallFont != null) return smallFont;
+
+        smallFont = doForRuntime(
+            () -> new RuntimeImage.Slick(ResourceHolder.imgFontSmall),
+            () -> new RuntimeImage.Swing(ResourceHolderSwing.imgFontSmall),
+            () -> new RuntimeImage.SDL(ResourceHolderSDL.imgFontSmall)
+        );
+
+        return smallFont;
+    }
+
+    private RuntimeImage<?> getNormalFont() {
+        if (normalFont != null) return normalFont;
+
+        normalFont = doForRuntime(
+            () -> new RuntimeImage.Slick(ResourceHolder.imgFont),
+            () -> new RuntimeImage.Swing(ResourceHolderSwing.imgFont),
+            () -> new RuntimeImage.SDL(ResourceHolderSDL.imgFont)
+        );
+
+        return normalFont;
+    }
+
+    private RuntimeImage<?> getBigFont() {
+        if (bigFont != null) return bigFont;
+
+        final String CUSTOM_SKIN_DIRECTORY = "custom.skin.directory";
+        String skinDir = null;
 
         switch (holderType) {
             case SLICK:
+                skinDir = mu.nu.nullpo.gui.slick.NullpoMinoSlick.propConfig.getProperty(CUSTOM_SKIN_DIRECTORY, "res");
+                break;
+            case SWING:
+                skinDir = mu.nu.nullpo.gui.swing.NullpoMinoSwing.propConfig.getProperty(CUSTOM_SKIN_DIRECTORY, "res");
+                break;
+            case SDL:
+                skinDir = mu.nu.nullpo.gui.sdl.NullpoMinoSDL.propConfig.getProperty(CUSTOM_SKIN_DIRECTORY, "res");
+                break;
+            default:
+                return null;
+        }
+
+        final String usedSkinDir = skinDir;
+
+        bigFont = doForRuntime(
+            () -> new RuntimeImage.Slick(ResourceHolder.loadImage(usedSkinDir + "/graphics/font_big.png")),
+            () -> new RuntimeImage.Swing(ResourceHolderSwing.loadImage(ResourceHolderSwing.getURL(usedSkinDir + "/graphics/font_big.png"))),
+            () -> new RuntimeImage.SDL(ResourceHolderSDL.imgFontBig)
+        );
+
+        return bigFont;
+    }
+
+    /**
+     * Improved implementation of <code>NormalFont.printFont</code>, that uses all three
+     * font sizes at appropriate times, and has better support for newlines at different
+     * scale factors.
+     *
+     * @param engine <code>GameEngine</code> to draw with
+     * @param x      X-coordinate (Top-Left Corner)
+     * @param y      Y-coordinate (Top-Left Corner)
+     * @param str    String to draw
+     * @param colour Character colour code (from <code>EventReceiver</code>)
+     * @param scale  Character scale
+     */
+    public void drawString(GameEngine engine, int x, int y, String str, int colour, float scale) {
+        RuntimeImage<?> font;
+        int fontBaseScale;
+
+        // Get font and base scale based on scale factor for best quality.
+        // Base unit length is 16px on screen.
+        final int BASE_UNIT = 16;
+
+        if (scale <= 0.5f) {
+            font = getSmallFont();
+            fontBaseScale = BASE_UNIT >>> 1;
+        } else if (scale > 1f) {
+            font = getBigFont();
+            fontBaseScale = BASE_UNIT * 2;
+        } else {
+            font = getNormalFont();
+            fontBaseScale = BASE_UNIT;
+        }
+
+        final int strLength = str.length();
+
+        float dx = x;
+        float dy = y;
+
+        for (int i = 0; i < strLength; ++i) {
+            final int chrAt = str.charAt(i);
+
+            if (chrAt == 0x0A) {
+                dx = x;
+                dy += BASE_UNIT * scale;
+            } else {
+                int sx = ((chrAt - 32) % 32) * fontBaseScale;
+                int sy = ((chrAt - 32) / 32) * fontBaseScale + (colour * 3 * fontBaseScale);
+
+                drawImage(
+                    engine,
+                    "font",
+                    font,
+                    dx,
+                    dy,
+                    dx + (BASE_UNIT * scale),
+                    dy + (BASE_UNIT * scale),
+                    sx,
+                    sy,
+                    fontBaseScale,
+                    fontBaseScale,
+                    255,
+                    255,
+                    255,
+                    255,
+                    false
+                );
+
+                dx += BASE_UNIT * scale;
+            }
+        }
+    }
+
+    /**
+     * Draws an image based on runtime to the screen.
+     *
+     * @param engine       GameEngine to draw with
+     * @param logName      Name of image when in logs
+     * @param runtimeImage The instance of the image to draw
+     * @param x            X-coordinate (Top-Left Corner)
+     * @param y            Y-coordinate (Top-Left Corner)
+     * @param x2           X-coordinate (Bottom-Right Corner)
+     * @param y2           Y-coordinate (Bottom-Right Corner)
+     * @param srcX         Source X-coordinate (Top-Left Corner)
+     * @param srcY         Source Y-coordinate (Top-Left Corner)
+     * @param srcSizeX     Horizontal size in Source
+     * @param srcSizeY     Vertical size in Source
+     * @param red          Red filter colour
+     * @param green        Green filter colour
+     * @param blue         Blue filter colour
+     * @param alpha        Image alpha multiplier
+     */
+    public void drawImage(GameEngine engine, String logName, RuntimeImage<?> runtimeImage, float x, float y, float x2, float y2, float srcX, float srcY, float srcSizeX, float srcSizeY, int red, int green, int blue, int alpha, boolean useCachedRenderer) {
+        switch (holderType) {
+            case SLICK:
                 if (!(runtimeImage instanceof RuntimeImage.Slick)) {
-                    log.error("Image '" + name + "' is not a Slick image!");
+                    log.error("Image '" + logName + "' is not a Slick image!");
                     return;
                 }
 
                 org.newdawn.slick.Image toDrawSlick = ((RuntimeImage.Slick) runtimeImage).image;
 
-                int fx = x + (int) (srcSizeX * scale);
-                int fy = y + (int) (srcSizeY * scale);
-
                 org.newdawn.slick.Color filter = new org.newdawn.slick.Color(red, green, blue, alpha);
 
-                toDrawSlick.draw(x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
-
+                toDrawSlick.draw(x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
                 break;
             case SWING:
                 if (!(runtimeImage instanceof RuntimeImage.Swing)) {
-                    log.error("Image '" + name + "' is not a Swing image!");
+                    log.error("Image '" + logName + "' is not a Swing image!");
                     return;
                 }
 
-                localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
+                localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver, useCachedRenderer);
                 if (localSwingGraphics == null) {
                     log.error("Swing graphics is null!");
                     return;
@@ -457,33 +584,29 @@ public class CustomResourceHolder {
 
                 java.awt.Image toDrawSwing = ((RuntimeImage.Swing) runtimeImage).image;
 
-                int fxSw = x + (int) (srcSizeX * scale);
-                int fySw = y + (int) (srcSizeY * scale);
-
                 localSwingGraphics.setColor(new java.awt.Color(red, green, blue, alpha));
-                localSwingGraphics.drawImage(toDrawSwing, x, y, fxSw, fySw, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
+                localSwingGraphics.drawImage(toDrawSwing, (int) x, (int) y, (int) x2, (int) y2, (int) srcX, (int) srcY, (int) (srcX + srcSizeX), (int) (srcY + srcSizeY), null);
                 localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
                 break;
             case SDL:
                 if (!(runtimeImage instanceof RuntimeImage.SDL)) {
-                    log.error("Image '" + name + "' is not a SDL image!");
+                    log.error("Image '" + logName + "' is not a SDL image!");
                     return;
                 }
 
-                localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver);
+                localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver, useCachedRenderer);
                 sdljava.video.SDLSurface toDrawSDL = ((RuntimeImage.SDL) runtimeImage).image;
 
-                int dx = (int) (srcSizeX * scale);
-                int dy = (int) (srcSizeY * scale);
+                int dx = (int) (x2 - x);
+                int dy = (int) (y2 - y);
                 try {
-                    toDrawSDL.blitSurface(new SDLRect(srcX, srcY, srcSizeX, srcSizeY), localSDLGraphics, new SDLRect(x, y, dx, dy));
+                    toDrawSDL.blitSurface(new SDLRect((int) srcX, (int) srcY, (int) srcSizeX, (int) srcSizeY), localSDLGraphics, new SDLRect((int) x, (int) y, dx, dy));
                 } catch (Exception e) {
                     // DO NOTHING AT ALL.
                 }
                 break;
         }
     }
-
 
     /**
      * Draws image to game.
@@ -504,58 +627,62 @@ public class CustomResourceHolder {
      * @param alpha    Alpha component
      */
     public void drawImage(GameEngine engine, String name, int x, int y, int x2, int y2, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha) {
-        if (x < x2 || y < y2) return;
         final RuntimeImage<?> runtimeImage = getImageAt(name);
 
-        switch (holderType) {
-            case SLICK:
-                if (!(runtimeImage instanceof RuntimeImage.Slick)) {
-                    log.error("Image '" + name + "' is not a Slick image!");
-                    return;
-                }
+        drawImage(
+            engine,
+            name,
+            runtimeImage,
+            x,
+            y,
+            x2,
+            y2,
+            srcX,
+            srcY,
+            srcSizeX,
+            srcSizeY,
+            red,
+            green,
+            blue,
+            alpha,
+            true
+        );
+    }
 
-                org.newdawn.slick.Image toDrawSlick = ((RuntimeImage.Slick) runtimeImage).image;
-
-                org.newdawn.slick.Color filter = new org.newdawn.slick.Color(red, green, blue, alpha);
-
-                toDrawSlick.draw(x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
-                break;
-            case SWING:
-                if (!(runtimeImage instanceof RuntimeImage.Swing)) {
-                    log.error("Image '" + name + "' is not a Swing image!");
-                    return;
-                }
-
-                localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
-                if (localSwingGraphics == null) {
-                    log.error("Swing graphics is null!");
-                    return;
-                }
-
-                java.awt.Image toDrawSwing = ((RuntimeImage.Swing) runtimeImage).image;
-
-                localSwingGraphics.setColor(new java.awt.Color(red, green, blue, alpha));
-                localSwingGraphics.drawImage(toDrawSwing, x, y, x2, y2, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
-                localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
-                break;
-            case SDL:
-                if (!(runtimeImage instanceof RuntimeImage.SDL)) {
-                    log.error("Image '" + name + "' is not a SDL image!");
-                    return;
-                }
-
-                localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver);
-                sdljava.video.SDLSurface toDrawSDL = ((RuntimeImage.SDL) runtimeImage).image;
-
-                int dx = x2 - x;
-                int dy = y2 - y;
-                try {
-                    toDrawSDL.blitSurface(new SDLRect(srcX, srcY, srcSizeX, srcSizeY), localSDLGraphics, new SDLRect(x, y, dx, dy));
-                } catch (Exception e) {
-                    // DO NOTHING AT ALL.
-                }
-                break;
-        }
+    /**
+     * Draws image to game.
+     *
+     * @param engine   GameEngine to draw with.
+     * @param name     Identifier of image.
+     * @param x        X position
+     * @param y        Y position
+     * @param srcX     Source X position
+     * @param srcY     Source Y position
+     * @param srcSizeX Source X size
+     * @param srcSizeY Source Y size
+     * @param red      Red component
+     * @param green    Green component
+     * @param blue     Blue component
+     * @param alpha    Alpha component
+     * @param scale    Image scale
+     */
+    public void drawImage(GameEngine engine, String name, int x, int y, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha, float scale) {
+        drawImage(
+            engine,
+            name,
+            x,
+            y,
+            x + (int) (srcSizeX * scale),
+            y + (int) (srcSizeY * scale),
+            srcX,
+            srcY,
+            srcSizeX,
+            srcSizeY,
+            red,
+            green,
+            blue,
+            alpha
+        );
     }
 
     /**
@@ -577,63 +704,22 @@ public class CustomResourceHolder {
      * @param alpha    Alpha component
      */
     public void drawOffsetImage(GameEngine engine, String name, int x, int y, int sx, int sy, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha) {
-        if (sx <= 0 || sy <= 0) return;
-        final RuntimeImage<?> runtimeImage = getImageAt(name);
-
-        switch (holderType) {
-            case SLICK:
-                if (!(runtimeImage instanceof RuntimeImage.Slick)) {
-                    log.error("Image '" + name + "' is not a Slick image!");
-                    return;
-                }
-
-                org.newdawn.slick.Image toDrawSlick = ((RuntimeImage.Slick) runtimeImage).image;
-
-                int fx = x + sx;
-                int fy = y + sy;
-
-                org.newdawn.slick.Color filter = new org.newdawn.slick.Color(red, green, blue, alpha);
-
-                toDrawSlick.draw(x, y, fx, fy, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, filter);
-
-                break;
-            case SWING:
-                if (!(runtimeImage instanceof RuntimeImage.Swing)) {
-                    log.error("Image '" + name + "' is not a Swing image!");
-                    return;
-                }
-
-                localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver);
-                if (localSwingGraphics == null) {
-                    log.error("Swing graphics is null!");
-                    return;
-                }
-
-                java.awt.Image toDrawSwing = ((RuntimeImage.Swing) runtimeImage).image;
-
-                int fxSw = x + sx;
-                int fySw = y + sy;
-
-                localSwingGraphics.setColor(new java.awt.Color(red, green, blue, alpha));
-                localSwingGraphics.drawImage(toDrawSwing, x, y, fxSw, fySw, srcX, srcY, srcX + srcSizeX, srcY + srcSizeY, null);
-                localSwingGraphics.setColor(new java.awt.Color(255, 255, 255, 255));
-                break;
-            case SDL:
-                if (!(runtimeImage instanceof RuntimeImage.SDL)) {
-                    log.error("Image '" + name + "' is not a SDL image!");
-                    return;
-                }
-
-                localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver);
-                sdljava.video.SDLSurface toDrawSDL = ((RuntimeImage.SDL) runtimeImage).image;
-
-                try {
-                    toDrawSDL.blitSurface(new SDLRect(srcX, srcY, srcSizeX, srcSizeY), localSDLGraphics, new SDLRect(x, y, sx, sy));
-                } catch (Exception e) {
-                    // DO NOTHING AT ALL.
-                }
-                break;
-        }
+        drawImage(
+            engine,
+            name,
+            x,
+            y,
+            x + sx,
+            y + sy,
+            srcX,
+            srcY,
+            srcSizeX,
+            srcSizeY,
+            red,
+            green,
+            blue,
+            alpha
+        );
     }
 
     /**

@@ -365,7 +365,7 @@ public class RendererExtension {
 
         if (renderer == CustomResourceHolder.Runtime.SLICK) {
             // region Slick Case
-            Graphics graphics = customGraphics.getGraphicsSlick((RendererSlick) receiver);
+            Graphics graphics = customGraphics.getGraphicsSlick((RendererSlick) receiver, true);
             if (graphics == null) return;
 
             if ((color <= Block.BLOCK_COLOR_INVALID)) return;
@@ -452,7 +452,7 @@ public class RendererExtension {
             // endregion Slick Case
         } else if (renderer == CustomResourceHolder.Runtime.SWING) {
             // region Swing Case
-            Graphics2D graphics = customGraphics.getGraphicsSwing((RendererSwing) receiver);
+            Graphics2D graphics = customGraphics.getGraphicsSwing((RendererSwing) receiver, true);
             if (graphics == null) return;
 
             if ((color <= Block.BLOCK_COLOR_INVALID)) return;
@@ -603,7 +603,7 @@ public class RendererExtension {
         } else if (renderer == CustomResourceHolder.Runtime.SDL) {
             try {
                 // region SDL Case
-                SDLSurface graphics = customGraphics.getGraphicsSDL((RendererSDL) receiver);
+                SDLSurface graphics = customGraphics.getGraphicsSDL((RendererSDL) receiver, true);
                 if (graphics == null) return;
 
                 if (color <= Block.BLOCK_COLOR_INVALID) return;
@@ -803,7 +803,7 @@ public class RendererExtension {
 
         if (renderer == CustomResourceHolder.Runtime.SLICK) {
             //region Slick Case
-            Graphics graphics = customGraphics.getGraphicsSlick((RendererSlick) receiver);
+            Graphics graphics = customGraphics.getGraphicsSlick((RendererSlick) receiver, true);
             final Color colorBase = new org.newdawn.slick.Color(colorBack[0], colorBack[1], colorBack[2]);
             final Color colorFill = new org.newdawn.slick.Color(colorFront[0], colorFront[1], colorFront[2]);
 
@@ -826,7 +826,7 @@ public class RendererExtension {
             //endregion Slick Case
         } else if (renderer == CustomResourceHolder.Runtime.SWING) {
             //region Swing Case
-            Graphics2D graphics = customGraphics.getGraphicsSwing((RendererSwing) receiver);
+            Graphics2D graphics = customGraphics.getGraphicsSwing((RendererSwing) receiver, true);
             final java.awt.Color colorBase = new java.awt.Color(colorBack[0], colorBack[1], colorBack[2]);
             final java.awt.Color colorFill = new java.awt.Color(colorFront[0], colorFront[1], colorFront[2]);
 
@@ -849,7 +849,7 @@ public class RendererExtension {
             //endregion Swing Case
         } else if (renderer == CustomResourceHolder.Runtime.SDL) {
             //region SDL Case
-            SDLSurface graphics = customGraphics.getGraphicsSDL((RendererSDL) receiver);
+            SDLSurface graphics = customGraphics.getGraphicsSDL((RendererSDL) receiver, true);
 
             if (graphics == null) return;
 

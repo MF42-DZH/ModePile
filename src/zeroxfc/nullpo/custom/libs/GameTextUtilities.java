@@ -32,6 +32,7 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Random;
 import mu.nu.nullpo.game.event.EventReceiver;
@@ -81,6 +82,294 @@ public class GameTextUtilities {
      * Sequential Character Phase
      */
     private static int CharacterPhase = 0;
+
+    private static CustomResourceHolder customGraphics;
+
+    private static CustomResourceHolder getCustomGraphics() {
+        if (customGraphics != null) return customGraphics;
+
+        customGraphics = new CustomResourceHolder(1);
+        return customGraphics;
+    }
+
+    /**
+     * Representation of a piece of text to draw.
+     * Do not use newlines directly, use the special newline constructor.
+     */
+    public static class Text {
+        public static final int BASE_UNIT = 16;
+
+        public final String string;
+        public final int colour;
+        public final float scale;
+
+        private Text(String string, int colour, float scale) {
+            this.string = string;
+            this.colour = colour;
+            this.scale = scale;
+        }
+
+        public static Text of(String string) {
+            return new Text(string, EventReceiver.COLOR_WHITE, 1f);
+        }
+
+        public static Text of(String string, int colour) {
+            return new Text(string, colour, 1f);
+        }
+
+        public static Text ofSmall(String string) {
+            return new Text(string, EventReceiver.COLOR_WHITE, 0.5f);
+        }
+
+        public static Text ofSmall(String string, int colour) {
+            return new Text(string, colour, 0.5f);
+        }
+
+        public static Text ofBig(String string) {
+            return new Text(string, EventReceiver.COLOR_WHITE, 2f);
+        }
+
+        public static Text ofBig(String string, int colour) {
+            return new Text(string, colour,  2f);
+        }
+
+        public static Text custom(String string, int colour, float scale) {
+            return new Text(string, colour, scale);
+        }
+
+        public static Text newLine() {
+            return new Text("\n", EventReceiver.COLOR_WHITE, 0f);
+        }
+
+        public int getWidth() {
+            return (int) (string.length() * BASE_UNIT * scale);
+        }
+
+        public boolean isNewLine() {
+            return string.equals("\n") && scale == 0f;
+        }
+    }
+
+    /** Representation of a left-aligned block of lines to draw. */
+    public static class TextBlock {
+        private final Text[] texts;
+        private int width = -1;
+        private int height = -1;
+
+        public TextBlock(Text... texts) {
+            this.texts = texts;
+        }
+
+        public static TextBlock single(Text text) {
+            return new TextBlock(text);
+        }
+
+        public Text get(int i) {
+            return texts[i];
+        }
+
+        public int length() {
+            return texts.length;
+        }
+
+        public int getWidth() {
+            if (width > -1) return width;
+
+            int offset = 0;
+
+            while (offset < length()) {
+                final int lineEnd = findLineEndIndex(this, offset);
+                int cWidth = 0;
+
+                for (int i = offset; i < lineEnd; ++i) {
+                    cWidth += texts[i].getWidth();
+                }
+
+                width = Math.max(width, cWidth);
+
+                offset = lineEnd + 1;
+            }
+
+            return width;
+        }
+
+        public int getHeight() {
+            if (height > -1) return height;
+
+            height = 0;
+
+            int offset = 0;
+            while (offset < length()) {
+                final int lineEnd = findLineEndIndex(this, offset);
+
+                float maxLineScale = 0f;
+                for (int i = offset; i < lineEnd; ++i) {
+                    maxLineScale = Math.max(texts[i].scale, maxLineScale);
+                }
+
+                height += (int) (Text.BASE_UNIT * maxLineScale);
+
+                offset = lineEnd + 1;
+            }
+
+            return height;
+        }
+    }
+
+    private static int findLineEndIndex(TextBlock texts, int offset) {
+        for (int i = offset; i < texts.length(); ++i) {
+            if (texts.get(i).isNewLine()) return i;
+        }
+
+        return texts.length();
+    }
+
+    /**
+     * Draws a block of texts defined by a text block.
+     * Text blocks always left-align all lines.
+     *
+     * @param engine         <code>GameEngine</code> to draw with
+     * @param startX         Start X-coordinate (Top-Left Corner)
+     * @param startY         Start Y-coortinate (Top-Right Corner)
+     * @param pinTop         Pin line to top instead of bottom when varying scale text exists
+     * @param texts          The text block to draw
+     */
+    public static void drawDirectTextBlock(GameEngine engine, int startX, int startY, boolean pinTop, TextBlock texts) {
+        int dx = startX;
+        int dy = startY;
+
+        // Process all lines.
+        int offset = 0;
+        while (offset < texts.length()) {
+            final int lineEnd = findLineEndIndex(texts, offset);
+
+            float maxLineScale = 0f;
+            for (int i = offset; i < lineEnd; ++i) {
+                maxLineScale = Math.max(texts.get(i).scale, maxLineScale);
+            }
+
+            for (int i = offset; i < lineEnd; ++i) {
+                getCustomGraphics().drawString(
+                    engine,
+                    dx,
+                    pinTop ? dy : dy + (int) ((maxLineScale - texts.get(i).scale) * Text.BASE_UNIT),
+                    texts.get(i).string,
+                    texts.get(i).colour,
+                    texts.get(i).scale
+                );
+
+                dx += texts.get(i).getWidth();
+            }
+
+            dx = startX;
+            dy += (int) (Text.BASE_UNIT * maxLineScale);
+
+            offset = lineEnd + 1;
+        }
+    }
+
+    /**
+     * Draws a block of texts defined by a text block.
+     * Text blocks always left-align all lines.
+     * <p>
+     * Alignment only modifies alignment by bounding box.
+     *
+     * @param engine         <code>GameEngine</code> to draw with
+     * @param startX         Start X-coordinate (Top-Left Corner)
+     * @param startY         Start Y-coortinate (Top-Right Corner)
+     * @param pinTop         Pin line to top instead of bottom when varying scale text exists
+     * @param texts          The text block to draw
+     * @param alignment      Alignment of the texts bounding box
+     */
+    public static void drawAlignedTextBlock(GameEngine engine, int startX, int startY, boolean pinTop, TextBlock texts, int alignment) {
+        int offsetX, offsetY;
+
+        switch (alignment) {
+            case ALIGN_TOP_MIDDLE:
+            case ALIGN_MIDDLE_MIDDLE:
+            case ALIGN_BOTTOM_MIDDLE:
+                offsetX = texts.getWidth() / 2;
+                break;
+            case ALIGN_TOP_RIGHT:
+            case ALIGN_MIDDLE_RIGHT:
+            case ALIGN_BOTTOM_RIGHT:
+                offsetX = texts.getWidth();
+                break;
+            default:
+                offsetX = 0;
+                break;
+        }
+
+        switch (alignment) {
+            case ALIGN_MIDDLE_LEFT:
+            case ALIGN_MIDDLE_MIDDLE:
+            case ALIGN_MIDDLE_RIGHT:
+                offsetY = texts.getHeight() / 2;
+                break;
+            case ALIGN_BOTTOM_LEFT:
+            case ALIGN_BOTTOM_MIDDLE:
+            case ALIGN_BOTTOM_RIGHT:
+                offsetY = texts.getHeight();
+                break;
+            default:
+                offsetY = 0;
+                break;
+        }
+
+        drawDirectTextBlock(engine, startX - offsetX, startY - offsetY, pinTop, texts);
+    }
+
+    /**
+     * Draws a block of score texts defined by a text block.
+     * Text blocks always left-align all lines.
+     * <p>
+     * <code>x</code> and <code>y</code> determine where in the score grid to draw the text.
+     *
+     * @param receiver       <code>EventReceiver</code> to get position info from
+     * @param engine         <code>GameEngine</code> to draw with
+     * @param x              Start X-coordinate (Top-Left Cornern Grid)
+     * @param y              Start Y-coortinate (Top-Right Corner in Grid)
+     * @param pinTop         Pin line to top instead of bottom when varying scale text exists
+     * @param texts          The text block to draw
+     */
+    public static void drawScoreTextBlockAlign(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, boolean pinTop, TextBlock texts, int alignment) {
+        int gridSize = smallGrid ? 8 : 16;
+
+        drawAlignedTextBlock(
+            engine,
+            receiver.getScoreDisplayPositionX(engine, playerID) + (x * gridSize),
+            receiver.getScoreDisplayPositionY(engine, playerID) + (y * gridSize),
+            pinTop,
+            texts,
+            alignment
+        );
+    }
+
+    /**
+     * Draws a block of score texts defined by a text block.
+     * Text blocks always left-align all lines.
+     * <p>
+     * <code>x</code> and <code>y</code> determine where in the menu grid to draw the text.
+     *
+     * @param receiver       <code>EventReceiver</code> to get position info from
+     * @param engine         <code>GameEngine</code> to draw with
+     * @param x              Start X-coordinate (Top-Left Cornern Grid)
+     * @param y              Start Y-coortinate (Top-Right Corner in Grid)
+     * @param pinTop         Pin line to top instead of bottom when varying scale text exists
+     * @param texts          The text block to draw
+     */
+    public void drawMenuTextBlockAlign(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, boolean pinTop, TextBlock texts, int alignment) {
+        int gridSize = smallGrid ? 8 : 16;
+
+        drawAlignedTextBlock(
+            engine,
+            receiver.getFieldDisplayPositionX(engine, playerID) + (x * gridSize) + 4,
+            receiver.getFieldDisplayPositionY(engine, playerID) + (y * gridSize) + 52,
+            pinTop,
+            texts,
+            alignment
+        );
+    }
 
     // region String Utilities
 
@@ -202,7 +491,6 @@ public class GameTextUtilities {
      * @param playerID  Player ID (1P = 0)
      * @param x         X coordinate of top-left corner of text
      * @param y         Y coordinate of top-left corner of text
-     * @param alignment Alignment of string relative to string's area
      * @param str       String to draw
      * @param color     Color of string
      * @param scale     Scale of string

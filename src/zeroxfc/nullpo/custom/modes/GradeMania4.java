@@ -109,6 +109,18 @@ public class GradeMania4 extends DummyMode {
         return left + " OF " + right;
     }
 
+    private static GameTextUtilities.TextBlock getAERBlock(int left, int right) {
+        int color = EventReceiver.COLOR_WHITE;
+        if (left + right >= 20) color = EventReceiver.COLOR_YELLOW;
+        else if (left + right >= 19) color = EventReceiver.COLOR_GREEN;
+
+        return new GameTextUtilities.TextBlock(
+            GameTextUtilities.Text.custom(String.valueOf(left), color, 2f),
+            GameTextUtilities.Text.custom(" OF ", color, 1.25f),
+            GameTextUtilities.Text.custom(String.valueOf(right), color, 2f)
+        );
+    }
+
     private static String getClassicGrade(int left, int right) {
         return TABLE_CLASSIC_GRADE_NAME[left + right];
     }
@@ -194,6 +206,21 @@ public class GradeMania4 extends DummyMode {
         "9 OF 10",
         "10 OF 10"
     };
+
+    private static GameTextUtilities.TextBlock secretAERBlock(int secretGrade) {
+        final int right = Math.min(10, secretGrade + 1);
+        final int left = Math.max(0, secretGrade - 9);
+
+        int color = EventReceiver.COLOR_WHITE;
+        if (secretGrade >= 19) color = EventReceiver.COLOR_YELLOW;
+        else if (secretGrade >= 18) color = EventReceiver.COLOR_GREEN;
+
+        return new GameTextUtilities.TextBlock(
+            GameTextUtilities.Text.custom(String.valueOf(left), color, 2f),
+            GameTextUtilities.Text.custom(" OF ", color, 1.25f),
+            GameTextUtilities.Text.custom(String.valueOf(right), color, 2f)
+        );
+    }
 
     private static int getFireworkLaunchCount(int totalGrade) {
         if (totalGrade >= 20) return 50;
@@ -1215,7 +1242,12 @@ public class GradeMania4 extends DummyMode {
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, 0, 19, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawScoreTextBlockAlign(
+                        receiver, engine, playerID,
+                        false, 0, 19, false,
+                        GameTextUtilities.TextBlock.single(GameTextUtilities.Text.ofBig(playerProperties.getNameDisplay())),
+                        GameTextUtilities.ALIGN_TOP_LEFT
+                    );
 
                     receiver.drawScoreFont(engine, playerID, 0, 22, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 
@@ -1321,10 +1353,20 @@ public class GradeMania4 extends DummyMode {
             if (playerProperties.isLoggedIn() || !playerName.isEmpty()) {
                 if (showGrade) {
                     receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, 0, 19, owner.replayMode ? playerName : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawScoreTextBlockAlign(
+                        receiver, engine, playerID,
+                        false, 0, 19, false,
+                        GameTextUtilities.TextBlock.single(GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay())),
+                        GameTextUtilities.ALIGN_TOP_LEFT
+                    );
                 } else {
                     receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, 0, 16, owner.replayMode ? playerName : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawScoreTextBlockAlign(
+                        receiver, engine, playerID,
+                        false, 0, 16, false,
+                        GameTextUtilities.TextBlock.single(GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay())),
+                        GameTextUtilities.ALIGN_TOP_LEFT
+                    );
                 }
             }
 
@@ -1514,6 +1556,14 @@ public class GradeMania4 extends DummyMode {
         return true;
     }
 
+    private final GameTextUtilities.TextBlock grandMasterTextBlock = new GameTextUtilities.TextBlock(
+        GameTextUtilities.Text.custom("G", EventReceiver.COLOR_YELLOW, 2.5f),
+        GameTextUtilities.Text.custom("RAND", EventReceiver.COLOR_YELLOW, 1.25f),
+        GameTextUtilities.Text.newLine(),
+        GameTextUtilities.Text.custom("M", EventReceiver.COLOR_YELLOW, 2.5f),
+        GameTextUtilities.Text.custom("ASTER", EventReceiver.COLOR_YELLOW, 1.25f)
+    );
+
     @Override
     public void renderGameOver(GameEngine engine, int playerID) {
         int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
@@ -1535,8 +1585,8 @@ public class GradeMania4 extends DummyMode {
                 engine,
                 playerID,
                 offsetX + (16 * engine.field.getWidth() / 2) + 4,
-                offsetY + (useClassicGrades ? 252 : 254),
-                GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                offsetY + 242,
+                GameTextUtilities.ALIGN_TOP_MIDDLE,
                 useClassicGrades ? HEADING_CLASSIC : HEADING_AER[gradePresentTextIndex],
                 EventReceiver.COLOR_WHITE,
                 0.75f
@@ -1548,8 +1598,8 @@ public class GradeMania4 extends DummyMode {
                     engine,
                     playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
-                    offsetY + (useClassicGrades ? 92 : 96),
-                    GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                    offsetY + 86,
+                    GameTextUtilities.ALIGN_TOP_MIDDLE,
                     useClassicGrades ? "SECRET GRADE" : "SECRET AER",
                     EventReceiver.COLOR_WHITE,
                     0.75f
@@ -1558,45 +1608,77 @@ public class GradeMania4 extends DummyMode {
         }
 
         if (engine.statc[0] > engine.field.getHeight() + 240) {
-            GameTextUtilities.drawDirectTextAlign(
-                receiver,
-                engine,
-                playerID,
-                offsetX + (16 * engine.field.getWidth() / 2) + 4,
-                offsetY + 284,
-                GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
-                useClassicGrades ? TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)] : getAER(getLeftGrade(engine), getRightGrade(engine)),
-                gradeColor,
-                useClassicGrades ? 2.5f : 1.75f
-            );
-
-            if (secretGrade > 4) {
+            if (useClassicGrades && getCombinedGrade(engine) < 20) {
                 GameTextUtilities.drawDirectTextAlign(
                     receiver,
                     engine,
                     playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
-                    offsetY + 126,
-                    GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
-                    useClassicGrades ? TABLE_SECRET_GRADE_NAME[secretGrade - 1] : SECRET_AER[secretGrade],
-                    secretGrade == 18 ? EventReceiver.COLOR_GREEN : (secretGrade == 19 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE),
-                    useClassicGrades ? 2.5f : 1.75f
+                    offsetY + 264,
+                    GameTextUtilities.ALIGN_TOP_MIDDLE,
+                    TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)],
+                    gradeColor,
+                    2.5f
                 );
+            } else if (useClassicGrades) {
+                GameTextUtilities.drawAlignedTextBlock(
+                    engine,
+                    offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                    offsetY + 264,
+                    false,
+                    grandMasterTextBlock,
+                    GameTextUtilities.ALIGN_TOP_MIDDLE
+                );
+            } else {
+                GameTextUtilities.drawAlignedTextBlock(
+                    engine,
+                    offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                    offsetY + 264,
+                    false,
+                    getAERBlock(getLeftGrade(engine), getRightGrade(engine)),
+                    GameTextUtilities.ALIGN_TOP_MIDDLE
+                );
+            }
+
+            if (secretGrade > 4) {
+                if (useClassicGrades) {
+                    GameTextUtilities.drawDirectTextAlign(
+                        receiver,
+                        engine,
+                        playerID,
+                        offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                        offsetY + 106,
+                        GameTextUtilities.ALIGN_TOP_MIDDLE,
+                        TABLE_SECRET_GRADE_NAME[secretGrade - 1],
+                        secretGrade == 18 ? EventReceiver.COLOR_GREEN : (secretGrade == 19 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE),
+                        2.5f
+                    );
+                } else {
+                    GameTextUtilities.drawAlignedTextBlock(
+                        engine,
+                        offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                        offsetY + 106,
+                        false,
+                        secretAERBlock(secretGrade),
+                        GameTextUtilities.ALIGN_TOP_MIDDLE
+                    );
+                }
             }
         }
 
         if (engine.statc[0] > engine.field.getHeight() + 300 && getRightGrade(engine) == 10 && getLeftGrade(engine) < 10 && engine.statistics.level >= LEVEL_LIMIT) {
             if (nextTimeTextIndex == 4) {
-                GameTextUtilities.drawDirectTextAlign(
-                    receiver,
+                GameTextUtilities.drawAlignedTextBlock(
                     engine,
-                    playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
-                    offsetY + (useClassicGrades ? 332 : 324),
-                    GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
-                    "BUT, LET'S GO BETTER",
-                    EventReceiver.COLOR_ORANGE,
-                    0.7f
+                    offsetY + 326,
+                    false,
+                    new GameTextUtilities.TextBlock(
+                        GameTextUtilities.Text.custom("BUT", EventReceiver.COLOR_ORANGE, 0.7f),
+                        GameTextUtilities.Text.custom("... ", EventReceiver.COLOR_ORANGE, 0.35f),
+                        GameTextUtilities.Text.custom("LET'S GO BETTER", EventReceiver.COLOR_ORANGE, 0.7f)
+                    ),
+                    GameTextUtilities.ALIGN_MIDDLE_MIDDLE
                 );
 
                 GameTextUtilities.drawDirectTextAlign(
@@ -1604,7 +1686,7 @@ public class GradeMania4 extends DummyMode {
                     engine,
                     playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
-                    offsetY + (useClassicGrades ? 348 : 340),
+                    offsetY + 342,
                     GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
                     "NEXT TIME TO BE",
                     EventReceiver.COLOR_ORANGE,
@@ -1616,7 +1698,7 @@ public class GradeMania4 extends DummyMode {
                     engine,
                     playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
-                    offsetY + (useClassicGrades ? 364 : 356),
+                    offsetY + 358,
                     GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
                     "A " + (useClassicGrades ? "GRAND MASTER" : "10 OF 10 PLAYER") + "!",
                     EventReceiver.COLOR_ORANGE,
@@ -1628,7 +1710,7 @@ public class GradeMania4 extends DummyMode {
                     engine,
                     playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
-                    offsetY + (useClassicGrades ? 332 : 324),
+                    offsetY + 326,
                     GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
                     "NOW TRY AGAIN TO BE",
                     EventReceiver.COLOR_ORANGE,
@@ -1640,7 +1722,7 @@ public class GradeMania4 extends DummyMode {
                     engine,
                     playerID,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
-                    offsetY + (useClassicGrades ? 348 : 340),
+                    offsetY + 342,
                     GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
                     "A " + (useClassicGrades ? "GRAND MASTER" : "10 OF 10 PLAYER") + "!",
                     EventReceiver.COLOR_ORANGE,
