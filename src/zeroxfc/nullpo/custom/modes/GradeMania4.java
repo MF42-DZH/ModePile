@@ -1637,9 +1637,9 @@ public class GradeMania4 extends DummyMode {
 
         final int finalGrade = getCombinedGrade(engine);
         int gradeColor = EventReceiver.COLOR_WHITE;
-
         if (finalGrade >= 20) gradeColor = EventReceiver.COLOR_YELLOW;
-        else if (finalGrade == 19) gradeColor = EventReceiver.COLOR_GREEN;
+        else if (getRightGrade(engine) >= 10) gradeColor = EventReceiver.COLOR_ORANGE;
+        else if (getRightGrade(engine) >= 9) gradeColor = EventReceiver.COLOR_GREEN;
 
         if (engine.statc[0] > engine.field.getHeight() + 150) {
             GameTextUtilities.drawDirectTextAlign(
