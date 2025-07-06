@@ -21,7 +21,7 @@ Follow the instructions in here as stated.
 
 It contains several things which are listed here:
 
-21 Gamemodes:
+22 Gamemodes:
 
 [Azullia's]
 2048 - The classic game of exponential growth in tile value.
@@ -32,6 +32,7 @@ CONSTANTRIS - Hope you can maintain speed.
 EXPRESS SHIPPING - Fill the fields! With a mouse! (Incompatible with Swing Instance.)
 EX REBORN - A remastering of a unique clone.
 FIREWORK CHALLENGE - Launch fireworks!
+GRADE MANIA 4 - If you beat GRADE MANIA 2, but GRADE MANIA 3 is too hard, try this.
 IDIOT% MODE - Spin TGM?
 JOKER - Be careful of your line clears.
 PONG - As basic and to-the-point as it gets. Keyboard-controlled.
@@ -317,6 +318,8 @@ config/rule/SRSRS.rul
 :GRADE MANIA 4
 config/rule/StandardHardAE.rul
 config/rule/Classic4.rul
+config/rule/StandardTiV2.rul
+config/rule/ClassicTi.rul
 
 Lastly add the following lines to 'modedesc_default.properties' which is in '[NullpoMino Directory]/config/lang/':
 
@@ -349,7 +352,7 @@ Folder_AZULLIA'S_MODES=Azullia's custom modes. WIP.
 Folder_MANDL27'S_MODES=MandL27's custom modes. WIP.
 
 Also in 'modedesc_JP.properties' in the same folder:
-*** NOTE: Deltatris is missing from this list. ***
+*** NOTE: Deltatris and Grade Mania 4 is missing from this list. At the moment, you'd have to provide your own translations if you're using the Japanese language setting. ***
 
 2048=\u30bf\u30a4\u30eb\u6570\u5024\u306e\u6307\u6570\u95a2\u6570\u7684\u6210\u9577\u306e\u6709\u540d\u306a\u30b2\u30fc\u30e0\u3067\u3059\u3002
 ACCELERATOR=\u30de\u30e9\u30bd\u30f3\u3001\u3059\u3070\u3084\u304f\u904a\u3070\u306a\u3044\u3068\u3044\u3051\u306a\u3044\uff01
@@ -375,7 +378,6 @@ SUBSCRIBER_CHALLENGE=\u3082\u3063\u3068\u8155\u3092\u78e8\u3051\u3000\u30a2\u30b
 Folder_NIGHTSHADE'S_MODES=Nightshade\u306e\u30e2\u30c9\u30b3\u30f3\u30c6\u30f3\u30c4\u3002\uff08\u4f5c\u696d\u4e2d\uff09
 Folder_AZULLIA'S_MODES=Azullia\u306e\u30e2\u30c9\u30b3\u30f3\u30c6\u30f3\u30c4\u3002\uff08\u4f5c\u696d\u4e2d\uff09
 Folder_MANDL27'S_MODES=\u004d\u0061\u006e\u0064\u004c\u0032\u0037\u306e\u30e2\u30c9\u30b3\u30f3\u30c6\u30f3\u30c4\u3002\uff08\u4f5c\u696d\u4e2d\uff09
-
 
 ----------
 

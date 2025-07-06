@@ -64,6 +64,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _ShakingText_ - Text that vibrates around a fixed point.
 * _SideWaveText_ - _Super Collapse II_-styled text popups.
 * _SoundLoader_ - Allows the use of custom SFX.
+* _SpeedTableBuilder_ - A more fluent way of constructing speed tables for gamemodes.
 * _StaticFlyInText_ - Similar to _FlyInOutText_, but the text does not fly back out.
 * _ValueWrapper_ - Class that holds a set of one of each primitive numbers.
 * _WeightedRandomiser_ - A weighted pseudorandom number generator. 
@@ -82,8 +83,9 @@ Click the links that are available in the mode names to get a YouTube video demo
 ### Without an IDE
 
 1. Perform steps 1-3, and 5 of the steps with IDE.
-2. Set your working directory to inside the repository.
-3. Run `build.bat` or `build.sh` depending on your OS.
+2. Set JDK 1.8.0 as the first JDK in your PATH, such that running `java --version` reports Java 1.8.0.
+3. Set your working directory to inside the repository.
+4. Run `build.bat` (Windows) or `build.sh` (Mac OS / Linux) depending on your OS.
 
 ## Installation Notes
 
@@ -112,9 +114,9 @@ Click the links that are available in the mode names to get a YouTube video demo
 
 ## Special Thanks
 
-* Oshisaure - A main inspiration for starting this modding project, a code design helper and motivator to allow this to continue.
+* [Oshisaure](https://github.com/Oshisaure) - A main inspiration for starting this modding project, a code design helper and motivator to allow this to continue.
 * Nightshade - A main inspiration for starting this modding project, a code design helper and motivator to allow this to continue.
 * GlitchyPSI - A main inspiration for starting this modding project, a code design helper (esp. for allowing the adaptation of their custom sound loader code) and motivator to allow this to continue.
-* Akari - A main inspiration for starting this modding project (see *Idiot% Mode* above) and motivator to allow this to continue and for providing Japanese translations of the mode descriptions.
+* [Akari](https://github.com/sleepyakari) - A main inspiration for starting this modding project (see *Idiot% Mode* above) and motivator to allow this to continue and for providing Japanese translations of the mode descriptions.
 * The original creator of *NullpoMino*, NullNoName.
 * All others that worked on *NullpoMino* - For helping to develop the game into the extensible platform we know today.
