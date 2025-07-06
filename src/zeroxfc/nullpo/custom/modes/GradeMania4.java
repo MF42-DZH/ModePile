@@ -153,7 +153,7 @@ public class GradeMania4 extends DummyMode {
 
         return new GameTextUtilities.TextBlock(
             GameTextUtilities.Text.custom(String.valueOf(left), color, 2f),
-            GameTextUtilities.Text.custom(" OF ", color, 1.25f),
+            GameTextUtilities.Text.custom(" OF ", color, 1f),
             GameTextUtilities.Text.custom(String.valueOf(right), color, 2f)
         );
     }
@@ -241,7 +241,7 @@ public class GradeMania4 extends DummyMode {
 
         return new GameTextUtilities.TextBlock(
             GameTextUtilities.Text.custom(String.valueOf(left), color, scale * 2f),
-            GameTextUtilities.Text.custom(" OF ", color, scale * 1.25f),
+            GameTextUtilities.Text.custom(" OF ", color, scale * 1f),
             GameTextUtilities.Text.custom(String.valueOf(right), color, scale * 2f)
         );
     }
