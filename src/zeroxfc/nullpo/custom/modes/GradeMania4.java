@@ -105,24 +105,57 @@ public class GradeMania4 extends DummyMode {
 
     private static final int HEADER_COLOUR = EventReceiver.COLOR_BLUE;
 
-    private static String getAER(int left, int right) {
-        return left + " OF " + right;
+//    private static String getAER(int left, int right) {
+//        return left + " OF " + right;
+//    }
+
+    private static GameTextUtilities.TextBlock getDisplayGradeBlock(int left, int right, int color) {
+        return getDisplayGradeBlock(left, right, color, 1.0f);
+    }
+
+    private static GameTextUtilities.TextBlock getDisplayGradeBlock(int left, int right, int color, float scale) {
+        if (left + right == 19) {
+            return new GameTextUtilities.TextBlock(
+                GameTextUtilities.Text.custom("M", color, scale),
+                GameTextUtilities.Text.custom("ASTER", color, scale * 0.5f)
+            );
+        } else if (left + right == 20) {
+            return new GameTextUtilities.TextBlock(
+                GameTextUtilities.Text.custom("G", color, scale),
+                GameTextUtilities.Text.custom("RAND ", color, scale * 0.5f),
+                GameTextUtilities.Text.custom("M", color, scale),
+                GameTextUtilities.Text.custom("ASTER", color, scale * 0.5f)
+            );
+        }
+
+        return new GameTextUtilities.TextBlock(
+            GameTextUtilities.Text.custom(TABLE_CLASSIC_GRADE_NAME[left + right], color, 1f)
+        );
+    }
+
+    private static GameTextUtilities.TextBlock getDisplayAERBlock(int left, int right, int color) {
+        return getDisplayAERBlock(left, right, color, 1.0f);
+    }
+
+    private static GameTextUtilities.TextBlock getDisplayAERBlock(int left, int right, int color, float scale) {
+        return new GameTextUtilities.TextBlock(
+            GameTextUtilities.Text.custom(String.valueOf(left), color, scale),
+            GameTextUtilities.Text.custom(" OF ", color, scale * 0.5f),
+            GameTextUtilities.Text.custom(String.valueOf(right), color, scale)
+        );
     }
 
     private static GameTextUtilities.TextBlock getAERBlock(int left, int right) {
         int color = EventReceiver.COLOR_WHITE;
         if (left + right >= 20) color = EventReceiver.COLOR_YELLOW;
-        else if (left + right >= 19) color = EventReceiver.COLOR_GREEN;
+        else if (right >= 10) color = EventReceiver.COLOR_ORANGE;
+        else if (right >= 9) color = EventReceiver.COLOR_GREEN;
 
         return new GameTextUtilities.TextBlock(
             GameTextUtilities.Text.custom(String.valueOf(left), color, 2f),
             GameTextUtilities.Text.custom(" OF ", color, 1.25f),
             GameTextUtilities.Text.custom(String.valueOf(right), color, 2f)
         );
-    }
-
-    private static String getClassicGrade(int left, int right) {
-        return TABLE_CLASSIC_GRADE_NAME[left + right];
     }
 
     private static final int LEVEL_LIMIT = 999;
@@ -184,41 +217,32 @@ public class GradeMania4 extends DummyMode {
 
     private static final String HEADING_CLASSIC = "YOUR GRADE";
 
-    private static final String[] SECRET_AER = {
-        "0 OF 1",
-        "0 OF 2",
-        "0 OF 3",
-        "0 OF 4",
-        "0 OF 5",
-        "0 OF 6",
-        "0 OF 7",
-        "0 OF 8",
-        "0 OF 9",
-        "0 OF 10",
-        "1 OF 10",
-        "2 OF 10",
-        "3 OF 10",
-        "4 OF 10",
-        "5 OF 10",
-        "6 OF 10",
-        "7 OF 10",
-        "8 OF 10",
-        "9 OF 10",
-        "10 OF 10"
-    };
+    private static GameTextUtilities.TextBlock secretGradeBlock(int secretGrade) {
+        if (secretGrade < 19) {
+            return new GameTextUtilities.TextBlock(
+                GameTextUtilities.Text.custom(TABLE_SECRET_GRADE_NAME[secretGrade - 1], EventReceiver.COLOR_WHITE, 1f)
+            );
+        } else {
+            return new GameTextUtilities.TextBlock(
+                GameTextUtilities.Text.custom("G", EventReceiver.COLOR_YELLOW, 1f),
+                GameTextUtilities.Text.custom("RAND ", EventReceiver.COLOR_YELLOW, 0.5f),
+                GameTextUtilities.Text.custom("M", EventReceiver.COLOR_YELLOW, 1f),
+                GameTextUtilities.Text.custom("ASTER", EventReceiver.COLOR_YELLOW, 0.5f)
+            );
+        }
+    }
 
-    private static GameTextUtilities.TextBlock secretAERBlock(int secretGrade) {
+    private static GameTextUtilities.TextBlock secretAERBlock(int secretGrade, float scale) {
         final int right = Math.min(10, secretGrade + 1);
         final int left = Math.max(0, secretGrade - 9);
 
         int color = EventReceiver.COLOR_WHITE;
         if (secretGrade >= 19) color = EventReceiver.COLOR_YELLOW;
-        else if (secretGrade >= 18) color = EventReceiver.COLOR_GREEN;
 
         return new GameTextUtilities.TextBlock(
-            GameTextUtilities.Text.custom(String.valueOf(left), color, 2f),
-            GameTextUtilities.Text.custom(" OF ", color, 1.25f),
-            GameTextUtilities.Text.custom(String.valueOf(right), color, 2f)
+            GameTextUtilities.Text.custom(String.valueOf(left), color, scale * 2f),
+            GameTextUtilities.Text.custom(" OF ", color, scale * 1.25f),
+            GameTextUtilities.Text.custom(String.valueOf(right), color, scale * 2f)
         );
     }
 
@@ -1194,15 +1218,19 @@ public class GradeMania4 extends DummyMode {
         }
     }
 
-    private String gradeString(int left, int right) {
-        if (useClassicGrades) return TABLE_CLASSIC_GRADE_NAME[left + right];
-        else return getAER(left, right).replace(" OF ", "/");
-    }
-
-    private static int rightGradeColor(int right) {
-        if (right == 10) return EventReceiver.COLOR_ORANGE;
+    private static int rankGradeColor(int left, int right) {
+        if (left + right == 20) return EventReceiver.COLOR_YELLOW;
+        else if (right == 10) return EventReceiver.COLOR_ORANGE;
         else if (right == 9) return EventReceiver.COLOR_GREEN;
         else return EventReceiver.COLOR_WHITE;
+    }
+
+    private void drawRankGrade(GameEngine engine, int playerID, int x, int y, int left, int right, int color, float scale) {
+        GameTextUtilities.drawAlignedScoreTextBlock(
+            receiver, engine, playerID, scale == 0.5f, x, y, false,
+            useClassicGrades ? getDisplayGradeBlock(left, right, color, scale) : getDisplayAERBlock(left, right, color, scale),
+            GameTextUtilities.ALIGN_TOP_LEFT
+        );
     }
 
     @Override
@@ -1226,9 +1254,17 @@ public class GradeMania4 extends DummyMode {
                     for (int i = 0; i < RANKING_MAX; i++) {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
                         if (rankingRankPlayer != -1) {
-                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i]), (i == rankingRankPlayer) ? EventReceiver.COLOR_RED : rightGradeColor(rankingGradeRightPlayer[rankingBoard()][i]), scale);
+                            drawRankGrade(
+                                engine, playerID, 3, topY + i, rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i],
+                                (i == rankingRankPlayer) ? EventReceiver.COLOR_RED : rankGradeColor(rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i]),
+                                scale
+                            );
                         } else {
-                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i]), rightGradeColor(rankingGradeRightPlayer[rankingBoard()][i]), scale);
+                            drawRankGrade(
+                                engine, playerID, 3, topY + i, rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i],
+                                rankGradeColor(rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i]),
+                                scale
+                            );
                         }
                         receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevelPlayer[rankingBoard()][i]), (i == rankingRankPlayer), scale);
                         receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTimePlayer[rankingBoard()][i]), (i == rankingRankPlayer), scale);
@@ -1248,9 +1284,17 @@ public class GradeMania4 extends DummyMode {
                     for (int i = 0; i < RANKING_MAX; i++) {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
                         if (rankingRank != -1) {
-                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i]), (i == rankingRank) ? EventReceiver.COLOR_RED : rightGradeColor(rankingGradeRight[rankingBoard()][i]), scale);
+                            drawRankGrade(
+                                engine, playerID, 3, topY + i, rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i],
+                                (i == rankingRank) ? EventReceiver.COLOR_RED : rankGradeColor(rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i]),
+                                scale
+                            );
                         } else {
-                            receiver.drawScoreFont(engine, playerID, 3, topY + i, gradeString(rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i]), rightGradeColor(rankingGradeRight[rankingBoard()][i]), scale);
+                            drawRankGrade(
+                                engine, playerID, 3, topY + i, rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i],
+                                rankGradeColor(rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i]),
+                                scale
+                            );
                         }
                         receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevel[rankingBoard()][i]), (i == rankingRank), scale);
                         receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTime[rankingBoard()][i]), (i == rankingRank), scale);
@@ -1270,11 +1314,13 @@ public class GradeMania4 extends DummyMode {
             if (showGrade) {
                 receiver.drawScoreFont(engine, playerID, 0, 3, useClassicGrades ? "GRADE" : "AER", EventReceiver.COLOR_BLUE);
 
-                if (useClassicGrades) {
-                    receiver.drawScoreFont(engine, playerID, 0, 4, TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)], (((gradeFlash >>> 1) % 2) == 1));
-                } else {
-                    receiver.drawScoreFont(engine, playerID, 0, 4, getAER(leftGrade, rightGrade), (((gradeFlash >>> 1) % 2) == 1));
-                }
+                final int color = ((gradeFlash >>> 1) % 2) == 1 ? EventReceiver.COLOR_RED : EventReceiver.COLOR_WHITE;
+
+                GameTextUtilities.drawAlignedScoreTextBlock(
+                    receiver, engine, playerID, false, 0, 4, false,
+                    useClassicGrades ? getDisplayGradeBlock(leftGrade, rightGrade, color) : getDisplayAERBlock(leftGrade, rightGrade, color),
+                    GameTextUtilities.ALIGN_TOP_LEFT
+                );
             }
 
             receiver.drawScoreFont(engine, playerID, 0, 6, "LEVEL", EventReceiver.COLOR_BLUE);
@@ -1434,18 +1480,24 @@ public class GradeMania4 extends DummyMode {
         receiver.drawMenuFont(engine, playerID, 0, 0, "kn PAGE" + (engine.statc[1] + 1) + "/3", EventReceiver.COLOR_RED);
 
         if (engine.statc[1] == 0) {
+            final int lGrade = getLeftGrade(engine);
+            final int rGrade = getRightGrade(engine);
+
             int gcolor = EventReceiver.COLOR_WHITE;
             if (getCombinedGrade(engine) >= 20) gcolor = EventReceiver.COLOR_YELLOW;
-            else if (getCombinedGrade(engine) >= 19) gcolor = EventReceiver.COLOR_GREEN;
+            else if (rGrade >= 10) gcolor = EventReceiver.COLOR_ORANGE;
+            else if (rGrade >= 9) gcolor = EventReceiver.COLOR_GREEN;
 
             int sgcolor = EventReceiver.COLOR_WHITE;
             if (secretGrade >= 19) sgcolor = EventReceiver.COLOR_YELLOW;
-            else if (secretGrade >= 18) sgcolor = EventReceiver.COLOR_GREEN;
 
             receiver.drawMenuFont(engine, playerID, 0, 2, useClassicGrades ? "GRADE" : "AER", EventReceiver.COLOR_BLUE);
-            String strGrade = useClassicGrades ? String.format("%10s", TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)]) : String.format("%10s", getAER(getLeftGrade(engine), getRightGrade(engine)));
 
-            receiver.drawMenuFont(engine, playerID, 0, 3, strGrade, gcolor);
+            GameTextUtilities.drawAlignedMenuTextBlock(
+                receiver, engine, playerID, false, 10, 3,false,
+                useClassicGrades ? getDisplayGradeBlock(lGrade, rGrade, gcolor) : getDisplayAERBlock(lGrade, rGrade, gcolor),
+                GameTextUtilities.ALIGN_TOP_RIGHT
+            );
 
             drawResultStats(
                 engine, playerID, receiver, 4, EventReceiver.COLOR_BLUE,
@@ -1455,10 +1507,18 @@ public class GradeMania4 extends DummyMode {
             if (secretGrade > 4) {
                 if (useClassicGrades) {
                     receiver.drawMenuFont(engine, playerID, 0, 14, "S. GRADE", EventReceiver.COLOR_BLUE);
-                    receiver.drawMenuFont(engine, playerID, 0, 15, String.format("%10s", TABLE_SECRET_GRADE_NAME[secretGrade - 1]), sgcolor);
+                    GameTextUtilities.drawAlignedMenuTextBlock(
+                        receiver, engine, playerID, false, 10, 15, false,
+                        secretGradeBlock(secretGrade),
+                        GameTextUtilities.ALIGN_TOP_RIGHT
+                    );
                 } else {
                     receiver.drawMenuFont(engine, playerID, 0, 14, "S. AER", EventReceiver.COLOR_BLUE);
-                    receiver.drawMenuFont(engine, playerID, 0, 15, String.format("%10s", SECRET_AER[secretGrade]), sgcolor);
+                    GameTextUtilities.drawAlignedMenuTextBlock(
+                        receiver, engine, playerID, false, 10, 15, false,
+                        secretAERBlock(secretGrade, 0.5f),
+                        GameTextUtilities.ALIGN_TOP_RIGHT
+                    );
                 }
             }
         } else if (engine.statc[1] == 1) {
@@ -1557,6 +1617,15 @@ public class GradeMania4 extends DummyMode {
         GameTextUtilities.Text.custom("ASTER", EventReceiver.COLOR_YELLOW, 1.25f)
     );
 
+    private GameTextUtilities.TextBlock masterTextBlock(int left, int right) {
+        int color = right == 10 ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
+
+        return new GameTextUtilities.TextBlock(
+            GameTextUtilities.Text.custom("M", color, 2.5f),
+            GameTextUtilities.Text.custom("ASTER", color, 1.25f)
+        );
+    }
+
     @Override
     public void renderGameOver(GameEngine engine, int playerID) {
         int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
@@ -1597,7 +1666,7 @@ public class GradeMania4 extends DummyMode {
         }
 
         if (engine.statc[0] > engine.field.getHeight() + 240) {
-            if (useClassicGrades && getCombinedGrade(engine) < 20) {
+            if (useClassicGrades && getCombinedGrade(engine) < 19) {
                 GameTextUtilities.drawDirectTextAlign(
                     engine,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
@@ -1607,13 +1676,22 @@ public class GradeMania4 extends DummyMode {
                     gradeColor,
                     2.5f
                 );
-            } else if (useClassicGrades) {
+            } else if (useClassicGrades && getCombinedGrade(engine) == 20) {
                 GameTextUtilities.drawAlignedTextBlock(
                     engine,
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
                     offsetY + 264,
                     false,
                     grandMasterTextBlock,
+                    GameTextUtilities.ALIGN_TOP_MIDDLE
+                );
+            } else if (useClassicGrades && getCombinedGrade(engine) == 19) {
+                GameTextUtilities.drawAlignedTextBlock(
+                    engine,
+                    offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                    offsetY + 264,
+                    false,
+                    masterTextBlock(getLeftGrade(engine), getRightGrade(engine)),
                     GameTextUtilities.ALIGN_TOP_MIDDLE
                 );
             } else {
@@ -1629,22 +1707,33 @@ public class GradeMania4 extends DummyMode {
 
             if (secretGrade > 4) {
                 if (useClassicGrades) {
-                    GameTextUtilities.drawDirectTextAlign(
-                        engine,
-                        offsetX + (16 * engine.field.getWidth() / 2) + 4,
-                        offsetY + 106,
-                        GameTextUtilities.ALIGN_TOP_MIDDLE,
-                        TABLE_SECRET_GRADE_NAME[secretGrade - 1],
-                        secretGrade == 18 ? EventReceiver.COLOR_GREEN : (secretGrade == 19 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE),
-                        2.5f
-                    );
+                    if (secretGrade < 19) {
+                        GameTextUtilities.drawDirectTextAlign(
+                            engine,
+                            offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                            offsetY + 106,
+                            GameTextUtilities.ALIGN_TOP_MIDDLE,
+                            TABLE_SECRET_GRADE_NAME[secretGrade - 1],
+                            EventReceiver.COLOR_WHITE,
+                            2.5f
+                        );
+                    } else {
+                        GameTextUtilities.drawAlignedTextBlock(
+                            engine,
+                            offsetX + (16 * engine.field.getWidth() / 2) + 4,
+                            offsetY + 106,
+                            false,
+                            grandMasterTextBlock,
+                            GameTextUtilities.ALIGN_TOP_MIDDLE
+                        );
+                    }
                 } else {
                     GameTextUtilities.drawAlignedTextBlock(
                         engine,
                         offsetX + (16 * engine.field.getWidth() / 2) + 4,
                         offsetY + 106,
                         false,
-                        secretAERBlock(secretGrade),
+                        secretAERBlock(secretGrade, 1f),
                         GameTextUtilities.ALIGN_TOP_MIDDLE
                     );
                 }
