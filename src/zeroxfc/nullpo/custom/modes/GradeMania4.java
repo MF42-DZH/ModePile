@@ -424,7 +424,7 @@ public class GradeMania4 extends DummyMode {
         pCoordList = new LinkedList<>();
         cPiece = null;
 
-        engine.comboType = GameEngine.COMBO_TYPE_DISABLE;
+        engine.comboType = GameEngine.COMBO_TYPE_NORMAL;
         engine.framecolor = GameEngine.FRAME_COLOR_BLUE;
 
         owner.backgroundStatus.bg = 0;

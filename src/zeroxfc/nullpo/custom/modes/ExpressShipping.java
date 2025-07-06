@@ -10,8 +10,8 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.*;
 import zeroxfc.nullpo.custom.modes.objects.expressshipping.*;
-import zeroxfc.nullpo.custom.modes.objects.gemswap.Effect;
-import zeroxfc.nullpo.custom.modes.objects.gemswap.ScorePopup;
+import zeroxfc.nullpo.custom.libs.effects.Effect;
+import zeroxfc.nullpo.custom.libs.effects.ScorePopup;
 
 import java.util.ArrayList;
 import java.util.Random;

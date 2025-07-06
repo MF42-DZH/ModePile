@@ -3,6 +3,7 @@ package zeroxfc.nullpo.custom.modes.objects.gemswap;
 import java.util.Random;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
+import zeroxfc.nullpo.custom.libs.effects.Effect;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 

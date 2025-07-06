@@ -14,7 +14,7 @@ import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.MouseParser;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
-import zeroxfc.nullpo.custom.modes.objects.gemswap.Effect;
+import zeroxfc.nullpo.custom.libs.effects.Effect;
 import zeroxfc.nullpo.custom.modes.objects.gemswap.GemField;
 import zeroxfc.nullpo.custom.modes.objects.gemswap.ScoreEvent;
 

@@ -1,4 +1,4 @@
-package zeroxfc.nullpo.custom.modes.objects.gemswap;
+package zeroxfc.nullpo.custom.libs.effects;
 
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
