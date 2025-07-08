@@ -3,28 +3,28 @@ package zeroxfc.nullpo.custom.modes.objects.minesweeper;
 import java.util.Random;
 
 public class GameGrid {
-    public static final int STATE_SAFE = 0,
-        STATE_MINE = 1,
-        STATE_ALREADY_OPEN = 2;
     private final int length;
     private final int height;
     private final int squares;
     private final int mines;
     private final float minePercent;
     private final Random randomizer;
-    public GridSpace[][] contents;
+    private GridSpace[][] contents;
 
-    public GameGrid() {
-        this(10, 10, 0.1f, 0);
+    private int version;
+
+    public GameGrid(int version) {
+        this(10, 10, 0.1f, 0, version);
     }
 
-    public GameGrid(int sizeLength, int sizeHeight, float minePercentArg, long randseed) {
+    public GameGrid(int sizeLength, int sizeHeight, float minePercentArg, long randseed, int version) {
         randomizer = new Random(randseed);
         length = sizeLength;
         height = sizeHeight;
         squares = length * height;
         minePercent = minePercentArg;
         mines = (int) ((minePercent / 100f) * squares);
+        this.version = version;
 
         contents = new GridSpace[height][length];
 
@@ -37,17 +37,23 @@ public class GameGrid {
 
     public void generateMines(int excludeX, int excludeY) {
         for (int i = 0; i < mines; i++) {
-            int TestX, TestY;
-            int RollCount = 0;
+            int testX, testY;
 
-            do {
-                TestX = randomizer.nextInt(length);
-                TestY = randomizer.nextInt(height);
-                RollCount++;
-            } while (getSurroundingMines(TestX, TestY) >= 3 && RollCount < 6);
+            if (version < 2) {
+                int rollCount = 0;
 
-            if (!contents[TestY][TestX].isMine && !(TestY == excludeY && TestX == excludeX)) {
-                contents[TestY][TestX].isMine = true;
+                do {
+                    testX = randomizer.nextInt(length);
+                    testY = randomizer.nextInt(height);
+                    rollCount++;
+                } while (getSurroundingMines(testX, testY) >= 3 && rollCount < 6);
+            } else {
+                testX = randomizer.nextInt(length);
+                testY = randomizer.nextInt(height);
+            }
+
+            if (!contents[testY][testX].isMine && !(testY == excludeY && testX == excludeX)) {
+                contents[testY][testX].isMine = true;
             } else {
                 i--;
             }
@@ -150,12 +156,12 @@ public class GameGrid {
         }
     }
 
-    public int uncoverAt(int x, int y) {
+    public Square uncoverAt(int x, int y) {
         if (!contents[y][x].flagged && !contents[y][x].uncovered && !contents[y][x].question) {
             contents[y][x].uncovered = true;
 
             if (contents[y][x].isMine) {
-                return STATE_MINE;
+                return Square.MINE;
             } else {
                 if (contents[y][x].surroundingMines == 0) {
                     int[][] testLocations = { { -1, -1 }, { 0, -1 }, { 1, -1 },
@@ -173,30 +179,31 @@ public class GameGrid {
                     }
                 }
 
-                return STATE_SAFE;
+                return Square.SAFE;
             }
         }
 
-        return STATE_ALREADY_OPEN;
+        return Square.ALREADY_OPEN;
     }
 
-    public int cycleState(int x, int y) {
+    public Square cycleState(int x, int y) {
         if (!contents[y][x].uncovered) {
             if (!contents[y][x].flagged && !contents[y][x].question) {
                 contents[y][x].flagged = true;
                 contents[y][x].question = false;
-                return 0;
+                return Square.SAFE;
             } else if (contents[y][x].flagged && !contents[y][x].question) {
                 contents[y][x].flagged = false;
                 contents[y][x].question = true;
-                return 0;
+                return Square.SAFE;
             } else if (!contents[y][x].flagged && contents[y][x].question) {
                 contents[y][x].flagged = false;
                 contents[y][x].question = false;
-                return 0;
+                return Square.SAFE;
             }
         }
-        return 1;
+
+        return Square.MINE;
     }
 
     public GridSpace getSquareAt(int x, int y) {
@@ -245,5 +252,10 @@ public class GameGrid {
 
     public int getHeight() {
         return height;
+    }
+
+    // Representation of a square.
+    public enum Square {
+        SAFE, MINE, ALREADY_OPEN
     }
 }

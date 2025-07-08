@@ -11,6 +11,7 @@ import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
@@ -20,7 +21,8 @@ public class Minesweeper extends DummyMode {
     private static final int MAX_DIM = 20;
 
     private static final int TIMEBONUS_SQUARE = 9;
-    private static final int headerColour = EventReceiver.COLOR_YELLOW;
+    private static final int HEADER_COLOUR = EventReceiver.COLOR_YELLOW;
+
     private GameGrid mainGrid;
     private int length, height, cursorX, cursorY, cursorScreenX, cursorScreenY, offsetX, offsetY;
     private Block[][] blockGrid;
@@ -33,10 +35,13 @@ public class Minesweeper extends DummyMode {
     private int currentLimit;
     private int numberOfCover;
     private ProfileProperties playerProperties;
-    private String PLAYER_NAME;
+    private String playerName;
 
     private EventReceiver receiver;
     private GameManager owner;
+
+    private static final int CURRENT_VERSION = 2;
+    private int version;
 
     @Override
     public String getName() {
@@ -73,17 +78,21 @@ public class Minesweeper extends DummyMode {
         blockGrid = null;
 
         if (playerProperties == null) {
-            playerProperties = new ProfileProperties(headerColour);
+            playerProperties = new ProfileProperties(HEADER_COLOUR);
         }
 
         if (!owner.replayMode) {
             loadSetting(owner.modeConfig);
 
-            PLAYER_NAME = "";
+            playerName = "";
+            version = CURRENT_VERSION;
         } else {
             loadSetting(owner.replayProp);
 
-            PLAYER_NAME = owner.replayProp.getProperty("minesweeper.playerName", "");
+            playerName = owner.replayProp.getProperty("minesweeper.playername", "");
+            version = owner.replayProp.getProperty("minesweeper.version", 1);
+
+            Logger.getLogger(Minesweeper.class).info("NAME: " + playerName);
         }
 
         engine.owner.backgroundStatus.bg = bg;
@@ -94,7 +103,7 @@ public class Minesweeper extends DummyMode {
         if (mainGrid != null) mainGrid = null;
 
         // Menu
-        if (engine.owner.replayMode == false) {
+        if (!engine.owner.replayMode) {
             // Configuration changes
             int change = updateCursor(engine, 5, playerID);
 
@@ -156,12 +165,12 @@ public class Minesweeper extends DummyMode {
             // Cancel
             if (engine.ctrl.isPush(Controller.BUTTON_B)) {
                 engine.quitflag = true;
-                playerProperties = new ProfileProperties(headerColour);
+                playerProperties = new ProfileProperties(HEADER_COLOUR);
             }
 
             // New acc
             if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
-                playerProperties = new ProfileProperties(headerColour);
+                playerProperties = new ProfileProperties(HEADER_COLOUR);
                 engine.playSE("decide");
 
                 engine.stat = GameEngine.STAT_CUSTOM;
@@ -232,7 +241,7 @@ public class Minesweeper extends DummyMode {
 
             firstClick = true;
             localRand = new Random(engine.randSeed);
-            mainGrid = new GameGrid(length, height, minePercentage, engine.randSeed);
+            mainGrid = new GameGrid(length, height, minePercentage, engine.randSeed, version);
 
             engine.ruleopt.fieldWidth = Math.min(length, MAX_DIM);
             engine.ruleopt.fieldHeight = Math.min(height, MAX_DIM);
@@ -268,7 +277,6 @@ public class Minesweeper extends DummyMode {
             engine.resetStatc();
             if (!engine.readyDone) {
                 engine.startTime = System.nanoTime();
-                //startTime = System.nanoTime()/1000000L;
             }
             engine.readyDone = true;
             return true;
@@ -371,8 +379,6 @@ public class Minesweeper extends DummyMode {
     @Override
     public boolean onCustom(GameEngine engine, int playerID) {
         if (engine.gameActive) {
-            // Block mine = new Block(Block.BLOCK_COLOR_GEM_RED, engine.getSkin(), Block.BLOCK_ATTRIBUTE_VISIBLE);
-            // Block open = new Block(Block.BLOCK_COLOR_GRAY, engine.getSkin(), Block.BLOCK_ATTRIBUTE_VISIBLE);
             Block dummyBlock = new Block(Block.BLOCK_COLOR_GEM_RED);
 
             int changeX = 0;
@@ -414,7 +420,7 @@ public class Minesweeper extends DummyMode {
             cursorScreenX += changeX;
             cursorScreenY += changeY;
 
-            if (length > 20) {
+            if (length > MAX_DIM) {
                 if (cursorX == 0) {
                     cursorScreenX = 0;
                     offsetX = 0;
@@ -432,7 +438,7 @@ public class Minesweeper extends DummyMode {
                 cursorScreenX = cursorX;
             }
 
-            if (height > 20) {
+            if (height > MAX_DIM) {
                 if (cursorY == 0) {
                     cursorScreenY = 0;
                     offsetY = 0;
@@ -452,10 +458,11 @@ public class Minesweeper extends DummyMode {
 
             // IN ORDER: cycle state, uncover, chord uncover, chord flag
 
-            int res;
+            GameGrid.Square res;
             if (engine.ctrl.isPush(Controller.BUTTON_B)) {
                 res = mainGrid.cycleState(cursorX, cursorY);
-                if (res == 0) {
+
+                if (res == GameGrid.Square.SAFE) {
                     engine.playSE("hold");
                 } else {
                     engine.playSE("holdfail");
@@ -468,12 +475,11 @@ public class Minesweeper extends DummyMode {
 
                 res = mainGrid.uncoverAt(cursorX, cursorY);
                 switch (res) {
-                    case GameGrid.STATE_ALREADY_OPEN:
+                    case ALREADY_OPEN:
                         engine.playSE("holdfail");
                         break;
-                    case GameGrid.STATE_MINE:
+                    case MINE:
                         engine.playSE("explosion" + (localRand.nextInt(4) + 1));
-                        // receiver.blockBreak(engine, playerID, cursorX, cursorY, dummyBlock);
                         mainGrid.uncoverAllMines();
 
                         updateBlockGrid(engine);
@@ -487,18 +493,12 @@ public class Minesweeper extends DummyMode {
                             }
                         }
 
-                        //				for (int y = 0; y < height; y++) {
-                        //					for (int x = 0; x < length; x++) {
-                        //						if (mainGrid.getSquareAt(x, y).isMine) engine.field.getBlock(x, y).copy(mine);
-                        //					}
-                        //				}
-
                         engine.gameEnded();
                         engine.resetStatc();
                         engine.stat = GameEngine.STAT_GAMEOVER;
 
                         return true;
-                    case GameGrid.STATE_SAFE:
+                    case SAFE:
                         if (numberOfCover > mainGrid.getCoveredSquares() && timeLimit > 0) {
                             int bonusCount = numberOfCover - mainGrid.getCoveredSquares();
                             currentLimit += TIMEBONUS_SQUARE * bonusCount;
@@ -525,35 +525,26 @@ public class Minesweeper extends DummyMode {
                         if (py < 0 || py >= height) continue;
 
                         res = mainGrid.uncoverAt(px, py);
-                        switch (res) {
-                            case GameGrid.STATE_MINE:
-                                engine.playSE("explosion" + (localRand.nextInt(4) + 1));
-                                mainGrid.uncoverAllMines();
+                        if (res == GameGrid.Square.MINE) {
+                            engine.playSE("explosion" + (localRand.nextInt(4) + 1));
+                            mainGrid.uncoverAllMines();
 
-                                updateBlockGrid(engine);
-                                updateEngineGrid(engine);
+                            updateBlockGrid(engine);
+                            updateEngineGrid(engine);
 
-                                for (int y = 0; y < (height > 20 ? MAX_DIM : height); y++) {
-                                    for (int x = 0; x < (length > 20 ? MAX_DIM : length); x++) {
-                                        if (engine.field.getBlock(x, y).color == Block.BLOCK_COLOR_GEM_RED) {
-                                            receiver.blockBreak(engine, playerID, x, y, dummyBlock);
-                                        }
+                            for (int y = 0; y < (height > 20 ? MAX_DIM : height); y++) {
+                                for (int x = 0; x < (length > 20 ? MAX_DIM : length); x++) {
+                                    if (engine.field.getBlock(x, y).color == Block.BLOCK_COLOR_GEM_RED) {
+                                        receiver.blockBreak(engine, playerID, x, y, dummyBlock);
                                     }
                                 }
+                            }
 
-                                //						for (int y = 0; y < height; y++) {
-                                //							for (int x = 0; x < length; x++) {
-                                //								if (mainGrid.getSquareAt(x, y).isMine) engine.field.getBlock(x, y).copy(mine);
-                                //							}
-                                //						}
+                            engine.gameEnded();
+                            engine.resetStatc();
+                            engine.stat = GameEngine.STAT_GAMEOVER;
 
-                                engine.gameEnded();
-                                engine.resetStatc();
-                                engine.stat = GameEngine.STAT_GAMEOVER;
-
-                                return true;
-                            default:
-                                break;
+                            return true;
                         }
                     }
                     if (numberOfCover > mainGrid.getCoveredSquares() && timeLimit > 0) {
@@ -626,12 +617,6 @@ public class Minesweeper extends DummyMode {
                 updateBlockGrid(engine);
                 updateEngineGrid(engine);
 
-                //			for (int y = 0; y < height; y++) {
-                //				for (int x = 0; x < length; x++) {
-                //					if (mainGrid.getSquareAt(x, y).uncovered) engine.field.getBlock(x, y).copy(open);
-                //				}
-                //			}
-
                 engine.gameEnded();
                 engine.stat = GameEngine.STAT_EXCELLENT;
                 engine.ending = 1;
@@ -645,7 +630,7 @@ public class Minesweeper extends DummyMode {
         } else {
             engine.isInGame = true;
 
-            boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+            playerProperties.loginScreen.updateScreen(engine, playerID);
             if (playerProperties.isLoggedIn()) {
                 loadSettingPlayer(playerProperties);
             }
@@ -701,14 +686,13 @@ public class Minesweeper extends DummyMode {
         receiver.drawScoreFont(engine, playerID, ix, 1, "(" + (int) (length * height * (minePercentage / 100f)) + " MINES)", EventReceiver.COLOR_BLUE);
 
 
-        if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false))) {
+        if (((engine.stat == GameEngine.STAT_SETTING) || (engine.stat == GameEngine.STAT_RESULT)) && !owner.replayMode) {
             if (playerProperties.isLoggedIn()) {
                 receiver.drawScoreFont(engine, playerID, ix, 3, "PLAYER", EventReceiver.COLOR_BLUE);
-                receiver.drawScoreFont(engine, playerID, ix, 4, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, ix, 4, GameTextUtilities.Text.ofBig(playerProperties.getNameDisplay()));
             } else {
                 receiver.drawScoreFont(engine, playerID, ix, 3, "LOGIN STATUS", EventReceiver.COLOR_BLUE);
-                if (!playerProperties.isLoggedIn())
-                    receiver.drawScoreFont(engine, playerID, ix, 4, "(NOT LOGGED IN)\n(E:LOG IN)");
+                if (!playerProperties.isLoggedIn()) receiver.drawScoreFont(engine, playerID, ix, 4, "(NOT LOGGED IN)\n(E:LOG IN)");
             }
         } else if (engine.stat == GameEngine.STAT_CUSTOM && !engine.gameActive) {
             playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
@@ -732,10 +716,6 @@ public class Minesweeper extends DummyMode {
                 if (proportion <= 0.75f) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
                 if (proportion <= 0.5f) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
                 if (proportion <= 0.25f) engine.meterColor = GameEngine.METER_COLOR_GREEN;
-
-                // Block covered = new Block(Block.BLOCK_COLOR_BLUE, engine.getSkin(), Block.BLOCK_ATTRIBUTE_VISIBLE | Block.BLOCK_ATTRIBUTE_OUTLINE);
-                // Block open = new Block(Block.BLOCK_COLOR_GRAY, engine.getSkin(), Block.BLOCK_ATTRIBUTE_VISIBLE);
-                // Block mine = new Block(Block.BLOCK_COLOR_GEM_RED, engine.getSkin(), Block.BLOCK_ATTRIBUTE_VISIBLE);
 
                 if (engine.stat == GameEngine.STAT_CUSTOM) {
                     if (height <= MAX_DIM && length <= MAX_DIM) {
@@ -821,9 +801,11 @@ public class Minesweeper extends DummyMode {
                 }
             }
 
-            if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
-                receiver.drawScoreFont(engine, playerID, 0, 20, "PLAYER", EventReceiver.COLOR_BLUE);
-                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 21, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
+            if (playerProperties.isLoggedIn() || !playerName.isEmpty()) {
+                final int baseY = timeLimit > 0 ? 12 : 9;
+
+                receiver.drawScoreFont(engine, playerID, 0, baseY, "PLAYER", EventReceiver.COLOR_BLUE);
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, baseY + 1, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
             }
         }
     }
@@ -849,8 +831,13 @@ public class Minesweeper extends DummyMode {
     @Override
     public void saveReplay(GameEngine engine, int playerID, CustomProperties prop) {
         saveSetting(prop);
+        prop.setProperty("minesweeper.version", CURRENT_VERSION);
 
-        if ((owner.replayMode == false)) {
+        if (playerProperties.isLoggedIn()) {
+            prop.setProperty("minesweeper.playername", playerProperties.getNameDisplay());
+        }
+
+        if (!owner.replayMode) {
             receiver.saveModeConfig(owner.modeConfig);
         }
     }
