@@ -1,5 +1,6 @@
 package zeroxfc.nullpo.custom.libs;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.IntFunction;
@@ -145,66 +146,73 @@ public class SpeedTableBuilder {
             throw new IllegalStateException("One or more value tables are empty!");
         }
 
-        final List<Integer> localGravityNumeratorValues = new LinkedList<>(this.gravityNumeratorValues);
-        final List<Integer> localGravityDenominatorValues = new LinkedList<>(this.gravityDenominatorValues);
-        final List<Integer> localGravityLevels = new LinkedList<>(this.gravityLevels);
+        final List<Integer> localGravityNumeratorValues = new ArrayList<>(this.gravityNumeratorValues);
+        final List<Integer> localGravityDenominatorValues = new ArrayList<>(this.gravityDenominatorValues);
+        final List<Integer> localGravityLevels = new ArrayList<>(this.gravityLevels);
 
-        final List<Integer> localAreValues = new LinkedList<>(this.areValues);
-        final List<Integer> localAreLevels = new LinkedList<>(this.areLevels);
+        final List<Integer> localAreValues = new ArrayList<>(this.areValues);
+        final List<Integer> localAreLevels = new ArrayList<>(this.areLevels);
 
-        final List<Integer> localLineAreValues = new LinkedList<>(this.lineAreValues);
-        final List<Integer> localLineAreLevels = new LinkedList<>(this.lineAreLevels);
+        final List<Integer> localLineAreValues = new ArrayList<>(this.lineAreValues);
+        final List<Integer> localLineAreLevels = new ArrayList<>(this.lineAreLevels);
 
-        final List<Integer> localLineDelayValues = new LinkedList<>(this.lineDelayValues);
-        final List<Integer> localLineDelayLevels = new LinkedList<>(this.lineDelayLevels);
+        final List<Integer> localLineDelayValues = new ArrayList<>(this.lineDelayValues);
+        final List<Integer> localLineDelayLevels = new ArrayList<>(this.lineDelayLevels);
 
-        final List<Integer> localLockDelayValues = new LinkedList<>(this.lockDelayValues);
-        final List<Integer> localLockDelayLevels = new LinkedList<>(this.lockDelayLevels);
+        final List<Integer> localLockDelayValues = new ArrayList<>(this.lockDelayValues);
+        final List<Integer> localLockDelayLevels = new ArrayList<>(this.lockDelayLevels);
 
-        final List<Integer> localDasValues = new LinkedList<>(this.dasValues);
-        final List<Integer> localDasLevels = new LinkedList<>(this.dasLevels);
+        final List<Integer> localDasValues = new ArrayList<>(this.dasValues);
+        final List<Integer> localDasLevels = new ArrayList<>(this.dasLevels);
 
         return (level) -> {
             final SpeedParam speed = new SpeedParam();
 
+            speed.gravity = localGravityNumeratorValues.get(localGravityNumeratorValues.size() - 1);
+            speed.denominator = localGravityDenominatorValues.get(localGravityDenominatorValues.size() - 1);
             for (int i = 0; i < localGravityLevels.size(); i++) {
-                if (localGravityLevels.get(i) < level) continue;
+                if (localGravityLevels.get(i) <= level) continue;
 
                 speed.gravity = localGravityNumeratorValues.get(i);
                 speed.denominator = localGravityDenominatorValues.get(i);
                 break;
             }
 
+            speed.are = localAreValues.get(localAreValues.size() - 1);
             for (int i = 0; i < localAreLevels.size(); i++) {
-                if (localAreLevels.get(i) < level) continue;
+                if (localAreLevels.get(i) <= level) continue;
 
                 speed.are = localAreValues.get(i);
                 break;
             }
 
+            speed.areLine = localLineAreValues.get(localLineAreValues.size() - 1);
             for (int i = 0; i < localLineAreLevels.size(); i++) {
-                if (localLineAreLevels.get(i) < level) continue;
+                if (localLineAreLevels.get(i) <= level) continue;
 
                 speed.areLine = localLineAreValues.get(i);
                 break;
             }
 
+            speed.lineDelay = localLineDelayValues.get(localLineDelayValues.size() - 1);
             for (int i = 0; i < localLineDelayLevels.size(); i++) {
-                if (localLineDelayLevels.get(i) < level) continue;
+                if (localLineDelayLevels.get(i) <= level) continue;
 
                 speed.lineDelay = localLineDelayValues.get(i);
                 break;
             }
 
+            speed.lockDelay = localLockDelayValues.get(localLineDelayValues.size() - 1);
             for (int i = 0; i < localLockDelayLevels.size(); i++) {
-                if (localLockDelayLevels.get(i) < level) continue;
+                if (localLockDelayLevels.get(i) <= level) continue;
 
                 speed.lockDelay = localLockDelayValues.get(i);
                 break;
             }
 
+            speed.das = localDasValues.get(localDasValues.size() - 1);
             for (int i = 0; i < localDasLevels.size(); i++) {
-                if (localDasLevels.get(i) < level) continue;
+                if (localDasLevels.get(i) <= level) continue;
 
                 speed.das = localDasValues.get(i);
                 break;

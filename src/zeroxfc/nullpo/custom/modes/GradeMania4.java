@@ -33,7 +33,7 @@ import zeroxfc.nullpo.custom.libs.particles.SurfaceSparks;
 public class GradeMania4 extends DummyMode {
     private static final Logger log = Logger.getLogger(GradeMania4.class);
 
-    private static final int CURRENT_VERSION = 0;
+    private static final int CURRENT_VERSION = 1;
 
     private static final IntFunction<SpeedParam> SPEED_TABLE = new SpeedTableBuilder()
         .addGravity(4, 256, 30)
@@ -87,6 +87,58 @@ public class GradeMania4 extends DummyMode {
         .addDAS(7, Integer.MAX_VALUE)
         .buildSpeedTable();
 
+    private static final IntFunction<SpeedParam> SPEED_TABLE_BROKEN = new SpeedTableBuilder()
+        .addGravity(4, 256, 31)
+        .addGravity(6, 256, 36)
+        .addGravity(8, 256, 41)
+        .addGravity(10, 256, 51)
+        .addGravity(12, 256, 61)
+        .addGravity(16, 256, 71)
+        .addGravity(32, 256, 81)
+        .addGravity(48, 256, 91)
+        .addGravity(64, 256, 101)
+        .addGravity(80, 256, 121)
+        .addGravity(96, 256, 141)
+        .addGravity(112, 256, 161)
+        .addGravity(128, 256, 171)
+        .addGravity(144, 256, 201)
+        .addGravity(4, 256, 221)
+        .addGravity(32, 256, 231)
+        .addGravity(64, 256, 234)
+        .addGravity(96, 256, 237)
+        .addGravity(128, 256, 240)
+        .addGravity(160, 256, 244)
+        .addGravity(192, 256, 248)
+        .addGravity(224, 256, 252)
+        .addGravity(256, 256, 301)
+        .addGravity(512, 256, 331)
+        .addGravity(768, 256, 361)
+        .addGravity(1024, 256, 401)
+        .addGravity(1280, 256, 421)
+        .addGravity(1024, 256, 451)
+        .addGravity(768, 256, 501)
+        .addGravity(-1, 256, Integer.MAX_VALUE)
+        .addARE(23, 701)
+        .addARE(14, 801)
+        .addARE(10, 901)
+        .addARE(10, Integer.MAX_VALUE)
+        .addLineARE(23, 601)
+        .addLineARE(14, 701)
+        .addLineARE(10, 801)
+        .addLineARE(4, 901)
+        .addLineARE(4, Integer.MAX_VALUE)
+        .addLineDelay(40, 501)
+        .addLineDelay(25, 601)
+        .addLineDelay(16, 701)
+        .addLineDelay(12, 801)
+        .addLineDelay(6, 901)
+        .addLineDelay(6, Integer.MAX_VALUE)
+        .addLockDelay(31, Integer.MAX_VALUE)
+        .addDAS(15, 501)
+        .addDAS(9, 901)
+        .addDAS(7, Integer.MAX_VALUE)
+        .buildSpeedTable();
+
     private static final int[] TABLE_BGM_FADEOUT = { 280, 480, -1 };
 
     private static final int[] TABLE_BGM_CHANGE = { 300, 500, -1 };
@@ -104,10 +156,6 @@ public class GradeMania4 extends DummyMode {
     };
 
     private static final int HEADER_COLOUR = EventReceiver.COLOR_BLUE;
-
-//    private static String getAER(int left, int right) {
-//        return left + " OF " + right;
-//    }
 
     private static GameTextUtilities.TextBlock getDisplayGradeBlock(int left, int right, int color) {
         return getDisplayGradeBlock(left, right, color, 1.0f);
@@ -466,7 +514,6 @@ public class GradeMania4 extends DummyMode {
             loadSetting(owner.replayProp);
 
             playerName = owner.replayProp.getProperty("grademania4.playerName", "");
-            version = owner.replayProp.getProperty("grademania4.version", CURRENT_VERSION);
         }
     }
 
@@ -481,6 +528,7 @@ public class GradeMania4 extends DummyMode {
         hardDropEffect = prop.getProperty("grademania4.hardDropEffect", true);
         animatedBackgrounds = prop.getProperty("grademania4.animatedBackgrounds", false);
         sparkEffect = prop.getProperty("grademania4.sparkEffect", true);
+        version = prop.getProperty("grademania4.version", 0);
     }
 
     private void saveSetting(CustomProperties prop) {
@@ -494,6 +542,7 @@ public class GradeMania4 extends DummyMode {
         prop.setProperty("grademania4.hardDropEffect", hardDropEffect);
         prop.setProperty("grademania4.animatedBackgrounds", animatedBackgrounds);
         prop.setProperty("grademania4.sparkEffect", sparkEffect);
+        prop.setProperty("grademania4.version", version);
     }
 
     private void loadSettingPlayer(ProfileProperties prop) {
@@ -670,7 +719,7 @@ public class GradeMania4 extends DummyMode {
     private static final int EXTRA_ARE = 6;
 
     private void setSpeed(GameEngine engine) {
-        final SpeedParam speed = SPEED_TABLE.apply(engine.statistics.level);
+        final SpeedParam speed = getUsedSpeedTable().apply(engine.statistics.level);
 
         engine.speed = speed;
 
@@ -838,12 +887,17 @@ public class GradeMania4 extends DummyMode {
         return s;
     }
 
-    @Override
+    // Preserve replay compatibility.
+    private IntFunction<SpeedParam> getUsedSpeedTable() {
+        return version == 0 ? SPEED_TABLE_BROKEN : SPEED_TABLE;
+    }
+
+        @Override
     public void onFirst(GameEngine engine, int playerID) {
         pCoordList.clear();
         cPiece = null;
 
-        final SpeedParam currentParam = SPEED_TABLE.apply(engine.statistics.level);
+        final SpeedParam currentParam = getUsedSpeedTable().apply(engine.statistics.level);
 
         // Extra shortens ARE if it is longer than Extra's ARE.
         if (engine.ctrl.isPress(Controller.BUTTON_F) || alwaysExtra) {
@@ -1566,6 +1620,8 @@ public class GradeMania4 extends DummyMode {
 
             if (finalGrade >= 20) engine.playSE("cool");
             else if (finalGrade == 19) engine.playSE("medal");
+
+            log.info(String.format("AER: %s /// GRADE: %s", getLeftGrade(engine) + " OF " + getRightGrade(engine), TABLE_CLASSIC_GRADE_NAME[getCombinedGrade(engine)]));
         }
 
         if (engine.statc[0] < engine.field.getHeight() + 1) {
