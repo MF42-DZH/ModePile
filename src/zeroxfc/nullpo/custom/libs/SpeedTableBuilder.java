@@ -202,7 +202,7 @@ public class SpeedTableBuilder {
                 break;
             }
 
-            speed.lockDelay = localLockDelayValues.get(localLineDelayValues.size() - 1);
+            speed.lockDelay = localLockDelayValues.get(localLockDelayValues.size() - 1);
             for (int i = 0; i < localLockDelayLevels.size(); i++) {
                 if (localLockDelayLevels.get(i) <= level) continue;
 
