@@ -499,10 +499,10 @@ public class GradeMania4 extends DummyMode {
         rankingTimePlayer = new int[2][RANKING_MAX];
 
         if (!owner.replayMode) {
+            version = CURRENT_VERSION;
+
             loadSetting(owner.modeConfig);
             loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
-
-            version = CURRENT_VERSION;
 
             if (playerProperties.isLoggedIn()) {
                 loadSettingPlayer(playerProperties);
