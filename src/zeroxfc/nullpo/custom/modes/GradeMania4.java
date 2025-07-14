@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.function.IntFunction;
+import java.util.function.Supplier;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
@@ -84,58 +85,6 @@ public class GradeMania4 extends DummyMode {
         .addLockDelay(31, Integer.MAX_VALUE)
         .addDAS(15, 500)
         .addDAS(9, 900)
-        .addDAS(7, Integer.MAX_VALUE)
-        .buildSpeedTable();
-
-    private static final IntFunction<SpeedParam> SPEED_TABLE_BROKEN = new SpeedTableBuilder()
-        .addGravity(4, 256, 31)
-        .addGravity(6, 256, 36)
-        .addGravity(8, 256, 41)
-        .addGravity(10, 256, 51)
-        .addGravity(12, 256, 61)
-        .addGravity(16, 256, 71)
-        .addGravity(32, 256, 81)
-        .addGravity(48, 256, 91)
-        .addGravity(64, 256, 101)
-        .addGravity(80, 256, 121)
-        .addGravity(96, 256, 141)
-        .addGravity(112, 256, 161)
-        .addGravity(128, 256, 171)
-        .addGravity(144, 256, 201)
-        .addGravity(4, 256, 221)
-        .addGravity(32, 256, 231)
-        .addGravity(64, 256, 234)
-        .addGravity(96, 256, 237)
-        .addGravity(128, 256, 240)
-        .addGravity(160, 256, 244)
-        .addGravity(192, 256, 248)
-        .addGravity(224, 256, 252)
-        .addGravity(256, 256, 301)
-        .addGravity(512, 256, 331)
-        .addGravity(768, 256, 361)
-        .addGravity(1024, 256, 401)
-        .addGravity(1280, 256, 421)
-        .addGravity(1024, 256, 451)
-        .addGravity(768, 256, 501)
-        .addGravity(-1, 256, Integer.MAX_VALUE)
-        .addARE(23, 701)
-        .addARE(14, 801)
-        .addARE(10, 901)
-        .addARE(10, Integer.MAX_VALUE)
-        .addLineARE(23, 601)
-        .addLineARE(14, 701)
-        .addLineARE(10, 801)
-        .addLineARE(4, 901)
-        .addLineARE(4, Integer.MAX_VALUE)
-        .addLineDelay(40, 501)
-        .addLineDelay(25, 601)
-        .addLineDelay(16, 701)
-        .addLineDelay(12, 801)
-        .addLineDelay(6, 901)
-        .addLineDelay(6, Integer.MAX_VALUE)
-        .addLockDelay(31, Integer.MAX_VALUE)
-        .addDAS(15, 501)
-        .addDAS(9, 901)
         .addDAS(7, Integer.MAX_VALUE)
         .buildSpeedTable();
 
@@ -302,7 +251,6 @@ public class GradeMania4 extends DummyMode {
 
     // Settings
     private int version;
-    private boolean useModepileRuleset;
     private int startLevel;
     private boolean showGrade;
     private boolean useClassicGrades;
@@ -352,10 +300,6 @@ public class GradeMania4 extends DummyMode {
     private int rankingRankPlayer;
     private int[][] rankingGradeLeftPlayer, rankingGradeRightPlayer, rankingLevelPlayer, rankingTimePlayer;
 
-    private int rankingBoard() {
-        return useModepileRuleset ? 1 : 0;
-    }
-
     private AnimatedBackgroundHook[] animBgInstances;
 
     private Random fireworkRandomiser;
@@ -369,19 +313,27 @@ public class GradeMania4 extends DummyMode {
 
     // Grade recognition system.
     private int getLeftGrade(GameEngine engine) {
-        if (useModepileRuleset) {
-            return Math.min(9, fullGameQuota / 1000) + (((engine.statistics.level >= LEVEL_LIMIT) && (engine.statistics.time <= TIME_LIMIT_TEN_OF_TEN)) ? 1 : 0);
-        } else {
-            int count = 0;
+        switch (gameRuleset) {
+            case ORIGINAL:
+                {
+                    int count = 0;
 
-            for (int sectionPoint : sectionPoints) {
-                if (sectionPoint >= 1000) ++count;
-            }
+                    for (int sectionPoint : sectionPoints) {
+                        if (sectionPoint >= 1000) ++count;
+                    }
 
-            if ((engine.statistics.level >= LEVEL_LIMIT) && (engine.statistics.time <= TIME_LIMIT_TEN_OF_TEN)) ++count;
+                    if ((engine.statistics.level >= LEVEL_LIMIT) && (engine.statistics.time <= TIME_LIMIT_TEN_OF_TEN)) ++count;
 
-            return count;
+                    return count;
+                }
+            case MODEPILE:
+                return Math.min(9, fullGameQuota / 1000) + (((engine.statistics.level >= LEVEL_LIMIT) && (engine.statistics.time <= TIME_LIMIT_TEN_OF_TEN)) ? 1 : 0);
+            case UPDATED_ORIGINAL:
+                // TODO: When original rules are updated, add this in!
+                break;
         }
+
+        return 0;
     }
 
     private int getRightGrade(GameEngine engine) {
@@ -394,6 +346,32 @@ public class GradeMania4 extends DummyMode {
 
     private GameManager owner;
     private EventReceiver receiver;
+
+    private enum Ruleset {
+        ORIGINAL(0, "ORIGINAL"),
+        MODEPILE(1, "MODEPILE"),
+        UPDATED_ORIGINAL(2, "ORIGINAL V2");
+
+        private final int leaderboard;
+        private final String displayName;
+
+        Ruleset(int leaderboard, String displayName) {
+            this.leaderboard = leaderboard;
+            this.displayName = displayName;
+        }
+
+        // All rules available
+        private static final Ruleset[] RULES = new Ruleset[] { ORIGINAL, MODEPILE, UPDATED_ORIGINAL };
+        public static Ruleset[] allRules() {
+            return RULES;
+        }
+    }
+
+    private Ruleset gameRuleset;
+
+    private int rankingBoard() {
+        return gameRuleset.leaderboard;
+    }
 
     @Override
     public String getName() {
@@ -434,7 +412,7 @@ public class GradeMania4 extends DummyMode {
         engineExtraRules.softdropSurfaceLock = false;
         engineExtraRules.softdropLimit = true;
 
-        useModepileRuleset = false;
+        gameRuleset = Ruleset.ORIGINAL;
         startLevel = 0;
         showGrade = false;
         useClassicGrades = false;
@@ -517,8 +495,30 @@ public class GradeMania4 extends DummyMode {
         }
     }
 
+    private void loadRuleset(Supplier<Integer> ruleGetter, Supplier<Boolean> legacyRuleGetter) {
+        switch (ruleGetter.get()) {
+            case 0:
+                gameRuleset = Ruleset.ORIGINAL;
+                break;
+            case 1:
+                gameRuleset = Ruleset.MODEPILE;
+                break;
+            case 2:
+                gameRuleset = Ruleset.UPDATED_ORIGINAL;
+                break;
+            default:
+                if (legacyRuleGetter.get()) gameRuleset = Ruleset.MODEPILE;
+                else gameRuleset = Ruleset.ORIGINAL;
+                break;
+        }
+    }
+
     private void loadSetting(CustomProperties prop) {
-        useModepileRuleset = prop.getProperty("grademania4.customRule", false);
+        loadRuleset(
+            () -> prop.getProperty("grademania4.ruleset", -1),
+            () -> prop.getProperty("grademania4.customRule", false)
+        );
+
         startLevel = prop.getProperty("grademania4.startLevel", 0);
         showGrade = prop.getProperty("grademania4.showGrade", false);
         useClassicGrades = prop.getProperty("grademania4.useClassicGrades", false);
@@ -532,7 +532,7 @@ public class GradeMania4 extends DummyMode {
     }
 
     private void saveSetting(CustomProperties prop) {
-        prop.setProperty("grademania4.customRule", useModepileRuleset);
+        prop.setProperty("grademania4.ruleset", gameRuleset.leaderboard);
         prop.setProperty("grademania4.startLevel", startLevel);
         prop.setProperty("grademania4.showGrade", showGrade);
         prop.setProperty("grademania4.useClassicGrades", useClassicGrades);
@@ -548,7 +548,10 @@ public class GradeMania4 extends DummyMode {
     private void loadSettingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return;
 
-        useModepileRuleset = prop.getProperty("grademania4.customRule", false);
+        loadRuleset(
+            () -> prop.getProperty("grademania4.ruleset", -1),
+            () -> prop.getProperty("grademania4.customRule", false)
+        );
         startLevel = prop.getProperty("grademania4.startLevel", 0);
         showGrade = prop.getProperty("grademania4.showGrade", false);
         useClassicGrades = prop.getProperty("grademania4.useClassicGrades", false);
@@ -563,7 +566,7 @@ public class GradeMania4 extends DummyMode {
     private void saveSettingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return;
 
-        prop.setProperty("grademania4.customRule", useModepileRuleset);
+        prop.setProperty("grademania4.ruleset", gameRuleset.leaderboard);
         prop.setProperty("grademania4.startLevel", startLevel);
         prop.setProperty("grademania4.showGrade", showGrade);
         prop.setProperty("grademania4.useClassicGrades", useClassicGrades);
@@ -719,7 +722,9 @@ public class GradeMania4 extends DummyMode {
     private static final int EXTRA_ARE = 6;
 
     private void setSpeed(GameEngine engine) {
-        final SpeedParam speed = getUsedSpeedTable().apply(engine.statistics.level);
+        final SpeedParam speed = SPEED_TABLE.apply(
+            (version == 0) ? engine.statistics.level - 1 : engine.statistics.level
+        );
 
         engine.speed = speed;
 
@@ -750,7 +755,13 @@ public class GradeMania4 extends DummyMode {
 
                 switch (engine.statc[2]) {
                     case 0:
-                        useModepileRuleset = !useModepileRuleset;
+                        int newRule = gameRuleset.leaderboard + change;
+
+                        // TODO: When the updated original rules are available, remove the -1 and change the -2 to a -1.
+                        if (newRule >= Ruleset.allRules().length - 1) newRule = 0;
+                        else if (newRule < 0) newRule = Ruleset.allRules().length - 2;
+
+                        gameRuleset = Ruleset.allRules()[newRule];
                         break;
                     case 1:
                         startLevel += change;
@@ -842,7 +853,7 @@ public class GradeMania4 extends DummyMode {
     @Override
     public void renderSetting(GameEngine engine, int playerID) {
         drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_YELLOW, 0,
-            "VARIANT", useModepileRuleset ? "MODEPILE" : "ORIGINAL"
+            "VARIANT", gameRuleset.displayName
         );
         drawMenu(engine, playerID, receiver, 2, EventReceiver.COLOR_RED, 1,
             "LEVEL", String.valueOf(startLevel * 100)
@@ -887,17 +898,15 @@ public class GradeMania4 extends DummyMode {
         return s;
     }
 
-    // Preserve replay compatibility.
-    private IntFunction<SpeedParam> getUsedSpeedTable() {
-        return version == 0 ? SPEED_TABLE_BROKEN : SPEED_TABLE;
-    }
-
-        @Override
+    @Override
     public void onFirst(GameEngine engine, int playerID) {
         pCoordList.clear();
         cPiece = null;
 
-        final SpeedParam currentParam = getUsedSpeedTable().apply(engine.statistics.level);
+        // Preserve replay compatibility.
+        final SpeedParam currentParam = SPEED_TABLE.apply(
+            (version == 0) ? engine.statistics.level - 1 : engine.statistics.level
+        );
 
         // Extra shortens ARE if it is longer than Extra's ARE.
         if (engine.ctrl.isPress(Controller.BUTTON_F) || alwaysExtra) {
@@ -1074,15 +1083,30 @@ public class GradeMania4 extends DummyMode {
 
             if (lines < 3) {
                 engine.statistics.level += lines;
-                if (useModepileRuleset) fullGameQuota += 10 * lines;
             } else if (lines == 3) {
                 engine.statistics.level += 4;
-                if (useModepileRuleset) fullGameQuota += 50;
             } else {
                 engine.statistics.level += lines + (lines >>> 1);
+            }
 
-                if (useModepileRuleset) fullGameQuota += 175;
-                else sectionPoints[currentSection] += 175;
+            switch (gameRuleset) {
+                case ORIGINAL:
+                    if (lines >= 4) {
+                        sectionPoints[currentSection] += 175;
+                    }
+                    break;
+                case MODEPILE:
+                    if (lines < 3) {
+                        fullGameQuota += 10 * lines;
+                    } else if (lines == 3) {
+                        fullGameQuota += 50;
+                    } else {
+                         fullGameQuota += 175;
+                    }
+                    break;
+                case UPDATED_ORIGINAL:
+                    // TODO: When new original rules are available, implement this!
+                    break;
             }
 
             // AC bonus
@@ -1092,8 +1116,17 @@ public class GradeMania4 extends DummyMode {
                 if (!sectionAllClearAchieved[currentSection]) {
                     sectionAllClearAchieved[currentSection] = true;
 
-                    sectionPoints[currentSection] += 350;
-                    fullGameQuota += 350;
+                    switch (gameRuleset) {
+                        case ORIGINAL:
+                            sectionPoints[currentSection] += 350;
+                            break;
+                        case MODEPILE:
+                            fullGameQuota += 350;
+                            break;
+                        case UPDATED_ORIGINAL:
+                            // TODO: When new original rules are available, implement this!
+                            break;
+                    }
                 }
             }
 
@@ -1290,7 +1323,7 @@ public class GradeMania4 extends DummyMode {
     @Override
     public void renderLast(GameEngine engine, int playerID) {
         receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_BLUE);
-        receiver.drawScoreFont(engine, playerID, 0, 1, "(" + (useModepileRuleset ? "MODEPILE" : "ORIGINAL") + " RULES)", EventReceiver.COLOR_BLUE);
+        receiver.drawScoreFont(engine, playerID, 0, 1, "(" + gameRuleset.displayName + " RULES)", EventReceiver.COLOR_BLUE);
 
         if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode))) {
             if ((!owner.replayMode) && (startLevel == 0) && (!alwaysExtra) && (!always20g) && (engine.ai == null)) {
@@ -1417,29 +1450,41 @@ public class GradeMania4 extends DummyMode {
             if (showGrade && engine.ending < 2) {
                 receiver.drawScoreFont(engine, playerID, 0, 14, "QUOTA", EventReceiver.COLOR_GREEN);
 
-                if (useModepileRuleset) {
-                    receiver.drawScoreFont(engine, playerID, 0, 15, fullGameQuota + " / " + 9000, fullGameQuota >= FULL_GAME_QUOTA_LIMIT ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE);
+                switch (gameRuleset) {
+                    case ORIGINAL:
+                        {
 
-                    float value = Math.min(1f, fullGameQuota / (float) FULL_GAME_QUOTA_LIMIT);
+                            int section = engine.statistics.level / 100 - 1;
+                            if (section < 0) section = 0;
 
-                    rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
-                        RendererExtension.ALIGN_TOP_LEFT, value,
-                        4f, 2f,
-                        RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
-                    );
-                } else {
-                    int section = engine.statistics.level / 100 - 1;
-                    if (section < 0) section = 0;
+                            receiver.drawScoreFont(engine, playerID, 0, 15, sectionPoints[section] + " / " + 1000, sectionPoints[section] >= 1000 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE);
 
-                    receiver.drawScoreFont(engine, playerID, 0, 15, sectionPoints[section] + " / " + 1000, sectionPoints[section] >= 1000 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE);
+                            float value = Math.min(1f, sectionPoints[section] / 1000f);
 
-                    float value = Math.min(1f, sectionPoints[section] / 1000f);
+                            rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
+                                RendererExtension.ALIGN_TOP_LEFT, value,
+                                4f, 2f,
+                                RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
+                            );
+                        }
+                        break;
+                    case MODEPILE:
+                        {
 
-                    rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
-                        RendererExtension.ALIGN_TOP_LEFT, value,
-                        4f, 2f,
-                        RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
-                    );
+                            receiver.drawScoreFont(engine, playerID, 0, 15, fullGameQuota + " / " + 9000, fullGameQuota >= FULL_GAME_QUOTA_LIMIT ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE);
+
+                            float value = Math.min(1f, fullGameQuota / (float) FULL_GAME_QUOTA_LIMIT);
+
+                            rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
+                                RendererExtension.ALIGN_TOP_LEFT, value,
+                                4f, 2f,
+                                RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
+                            );
+                        }
+                        break;
+                    case UPDATED_ORIGINAL:
+                        // TODO: When original rules are updated, add this in!
+                        break;
                 }
             }
 
