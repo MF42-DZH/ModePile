@@ -398,7 +398,7 @@ public class GradeMania4 extends DummyMode {
             animBgInstances[9] = new BackgroundFakeScanlines(9);
         }
 
-        SoundLoader.loadSoundset(SoundLoader.LOADTYPE_FIREWORKS);
+        SoundLoader.loadSoundset(SoundLoader.SoundSet.FIREWORKS);
 
         engineBaseRules = engine.ruleopt;
         engineExtraRules = new RuleOptions(engine.ruleopt);

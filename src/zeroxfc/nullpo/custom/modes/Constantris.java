@@ -211,7 +211,7 @@ public class Constantris extends MarathonModeBase {
             netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
         }
 
-        SoundLoader.loadSoundset(SoundLoader.LOADTYPE_CONSTANTRIS);
+        SoundLoader.loadSoundset(SoundLoader.SoundSet.CONSTANTRIS);
 
         owner.backgroundStatus.bg = 0;
         engine.framecolor = GameEngine.FRAME_COLOR_YELLOW;

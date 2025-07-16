@@ -104,11 +104,20 @@ public class GameTextUtilities {
         public final String string;
         public final int colour;
         public final float scale;
+        public final int[] rgba;
 
         private Text(String string, int colour, float scale) {
             this.string = string;
             this.colour = colour;
             this.scale = scale;
+            this.rgba = new int[] { 255, 255, 255, 255 };
+        }
+
+        private Text(String string, int colour, float scale, int red, int green, int blue, int alpha) {
+            this.string = string;
+            this.colour = colour;
+            this.scale = scale;
+            this.rgba = new int[] { red, green, blue, alpha };
         }
 
         public static Text of(String string) {
@@ -138,6 +147,39 @@ public class GameTextUtilities {
         public static Text custom(String string, int colour, float scale) {
             return new Text(string, colour, scale);
         }
+
+        public static Text ofAnyColor(String string, int red, int green, int blue, int alpha) {
+            return new Text(string, EventReceiver.COLOR_WHITE, 1f, red, green, blue, alpha);
+        }
+
+        public static Text ofAnyColorSmall(String string, int red, int green, int blue, int alpha) {
+            return new Text(string, EventReceiver.COLOR_WHITE, 0.5f, red, green, blue, alpha);
+        }
+
+        public static Text ofAnyColorBig(String string, int red, int green, int blue, int alpha) {
+            return new Text(string, EventReceiver.COLOR_WHITE, 2f, red, green, blue, alpha);
+        }
+
+        public static Text customAnyColor(String string, int red, int green, int blue, int alpha, float scale) {
+            return new Text(string, EventReceiver.COLOR_WHITE, scale, red, green, blue, alpha);
+        }
+
+        public static Text ofMixColor(String string, int receiverColour, int red, int green, int blue, int alpha) {
+            return new Text(string, receiverColour, 1f, red, green, blue, alpha);
+        }
+
+        public static Text ofMixColorSmall(String string, int receiverColour, int red, int green, int blue, int alpha) {
+            return new Text(string, receiverColour, 0.5f, red, green, blue, alpha);
+        }
+
+        public static Text ofMixColorBig(String string, int receiverColour, int red, int green, int blue, int alpha) {
+            return new Text(string, receiverColour, 2f, red, green, blue, alpha);
+        }
+
+        public static Text customMixColor(String string, int receiverColour, int red, int green, int blue, int alpha, float scale) {
+            return new Text(string, receiverColour, scale, red, green, blue, alpha);
+        }
+
 
         public static Text newLine() {
             return new Text("\n", EventReceiver.COLOR_WHITE, 0f);
@@ -232,7 +274,18 @@ public class GameTextUtilities {
 
     // Single text version of the block methods.
     public static void drawDirectText(GameEngine engine, int startX, int startY, Text text) {
-        getCustomGraphics().drawString(engine, startX, startY, text.string, text.colour, text.scale);
+        getCustomGraphics().drawString(
+            engine,
+            startX,
+            startY,
+            text.string,
+            text.colour,
+            text.rgba[0],
+            text.rgba[1],
+            text.rgba[2],
+            text.rgba[3],
+            text.scale
+        );
     }
 
     public static void drawAlignedText(GameEngine engine, int startX, int startY, Text text) {
@@ -340,6 +393,10 @@ public class GameTextUtilities {
                     pinTop ? dy : dy + (int) ((maxLineScale - texts.get(i).scale) * Text.BASE_UNIT),
                     texts.get(i).string,
                     texts.get(i).colour,
+                    texts.get(i).rgba[0],
+                    texts.get(i).rgba[1],
+                    texts.get(i).rgba[2],
+                    texts.get(i).rgba[3],
                     texts.get(i).scale
                 );
 

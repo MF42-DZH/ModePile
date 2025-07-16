@@ -33,6 +33,7 @@
 package zeroxfc.nullpo.custom.libs;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Field;
@@ -54,43 +55,10 @@ public class FieldManipulation {
      * @return <code>true</code> if line clear is split. <code>false</code> otherwise.
      */
     public static boolean checkLineForSplit(Field field) {
-/*		if (field.lastLinesCleared == null){
- *			field.lastLinesCleared = new ArrayList<Block[]>();
- *		}
- *		field.lastLinesCleared.clear();
- *
- *		boolean previousFlag = false;
- *		boolean atLeastOne = false;
- *
- *		Block[] row = new Block[field.getWidth()];
- *
- *		for(int i = (field.getHiddenHeight() * -1); i < field.getHeightWithoutHurryupFloor(); i++) {
- *			boolean flag = true;
- *
- *			for(int j = 0; j < field.getWidth(); j++) {
- *				row[j] = new Block(field.getBlock(j, i));
- *				if((field.getBlockEmpty(j, i)) || (field.getBlock(j, i).getAttribute(Block.BLOCK_ATTRIBUTE_WALL))) {
- *					flag = false;
- *					break;
- *				}
- *			}
- *
- *			field.setLineFlag(i, flag);
- *
- *			if (flag != previousFlag && atLeastOne && flag) {
- *				return true;
- *			}
- *
- *			if(flag) {
- *				atLeastOne = true;
- *			}
- *
- *			previousFlag = flag;
-  		} */
         int regions = 0;
         int lines = 0;
 
-        for (int i = field.getHiddenHeight() * -1; i < field.getHeight(); i++) {
+        for (int i = field.getHiddenHeight() * -1; i < field.getHeightWithoutHurryupFloor(); i++) {
             if (field.getLineFlag(i)) lines++;
             if (lines > 0) regions++;
         }
@@ -482,6 +450,25 @@ public class FieldManipulation {
                 }
             }
         }
+    }
+
+    /** Compares if two fields are equal. */
+    public static boolean fieldEquals(Field a, Field b) {
+        if (a.getWidth() != b.getWidth()) return false;
+        if ((a.getHiddenHeight() + a.getHeight()) != (b.getHiddenHeight() + b.getHeight())) return false;
+
+        for (int y = (-1 * a.getHiddenHeight()); y < a.getHeight(); ++y) {
+            for (int x = 0; x < a.getWidth(); ++x) {
+                final Block ba = a.getBlock(x, y);
+                final Block bb = b.getBlock(x, y);
+
+                if (ba.color != bb.color || ba.attribute != bb.attribute) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -890,5 +877,64 @@ public class FieldManipulation {
             }
         }
         return field.getHiddenHeight() * -1;
+    }
+
+    /**
+     * Updates every single block's connection attributes in a field.
+     *
+     * @param field Field to connect all blocks of.
+     */
+    public static void updateAllBlockConnections(Field field) {
+        for (int y = (-1 * field.getHiddenHeight()); y < field.getHeight(); ++y) {
+            for (int x = 0; x < field.getWidth(); ++x) {
+                final Block block = field.getBlock(x, y);
+                if (block == null || block.isEmpty()) continue;
+
+                Block otherBlock = field.getBlock(x, y - 1);
+                block.setAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_UP, otherBlock != null && otherBlock.color == block.color);
+
+                otherBlock = field.getBlock(x, y + 1);
+                block.setAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_DOWN, otherBlock != null && otherBlock.color == block.color);
+
+                otherBlock = field.getBlock(x - 1, y);
+                block.setAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_LEFT, otherBlock != null && otherBlock.color == block.color);
+
+                otherBlock = field.getBlock(x + 1, y);
+                block.setAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT, otherBlock != null && otherBlock.color == block.color);
+            }
+        }
+    }
+
+    /**
+     * Performs one freefall step on the field (moves a block / stack of blocks floating above empty blocks one empty block down).
+     *
+     * @param field Field to perform freefall step on
+     * @return If a block has landed on another block
+     */
+    public static boolean freeFallStep(Field field) {
+        final Block noBlock = new Block(Block.BLOCK_COLOR_NONE);
+
+        final boolean[] fallen = new boolean[field.getWidth()];
+        boolean landed = false;
+
+        for (int y = field.getHeight() - 1; y >= (-1 * field.getHiddenHeight()) + 1; --y) {
+            for (int x = 0; x < field.getWidth(); ++x) {
+                final Block block = field.getBlock(x, y);
+                if (block == null || !block.isEmpty()) continue;
+
+                final Block blockAbove = field.getBlock(x, y - 1);
+                if (blockAbove == null || blockAbove.isEmpty()) continue;
+
+                block.copy(blockAbove);
+                blockAbove.copy(noBlock);
+
+                final Block blockBelow = field.getBlock(x, y + 1);
+                if (!fallen[x] && ((y + 1) >= field.getHeight() || (blockBelow != null && !blockBelow.isEmpty()))) landed = true;
+
+                fallen[x] = true;
+            }
+        }
+
+        return landed;
     }
 }

@@ -431,8 +431,6 @@ public class SingleDeathMarathon extends MarathonModeBase {
         engine.statistics.scoreFromHardDrop += fall * 2;
         engine.statistics.score += fall * 2;
 
-        int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
-        int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
         cPiece = new Piece(engine.nowPieceObject);
         for (int i = 1; i <= fall; i++) {
             pCoordList.add(
@@ -1529,8 +1527,8 @@ public class SingleDeathMarathon extends MarathonModeBase {
                         pts += 1600 * (engine.statistics.level + 1);
                     }
                 } else {
-                    pts = (int) (1.5 * getLineScore(lines));
-                    if (engine.b2b) pts *= 1.5;
+                    pts = getLineScore(lines * 2);
+                    if (engine.b2b) pts = (int) (pts * 1.5);
                 }
 
                 lastevent = EVENT_TSPIN_TRIPLE;

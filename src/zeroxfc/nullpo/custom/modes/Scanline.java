@@ -105,7 +105,7 @@ public class Scanline extends MarathonModeBase {
      */
     @Override
     public void playerInit(GameEngine engine, int playerID) {
-        SoundLoader.loadSoundset(SoundLoader.LOADTYPE_SCANNER);
+        SoundLoader.loadSoundset(SoundLoader.SoundSet.SCANNER);
 
         owner = engine.owner;
         receiver = engine.owner.receiver;

@@ -32,11 +32,12 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import javax.sound.sampled.Clip;
+import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.gui.sdl.ResourceHolderSDL;
 import mu.nu.nullpo.gui.sdl.SoundManagerSDL;
 import mu.nu.nullpo.gui.slick.ResourceHolder;
@@ -51,14 +52,14 @@ public class SoundLoader {
     private static final String CUSTOM_SKIN_DIRECTORY = "custom.skin.directory";
     private static final String SE_ZEROXFC = "/se/zeroxfc/";
 
-    /**
-     * Soundpack IDs
-     */
-    public static final int LOADTYPE_FIREWORKS = 0;
-    public static final int LOADTYPE_SCANNER = 1;
-    public static final int LOADTYPE_MINESWEEPER = 2;
-    public static final int LOADTYPE_COLLAPSE = 3;
-    public static final int LOADTYPE_CONSTANTRIS = 4;
+    /** Preset sound effect set identifier. */
+    public enum SoundSet {
+        FIREWORKS,
+        SCANNER,
+        MINESWEEPER,
+        COLLAPSE,
+        CONSTANTRIS
+    }
 
     /**
      * Debug log
@@ -67,23 +68,23 @@ public class SoundLoader {
 
     private SoundLoader() {}
 
-    public static void loadSoundset(int loadType) {
+    public static void loadSoundset(SoundSet loadType) {
         switch (loadType) {
-            case LOADTYPE_FIREWORKS:
+            case FIREWORKS:
                 importSound("fireworklaunch");
                 importSound("fireworkexplode");
                 break;
-            case LOADTYPE_SCANNER:
+            case SCANNER:
                 importSound("linescanned");
                 importSound("linescannermove");
                 break;
-            case LOADTYPE_MINESWEEPER:
+            case MINESWEEPER:
                 importSound("explosion1");
                 importSound("explosion2");
                 importSound("explosion3");
                 importSound("explosion4");
                 break;
-            case LOADTYPE_COLLAPSE:
+            case COLLAPSE:
                 importSound("bombexplode");
                 importSound("landing");
                 importSound("rise");
@@ -92,14 +93,97 @@ public class SoundLoader {
                 importSound("normalclear");
                 importSound("nolanding");
                 importSound("noclear");
+                importSound("bonuspop");
                 break;
-            case LOADTYPE_CONSTANTRIS:
+            case CONSTANTRIS:
                 importSound("horn");
                 importSound("timeincrease");
                 importSound("timereduce");
                 break;
             default:
                 break;
+        }
+    }
+
+    private static boolean extended = false;
+
+    /** Extends the sound effect maps' capacities in the NullpoMino runtime. */
+    @SuppressWarnings("unchecked")
+    private static void extendClipMaps() {
+        if (extended) return;
+
+        final CustomResourceHolder.Runtime holderType = CustomResourceHolder.getCurrentNullpominoRuntime();
+
+        try {
+            switch (holderType) {
+                case SLICK:
+                    {
+                        final Field cm = SoundManager.class.getDeclaredField("clipMap");
+                        final Field mc = SoundManager.class.getDeclaredField("maxClips");
+
+                        cm.setAccessible(true);
+                        mc.setAccessible(true);
+
+                        cm.set(
+                            ResourceHolder.soundManager,
+                            new HashMap<>(
+                                (HashMap<String, org.newdawn.slick.Sound>) cm.get(ResourceHolder.soundManager)
+                            )
+                        );
+                        mc.setInt(ResourceHolder.soundManager, Integer.MAX_VALUE);
+                    }
+                    break;
+                case SWING:
+                    {
+                        final Field cm = WaveEngine.class.getDeclaredField("clipMap");
+                        final Field mc = WaveEngine.class.getDeclaredField("maxClips");
+
+                        cm.setAccessible(true);
+                        mc.setAccessible(true);
+
+                        cm.set(
+                            ResourceHolderSwing.soundManager,
+                            new HashMap<>(
+                                (HashMap<String, javax.sound.sampled.Clip>) cm.get(ResourceHolderSwing.soundManager)
+                            )
+                        );
+                        mc.setInt(ResourceHolderSwing.soundManager, Integer.MAX_VALUE);
+                    }
+                    break;
+                case SDL:
+                    {
+                        final Field clm = SoundManagerSDL.class.getDeclaredField("clipMap");
+                        final Field chm = SoundManagerSDL.class.getDeclaredField("channelMap");
+                        final Field mc = SoundManagerSDL.class.getDeclaredField("maxClips");
+
+                        clm.setAccessible(true);
+                        chm.setAccessible(true);
+                        mc.setAccessible(true);
+
+                        clm.set(
+                            ResourceHolderSDL.soundManager,
+                            new HashMap<>(
+                                (HashMap<String, sdljava.mixer.MixChunk>) clm.get(ResourceHolderSDL.soundManager)
+                            )
+                        );
+                        chm.set(
+                            ResourceHolderSDL.soundManager,
+                            new HashMap<>(
+                                (HashMap<String, Integer>) chm.get(ResourceHolderSDL.soundManager)
+                            )
+                        );
+                        mc.setInt(ResourceHolderSDL.soundManager, Integer.MAX_VALUE);
+                    }
+                    break;
+                case UNKNOWN:
+                    break;
+            }
+        } catch (Exception e) {
+            log.error("Failed to extend clipmaps:");
+            log.error(e);
+        } finally {
+            log.info("Successful in extending clipmaps.");
+            extended = true;
         }
     }
 
@@ -111,6 +195,8 @@ public class SoundLoader {
      * @param soundName Name of sound in pack
      */
     private static void importSound(String soundName) {
+        extendClipMaps();
+
         String skindir = null;
         final CustomResourceHolder.Runtime holderType = CustomResourceHolder.getCurrentNullpominoRuntime();
 
@@ -142,12 +228,93 @@ public class SoundLoader {
      * @param soundName Name to store sound as
      */
     public static void importSound(String filePath, String soundName) {
+        extendClipMaps();
+
         if (ResourceHolderSwing.soundManager != null) {
             ResourceHolderSwing.soundManager.load(soundName, filePath);
         } else if (ResourceHolder.soundManager != null) {
             ResourceHolder.soundManager.load(soundName, filePath);
         } else if (ResourceHolderSDL.soundManager != null) {
             ResourceHolderSDL.soundManager.load(soundName, filePath);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static org.newdawn.slick.Sound getSlickSound(String name) {
+        try {
+            final Field cm = SoundManager.class.getDeclaredField("clipMap");
+            cm.setAccessible(true);
+
+            return ((HashMap<String, org.newdawn.slick.Sound>) cm.get(ResourceHolder.soundManager)).get(name);
+        } catch (Exception e) {
+            log.error("Unable to get Slick sound: " + name);
+            log.error(e);
+
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static javax.sound.sampled.Clip getSwingSound(String name) {
+        try {
+            final Field cm = WaveEngine.class.getDeclaredField("clipMap");
+            cm.setAccessible(true);
+
+            return ((HashMap<String, javax.sound.sampled.Clip>) cm.get(ResourceHolderSwing.soundManager)).get(name);
+        } catch (Exception e) {
+            log.error("Unable to get Swing sound: " + name);
+            log.error(e);
+
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static sdljava.mixer.MixChunk getSDLSound(String name) {
+        try {
+            final Field cm = SoundManagerSDL.class.getDeclaredField("clipMap");
+            cm.setAccessible(true);
+
+            return ((HashMap<String, sdljava.mixer.MixChunk>) cm.get(ResourceHolderSDL.soundManager)).get(name);
+        } catch (Exception e) {
+            log.error("Unable to get SDL sound: " + name);
+            log.error(e);
+
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static int getSDLChannel(String name) {
+        try {
+            final Field cm = SoundManagerSDL.class.getDeclaredField("channelMap");
+            cm.setAccessible(true);
+
+            return ((HashMap<String, Integer>) cm.get(ResourceHolderSDL.soundManager)).get(name);
+        } catch (Exception e) {
+            log.error("Unable to get SDL sound: " + name);
+            log.error(e);
+
+            return -1;
+        }
+    }
+
+    /**
+     * Play a panned sound if possible.
+     *
+     * @param engine    Fallback game engine.
+     * @param soundName Sound name in memory to play.
+     * @param balance   Audio balance (-1.0 = left, 0 = neutral, 1.0 = right).
+     */
+    public static void playPannedSound(GameEngine engine, String soundName, float balance) {
+        final float pan = MathHelper.clamp(balance, -1f, 1f);
+        final CustomResourceHolder.Runtime holderType = CustomResourceHolder.getCurrentNullpominoRuntime();
+
+        if (holderType == CustomResourceHolder.Runtime.SLICK) {
+            final Sound slSound = getSlickSound(soundName);
+            if (slSound != null) slSound.playAt(pan, 0f, 0f);
+        } else {
+            engine.playSE(soundName);
         }
     }
 

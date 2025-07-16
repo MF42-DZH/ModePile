@@ -80,7 +80,7 @@ public class SideWaveText {
     public void update() {
         sinPhase += sinFrequency * ((Math.PI * 2) / 60);
 
-        xOffset = offsetMax * Math.sin(sinPhase);
+        xOffset = offsetMax * (Math.sin(sinPhase) / 2.0);
 
         position = DoubleVector.add(position, VerticalVelocity);
 

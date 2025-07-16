@@ -249,7 +249,7 @@ public class FireworkChallenge extends DummyMode {
     public void playerInit(GameEngine engine, int playerID) {
         presses = new boolean[] { false, false, false, false, false, false, false, false, false, false };
 
-        SoundLoader.loadSoundset(SoundLoader.LOADTYPE_FIREWORKS);
+        SoundLoader.loadSoundset(SoundLoader.SoundSet.FIREWORKS);
 
         creditObject = new ScrollingMarqueeText(CREDIT_HEADINGS, CREDIT_TEXTS, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
 

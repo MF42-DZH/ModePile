@@ -480,6 +480,28 @@ public class CustomResourceHolder {
      * @param scale  Character scale
      */
     public void drawString(GameEngine engine, int x, int y, String str, int colour, float scale) {
+        drawString(engine, x, y, str, colour, 255, 255, 255, 255, scale);
+    }
+
+    /**
+     * Improved implementation of <code>NormalFont.printFont</code>, that uses all three
+     * font sizes at appropriate times, and has better support for newlines at different
+     * scale factors.
+     * <p>
+     * This version also supports post-multiplying the colour of the text.
+     *
+     * @param engine             <code>GameEngine</code> to draw with
+     * @param x                  X-coordinate (Top-Left Corner)
+     * @param y                  Y-coordinate (Top-Left Corner)
+     * @param str                String to draw
+     * @param receiverTextColour Character colour code (from <code>EventReceiver</code>)
+     * @param red                Colour multiplication red component
+     * @param green              Colour multiplication green component
+     * @param blue               Colour multiplication blue component
+     * @param alpha              Render alpha
+     * @param scale              Character scale
+     */
+    public void drawString(GameEngine engine, int x, int y, String str, int receiverTextColour, int red, int green, int blue, int alpha, float scale) {
         RuntimeImage<?> font;
         int fontBaseScale;
 
@@ -511,7 +533,7 @@ public class CustomResourceHolder {
                 dy += BASE_UNIT * scale;
             } else {
                 int sx = ((chrAt - 32) % 32) * fontBaseScale;
-                int sy = ((chrAt - 32) / 32) * fontBaseScale + (colour * 3 * fontBaseScale);
+                int sy = ((chrAt - 32) / 32) * fontBaseScale + (receiverTextColour * 3 * fontBaseScale);
 
                 drawImage(
                     engine,
@@ -525,10 +547,10 @@ public class CustomResourceHolder {
                     sy,
                     fontBaseScale,
                     fontBaseScale,
-                    255,
-                    255,
-                    255,
-                    255,
+                    red,
+                    green,
+                    blue,
+                    alpha,
                     false
                 );
 

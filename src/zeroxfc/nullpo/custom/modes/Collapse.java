@@ -1,5 +1,7 @@
 package zeroxfc.nullpo.custom.modes;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
@@ -14,13 +16,14 @@ import mu.nu.nullpo.gui.slick.MouseInput;
 import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.SideWaveText;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
-import zeroxfc.nullpo.custom.libs.ValueWrapper;
 import zeroxfc.nullpo.custom.libs.WeightedRandomiser;
 
 public class Collapse extends DummyMode {
@@ -31,6 +34,8 @@ public class Collapse extends DummyMode {
     // DONE: Do the centre-direction column gravity thing... somehow.
     // DONE: Implement mouse control if you can.
     // DONE: Implement flying score popups.
+
+    private static final int VERSION = 2;
 
     private static final int[] tableColors = {
         Block.BLOCK_COLOR_RED,
@@ -53,11 +58,11 @@ public class Collapse extends DummyMode {
     private static final int[][] tableColorWeights = {
         { 1, 1, 1, 0, 0, 0 },
         { 160, 160, 160, 0, 0, 1 },
-        { 160, 160, 160, 80, 0, 2 },
-        { 160, 160, 160, 120, 0, 3 },
+        { 160, 160, 160, 160, 0, 3 },
         { 160, 160, 160, 160, 0, 4 },
-        { 192, 192, 192, 192, 96, 11 },
-        { 204, 204, 204, 204, 204, 18 }
+        { 160, 160, 160, 160, 0, 5 },
+        { 192, 192, 192, 192, 192, 12 },
+        { 204, 204, 204, 204, 204, 20 }
     };
 
     private static final int[][] tableBombColorWeights = {
@@ -70,6 +75,7 @@ public class Collapse extends DummyMode {
         { 8, 8, 8, 8, 8, 40 }
     };
 
+    private static final int LEVEL_NEW_COLOR = 7;
     private static final int[] tableLevelWeightShift = {
         0, 3, 6, 9, 12, 15, 18, 10000
     };
@@ -109,7 +115,7 @@ public class Collapse extends DummyMode {
         400, -1
     };
 
-    private static final double bombChance = (0.01);
+    private static final double BOMB_CHANCE = (0.01);
 
     private static final int MAX_RANKING = 10;
 
@@ -152,8 +158,7 @@ public class Collapse extends DummyMode {
     private Random localRandom;
     private boolean force;
     private int lineSpawn;
-    private int lastScore, scoreToDisplay, scGetTime;
-    private double multiplier;
+    private int scoreToDisplay, scGetTime, sinceLastClear;
     private int acTime;
 
     private ProfileProperties playerProperties;
@@ -161,6 +166,8 @@ public class Collapse extends DummyMode {
     private int[][] rankingLevelPlayer;
     private int rankingRankPlayer;
     private boolean showPlayerStats;
+    private int outline;
+    private boolean shrinkPopups;
 
     /*
      * ------ MAIN METHODS ------
@@ -173,7 +180,7 @@ public class Collapse extends DummyMode {
 
     @Override
     public void playerInit(GameEngine engine, int playerID) {
-        SoundLoader.loadSoundset(SoundLoader.LOADTYPE_COLLAPSE);
+        SoundLoader.loadSoundset(SoundLoader.SoundSet.COLLAPSE);
 
         owner = engine.owner;
         receiver = engine.owner.receiver;
@@ -205,11 +212,12 @@ public class Collapse extends DummyMode {
         force = false;
         bScore = 0;
         lineSpawn = 0;
-        lastScore = 0;
         scoreToDisplay = 0;
         scGetTime = 0;
-        multiplier = 1;
+        sinceLastClear = 0;
         acTime = -1;
+        outline = GameEngine.BLOCK_OUTLINE_NONE;
+        shrinkPopups = true;
 
         resetSTextArr();
 
@@ -217,7 +225,7 @@ public class Collapse extends DummyMode {
         spawnTimerLimit = 0;
 
         nextBlocks = new Block[12];
-        resetBlockArray(engine);
+        resetBlockArray();
 
         String mainClass = CustomResourceHolder.getMainClassName();
 
@@ -254,15 +262,26 @@ public class Collapse extends DummyMode {
         }
     }
 
-    private void addSText(int score, boolean big, boolean largeclear) {
-        int offsetX = -1 * ((String.valueOf(score).length() * (big ? 32 : 16)) / 2);
-        int offsetY = -8;
+    private void addSText(GameEngine engine, int playerID, int score, boolean big, boolean largeclear) {
+        if (holderType != HOLDER_SWING) {
+            SideWaveText s = new SideWaveText(cursorX, cursorY, 1.5, !largeclear ? 0 : (big ? 24 : 16), String.valueOf(score), big, largeclear);
 
-        if (big) {
-            offsetY *= 2;
+            for (int i = 0; i < sTextArr.length; i++) {
+                if (sTextArr[i] == null) {
+                    sTextArr[i] = s;
+                    return;
+                }
+            }
+        } else {
+            addSText(engine, playerID, fieldX, fieldY, score, big, largeclear);
         }
+    }
 
-        SideWaveText s = new SideWaveText(cursorX + offsetX, cursorY + offsetY, 1.5, !largeclear ? 0 : (big ? 24 : 16), String.valueOf(score), big, largeclear);
+    private void addSText(GameEngine engine, int playerID, int flX, int flY, int score, boolean big, boolean largeclear) {
+        final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+        final int baseY = receiver.getFieldDisplayPositionX(engine, playerID) + 52;
+
+        SideWaveText s = new SideWaveText(baseX + (flX * 16) + 8, baseY + (flY * 16) + 8, 1.5, !largeclear ? 0 : (big ? 24 : 16), String.valueOf(score), big, largeclear);
 
         for (int i = 0; i < sTextArr.length; i++) {
             if (sTextArr[i] == null) {
@@ -275,9 +294,9 @@ public class Collapse extends DummyMode {
     @Override
     public boolean onSetting(GameEngine engine, int playerID) {
         // Menu
-        if (engine.owner.replayMode == false) {
+        if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 2, playerID);
+            int change = updateCursor(engine, 4, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -295,6 +314,14 @@ public class Collapse extends DummyMode {
                         bgm += change;
                         if (bgm < 0) bgm = 15;
                         if (bgm > 15) bgm = 0;
+                        break;
+                    case 3:
+                        outline += change;
+                        if (outline < GameEngine.BLOCK_OUTLINE_NONE) outline = GameEngine.BLOCK_OUTLINE_SAMECOLOR;
+                        if (outline > GameEngine.BLOCK_OUTLINE_SAMECOLOR) outline = GameEngine.BLOCK_OUTLINE_NONE;
+                        break;
+                    case 4:
+                        shrinkPopups = !shrinkPopups;
                         break;
                 }
             }
@@ -343,11 +370,33 @@ public class Collapse extends DummyMode {
 
     @Override
     public void renderSetting(GameEngine engine, int playerID) {
+        String outlineStr;
+        switch (outline) {
+            case GameEngine.BLOCK_OUTLINE_NONE:
+                outlineStr = "NONE";
+                break;
+            case GameEngine.BLOCK_OUTLINE_NORMAL:
+                outlineStr = "NORMAL";
+                break;
+            case GameEngine.BLOCK_OUTLINE_CONNECT:
+                outlineStr = "CONNECT";
+                break;
+            case GameEngine.BLOCK_OUTLINE_SAMECOLOR:
+                outlineStr = "COLOR";
+                break;
+            default:
+                outlineStr = "";
+                break;
+        }
+
         drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_RED, 0,
             "DIFFICULTY", DIFFICULTY_NAMES[difficulty]);
         drawMenu(engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE, 1,
             "BOMBS", GeneralUtil.getONorOFF(enableBombs),
             "BGM", String.valueOf(bgm));
+        drawMenu(engine, playerID, receiver, 6, EventReceiver.COLOR_PINK, 3,
+            "OUTLINE", outlineStr,
+            "POPUP SHRINK", GeneralUtil.getONorOFF(shrinkPopups));
     }
 
     @Override
@@ -360,6 +409,8 @@ public class Collapse extends DummyMode {
 
         // Initialization
         if (engine.statc[0] == 0) {
+            engine.blockOutlineType = outline;
+
             engine.ruleopt.fieldWidth = 12;
             engine.ruleopt.fieldHeight = 16;
             engine.ruleopt.fieldHiddenHeight = 1;
@@ -373,8 +424,10 @@ public class Collapse extends DummyMode {
             fieldY = -1;
             localState = -1;
             force = false;
-            lastScore = 0;
             scoreToDisplay = 0;
+            sinceLastClear = 0;
+            lastLanding = false;
+            lastMoved = false;
 
             localRandom = new Random(engine.randSeed - 1);
             wRandomEngine = new WeightedRandomiser(tableColorWeights[0], engine.randSeed);
@@ -427,7 +480,7 @@ public class Collapse extends DummyMode {
                 }
 
                 incrementField(engine);
-                resetBlockArray(engine);
+                resetBlockArray();
             }
 
             engine.playSE("rise");
@@ -494,7 +547,7 @@ public class Collapse extends DummyMode {
 
             engine.isInGame = true;
 
-            boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+            playerProperties.loginScreen.updateScreen(engine, playerID);
             if (playerProperties.isLoggedIn()) {
                 loadRankingPlayer(playerProperties);
                 loadSettingPlayer(playerProperties);
@@ -508,7 +561,7 @@ public class Collapse extends DummyMode {
 
     // DONE: Make the rest of the gamemode work.
 
-    private void clearSquares(GameEngine engine) {
+    private void clearSquares(GameEngine engine, int playerID) {
         int score = 0;
         int squares = 0;
         boolean fromBomb = false;
@@ -517,7 +570,15 @@ public class Collapse extends DummyMode {
             squares = getSquares(engine, fieldX, fieldY);
 
             if (squares >= 3) {
-                score = getClearScore(engine, squares);
+                score = getBaseScore(squares);
+
+                final boolean bigClear = (engine.statistics.level < LEVEL_NEW_COLOR && squares >= 15) || (engine.statistics.level >= LEVEL_NEW_COLOR && squares >= 10);
+
+                int multiplier = 1;
+                if (bigClear && engine.statistics.level < LEVEL_NEW_COLOR) multiplier = 2 + (engine.statistics.level + 1);
+                if (bigClear && engine.statistics.level >= LEVEL_NEW_COLOR) multiplier *= 10;
+
+                score *= multiplier;
 
                 for (int y = 0; y < engine.field.getHeight(); y++) {
                     for (int x = 0; x < engine.field.getWidth(); x++) {
@@ -527,9 +588,7 @@ public class Collapse extends DummyMode {
                     }
                 }
 
-                int u = 0;
-                if (squares >= 12) u = 1;
-                engine.playSE(u == 1 ? "bigclear" : "normalclear");
+                engine.playSE(bigClear ? "bigclear" : "normalclear");
             } else {
                 engine.playSE("noclear");
                 for (int y = 0; y < engine.field.getHeight(); y++) {
@@ -557,7 +616,7 @@ public class Collapse extends DummyMode {
                     }
                 }
 
-                score = (int) (getClearScore(engine, squares) * 0.75);
+                score = getBaseScore(squares + (squares >>> 1));
             } else {
                 squares = 0;
 
@@ -572,7 +631,7 @@ public class Collapse extends DummyMode {
                     }
                 }
 
-                score = (int) (getClearScore(engine, squares) * 0.5);
+                score = getBaseScore(squares + (squares >>> 1));
             }
 
             explode(engine);
@@ -581,31 +640,66 @@ public class Collapse extends DummyMode {
         }
 
         if (score > 0) {
-            score *= multiplier;
+            final boolean bigClear = (engine.statistics.level < LEVEL_NEW_COLOR && squares >= 15) || (engine.statistics.level >= LEVEL_NEW_COLOR && squares >= 10);
 
-            if (squares >= 6) addSText(score, fromBomb, (squares >= 12));
-            setNewLowerScore(engine);
+            if (squares >= 6) addSText(engine, playerID, score, fromBomb, bigClear);
 
             if (engine.field.isEmpty()) {
                 acTime = 0;
                 engine.playSE("bonus");
-                engine.statistics.score += 100000 * Math.pow(1.025, engine.statistics.level);
+                engine.statistics.score += 10000 * (engine.statistics.level + 1);
             }
             engine.statistics.score += score;
         }
     }
 
+    private boolean lastLanding;
+    private boolean lastMoved;
+
     private boolean stateInGame(GameEngine engine, int playerID) {
+        updateMeter(engine);
+        endLevelEmptyCounter = 0;
+        endLevelEmptyRowCounter = 0;
+
+        if (sinceLastClear > 0 && sinceLastClear % 2 == 0) {
+            final Field checkField = new Field(engine.field);
+            final boolean detectedLanding = FieldManipulation.freeFallStep(engine.field);
+
+            if (!FieldManipulation.fieldEquals(engine.field, checkField)) {
+                lastLanding = detectedLanding;
+                lastMoved = false;
+            } else {
+                if (lastLanding) engine.playSE("landing");
+                lastLanding = false;
+
+                if (bringColumnsCloser(engine)) {
+                    lastMoved = true;
+                } else {
+                    if (lastMoved) engine.playSE("nolanding");
+                    lastMoved = false;
+                }
+            }
+        }
+
+        // Store the animated copy of the field at the moment.
+        final Field tempFieldCopy = new Field(engine.field);
+
+        // Set up the field for clear checks.
+        engine.field.freeFall();
+        for (int i = 0; i < 6; i++) {
+            bringColumnsCloser(engine);
+        }
+
         if (holderType != HOLDER_SWING) {
             if (fieldX != -1) {
                 if (!engine.field.getBlockEmpty(fieldX, fieldY)) {
-                    clearSquares(engine);
+                    clearSquares(engine, playerID);
                 }
             }
         } else {
             if (engine.ctrl.isPush(Controller.BUTTON_A)) {
                 if (!engine.field.getBlockEmpty(fieldX, fieldY)) {
-                    clearSquares(engine);
+                    clearSquares(engine, playerID);
                 }
             }
         }
@@ -633,11 +727,10 @@ public class Collapse extends DummyMode {
         }
 
         if (brk > 0) {
-            if (engine.field.freeFall()) engine.playSE("landing");
-            else engine.playSE("nolanding");
-            for (int i = 0; i < 6; i++) {
-                bringColumnsCloser(engine);
-            }
+            sinceLastClear = 0;
+        } else {
+            // If no clear, put the animated field back in.
+            engine.field.copy(tempFieldCopy);
         }
 
         spawnTimer++;
@@ -649,7 +742,7 @@ public class Collapse extends DummyMode {
                 double coeff = localRandom.nextDouble();
                 int temp = -1;
 
-                if (coeff <= bombChance * (engine.field.getHighestBlockY() < 4 ? 3 : 1) && enableBombs && linesLeft != 1) {
+                if (coeff <= BOMB_CHANCE * (engine.field.getHighestBlockY() < 4 ? 3 : 1) && enableBombs && linesLeft != 1) {
                     temp = wRandomEngineBomb.nextInt();
 
                     nextBlocks[index] = new Block(tableBombColors[temp], engine.getSkin());
@@ -670,33 +763,24 @@ public class Collapse extends DummyMode {
                     nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
                     nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_BONE, bone);
                 }
+
+                engine.playSE("move");
             } else {
                 if (linesLeft > 0) linesLeft--;
-
-                double proportion = (double) linesLeft / tableLevelLine[engine.statistics.level];
-                if (linesLeft >= 0) {
-                    engine.meterValue = (int) (proportion * receiver.getMeterMax(engine));
-                    engine.meterColor = GameEngine.METER_COLOR_RED;
-                    if (proportion <= 0.75f) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
-                    if (proportion <= 0.5f) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
-                    if (proportion <= 0.25f) engine.meterColor = GameEngine.METER_COLOR_GREEN;
-                } else {
-                    engine.meterValue = receiver.getMeterMax(engine);
-                    engine.meterColor = GameEngine.METER_COLOR_GREEN;
-                }
+                updateMeter(engine);
 
                 if (linesLeft != 0) {
                     engine.playSE("rise");
                     incrementField(engine);
                 }
 
-                resetBlockArray(engine);
+                resetBlockArray();
 
                 if (linesLeft == 3) {
                     engine.playSE("gradeup");
                 }
 
-                multiplier = midgameSpeedSet(engine);
+                midgameSpeedSet(engine);
 
                 if (spawnTimer == 0 && engine.field.getHighestBlockY() <= 2 && engine.field.getHighestBlockY() >= 0) {
                     engine.playSE("danger");
@@ -710,7 +794,7 @@ public class Collapse extends DummyMode {
                 double coeff = localRandom.nextDouble();
                 int temp = -1;
 
-                if (coeff <= bombChance * (engine.field.getHighestBlockY() < 4 ? 3 : 1) && enableBombs && linesLeft != 1) {
+                if (coeff <= BOMB_CHANCE * (engine.field.getHighestBlockY() < 4 ? 3 : 1) && enableBombs && linesLeft != 1) {
                     temp = wRandomEngineBomb.nextInt();
 
                     if (linesLeft == 1) {
@@ -739,6 +823,12 @@ public class Collapse extends DummyMode {
         }
 
         if (linesLeft == 0) {
+            // Set up the field for level end checks.
+            engine.field.freeFall();
+            for (int i = 0; i < 6; i++) {
+                bringColumnsCloser(engine);
+            }
+
             engine.resetStatc();
             localState = LOCALSTATE_TRANSITION;
             return false;
@@ -763,10 +853,30 @@ public class Collapse extends DummyMode {
         return false;
     }
 
+    private void updateMeter(GameEngine engine) {
+        double proportion = (double) linesLeft / tableLevelLine[engine.statistics.level];
+        if (linesLeft >= 0) {
+            engine.meterValue = (int) (proportion * receiver.getMeterMax(engine));
+            engine.meterColor = GameEngine.METER_COLOR_RED;
+            if (proportion <= 0.75f) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
+            if (proportion <= 0.5f) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
+            if (proportion <= 0.25f) engine.meterColor = GameEngine.METER_COLOR_GREEN;
+        } else {
+            engine.meterValue = receiver.getMeterMax(engine);
+            engine.meterColor = GameEngine.METER_COLOR_GREEN;
+        }
+    }
+
+    private int endLevelEmpties;
+    private int endLevelEmptyRowCounter;
+    private int endLevelEmptyCounter;
+
     private boolean stateTransition(GameEngine engine, int playerID) {
-        if (engine.statc[0] > (180 + 16 * 3)) {
+        final int fillDuration = endLevelEmpties * 3;
+
+        if (engine.statc[0] > fillDuration + 180) {
             levelUp(engine, playerID, false);
-            resetBlockArray(engine);
+            resetBlockArray();
             engine.resetStatc();
 
             for (int i = 0; i < lineSpawn; i++) {
@@ -790,7 +900,7 @@ public class Collapse extends DummyMode {
                 }
 
                 incrementField(engine);
-                resetBlockArray(engine);
+                resetBlockArray();
             }
 
             engine.playSE("go");
@@ -799,32 +909,83 @@ public class Collapse extends DummyMode {
             localState = LOCALSTATE_INGAME;
             return false;
         } else if (engine.statc[0] > 0) {
-            int f = engine.statc[0] - 60;
+            final Block nblk = new Block(Block.BLOCK_COLOR_NONE);
+            nblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+            nblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+            nblk.setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, false);
 
-            if (f % 3 == 0 && f >= 0 && (15 - (f / 3)) >= -1) {
-                for (int x = 0; x < engine.field.getWidth(); x++) {
-                    int y = 15 - (f / 3);
-                    Block blk = engine.field.getBlock(x, y);
+            final Block gblk = new Block(Block.BLOCK_COLOR_GRAY);
+            gblk.skin = engine.getSkin();
+            gblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+            gblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+            gblk.setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, false);
 
-                    Block nblk = new Block(Block.BLOCK_COLOR_NONE);
-                    nblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
-                    nblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
-                    nblk.setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, false);
+            if (engine.statc[0] >= fillDuration) {
+                int f = (engine.statc[0] - fillDuration) - 60;
 
-                    if (blk != null) {
-                        if (blk.color > Block.BLOCK_COLOR_NONE) {
-                            receiver.blockBreak(engine, playerID, x, y, blk);
-                            engine.field.getBlock(x, y).copy(nblk);
+                if (f % 3 == 0 && f >= 0 && (15 - (f / 3)) >= -1) {
+                    for (int x = 0; x < engine.field.getWidth(); x++) {
+                        int y = 15 - (f / 3);
+                        Block blk = engine.field.getBlock(x, y);
+
+
+                        if (blk != null) {
+                            if (blk.color > Block.BLOCK_COLOR_NONE) {
+                                receiver.blockBreak(engine, playerID, x, y, blk);
+                                engine.field.getBlock(x, y).copy(nblk);
+                            }
+                        }
+                    }
+                }
+            } else if (engine.statc[0] % 3 == 0) {
+                boolean breakOut = false;
+
+                for (int y = 0; y < engine.field.getHeight() && !breakOut; ++y) {
+                    for (int x = 0; x < engine.field.getWidth(); ++x) {
+                        final Block blk = engine.field.getBlock(x, y);
+                        if (blk != null && blk.isEmpty()) {
+                            breakOut = true;
+                            blk.copy(gblk);
+
+                            engine.playSE("bonuspop");
+                            endLevelEmptyCounter++;
+
+                            if (x == engine.field.getWidth() - 1) {
+                                for (int x2 = 0; x2 < engine.field.getWidth(); ++x2) {
+                                    if (engine.field.getBlock(x2, y).color != Block.BLOCK_COLOR_GRAY) break;
+                                    else if (x2 == x) {
+                                        engine.playSE("gem");
+                                        endLevelEmptyRowCounter++;
+
+                                        int shownScore = getRawRowLevelClearBonus(engine, endLevelEmptyRowCounter);
+                                        if (endLevelEmptyRowCounter > 1) shownScore = getRawRowLevelClearBonus(engine, endLevelEmptyRowCounter) - getRawRowLevelClearBonus(engine, endLevelEmptyRowCounter - 1);
+
+                                        addSText(
+                                            engine, playerID,
+                                            (engine.field.getWidth() / 2) - 1, y,
+                                            shownScore,
+                                            false, true
+                                        );
+
+                                        for (int x3 = 0; x3 < engine.field.getWidth(); ++x3) {
+                                            engine.field.getBlock(x3, y).elapsedFrames = 0;
+                                        }
+                                    }
+                                }
+                            }
+
+                            break;
                         }
                     }
                 }
             }
 
-            if (engine.statc[0] == (120 + 16 * 3)) engine.playSE("ready");
+            if (engine.statc[0] == fillDuration + 120) engine.playSE("ready");
         } else {
+            endLevelEmpties = FieldManipulation.getNumberOfEmptySpaces(engine.field);
+
             engine.playSE("stageclear");
             bScore = getLevelClearBonus(engine);
-            setNewLowerScore(engine);
             engine.statistics.score += bScore;
         }
 
@@ -845,33 +1006,23 @@ public class Collapse extends DummyMode {
     }
 
     private int getSquares(GameEngine engine, int x, int y) {
-        ValueWrapper wrapper = new ValueWrapper();
-
-        flagSquares(engine, wrapper, x, y, engine.field.getBlockColor(x, y));
-
-        return wrapper.valueInt;
+        return flagSquares(engine, x, y, engine.field.getBlockColor(x, y));
     }
 
-    private void flagSquares(GameEngine engine, ValueWrapper counter, int x, int y, int color) {
+    private int flagSquares(GameEngine engine, int x, int y, int color) {
         if (x >= 0 && x < 12 && y >= 0 && y < 16) {
             if (engine.field.getBlockColor(x, y) == color || engine.field.getBlockColor(x, y) == 35 || engine.field.getBlockColor(x, y) == (7 + color)) {
-                counter.valueInt++;
                 engine.field.getBlock(x, y).secondaryColor = engine.field.getBlock(x, y).color;
                 engine.field.getBlock(x, y).color = Block.BLOCK_COLOR_PURPLE;
 
-                flagSquares(engine, counter, x + 1, y, color);
-                flagSquares(engine, counter, x - 1, y, color);
-                flagSquares(engine, counter, x, y + 1, color);
-                flagSquares(engine, counter, x, y - 1, color);
-            } else {
-                return;
+                return 1 + flagSquares(engine, x + 1, y, color) + flagSquares(engine, x - 1, y, color) + flagSquares(engine, x, y + 1, color) + flagSquares(engine, x, y - 1, color);
             }
-        } else {
-            return;
         }
+
+        return 0;
     }
 
-    private void resetBlockArray(GameEngine engine) {
+    private void resetBlockArray() {
         for (int i = 0; i < nextBlocks.length; i++) {
             nextBlocks[i] = new Block(Block.BLOCK_COLOR_NONE);
             nextBlocks[i].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
@@ -891,10 +1042,12 @@ public class Collapse extends DummyMode {
         }
     }
 
-    private void bringColumnsCloser(GameEngine engine) {
-        Block nblk = new Block(Block.BLOCK_COLOR_NONE);
+    private boolean bringColumnsCloser(GameEngine engine) {
+        final Block nblk = new Block(Block.BLOCK_COLOR_NONE);
         nblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
         nblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+
+        boolean moved = false;
 
         for (int x = 5; x > 0; x--) {
             boolean empty = true;
@@ -909,6 +1062,7 @@ public class Collapse extends DummyMode {
                 for (int x2 = x; x2 > 0; x2--) {
                     for (int y = 0; y < engine.field.getHeight(); y++) {
                         engine.field.getBlock(x2, y).copy(engine.field.getBlock(x2 - 1, y));
+                        moved |= !engine.field.getBlock(x2 - 1, y).isEmpty();
                     }
                 }
 
@@ -931,6 +1085,7 @@ public class Collapse extends DummyMode {
                 for (int x2 = x; x2 < 11; x2++) {
                     for (int y = 0; y < engine.field.getHeight(); y++) {
                         engine.field.getBlock(x2, y).copy(engine.field.getBlock(x2 + 1, y));
+                        moved |= !engine.field.getBlock(x2 + 1, y).isEmpty();
                     }
                 }
 
@@ -939,6 +1094,8 @@ public class Collapse extends DummyMode {
                 }
             }
         }
+
+        return moved;
     }
 
     private void levelUp(GameEngine engine, int playerID, boolean beginning) {
@@ -948,7 +1105,7 @@ public class Collapse extends DummyMode {
         int effectiveLevel = engine.statistics.level;
 
         spawnTimer = 0;
-        resetBlockArray(engine);
+        resetBlockArray();
 
         lineSpawn = tableLevelStartLines[effectiveLevel];
         linesLeft = tableLevelLine[effectiveLevel];
@@ -971,9 +1128,6 @@ public class Collapse extends DummyMode {
             }
         }
 
-
-        multiplier = 0.75;
-
         wRandomEngine.setWeights(tableColorWeights[result]);
         wRandomEngineBomb.setWeights(tableBombColorWeights[result]);
 
@@ -990,7 +1144,7 @@ public class Collapse extends DummyMode {
         }
     }
 
-    private double midgameSpeedSet(GameEngine engine) {
+    private void midgameSpeedSet(GameEngine engine) {
         if (linesLeft >= maxSpeedLine) {
             int effectiveLevel = engine.statistics.level;
             double fraction = 0.75 + (0.75 * ((double) (linesLeft - maxSpeedLine) / (tableLevelLine[effectiveLevel] - maxSpeedLine)));
@@ -1011,31 +1165,27 @@ public class Collapse extends DummyMode {
             double mod = rawSpeed % 1;
             if (mod > 0) spawnTimerLimit = (int) (rawSpeed + 1);
             else spawnTimerLimit = (int) rawSpeed;
-
-            return 0.75 - (fraction - 1.5);
-        } else if (linesLeft >= 0) {
-            return 1.5;
         } else {
-            int effectiveLevel = engine.statistics.level;
-            double rawSpeed = 1;
+            if (linesLeft < 0) {
+                int effectiveLevel = engine.statistics.level;
+                double rawSpeed = 1;
 
-            switch (difficulty) {
-                case 0:
-                    rawSpeed = 0.75 * tableSpawnSpeedEasy[effectiveLevel];
-                    break;
-                case 1:
-                    rawSpeed = 0.75 * tableSpawnSpeedNormal[effectiveLevel];
-                    break;
-                case 2:
-                    rawSpeed = 0.75 * tableSpawnSpeedHard[effectiveLevel];
-                    break;
+                switch (difficulty) {
+                    case 0:
+                        rawSpeed = 0.75 * tableSpawnSpeedEasy[effectiveLevel];
+                        break;
+                    case 1:
+                        rawSpeed = 0.75 * tableSpawnSpeedNormal[effectiveLevel];
+                        break;
+                    case 2:
+                        rawSpeed = 0.75 * tableSpawnSpeedHard[effectiveLevel];
+                        break;
+                }
+
+                double mod = rawSpeed % 1;
+                if (mod > 0) spawnTimerLimit = (int) (rawSpeed + 1);
+                else spawnTimerLimit = (int) rawSpeed;
             }
-
-            double mod = rawSpeed % 1;
-            if (mod > 0) spawnTimerLimit = (int) (rawSpeed + 1);
-            else spawnTimerLimit = (int) rawSpeed;
-
-            return 1.5;
         }
     }
 
@@ -1216,17 +1366,27 @@ public class Collapse extends DummyMode {
     }
 
     private void incrementScore(GameEngine engine) {
-        scoreToDisplay = (int) Interpolation.sineStep(lastScore, engine.statistics.score, scGetTime / 60d);
-    }
+        if (localState == LOCALSTATE_INGAME) {
+            if (scGetTime % 2 == 0) {
+                scoreToDisplay += (int) Math.min(Math.max(Math.pow((scGetTime >>> 1) - 6.0, 2.0), 1), Math.ceil((engine.statistics.score - scoreToDisplay) * 0.5));
+                if (engine.statistics.score < scoreToDisplay) scoreToDisplay = engine.statistics.score;
+            }
 
-    private void setNewLowerScore(GameEngine engine) {
-        lastScore = engine.statistics.score;
-        scGetTime = 0;
+            if (engine.statistics.score <= scoreToDisplay) scGetTime = 0;
+        } else if (localState == LOCALSTATE_TRANSITION && engine.stat == GameEngine.STAT_CUSTOM) {
+            final int currentBonusDisplay = getRawLevelClearBonus(engine, endLevelEmptyCounter, endLevelEmptyRowCounter);
+            scoreToDisplay = engine.statistics.score - bScore + currentBonusDisplay;
+        }
     }
 
     @Override
     public void onLast(GameEngine engine, int playerID) {
-        if (scGetTime < 60 && !engine.lagStop) scGetTime++;
+        if (!engine.lagStop) {
+            scGetTime++;
+            incrementScore(engine);
+            sinceLastClear++;
+        }
+
         if (!engine.lagStop) {
             updateSTextArr();
             if (acTime < 120 && acTime >= 0) acTime++;
@@ -1239,6 +1399,16 @@ public class Collapse extends DummyMode {
                 showPlayerStats = !showPlayerStats;
                 engine.playSE("change");
             }
+        }
+
+        if (localState == LOCALSTATE_INGAME && engine.field != null && engine.field.getHighestBlockY() <= 0) {
+            engine.framecolor = GameEngine.FRAME_COLOR_RED;
+        } else {
+            engine.framecolor = GameEngine.FRAME_COLOR_YELLOW;
+        }
+
+        if (engine.field != null) {
+            FieldManipulation.updateAllBlockConnections(engine.field);
         }
 
         if (engine.quitflag) {
@@ -1287,7 +1457,6 @@ public class Collapse extends DummyMode {
         } else if (!engine.gameActive && engine.stat == GameEngine.STAT_CUSTOM) {
             playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
         } else {
-            if (!engine.lagStop) incrementScore(engine);
             receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
             receiver.drawScoreFont(engine, playerID, 0, 4, String.valueOf(scoreToDisplay));
 
@@ -1295,7 +1464,7 @@ public class Collapse extends DummyMode {
             receiver.drawScoreFont(engine, playerID, 0, 7, String.valueOf(engine.statistics.level + 1));
 
             receiver.drawScoreFont(engine, playerID, 0, 9, "LINES LEFT", EventReceiver.COLOR_BLUE);
-            receiver.drawScoreFont(engine, playerID, 0, 10, linesLeft >= 0 ? String.valueOf(linesLeft) : "INFINITY");
+            receiver.drawScoreFont(engine, playerID, 0, 10, linesLeft >= 0 ? String.valueOf(linesLeft) : "INFINITE");
 
             receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
             receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
@@ -1303,6 +1472,41 @@ public class Collapse extends DummyMode {
             if (playerProperties.isLoggedIn()) {
                 receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
                 GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 16, GameTextUtilities.Text.ofBig(playerProperties.getNameDisplay()));
+            }
+
+            if (holderType == HOLDER_SWING) {
+                receiver.drawMenuFont(engine, playerID, fieldX, fieldY, "f", EventReceiver.COLOR_YELLOW);
+            }
+
+            if (localState == LOCALSTATE_TRANSITION) {
+                final String s = String.valueOf(
+                    getRawLevelClearBonus(engine, endLevelEmptyCounter, endLevelEmptyRowCounter)
+                );
+
+                final int l = s.length();
+                final int offset = (12 - l) / 2;
+                receiver.drawMenuFont(engine, playerID, 2, 6, "LEVEL UP", (engine.statc[0] / 2) % 2 == 0, EventReceiver.COLOR_YELLOW, EventReceiver.COLOR_ORANGE);
+                receiver.drawMenuFont(engine, playerID, 0, 8, "BONUS POINTS", EventReceiver.COLOR_YELLOW);
+                receiver.drawMenuFont(engine, playerID, offset, 9, s);
+            }
+
+            if (localState == LOCALSTATE_INGAME) {
+                int fx = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+                int fy = receiver.getFieldDisplayPositionY(engine, playerID) + 52 + (17 * 16);
+                for (int i = 0; i < nextBlocks.length; i++) {
+                    if (nextBlocks[i].color > Block.BLOCK_COLOR_NONE)
+                        receiver.drawSingleBlock(engine, playerID, fx + (i * 16), fy, nextBlocks[i].color, engine.getSkin(), nextBlocks[i].getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0f, 1f, 1f);
+                }
+
+                String s = String.valueOf(10000 * (engine.statistics.level + 1));
+                int l = s.length();
+                int offset = (12 - l) / 2;
+
+                if (acTime >= 0 && acTime < 120) {
+                    receiver.drawMenuFont(engine, playerID, 1, 6, "ALL CLEAR!", (engine.statistics.time / 2) % 2 == 0, EventReceiver.COLOR_YELLOW, EventReceiver.COLOR_ORANGE);
+                    receiver.drawMenuFont(engine, playerID, 0, 8, "BONUS POINTS", EventReceiver.COLOR_YELLOW);
+                    receiver.drawMenuFont(engine, playerID, offset, 9, s);
+                }
             }
 
             for (SideWaveText sideWaveText : sTextArr) {
@@ -1313,65 +1517,30 @@ public class Collapse extends DummyMode {
                     y = h[1];
 
                     float scale = 0;
-                    float rs = 0;
-                    float baseScale = sideWaveText.getBig() ? 2 : 1;
-                    double baseDim = sideWaveText.getBig() ? 32.0 : 16.0;
-                    if (sideWaveText.getLifeTime() < 24) {
+                    float baseScale = sideWaveText.getBig() ? 1.5f : 1f;
+
+                    int limit = 90;
+                    if (sideWaveText.getLifeTime() < limit) {
                         scale = baseScale;
-                        rs = 1;
                     } else {
-                        scale = baseScale - (baseScale * ((float) (sideWaveText.getLifeTime() - 24) / 96));
-                        rs = 1 - (((float) (sideWaveText.getLifeTime() - 24) / 96));
+                        scale = baseScale - (baseScale * ((float) (sideWaveText.getLifeTime() - limit) / (120 - limit)));
                     }
-                    int nOffX = 0, nOffY = 0;
-                    if (rs < 1) {
-                        nOffX = (int) (((baseDim * sideWaveText.getText().length()) - ((baseDim * sideWaveText.getText().length()) * rs)) / 2);
-                        nOffY = (int) ((baseDim - (baseDim * rs)) / 2);
-                    }
+
+                    int alpha = (int) Interpolation.smoothStep(255.0, 0.0, MathHelper.clamp((sideWaveText.getLifeTime() - 60) / 60.0, 0.0, 1.0));
 
                     if ((sideWaveText.getLifeTime() / 2) % 2 == 0 && sideWaveText.getLargeClear()) {
-                        GameTextUtilities.drawDirectText(engine, x + nOffX, y + nOffY, GameTextUtilities.Text.custom(sideWaveText.getText(), EventReceiver.COLOR_YELLOW, scale));
+                        GameTextUtilities.drawAlignedText(
+                            engine, x, y,
+                            GameTextUtilities.Text.customMixColor(sideWaveText.getText(), EventReceiver.COLOR_YELLOW, 255, 255, 255, alpha, scale),
+                            GameTextUtilities.ALIGN_MIDDLE_MIDDLE
+                        );
                     } else {
-                        GameTextUtilities.drawDirectText(engine, x + nOffX, y + nOffY, GameTextUtilities.Text.custom(sideWaveText.getText(), EventReceiver.COLOR_ORANGE, scale));
+                        GameTextUtilities.drawAlignedText(
+                            engine, x, y,
+                            GameTextUtilities.Text.customMixColor(sideWaveText.getText(), EventReceiver.COLOR_ORANGE, 255, 255, 255, alpha, scale),
+                            GameTextUtilities.ALIGN_MIDDLE_MIDDLE
+                        );
                     }
-                }
-            }
-
-            if (holderType == HOLDER_SWING) {
-                receiver.drawMenuFont(engine, playerID, fieldX, fieldY, "f", EventReceiver.COLOR_YELLOW);
-            }
-
-            if (localState == LOCALSTATE_TRANSITION) {
-                String s = String.valueOf(bScore);
-                int l = s.length();
-                int offset = (12 - l) / 2;
-                receiver.drawMenuFont(engine, playerID, 2, 6, "LEVEL UP", (engine.statc[0] / 2) % 2 == 0, EventReceiver.COLOR_YELLOW, EventReceiver.COLOR_ORANGE);
-                receiver.drawMenuFont(engine, playerID, 0, 8, "BONUS POINTS", EventReceiver.COLOR_YELLOW);
-                receiver.drawMenuFont(engine, playerID, offset, 9, s);
-            }
-
-//			receiver.drawScoreFont(engine, playerID, 0, 15, "MOUSE COORDS", EventReceiver.COLOR_BLUE);
-//			receiver.drawScoreFont(engine, playerID, 0, 16, "(" + cursorX + ", " + cursorY + ")");
-//			
-//			receiver.drawScoreFont(engine, playerID, 0, 18, "FIELD CELL CLICKED", EventReceiver.COLOR_BLUE);
-//			receiver.drawScoreFont(engine, playerID, 0, 19, "(" + fieldX + ", " + fieldY + ")");
-
-            if (localState == LOCALSTATE_INGAME) {
-                int fx = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
-                int fy = receiver.getFieldDisplayPositionY(engine, playerID) + 52 + (17 * 16);
-                for (int i = 0; i < nextBlocks.length; i++) {
-                    if (nextBlocks[i].color > Block.BLOCK_COLOR_NONE)
-                        receiver.drawSingleBlock(engine, playerID, fx + (i * 16), fy, nextBlocks[i].color, engine.getSkin(), nextBlocks[i].getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0f, 1f, 1f);
-                }
-
-                String s = String.valueOf((int) (100000 * Math.pow(1.025, engine.statistics.level)));
-                int l = s.length();
-                int offset = (12 - l) / 2;
-
-                if (acTime >= 0 && acTime < 120) {
-                    receiver.drawMenuFont(engine, playerID, 1, 6, "ALL CLEAR!", (engine.statistics.time / 2) % 2 == 0, EventReceiver.COLOR_YELLOW, EventReceiver.COLOR_ORANGE);
-                    receiver.drawMenuFont(engine, playerID, 0, 8, "BONUS POINTS", EventReceiver.COLOR_YELLOW);
-                    receiver.drawMenuFont(engine, playerID, offset, 9, s);
                 }
             }
         }
@@ -1398,6 +1567,8 @@ public class Collapse extends DummyMode {
         enableBombs = prop.getProperty("collapse.enableBombs", true);
         difficulty = prop.getProperty("collapse.difficulty", 1);
         bgm = prop.getProperty("collapse.bgm", 0);
+        outline = prop.getProperty("collapse.outline", GameEngine.BLOCK_OUTLINE_NORMAL);
+        shrinkPopups = prop.getProperty("collapse.shrinkscorepopups", true);
     }
 
     /**
@@ -1409,6 +1580,8 @@ public class Collapse extends DummyMode {
         prop.setProperty("collapse.enableBombs", enableBombs);
         prop.setProperty("collapse.difficulty", difficulty);
         prop.setProperty("collapse.bgm", bgm);
+        prop.setProperty("collapse.outline", outline);
+        prop.setProperty("collapse.shrinkscorepopups", shrinkPopups);
     }
 
     /**
@@ -1418,9 +1591,12 @@ public class Collapse extends DummyMode {
      */
     private void loadSettingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return;
+
         enableBombs = prop.getProperty("collapse.enableBombs", true);
         difficulty = prop.getProperty("collapse.difficulty", 1);
         bgm = prop.getProperty("collapse.bgm", 0);
+        outline = prop.getProperty("collapse.outline", GameEngine.BLOCK_OUTLINE_NORMAL);
+        shrinkPopups = prop.getProperty("collapse.shrinkscorepopups", true);
     }
 
     /**
@@ -1430,9 +1606,12 @@ public class Collapse extends DummyMode {
      */
     private void saveSettingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return;
+
         prop.setProperty("collapse.enableBombs", enableBombs);
         prop.setProperty("collapse.difficulty", difficulty);
         prop.setProperty("collapse.bgm", bgm);
+        prop.setProperty("collapse.outline", outline);
+        prop.setProperty("collapse.shrinkscorepopups", shrinkPopups);
     }
 
     /**
@@ -1443,8 +1622,8 @@ public class Collapse extends DummyMode {
     protected void loadRanking(CustomProperties prop) {
         for (int i = 0; i < MAX_RANKING; i++) {
             for (int j = 0; j < MAX_DIFFICULTIES; j++) {
-                rankingScore[j][i] = prop.getProperty("collapse.ranking." + j + ".score." + i, 0);
-                rankingLevel[j][i] = prop.getProperty("collapse.ranking." + j + ".level." + i, 0);
+                rankingScore[j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + j + ".score." + i, 0);
+                rankingLevel[j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + j + ".level." + i, 0);
             }
         }
     }
@@ -1457,8 +1636,8 @@ public class Collapse extends DummyMode {
     private void saveRanking(CustomProperties prop) {
         for (int i = 0; i < MAX_RANKING; i++) {
             for (int j = 0; j < MAX_DIFFICULTIES; j++) {
-                prop.setProperty("collapse.ranking." + j + ".score." + i, rankingScore[j][i]);
-                prop.setProperty("collapse.ranking." + j + ".level." + i, rankingLevel[j][i]);
+                prop.setProperty("collapse." + VERSION + ".ranking." + j + ".score." + i, rankingScore[j][i]);
+                prop.setProperty("collapse." + VERSION + ".ranking." + j + ".level." + i, rankingLevel[j][i]);
             }
         }
     }
@@ -1472,8 +1651,8 @@ public class Collapse extends DummyMode {
         if (!prop.isLoggedIn()) return;
         for (int i = 0; i < MAX_RANKING; i++) {
             for (int j = 0; j < MAX_DIFFICULTIES; j++) {
-                rankingScorePlayer[j][i] = prop.getProperty("collapse.ranking." + j + ".score." + i, 0);
-                rankingLevelPlayer[j][i] = prop.getProperty("collapse.ranking." + j + ".level." + i, 0);
+                rankingScorePlayer[j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + j + ".score." + i, 0);
+                rankingLevelPlayer[j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + j + ".level." + i, 0);
             }
         }
     }
@@ -1487,8 +1666,8 @@ public class Collapse extends DummyMode {
         if (!prop.isLoggedIn()) return;
         for (int i = 0; i < MAX_RANKING; i++) {
             for (int j = 0; j < MAX_DIFFICULTIES; j++) {
-                prop.setProperty("collapse.ranking." + j + ".score." + i, rankingScorePlayer[j][i]);
-                prop.setProperty("collapse.ranking." + j + ".level." + i, rankingLevelPlayer[j][i]);
+                prop.setProperty("collapse." + VERSION + ".ranking." + j + ".score." + i, rankingScorePlayer[j][i]);
+                prop.setProperty("collapse." + VERSION + ".ranking." + j + ".level." + i, rankingLevelPlayer[j][i]);
             }
         }
     }
@@ -1570,25 +1749,98 @@ public class Collapse extends DummyMode {
      * ------ MODE-SPECIFIC PRIVATE METHODS ------
      */
 
-    private int getClearScore(GameEngine engine, int squares) {
-        return (int) ((18 * squares * ((double) squares / 4) * ((double) (engine.statistics.level + 1) / 3)) * Math.pow(1.015, squares));
+    /*
+     * Which one of the devs (or if it's a solo dev, them) thought this was a good idea???
+     *
+     * (3*min(n-2;4))
+     * + f(7;6;3)
+     * + f(13;9;5)
+     * + f(23;14;5)
+     * + f(38;19;10)
+     * + f(68;28;4)
+     * + f(102;32;1)
+     * + f(34;33;3)
+     * + (68
+     *    * (
+     *        (floor(max(n-37;0)/8)
+     *        * (floor(max(n-37;0)/8)+1)*4)
+     *        + ceil(max(n-37;0)/8)
+     *        * mod(max(n-37;0);8)
+     *      )
+     *   )
+     *
+     * f(x;y;z) = max(x*min(n-y;z);0)
+     * n: number of squares
+     *
+     * End of level:
+     * (((100*min(n;3))*max(n-3;1))*(x*(x+1))/2)+y
+     *
+     * y: empties
+     * x: empty rows
+     * n: level (1-indexed)
+     *
+     * SC1-2's scoring, provided by leikaisho
+     */
+
+    private static int scoreF(int squares, int x, int y, int z) {
+        return Math.max(0, x * Math.min(squares - y, z));
+    }
+
+    private int getBaseScore(int squares) {
+        final List<Integer> scores = new ArrayList<>(9);
+
+        scores.add(3 * Math.min(squares - 2, 4));
+        scores.add(scoreF(squares, 7, 6, 3));
+        scores.add(scoreF(squares, 13, 9, 5));
+        scores.add(scoreF(squares, 23, 14, 5));
+        scores.add(scoreF(squares, 38, 19, 10));
+        scores.add(scoreF(squares, 68, 28, 4));
+        scores.add(scoreF(squares, 102, 32, 1));
+        scores.add(scoreF(squares, 34, 33, 3));
+        scores.add((int)
+            (68.0 *
+                (
+                    ((Math.floor(Math.max(squares - 37, 0) / 8.0)) * ((Math.floor(Math.max(squares - 37, 0) / 8.0 + 1.0) * 4.0)))
+                        + ((Math.ceil(Math.max(squares - 37, 0) / 8.0)) * (Math.max(squares - 37, 0) % 8))
+                )
+            )
+        );
+
+        return scores.stream().mapToInt(Integer::valueOf).sum();
+    }
+
+    private int getRawRowLevelClearBonus(GameEngine engine, int emptyRows) {
+        final int usedLevel = engine.statistics.level + 1;
+        return (((100 * Math.min(usedLevel, 3)) * Math.max(usedLevel - 3, 1)) * (emptyRows * (emptyRows + 1)) / 2);
+    }
+
+    private int getRawLevelClearBonus(GameEngine engine, int empties, int emptyRows) {
+        return getRawRowLevelClearBonus(engine, emptyRows) + empties;
     }
 
     private int getLevelClearBonus(GameEngine engine) {
         int h = engine.field.getHeight();
         int w = engine.field.getWidth();
-        int s = 0;
+
+        int empties = 0;
+        int emptyRows = 0;
 
         for (int y = 0; y < h; y++) {
+            int s = 0;
+
+            // Get empty blocks in current row.
             for (int x = 0; x < w; x++) {
                 Block blk = engine.field.getBlock(x, y);
                 if ((blk != null) && (blk.color == Block.BLOCK_COLOR_NONE)) {
-                    s++;
+                    ++s;
+                    ++empties;
                 }
             }
+
+            if (s == w) ++emptyRows;
         }
 
-        return getClearScore(engine, s) / 48;
+        return getRawLevelClearBonus(engine, empties, emptyRows);
     }
 
     /**
@@ -1609,6 +1861,7 @@ public class Collapse extends DummyMode {
         return (distance <= radius);
     }
 
+    // Is this really all this does lmao?
     private void explode(GameEngine engine) {
         engine.playSE("bombexplode");
     }
