@@ -576,8 +576,7 @@ public class Collapse extends DummyMode {
 
                 int multiplier = 2 + (engine.statistics.level + 1);
                 if (bigClear && engine.statistics.level >= LEVEL_NEW_COLOR) multiplier *= 10;
-
-                score *= multiplier;
+                if (bigClear) score *= multiplier;
 
                 for (int y = 0; y < engine.field.getHeight(); y++) {
                     for (int x = 0; x < engine.field.getWidth(); x++) {
