@@ -157,7 +157,7 @@ public class RendererExtension {
                 Block blkTemp = new Block(piece.block[i]);
                 blkTemp.darkness = darkness;
 
-                drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, 2f * scale, blkTemp.attribute);
+                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, 2f * scale, blkTemp.attribute);
             }
         } else {
             for (int i = 0; i < piece.block.length; i++) {
@@ -167,7 +167,7 @@ public class RendererExtension {
                 Block blkTemp = new Block(piece.block[i]);
                 blkTemp.darkness = darkness;
 
-                drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale, blkTemp.attribute);
+                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale, blkTemp.attribute);
             }
         }
     }
@@ -199,7 +199,7 @@ public class RendererExtension {
                 Block blkTemp = new Block(piece.block[i]);
                 blkTemp.darkness = darkness;
 
-                drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale * 2f, blkTemp.attribute);
+                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale * 2f, blkTemp.attribute);
             }
         } else {
             for (int i = 0; i < piece.block.length; i++) {
@@ -216,7 +216,7 @@ public class RendererExtension {
                 Block blkTemp = new Block(piece.block[i]);
                 blkTemp.darkness = darkness;
 
-                drawScaledBlock(receiver, x2, y2, blkTemp.color, blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale, blkTemp.attribute);
+                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale, blkTemp.attribute);
             }
         }
     }

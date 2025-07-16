@@ -487,10 +487,11 @@ public class Collapse extends DummyMode {
 
             localState = LOCALSTATE_INGAME;
             engine.resetStatc();
+
             if (!engine.readyDone) {
                 engine.startTime = System.nanoTime();
-                //startTime = System.nanoTime()/1000000L;
             }
+
             engine.readyDone = true;
             return true;
         }
@@ -524,11 +525,11 @@ public class Collapse extends DummyMode {
             boolean incrementTime = false;
             switch (localState) {
                 case LOCALSTATE_INGAME:
-                    if (engine.timerActive == false) engine.timerActive = true;
+                    if (!engine.timerActive) engine.timerActive = true;
                     incrementTime = stateInGame(engine, playerID);
                     break;
                 case LOCALSTATE_TRANSITION:
-                    if (engine.timerActive == true) engine.timerActive = false;
+                    if (engine.timerActive) engine.timerActive = false;
                     incrementTime = stateTransition(engine, playerID);
                     break;
                 default:
@@ -1493,7 +1494,7 @@ public class Collapse extends DummyMode {
                 int fy = receiver.getFieldDisplayPositionY(engine, playerID) + 52 + (17 * 16);
                 for (int i = 0; i < nextBlocks.length; i++) {
                     if (nextBlocks[i].color > Block.BLOCK_COLOR_NONE)
-                        receiver.drawSingleBlock(engine, playerID, fx + (i * 16), fy, nextBlocks[i].color, engine.getSkin(), nextBlocks[i].getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0f, 1f, 1f);
+                        receiver.drawSingleBlock(engine, playerID, fx + (i * 16), fy, nextBlocks[i].getDrawColor(), engine.getSkin(), nextBlocks[i].getAttribute(Block.BLOCK_ATTRIBUTE_BONE), 0f, 1f, 1f);
                 }
 
                 String s = String.valueOf(10000 * (engine.statistics.level + 1));
