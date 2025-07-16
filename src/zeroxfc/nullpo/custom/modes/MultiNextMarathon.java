@@ -1372,7 +1372,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                             x2, y2, alignment,
                             piece,
                             pieceSize(i),
-                            ((float) i / (float) (oldRuleOpt.nextDisplay * 2)) + extraDarkness
+                            extraDarkness
                         );
                     }
                 }
@@ -1402,7 +1402,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                             x2, y2, alignment,
                             piece,
                             pieceSize(i),
-                            ((float) i / (float) (oldRuleOpt.nextDisplay * 2)) + extraDarkness
+                            extraDarkness
                         );
                     }
                 }

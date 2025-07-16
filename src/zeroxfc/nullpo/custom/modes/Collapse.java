@@ -574,8 +574,7 @@ public class Collapse extends DummyMode {
 
                 final boolean bigClear = (engine.statistics.level < LEVEL_NEW_COLOR && squares >= 15) || (engine.statistics.level >= LEVEL_NEW_COLOR && squares >= 10);
 
-                int multiplier = 1;
-                if (bigClear && engine.statistics.level < LEVEL_NEW_COLOR) multiplier = 2 + (engine.statistics.level + 1);
+                int multiplier = 2 + (engine.statistics.level + 1);
                 if (bigClear && engine.statistics.level >= LEVEL_NEW_COLOR) multiplier *= 10;
 
                 score *= multiplier;
@@ -616,7 +615,7 @@ public class Collapse extends DummyMode {
                     }
                 }
 
-                score = getBaseScore(squares + (squares >>> 1));
+                score = getBaseScore(squares);
             } else {
                 squares = 0;
 
@@ -631,7 +630,7 @@ public class Collapse extends DummyMode {
                     }
                 }
 
-                score = getBaseScore(squares + (squares >>> 1));
+                score = getBaseScore(squares);
             }
 
             explode(engine);
