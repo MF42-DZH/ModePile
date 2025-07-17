@@ -162,8 +162,6 @@ public class MultiNextMarathon extends MarathonModeBase {
     private boolean hardDropEffect;
     private boolean auditoryASMR;
 
-    private boolean oldSideNext;
-    private boolean oldBigSideNext;
     private RuleOptions oldRuleOpt;
 
     /*
@@ -211,8 +209,6 @@ public class MultiNextMarathon extends MarathonModeBase {
         hardDropEffect = true;
         auditoryASMR = true;
 
-        oldSideNext = false;
-        oldBigSideNext = false;
         returningPieces = new ArrayList<>(2);
 
         netPlayerInit(engine, playerID);
@@ -486,24 +482,6 @@ public class MultiNextMarathon extends MarathonModeBase {
         }
     }
 
-    private void getSideNexts() {
-        final Class<EventReceiver> erc = EventReceiver.class;
-
-        try {
-            final Field localFieldSN = erc.getDeclaredField("sidenext");
-            final Field localFieldSNB = erc.getDeclaredField("bigsidenext");
-
-            localFieldSN.setAccessible(true);
-            localFieldSNB.setAccessible(true);
-
-            oldSideNext = localFieldSN.getBoolean(receiver);
-            oldBigSideNext = localFieldSNB.getBoolean(receiver);
-        } catch (Exception e) {
-            log.error("Failed to extract next data.");
-            log.error(e);
-        }
-    }
-
     private void setSideNexts(boolean side, boolean big) {
         final Class<EventReceiver> erc = EventReceiver.class;
 
@@ -535,12 +513,7 @@ public class MultiNextMarathon extends MarathonModeBase {
         }
 
         // Force top next.
-        if (engine.stat == GameEngine.STAT_SETTING || engine.stat == GameEngine.STAT_RESULT || engine.stat == GameEngine.STAT_CUSTOM) {
-            if (!oldSideNext && !oldBigSideNext) getSideNexts();
-            setSideNexts(oldSideNext, oldBigSideNext);
-        } else {
-            setSideNexts(false, false);
-        }
+        setSideNexts(false, false);
 
         // Next shuffling
         if (engine.ctrl.isPush(Controller.BUTTON_F)) {
@@ -577,8 +550,10 @@ public class MultiNextMarathon extends MarathonModeBase {
 
         // 出現時の処理
         if(engine.statc[0] == 0) {
-            engine.nowPieceObject = getNext().queue.poll();
-            lastUsedNext = selectedNext;
+            if (!engine.initialHoldFlag) {
+                engine.nowPieceObject = getNext().queue.poll();
+                lastUsedNext = selectedNext;
+            }
 
             leftQueue.fillQueue();
             rightQueue.fillQueue();
@@ -596,7 +571,15 @@ public class MultiNextMarathon extends MarathonModeBase {
 
                 engine.statc[0] = 0;
                 engine.statc[1] = 1;
+
+                engine.initialHoldFlag = true;
+
+                engine.nowPieceObject = getNext().queue.poll();
+                lastUsedNext = selectedNext;
+
                 return true;
+            } else {
+                engine.initialHoldFlag = false;
             }
 
             if (auditoryASMR || lastUsedNext == WhichQueue.LEFT) {

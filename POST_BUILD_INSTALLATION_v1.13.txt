@@ -144,6 +144,8 @@ Multinext Marathon:
 Use the "D" button bind to push a piece back into the queue it came from and switch next queues.
 Use the "F" button bind to switch queues without pushing the piece back into its origin queue.
 
+Multinext Marathon forces top nexts due to how it presents its next queues.
+
 -- END NOTES --
 
 To add the gamemodes to your NullpoMino installation, add the following to 'mode.lst', located in '[NullpoMino Directory]/config/list/':
