@@ -1176,6 +1176,23 @@ public class MultiNextMarathon extends MarathonModeBase {
         return true;
     }
 
+    @Override
+    public boolean onCustom(GameEngine engine, int playerID) {
+        showPlayerStats = false;
+
+        engine.isInGame = true;
+
+        boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
+        if (playerProperties.isLoggedIn()) {
+            loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+            loadSettingPlayer(playerProperties);
+        }
+
+        if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+
+        return s;
+    }
+
     private void addReturningPiece(GameEngine engine, int playerID, WhichQueue queue) {
         final Piece copy = new Piece(engine.nowPieceObject);
         copy.resetOffsetArray();
