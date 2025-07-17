@@ -387,7 +387,7 @@ public class GemSwap extends DummyMode {
             return false;
         }
 
-        if (mouseControl.getMouseClick(MouseParser.BUTTON_LEFT)) {
+        if (mouseControl.getMouseClick(MouseParser.MouseButton.LEFT)) {
             int[] fieldLocationSelected = parseMouse(engine, playerID);
 
             if (fieldLocationSelected[0] >= 0 && fieldLocationSelected[0] < FIELD_DIMENSION &&
@@ -625,7 +625,7 @@ public class GemSwap extends DummyMode {
         int[] fieldLocationClicked = new int[] { -1, -1 };
         int[] mouseCoordinates = mouseControl.getMouseCoordinates();
 
-        if (mouseControl.getMouseClick(MouseParser.BUTTON_LEFT)) {
+        if (mouseControl.getMouseClick(MouseParser.MouseButton.LEFT)) {
             // TERMINAL LUMBAGO
             int fX = -1, fY = -1;
 

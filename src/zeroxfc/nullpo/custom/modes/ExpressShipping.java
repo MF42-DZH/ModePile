@@ -704,7 +704,7 @@ public class ExpressShipping extends PuzzleGameEngine {
 
         // region CLICK CODE
         if (selectedPiece == null) {
-            if (mouseControl.getMouseClick(MouseParser.BUTTON_LEFT)) {
+            if (mouseControl.getMouseClick(MouseParser.MouseButton.LEFT)) {
                 if (monominoConveyorBelt != null && monominoesLeft > 0) {
                     int[][][] cbbox = monominoConveyorBelt.getCursorBoundingBox();
 
@@ -741,7 +741,7 @@ public class ExpressShipping extends PuzzleGameEngine {
                         }
                     }
                 }
-            } else if (mouseControl.getMouseClick(MouseParser.BUTTON_RIGHT)) {
+            } else if (mouseControl.getMouseClick(MouseParser.MouseButton.RIGHT)) {
                 if (monominoConveyorBelt != null) {
                     int[] offset = monominoConveyorBelt.getCursorOffset();
                     int fX = ((mouseCoords[0] - 4 - receiver.getFieldDisplayPositionX(engine, playerID)) / 16) - offset[0];
@@ -778,11 +778,11 @@ public class ExpressShipping extends PuzzleGameEngine {
                 }
             }
         } else {
-            if (mouseControl.getMouseClick(MouseParser.BUTTON_RIGHT)) {
+            if (mouseControl.getMouseClick(MouseParser.MouseButton.RIGHT)) {
                 selectedPiece.rotate();
                 engine.playSE("rotate");
             }
-            if (mouseControl.getMouseClick(MouseParser.BUTTON_LEFT)) {
+            if (mouseControl.getMouseClick(MouseParser.MouseButton.LEFT)) {
                 if (mouseCoords[0] >= 49 && mouseCoords[1] >= 304 && mouseCoords[0] <= 134 && mouseCoords[1] <= 350 && cargoReturnCooldown == 0) {
                     engine.playSE("garbage");
 

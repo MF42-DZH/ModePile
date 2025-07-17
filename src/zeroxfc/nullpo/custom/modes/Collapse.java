@@ -20,6 +20,7 @@ import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.MathHelper;
+import zeroxfc.nullpo.custom.libs.MouseParser;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.SideWaveText;
@@ -160,6 +161,7 @@ public class Collapse extends DummyMode {
     private int lineSpawn;
     private int scoreToDisplay, scGetTime, sinceLastClear;
     private int acTime;
+    private MouseParser mouseInput;
 
     private ProfileProperties playerProperties;
     private int[][] rankingScorePlayer;
@@ -218,6 +220,7 @@ public class Collapse extends DummyMode {
         acTime = -1;
         outline = GameEngine.BLOCK_OUTLINE_NONE;
         shrinkPopups = true;
+        mouseInput = new MouseParser();
 
         resetSTextArr();
 
@@ -1189,72 +1192,46 @@ public class Collapse extends DummyMode {
     }
 
     private void parseMouse(GameEngine engine, int playerID) {
-        switch (holderType) {
-            case HOLDER_SLICK:
-                MouseInput.mouseInput.update(NullpoMinoSlick.appGameContainer.getInput());
+        if (holderType == HOLDER_SWING) {
+            // XXX: SWING DOES NOT SUPPORT MOUSE INPUT. FALL BACK TO KEYBOARD INPUT.
+            int changeX = 0, changeY = 0;
+            if (engine.ctrl.isPush(Controller.BUTTON_LEFT)) {
+                changeX += -1;
+            }
+            if (engine.ctrl.isPush(Controller.BUTTON_RIGHT)) {
+                changeX += 1;
+            }
+            if (engine.ctrl.isPush(Controller.BUTTON_UP)) {
+                changeY += -1;
+            }
+            if (engine.ctrl.isPush(Controller.BUTTON_DOWN)) {
+                changeY += 1;
+            }
 
-                cursorX = MouseInput.mouseInput.getMouseX();
-                cursorY = MouseInput.mouseInput.getMouseY();
+            fieldX += changeX;
+            fieldY += changeY;
 
-                if (MouseInput.mouseInput.isMouseClicked()) {
-                    fieldX = (cursorX - 4 - receiver.getFieldDisplayPositionX(engine, playerID)) / 16;
-                    fieldY = (cursorY - 52 - receiver.getFieldDisplayPositionY(engine, playerID)) / 16;
-                } else {
-                    fieldX = -1;
-                    fieldY = -1;
-                }
+            if (changeX != 0 || changeY != 0) engine.playSE("change");
 
-                break;
-            case HOLDER_SWING:
-                // XXX: SWING DOES NOT SUPPORT MOUSE INPUT. FALL BACK TO KEYBOARD INPUT.
-                int changeX = 0, changeY = 0;
-                if (engine.ctrl.isPush(Controller.BUTTON_LEFT)) {
-                    changeX += -1;
-                }
-                if (engine.ctrl.isPush(Controller.BUTTON_RIGHT)) {
-                    changeX += 1;
-                }
-                if (engine.ctrl.isPush(Controller.BUTTON_UP)) {
-                    changeY += -1;
-                }
-                if (engine.ctrl.isPush(Controller.BUTTON_DOWN)) {
-                    changeY += 1;
-                }
+            if (fieldX < 0) fieldX = 11;
+            if (fieldX > 11) fieldX = 0;
+            if (fieldY < 0) fieldY = 15;
+            if (fieldY > 15) fieldY = 0;
 
-                fieldX += changeX;
-                fieldY += changeY;
+            if (engine.ctrl.isPush(Controller.BUTTON_B) && localState == LOCALSTATE_INGAME) force = true;
+        } else {
+            mouseInput.update();
 
-                if (changeX != 0 || changeY != 0) engine.playSE("change");
+            cursorX = mouseInput.getMouseX();
+            cursorY = mouseInput.getMouseY();
 
-                if (fieldX < 0) fieldX = 11;
-                if (fieldX > 11) fieldX = 0;
-                if (fieldY < 0) fieldY = 15;
-                if (fieldY > 15) fieldY = 0;
-
-                if (engine.ctrl.isPush(Controller.BUTTON_B) && localState == LOCALSTATE_INGAME) force = true;
-
-                break;
-            case HOLDER_SDL:
-                try {
-                    MouseInputSDL.mouseInput.update();
-                } catch (Exception e) {
-                    // DO NOTHING
-                }
-
-                cursorX = MouseInputSDL.mouseInput.getMouseX();
-                cursorY = MouseInputSDL.mouseInput.getMouseY();
-
-                if (MouseInputSDL.mouseInput.isMouseClicked()) {
-                    fieldX = (cursorX - 4 - receiver.getFieldDisplayPositionX(engine, playerID)) / 16;
-                    fieldY = (cursorY - 52 - receiver.getFieldDisplayPositionY(engine, playerID)) / 16;
-                } else {
-                    fieldX = -1;
-                    fieldY = -1;
-                }
-
-                break;
-            default:
-                break;
+            if (mouseInput.getMouseClick(MouseParser.MouseButton.LEFT)) {
+                fieldX = mouseInput.getMouseFieldX(receiver, engine, playerID);
+                fieldY = mouseInput.getMouseFieldY(receiver, engine, playerID);
+            } else {
+                fieldX = -1;
+                fieldY = -1;
+            }
         }
 
         if ((fieldX < 0 || fieldX > 11) ||

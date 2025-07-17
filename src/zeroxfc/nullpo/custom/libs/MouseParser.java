@@ -32,18 +32,19 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
+import mu.nu.nullpo.game.event.EventReceiver;
+import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.gui.sdl.MouseInputSDL;
 import mu.nu.nullpo.gui.slick.MouseInput;
 import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
 import org.apache.log4j.Logger;
 
 public class MouseParser {
-    /**
-     * Mouse Button IDs
-     */
-    public static final int BUTTON_LEFT = 0,
-        BUTTON_RIGHT = 1,
-        BUTTON_MIDDLE = 2;
+    /** Mouse button representation. */
+    public enum MouseButton {
+        LEFT, RIGHT, MIDDLE
+    }
+
     /**
      * Debug Log
      */
@@ -126,31 +127,67 @@ public class MouseParser {
     }
 
     /**
+     * Gets the coordinates on the player field where the mouse is located on.
+     *
+     * @param receiver Current game renderer
+     * @param engine   Current game engine
+     * @param playerID Current player ID
+     * @return Mapped coordinates in game field
+     */
+    public int[] getMouseFieldCoordinates(EventReceiver receiver, GameEngine engine, int playerID) {
+        return new int[] { getMouseFieldX(receiver, engine, playerID), getMouseFieldY(receiver, engine, playerID) };
+    }
+
+    /**
+     * Gets the X coordinate on the player field where the mouse is located on.
+     *
+     * @param receiver Current game renderer
+     * @param engine   Current game engine
+     * @param playerID Current player ID
+     * @return Mapped X coordinate in game field
+     */
+    public int getMouseFieldX(EventReceiver receiver, GameEngine engine, int playerID) {
+        return (getMouseX() - 4 - receiver.getFieldDisplayPositionX(engine, playerID)) / 16;
+    }
+
+    /**
+     * Gets the Y coordinate on the player field where the mouse is located on.
+     *
+     * @param receiver Current game renderer
+     * @param engine   Current game engine
+     * @param playerID Current player ID
+     * @return Mapped Y coordinate in game field
+     */
+    public int getMouseFieldY(EventReceiver receiver, GameEngine engine, int playerID) {
+        return (getMouseY() - 52 - receiver.getFieldDisplayPositionY(engine, playerID)) / 16;
+    }
+
+    /**
      * Has the mouse been clicked on the updated frame?
      *
      * @param button Button ID (use the IDs in this class)
      * @return <code>boolean</code>; <code>true</code> = clicked, <code>false</code> = not clicked or was held before
      */
-    public boolean getMouseClick(int button) {
+    public boolean getMouseClick(MouseButton button) {
         switch (holderType) {
             case SLICK:
                 switch (button) {
-                    case BUTTON_LEFT:
+                    case LEFT:
                         return MouseInput.mouseInput.isMouseClicked();
-                    case BUTTON_RIGHT:
+                    case RIGHT:
                         return MouseInput.mouseInput.isMouseRightClicked();
-                    case BUTTON_MIDDLE:
+                    case MIDDLE:
                         return MouseInput.mouseInput.isMouseMiddleClicked();
                     default:
                         return false;
                 }
             case SDL:
                 switch (button) {
-                    case BUTTON_LEFT:
+                    case LEFT:
                         return MouseInputSDL.mouseInput.isMouseClicked();
-                    case BUTTON_RIGHT:
+                    case RIGHT:
                         return MouseInputSDL.mouseInput.isMouseRightClicked();
-                    case BUTTON_MIDDLE:
+                    case MIDDLE:
                         return MouseInputSDL.mouseInput.isMouseMiddleClicked();
                     default:
                         return false;
@@ -166,26 +203,26 @@ public class MouseParser {
      * @param button Button ID (use the IDs in this class)
      * @return <code>boolean</code>; <code>true</code> = clicked or held, <code>false</code> = not clicked nor held
      */
-    public boolean getMousePressed(int button) {
+    public boolean getMousePressed(MouseButton button) {
         switch (holderType) {
             case SLICK:
                 switch (button) {
-                    case BUTTON_LEFT:
+                    case LEFT:
                         return MouseInput.mouseInput.isMousePressed();
-                    case BUTTON_RIGHT:
+                    case RIGHT:
                         return MouseInput.mouseInput.isMouseRightPressed();
-                    case BUTTON_MIDDLE:
+                    case MIDDLE:
                         return MouseInput.mouseInput.isMouseMiddlePressed();
                     default:
                         return false;
                 }
             case SDL:
                 switch (button) {
-                    case BUTTON_LEFT:
+                    case LEFT:
                         return MouseInputSDL.mouseInput.isMousePressed();
-                    case BUTTON_RIGHT:
+                    case RIGHT:
                         return MouseInputSDL.mouseInput.isMouseRightPressed();
-                    case BUTTON_MIDDLE:
+                    case MIDDLE:
                         return MouseInputSDL.mouseInput.isMouseMiddlePressed();
                     default:
                         return false;
