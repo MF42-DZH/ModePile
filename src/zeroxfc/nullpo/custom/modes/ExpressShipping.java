@@ -1155,7 +1155,7 @@ public class ExpressShipping extends PuzzleGameEngine {
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, topY + RANKING_MAX + 2, GameTextUtilities.Text.ofBig(playerProperties.getNameDisplay()));
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                 } else {

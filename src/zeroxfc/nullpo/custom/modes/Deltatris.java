@@ -93,7 +93,7 @@ public class Deltatris extends MarathonModeBase {
     private int[][] rankingScorePlayer;
     private int[][] rankingTimePlayer;
     private int[][] rankingLinesPlayer;
-    private String PLAYER_NAME;
+    private String playerName;
 
     /**
      * The good hard drop effect
@@ -174,12 +174,12 @@ public class Deltatris extends MarathonModeBase {
             }
 
             version = BASE_VERSION;
-            PLAYER_NAME = null;
+            playerName = null;
         } else {
             loadSetting(owner.replayProp);
             if ((version == 0) && (owner.replayProp.getProperty("deltatris.endless", false))) goaltype = 2;
 
-            PLAYER_NAME = owner.replayProp.getProperty("deltatris.playerName", "");
+            playerName = owner.replayProp.getProperty("deltatris.playerName", "");
 
             // NET: Load name
             netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -473,7 +473,7 @@ public class Deltatris extends MarathonModeBase {
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, topY + RANKING_MAX + 2, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                 } else {
@@ -538,9 +538,9 @@ public class Deltatris extends MarathonModeBase {
 
             receiver.drawScoreFont(engine, playerID, 0, 17, "SPEED", EventReceiver.COLOR_RED);
 
-            if ((playerProperties != null && playerProperties.isLoggedIn()) || (PLAYER_NAME != null && PLAYER_NAME.length() > 0)) {
+            if ((playerProperties != null && playerProperties.isLoggedIn()) || (playerName != null && playerName.length() > 0)) {
                 receiver.drawScoreFont(engine, playerID, 8, 17, "PLAYER", EventReceiver.COLOR_BLUE);
-                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 8, 18, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 8, 18, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
             }
 
             int ix, iy;

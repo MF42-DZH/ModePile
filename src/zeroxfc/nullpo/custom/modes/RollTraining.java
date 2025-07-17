@@ -8,6 +8,7 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 
 public class RollTraining extends MarathonModeBase {
@@ -92,7 +93,7 @@ public class RollTraining extends MarathonModeBase {
     private int[][] rankingTimePlayer;
     private int rankingRankPlayer;
     private boolean showPlayerStats;
-    private String PLAYER_NAME;
+    private String playerName;
 
     private int getRankIndex() {
         int raw = usedSpeed;
@@ -166,12 +167,12 @@ public class RollTraining extends MarathonModeBase {
             }
 
             version = BASE_VERSION;
-            PLAYER_NAME = "";
+            playerName = "";
         } else {
             loadSetting(owner.replayProp);
             if ((version == 0) && (owner.replayProp.getProperty("rollTraining.endless", false))) goaltype = 2;
 
-            PLAYER_NAME = owner.replayProp.getProperty("rollTraining.playerName", "");
+            playerName = owner.replayProp.getProperty("rollTraining.playerName", "");
 
             // NET: Load name
             netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -421,7 +422,7 @@ public class RollTraining extends MarathonModeBase {
                         receiver.drawScoreFont(engine, playerID, 15, topY + i, GeneralUtil.getTime(rankingTimePlayer[getRankIndex()][i]), (i == rankingRankPlayer), scale);
 
                         receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                        receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                        GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, topY + RANKING_MAX + 2, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
 
                         receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                     }
@@ -490,9 +491,9 @@ public class RollTraining extends MarathonModeBase {
                 receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(Math.max(timer, 0)), timer <= 600 && (timer / 2 % 2 == 0));
             }
 
-            if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+            if (playerProperties.isLoggedIn() || playerName.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, 0, endless ? 12 : 15, "PLAYER", EventReceiver.COLOR_BLUE);
-                receiver.drawScoreFont(engine, playerID, 0, endless ? 13 : 16, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                receiver.drawScoreFont(engine, playerID, 0, endless ? 13 : 16, owner.replayMode ? playerName : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
             }
 
             if ((lastevent != EVENT_NONE) && (scgettime < 120)) {

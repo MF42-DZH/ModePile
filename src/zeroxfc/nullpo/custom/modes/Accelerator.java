@@ -66,7 +66,7 @@ public class Accelerator extends MarathonModeBase {
     private ArrayList<int[]> pCoordList;
     private Piece cPiece;
 
-    private String PLAYER_NAME;
+    private String playerName;
 
     private CustomResourceHolder customGraphics;
     private RendererExtension rendererExtension;
@@ -136,13 +136,13 @@ public class Accelerator extends MarathonModeBase {
                 loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
             }
 
-            PLAYER_NAME = "";
+            playerName = "";
             version = BASE_VERSION;
         } else {
             loadSetting(owner.replayProp);
             if ((version == 0) && (owner.replayProp.getProperty("accelerator.endless", false))) goaltype = 2;
 
-            PLAYER_NAME = owner.replayProp.getProperty("accelerator.playerName", "");
+            playerName = owner.replayProp.getProperty("accelerator.playerName", "");
 
             // NET: Load name
             netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -470,7 +470,7 @@ public class Accelerator extends MarathonModeBase {
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, topY + RANKING_MAX + 2, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                 } else {
@@ -529,9 +529,9 @@ public class Accelerator extends MarathonModeBase {
                 receiver.drawScoreFont(engine, playerID, 6, 18, "(ACTIVE!)", EventReceiver.COLOR_GREEN);
             receiver.drawScoreFont(engine, playerID, 0, 19, String.format("%.2f%%", percentage * 100), bonusActive ? ((engine.statistics.time % 2 == 0) ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_YELLOW) : EventReceiver.COLOR_WHITE, 1f + (float) percentage);
 
-            if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+            if (playerProperties.isLoggedIn() || playerName.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, 14, 18, "PLAYER", EventReceiver.COLOR_BLUE);
-                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 14, 19, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 14, 19, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
             }
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;

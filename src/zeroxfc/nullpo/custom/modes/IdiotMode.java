@@ -360,7 +360,7 @@ public class IdiotMode extends DummyMode {
     private ArrayList<int[]> pCoordList;
     private Piece cPiece;
     private ProfileProperties playerProperties;
-    private String PLAYER_NAME;
+    private String playerName;
     private boolean showPlayerStats;
     private int currentGameRankPlayer;      // Current attempt's rank
     private int[][] rankingGradePlayer;     // Grade rankings
@@ -494,7 +494,7 @@ public class IdiotMode extends DummyMode {
                 loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
             }
 
-            PLAYER_NAME = "";
+            playerName = "";
 
             switch (gameType) {
                 case GAMETYPE_DEATH:
@@ -526,7 +526,7 @@ public class IdiotMode extends DummyMode {
                 }
             }
 
-            PLAYER_NAME = owner.replayProp.getProperty("idiotmode.playerName", "");
+            playerName = owner.replayProp.getProperty("idiotmode.playerName", "");
 
             loadSetting(owner.replayProp, engine.ruleopt.strRuleName);
 
@@ -958,7 +958,7 @@ public class IdiotMode extends DummyMode {
 
                             receiver.drawScoreFont(engine, playerID, 0, 17, "F:VIEW SECTION TIME", EventReceiver.COLOR_GREEN);
                             receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                            receiver.drawScoreFont(engine, playerID, 0, 19, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                            GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 19, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
 
                             receiver.drawScoreFont(engine, playerID, 0, 22, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                         } else {
@@ -1084,9 +1084,9 @@ public class IdiotMode extends DummyMode {
             if (medalSK >= 1) receiver.drawScoreFont(engine, playerID, 0, 22, "SK", getMedalFontColor(medalSK));
             if (medalSC >= 1) receiver.drawScoreFont(engine, playerID, 3, 22, "SC", getMedalFontColor(medalSC));
 
-            if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+            if (playerProperties.isLoggedIn() || playerName.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, 6, 21, "PLAYER", EventReceiver.COLOR_BLUE);
-                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 6, 22, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 6, 22, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
             }
 
             // Section Time

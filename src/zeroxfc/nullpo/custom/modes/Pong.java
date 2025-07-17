@@ -69,7 +69,7 @@ public class Pong extends PuzzleGameEngine {
     private double computerRange;
     private int version;
     private ProfileProperties playerProperties;
-    private String PLAYER_NAME;
+    private String playerName;
 
     @Override
     public String getName() {
@@ -102,12 +102,12 @@ public class Pong extends PuzzleGameEngine {
                 loadSettingPlayer(playerProperties);
             }
 
-            PLAYER_NAME = "";
+            playerName = "";
         } else {
             loadSetting(owner.modeConfig);
             version = VERSION;
 
-            PLAYER_NAME = owner.replayProp.getProperty("pong.playerName", "");
+            playerName = owner.replayProp.getProperty("pong.playerName", "");
         }
 
         owner.backgroundStatus.bg = bg;
@@ -702,7 +702,7 @@ public class Pong extends PuzzleGameEngine {
 
             if (playerProperties.isLoggedIn()) {
                 receiver.drawScoreFont(engine, playerID, 0, 6, "PLAYER", EventReceiver.COLOR_BLUE);
-                receiver.drawScoreFont(engine, playerID, 0, 7, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 7, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
             } else {
                 receiver.drawScoreFont(engine, playerID, 0, 6, "LOGIN STATUS", EventReceiver.COLOR_BLUE);
                 if (!playerProperties.isLoggedIn())
@@ -720,9 +720,9 @@ public class Pong extends PuzzleGameEngine {
             receiver.drawScoreFont(engine, playerID, 8, 6, "COM. PTS.", EventReceiver.COLOR_RED);
             receiver.drawScoreFont(engine, playerID, 8, 7, String.valueOf(computerScore));
 
-            if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+            if (playerProperties.isLoggedIn() || playerName.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, 8, 9, "PLAYER", EventReceiver.COLOR_BLUE);
-                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 8, 10, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 8, 10, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
             }
 
             if (engine.stat != GameEngine.STAT_RESULT) {

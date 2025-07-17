@@ -255,7 +255,7 @@ public class MarathonTwo extends MarathonModeBase {
     private int[][] rankingScorePlayer;
     private int[][] rankingTimePlayer;
     private int[][] rankingLinesPlayer;
-    private String PLAYER_NAME;
+    private String playerName;
 
     /**
      * Field scattering effect
@@ -359,12 +359,12 @@ public class MarathonTwo extends MarathonModeBase {
             getInitialBGState();
             version = CURRENT_VERSION;
 
-            PLAYER_NAME = "";
+            playerName = "";
         } else {
             loadSetting(owner.replayProp);
             if ((version == 0) && (owner.replayProp.getProperty("marathon2.endless", false))) goaltype = 2;
 
-            PLAYER_NAME = owner.replayProp.getProperty("marathon2.playerName", "");
+            playerName = owner.replayProp.getProperty("marathon2.playerName", "");
 
             // NET: Load name
             netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
@@ -849,7 +849,7 @@ public class MarathonTwo extends MarathonModeBase {
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, topY + RANKING_MAX + 2, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                 } else {
@@ -939,10 +939,10 @@ public class MarathonTwo extends MarathonModeBase {
                 receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
             }
 
-            if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+            if (playerProperties.isLoggedIn() || playerName.length() > 0) {
                 if (glitchTimer == 0) {
                     receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
-                    GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 16, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
+                    GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 16, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
                 } else {
                     GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 15, GameTextUtilities.randomString(6, renderRandomiser), renderRandomiser, 1f);
                     GameTextUtilities.drawRandomRainbowScoreString(receiver, engine, playerID, 0, 16, GameTextUtilities.randomString(3, renderRandomiser), renderRandomiser, 2f);

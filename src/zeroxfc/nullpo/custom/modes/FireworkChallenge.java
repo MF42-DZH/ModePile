@@ -226,7 +226,7 @@ public class FireworkChallenge extends DummyMode {
     private Piece cPiece;
     private ProfileProperties playerProperties;
     private boolean showPlayerStats;
-    private String PLAYER_NAME;
+    private String playerName;
     private int rankingRankPlayer;
     private int[] rankingFireworksPlayer, rankingLevelPlayer, rankingTimePlayer;
 
@@ -365,11 +365,11 @@ public class FireworkChallenge extends DummyMode {
                 loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
             }
 
-            PLAYER_NAME = "";
+            playerName = "";
         } else {
             loadSetting(owner.replayProp);
 
-            PLAYER_NAME = owner.replayProp.getProperty("fireworkchallenge.playerName", "");
+            playerName = owner.replayProp.getProperty("fireworkchallenge.playerName", "");
         }
     }
 
@@ -657,7 +657,7 @@ public class FireworkChallenge extends DummyMode {
                         }
 
                         receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                        receiver.drawScoreFont(engine, playerID, 0, 19, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                        GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 19, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
 
                         receiver.drawScoreFont(engine, playerID, 0, 22, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
 
@@ -724,9 +724,9 @@ public class FireworkChallenge extends DummyMode {
             receiver.drawScoreFont(engine, playerID, 0, 10, "TIME", EventReceiver.COLOR_BLUE);
             receiver.drawScoreFont(engine, playerID, 0, 11, GeneralUtil.getTime(engine.statistics.time));
 
-            if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+            if (playerProperties.isLoggedIn() || playerName.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, 0, 16, "PLAYER", EventReceiver.COLOR_BLUE);
-                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 17, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 17, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
             }
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;

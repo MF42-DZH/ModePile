@@ -91,7 +91,7 @@ public class EXReborn extends DummyMode {
     private int version;
     private ProfileProperties playerProperties;
     private boolean showPlayerStats;
-    private String PLAYER_NAME;
+    private String playerName;
     private int rankingRankPlayer;
 
     /**
@@ -174,10 +174,10 @@ public class EXReborn extends DummyMode {
             }
 
             version = CURRENT_VERSION;
-            PLAYER_NAME = "";
+            playerName = "";
         } else {
             loadSetting(owner.replayProp);
-            PLAYER_NAME = owner.replayProp.getProperty("exreborn.playerName", "");
+            playerName = owner.replayProp.getProperty("exreborn.playerName", "");
         }
     }
 
@@ -1282,7 +1282,7 @@ public class EXReborn extends DummyMode {
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, topY + RANKING_MAX + 2, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                 } else {
@@ -1320,9 +1320,9 @@ public class EXReborn extends DummyMode {
             receiver.drawScoreFont(engine, playerID, 0, 8, "TIME", EventReceiver.COLOR_BLUE);
             receiver.drawScoreFont(engine, playerID, 0, 9, GeneralUtil.getTime(engine.statistics.time));
 
-            if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+            if (playerProperties.isLoggedIn() || playerName.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, 0, 11, "PLAYER", EventReceiver.COLOR_BLUE);
-                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 12, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 12, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
             }
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;

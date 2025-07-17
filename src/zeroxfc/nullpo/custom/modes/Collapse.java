@@ -1413,7 +1413,7 @@ public class Collapse extends DummyMode {
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + MAX_RANKING + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, 0, topY + MAX_RANKING + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, topY + MAX_RANKING + 2, GameTextUtilities.Text.ofBig(playerProperties.getNameDisplay()));
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + MAX_RANKING + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                 } else {

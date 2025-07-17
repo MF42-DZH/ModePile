@@ -93,7 +93,7 @@ public class Joker extends MarathonModeBase {
     private int[] rankingLevelPlayer;
     private int[] rankingTimePlayer;
     private int[] rankingLinesPlayer;
-    private String PLAYER_NAME;
+    private String playerName;
 
     // Last amount of lines cleared;
     private int lastLine;
@@ -175,14 +175,14 @@ public class Joker extends MarathonModeBase {
             }
 
             version = BASE_VERSION + 1;
-            PLAYER_NAME = "";
+            playerName = "";
         } else {
             loadSetting(owner.replayProp);
             if ((version == 0) && (owner.replayProp.getProperty("joker.endless", false))) goaltype = 2;
 
             // NET: Load name
             netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
-            PLAYER_NAME = owner.replayProp.getProperty("joker.playerName", "");
+            playerName = owner.replayProp.getProperty("joker.playerName", "");
         }
 
         engine.owner.backgroundStatus.bg = 18;
@@ -491,7 +491,7 @@ public class Joker extends MarathonModeBase {
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, topY + RANKING_MAX + 2, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + RANKING_MAX + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                 } else {
@@ -541,9 +541,9 @@ public class Joker extends MarathonModeBase {
             receiver.drawScoreFont(engine, playerID, 0, 15, "EFFICIENCY", EventReceiver.COLOR_GREEN);
             receiver.drawScoreFont(engine, playerID, 0, 16, String.format("%.2f", efficiency * 100) + "%", engine.statistics.level >= 300, EventReceiver.COLOR_WHITE, EventReceiver.COLOR_PINK);
 
-            if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+            if (playerProperties.isLoggedIn() || playerName.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER", EventReceiver.COLOR_BLUE);
-                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 19, GameTextUtilities.Text.ofBig(owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay()));
+                GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, 0, 19, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
             }
 
             if (shouldUseTimer) {

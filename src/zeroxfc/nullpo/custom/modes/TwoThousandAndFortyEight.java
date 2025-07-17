@@ -10,6 +10,7 @@ import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.ValueWrapper;
@@ -46,7 +47,7 @@ public class TwoThousandAndFortyEight extends DummyMode {
     private int lastScore;
     private ProfileProperties playerProperties;
     private boolean showPlayerStats;
-    private String PLAYER_NAME;
+    private String playerName;
     private int rankingRankPlayer;
     private int[][] rankingScorePlayer;
     private int[][] rankingTilePlayer;
@@ -102,10 +103,10 @@ public class TwoThousandAndFortyEight extends DummyMode {
                 loadRankingPlayer(playerProperties);
             }
 
-            PLAYER_NAME = "";
+            playerName = "";
         } else {
             loadSetting(owner.replayProp);
-            PLAYER_NAME = owner.replayProp.getProperty("2048.playerName", "");
+            playerName = owner.replayProp.getProperty("2048.playerName", "");
         }
 
         engine.owner.backgroundStatus.bg = bg;
@@ -532,7 +533,7 @@ public class TwoThousandAndFortyEight extends DummyMode {
                     }
 
                     receiver.drawScoreFont(engine, playerID, base, topY + MAX_RANKING + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                    receiver.drawScoreFont(engine, playerID, base, topY + MAX_RANKING + 2, playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                    GameTextUtilities.drawAlignedScoreText(receiver, engine, playerID, false, base, topY + MAX_RANKING + 2, GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()));
 
                     receiver.drawScoreFont(engine, playerID, base, topY + MAX_RANKING + 5, "F:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
                 } else {
@@ -571,9 +572,9 @@ public class TwoThousandAndFortyEight extends DummyMode {
             receiver.drawScoreFont(engine, playerID, base, 6, "TIME", EventReceiver.COLOR_BLUE);
             receiver.drawScoreFont(engine, playerID, base, 7, GeneralUtil.getTime(engine.statistics.time));
 
-            if (playerProperties.isLoggedIn() || PLAYER_NAME.length() > 0) {
+            if (playerProperties.isLoggedIn() || playerName.length() > 0) {
                 receiver.drawScoreFont(engine, playerID, base, 12, "PLAYER", EventReceiver.COLOR_BLUE);
-                receiver.drawScoreFont(engine, playerID, base, 13, owner.replayMode ? PLAYER_NAME : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
+                receiver.drawScoreFont(engine, playerID, base, 13, owner.replayMode ? playerName : playerProperties.getNameDisplay(), EventReceiver.COLOR_WHITE, 2f);
             }
 
             if (mainGrid != null) {
