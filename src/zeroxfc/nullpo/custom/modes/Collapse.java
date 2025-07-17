@@ -951,7 +951,7 @@ public class Collapse extends DummyMode {
 
                             if (x == engine.field.getWidth() - 1) {
                                 for (int x2 = 0; x2 < engine.field.getWidth(); ++x2) {
-                                    if (engine.field.getBlock(x2, y).color != Block.BLOCK_COLOR_GRAY) break;
+                                    if (engine.field.getBlock(x2, y).color != Block.BLOCK_COLOR_GRAY || engine.field.getBlock(x2, y).getAttribute(Block.BLOCK_ATTRIBUTE_BONE)) break;
                                     else if (x2 == x) {
                                         engine.playSE("gem");
                                         endLevelEmptyRowCounter++;
@@ -1422,8 +1422,8 @@ public class Collapse extends DummyMode {
         receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_ORANGE);
         receiver.drawScoreFont(engine, playerID, 0, 1, "(" + DIFFICULTY_NAMES[difficulty] + " DIFFICULTY)", EventReceiver.COLOR_ORANGE);
 
-        if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false))) {
-            if ((owner.replayMode == false) && (enableBombs == true) && (engine.ai == null)) {
+        if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode))) {
+            if ((!owner.replayMode) && (enableBombs) && (engine.ai == null)) {
                 float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
                 int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
                 receiver.drawScoreFont(engine, playerID, 3, topY - 1, "SCORE    LEVEL", EventReceiver.COLOR_BLUE, scale);
@@ -1462,8 +1462,12 @@ public class Collapse extends DummyMode {
             receiver.drawScoreFont(engine, playerID, 0, 6, "LEVEL", EventReceiver.COLOR_BLUE);
             receiver.drawScoreFont(engine, playerID, 0, 7, String.valueOf(engine.statistics.level + 1));
 
+            int lineCountColor = EventReceiver.COLOR_WHITE;
+            if (linesLeft <= 0) lineCountColor = EventReceiver.COLOR_GREEN;
+            else if (linesLeft <= 3) lineCountColor = EventReceiver.COLOR_YELLOW;
+
             receiver.drawScoreFont(engine, playerID, 0, 9, "LINES LEFT", EventReceiver.COLOR_BLUE);
-            receiver.drawScoreFont(engine, playerID, 0, 10, linesLeft >= 0 ? String.valueOf(linesLeft) : "INFINITE");
+            receiver.drawScoreFont(engine, playerID, 0, 10, linesLeft >= 0 ? String.valueOf(linesLeft) : "INFINITE", lineCountColor);
 
             receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
             receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));

@@ -79,9 +79,6 @@ public class CustomResourceHolder {
     private final HashMap<String, RuntimeImage<?>> loadedImages;
     private final HashMap<String, RuntimeMusic<?>> loadedMusic;
 
-    private Graphics2D localSwingGraphics;
-    private sdljava.video.SDLSurface localSDLGraphics;
-
     private final Runtime holderType;
 
     /**
@@ -124,6 +121,33 @@ public class CustomResourceHolder {
         return resouceHolderType;
     }
 
+    /**
+     * Gets the current instance's main class name.
+     *
+     * @return Main class name.
+     */
+    public static String getMainClassName() {
+        if (mainClassName.isEmpty() || mainClassName.equals("Unknown")) {
+            // Thread-safe code used for when more threads are being used.
+            // Warning: slower.
+            Collection<StackTraceElement[]> allStackTraces = Thread.getAllStackTraces().values();
+            for (StackTraceElement[] traceElements : allStackTraces) {
+                for (StackTraceElement element : traceElements) {
+                    String name = element.getClassName();
+                    if (name.contains("NullpoMinoSlick") || name.contains("NullpoMinoSwing") || name.contains("NullpoMinoSDL")) {
+                        mainClassName = name;
+                        break;
+                    }
+                }
+
+                if (!mainClassName.isEmpty()) break;
+            }
+            if (mainClassName.isEmpty()) mainClassName = "Unknown";
+        }
+
+        return mainClassName;
+    }
+
     /** Perform a value-returning action depending on the current runtime. */
     public static <T> T doForRuntime(Callable<T> ifSlick, Callable<T> ifSwing, Callable<T> ifSDL) {
         try {
@@ -162,33 +186,6 @@ public class CustomResourceHolder {
         } catch (Exception e) {
             log.error(e);
         }
-    }
-
-    /**
-     * Gets the current instance's main class name.
-     *
-     * @return Main class name.
-     */
-    public static String getMainClassName() {
-        if (mainClassName.isEmpty() || mainClassName.equals("Unknown")) {
-            // Thread-safe code used for when more threads are being used.
-            // Warning: slower.
-            Collection<StackTraceElement[]> allStackTraces = Thread.getAllStackTraces().values();
-            for (StackTraceElement[] traceElements : allStackTraces) {
-                for (StackTraceElement element : traceElements) {
-                    String name = element.getClassName();
-                    if (name.contains("NullpoMinoSlick") || name.contains("NullpoMinoSwing") || name.contains("NullpoMinoSDL")) {
-                        mainClassName = name;
-                        break;
-                    }
-                }
-
-                if (!mainClassName.isEmpty()) break;
-            }
-            if (mainClassName.isEmpty()) mainClassName = "Unknown";
-        }
-
-        return mainClassName;
     }
 
     /**
@@ -666,7 +663,7 @@ public class CustomResourceHolder {
                     return;
                 }
 
-                localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver, useCachedRenderer);
+                final Graphics2D localSwingGraphics = getGraphicsSwing((RendererSwing) engine.owner.receiver, useCachedRenderer);
                 if (localSwingGraphics == null) {
                     log.error("Swing graphics is null!");
                     return;
@@ -684,8 +681,8 @@ public class CustomResourceHolder {
                     return;
                 }
 
-                localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver, useCachedRenderer);
-                sdljava.video.SDLSurface toDrawSDL = ((RuntimeImage.SDL) runtimeImage).image;
+                final SDLSurface localSDLGraphics = getGraphicsSDL((RendererSDL) engine.owner.receiver, useCachedRenderer);
+                final sdljava.video.SDLSurface toDrawSDL = ((RuntimeImage.SDL) runtimeImage).image;
 
                 int dx = (int) (x2 - x);
                 int dy = (int) (y2 - y);
