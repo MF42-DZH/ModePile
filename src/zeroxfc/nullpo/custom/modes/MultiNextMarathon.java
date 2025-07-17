@@ -516,7 +516,7 @@ public class MultiNextMarathon extends MarathonModeBase {
         setSideNexts(false, false);
 
         // Next shuffling
-        if (engine.ctrl.isPush(Controller.BUTTON_F)) {
+        if (engine.ctrl.isPush(Controller.BUTTON_F) && engine.isInGame && engine.stat != GameEngine.STAT_CUSTOM) {
             switchNext(engine);
             SoundLoader.playPannedSound(engine, "initialhold", selectedNext == WhichQueue.LEFT ? -1f : 1f);
         }
