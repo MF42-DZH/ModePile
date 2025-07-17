@@ -14,7 +14,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _2048_ - A 2048 clone.
 * [_Accelerator_](https://www.youtube.com/watch?v=uRVD2QM7smU) - A marathon mode where playing fast is rewarded.
 * [_Colour Power_](https://www.youtube.com/watch?v=3NJaC0kZKn4) - A marathon mode where clearing lines using pieces of different colours nets you different power-ups.
-* [_Collapse_](https://www.youtube.com/watch?v=X6mryz4HaC8) - A clone of Super Collapse II's Traditional mode.
+* [_Collapse_](https://www.youtube.com/watch?v=X6mryz4HaC8) - A (still inaccurate) clone of Super Collapse II's Traditional mode.
 * [_Constantris_](https://www.youtube.com/watch?v=emwbuzGGwro) - A 電車でＧＯ！-inspired mode where you must advance to the next level at the correct time.
 * [_Deltatris_](https://www.youtube.com/watch?v=BDLKE6J0DUs) - A ΔMAX-inspired mode where every piece pushes you closer to maximum velocity.
 * [_Express Shipping_](https://www.youtube.com/watch?v=l9FZFv8zxUM) - A clone of the space-filling game Puzzle Express by HipSoft.
@@ -27,6 +27,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * [_Marathon II_](https://www.youtube.com/watch?v=QxsDKW0oUgs) - "If Marathon was so good, why isn't there a Marathon 2?"
 * [_Minesweeper_](https://www.youtube.com/watch?v=yvsnhtv1zvw) - It's Minesweeper. What else is there to say?
 * _Mission Mode_ - Play a marathon mode, but it asks you to clear Puyo-Puyo-styled missions.
+* _Multinext Marathon_ - A marathon mode with two next queues to juggle.
 * [_Pong_](https://www.youtube.com/watch?v=Xpn3dzklIb8) - A single-player Pong clone.
 * _Retro Mania 2_ - A mode based on *Sega \*\*\*ris '99*
 * _Roll Training_ - Practice your credit roll plays here.
@@ -45,7 +46,6 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _BufferedPrimitiveDrawingHook_ - For fast primitive drawing.
 * _DoubleVector_ - 2D vector type that uses doubles for more precision.
 * _CustomResourceHolder_ - Allows the use of custom images and BGM in a mode.
-* _DynamicReactiveSound_ (incomplete; on hold) - Generates and plays PCM samples on the fly.
 * _ExamSpinner_ - TI-style spinner like the one used during Promotion Exam results.
 * _FieldManipulation_ - Adds and fixes methods for dealing with the game's _Field_ type.
 * _FieldScatter_ - A 2D implementation of Sega \*\*\*ris '99's block explosion.
