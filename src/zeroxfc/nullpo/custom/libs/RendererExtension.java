@@ -405,17 +405,17 @@ public class RendererExtension {
 
         final RuntimeImage<?> runtimeImage = customGraphics.getBlockSkin(scale, skin);
 
+        int imageWidth = runtimeImage.getWidth();
+        if ((sx >= imageWidth) && (imageWidth != -1)) sx = 0;
+        int imageHeight = runtimeImage.getHeight();
+        if ((sy >= imageHeight) && (imageHeight != -1)) sy = 0;
+
         if (renderer == CustomResourceHolder.Runtime.SLICK) {
             // region Slick Case
-            Graphics graphics = customGraphics.getGraphicsSlick((RendererSlick) receiver, true);
+            final Graphics graphics = customGraphics.getGraphicsSlick((RendererSlick) receiver, true);
             if (graphics == null) return;
 
             final Image img = ((RuntimeImage.Slick) runtimeImage).image;
-
-            int imageWidth = img.getWidth();
-            if ((sx >= imageWidth) && (imageWidth != -1)) sx = 0;
-            int imageHeight = img.getHeight();
-            if ((sy >= imageHeight) && (imageHeight != -1)) sy = 0;
 
             Color filter = new Color(Color.white);
             filter.a = alpha;
@@ -450,21 +450,15 @@ public class RendererExtension {
             // endregion Slick Case
         } else if (renderer == CustomResourceHolder.Runtime.SWING) {
             // region Swing Case
-            Graphics2D graphics = customGraphics.getGraphicsSwing((RendererSwing) receiver, true);
+            final Graphics2D graphics = customGraphics.getGraphicsSwing((RendererSwing) receiver, true);
             if (graphics == null) return;
 
             final java.awt.Image img = ((RuntimeImage.Swing) runtimeImage).image;
-
-            int imageWidth = img.getWidth(null);
-            if ((sx >= imageWidth) && (imageWidth != -1)) sx = 0;
-            int imageHeight = img.getHeight(null);
-            if ((sy >= imageHeight) && (imageHeight != -1)) sy = 0;
-
-            Composite backupComposite = graphics.getComposite();
+            final Composite backupComposite = graphics.getComposite();
 
             boolean showbg = AnimatedBackgroundHook.getBGState(receiver);
             if ((alpha >= 0f) && (alpha < 1f) && (!showbg)) {
-                AlphaComposite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha);
+                final AlphaComposite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha);
                 graphics.setComposite(composite);
             }
 
@@ -538,7 +532,7 @@ public class RendererExtension {
             graphics.setComposite(backupComposite);
 
             if ((darkness != 0) || ((alpha >= 0f) && (alpha < 1f) && (showbg))) {
-                java.awt.Color backupColor = graphics.getColor();
+                final java.awt.Color backupColor = graphics.getColor();
 
                 java.awt.Color filterColor;
                 if ((alpha >= 0f) && (alpha < 1f) && (showbg)) {
@@ -557,18 +551,12 @@ public class RendererExtension {
         } else if (renderer == CustomResourceHolder.Runtime.SDL) {
             try {
                 // region SDL Case
-                SDLSurface graphics = customGraphics.getGraphicsSDL((RendererSDL) receiver, true);
+                final SDLSurface graphics = customGraphics.getGraphicsSDL((RendererSDL) receiver, true);
                 if (graphics == null) return;
 
-                SDLSurface img = ((RuntimeImage.SDL) runtimeImage).image;
-
-                int imageWidth = img.getWidth();
-                if ((sx >= imageWidth) && (imageWidth != -1)) sx = 0;
-                int imageHeight = img.getHeight();
-                if ((sy >= imageHeight) && (imageHeight != -1)) sy = 0;
-
-                SDLRect rectSrc = new SDLRect(sx, sy, srcSize, srcSize);
-                SDLRect rectDst = new SDLRect(x, y, size, size);
+                final SDLSurface img = ((RuntimeImage.SDL) runtimeImage).image;
+                final SDLRect rectSrc = new SDLRect(sx, sy, srcSize, srcSize);
+                final SDLRect rectDst = new SDLRect(x, y, size, size);
 
                 NullpoMinoSDL.fixRect(rectSrc, rectDst);
 
