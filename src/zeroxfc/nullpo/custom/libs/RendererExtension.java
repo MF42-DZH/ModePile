@@ -57,6 +57,7 @@ import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
 import sdljava.video.SDLVideo;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
+import zeroxfc.nullpo.custom.libs.types.RuntimeImage;
 
 public class RendererExtension {
     /**
@@ -363,56 +364,53 @@ public class RendererExtension {
     public void drawScaledBlock(EventReceiver receiver, int x, int y, int color, int skin, boolean bone, float darkness, float alpha, float scale, int attr) {
         final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
 
+        if ((color <= Block.BLOCK_COLOR_INVALID)) return;
+        if (skin >= CustomResourceHolder.getNumberLoadedBlockSkins()) skin = 0;
+
+        final boolean isSpecialBlocks = (color >= Block.BLOCK_COLOR_COUNT);
+        final boolean isSticky = customGraphics.getSkinStickyFlag(skin);
+
+        final int size = (int) (16 * scale);
+
+        int srcSize;
+        if (scale <= 0.5f) {
+            srcSize = 8;
+        } else if (scale <= 1.0f) {
+            srcSize = 16;
+        } else {
+            srcSize = 32;
+        }
+
+        int sx = color * srcSize;
+        if (bone) sx += 9 * srcSize;
+
+        int sy = 0;
+        if (isSpecialBlocks) sx = ((color - Block.BLOCK_COLOR_COUNT) + 18) * srcSize;
+
+        if (isSticky) {
+            if (isSpecialBlocks) {
+                sx = (color - Block.BLOCK_COLOR_COUNT) * srcSize;
+                sy = 18 * srcSize;
+            } else {
+                sx = 0;
+                if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_UP) != 0) sx |= 0x1;
+                if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_DOWN) != 0) sx |= 0x2;
+                if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_LEFT) != 0) sx |= 0x4;
+                if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT) != 0) sx |= 0x8;
+                sx *= srcSize;
+                sy = color * srcSize;
+                if (bone) sy += 9 * srcSize;
+            }
+        }
+
+        final RuntimeImage<?> runtimeImage = customGraphics.getBlockSkin(scale, skin);
+
         if (renderer == CustomResourceHolder.Runtime.SLICK) {
             // region Slick Case
             Graphics graphics = customGraphics.getGraphicsSlick((RendererSlick) receiver, true);
             if (graphics == null) return;
 
-            if ((color <= Block.BLOCK_COLOR_INVALID)) return;
-            if (skin >= ResourceHolder.imgNormalBlockList.size()) skin = 0;
-
-            boolean isSpecialBlocks = (color >= Block.BLOCK_COLOR_COUNT);
-            boolean isSticky = ResourceHolder.blockStickyFlagList.get(skin);
-
-            int size = (int) (16 * scale);
-
-            int srcSize;
-            if (scale <= 0.5f) {
-                srcSize = 8;
-            } else if (scale <= 1.0f) {
-                srcSize = 16;
-            } else {
-                srcSize = 32;
-            }
-
-            Image img = null;
-            if (scale <= 0.5f)
-                img = ResourceHolder.imgSmallBlockList.get(skin);
-            else if (scale > 1.0f)
-                img = ResourceHolder.imgBigBlockList.get(skin);
-            else
-                img = ResourceHolder.imgNormalBlockList.get(skin);
-
-            int sx = color * srcSize;
-            if (bone) sx += 9 * srcSize;
-            int sy = 0;
-            if (isSpecialBlocks) sx = ((color - Block.BLOCK_COLOR_COUNT) + 18) * srcSize;
-
-            if (isSticky) {
-                if (isSpecialBlocks) {
-                    sx = (color - Block.BLOCK_COLOR_COUNT) * srcSize;
-                    sy = 18 * srcSize;
-                } else {
-                    sx = 0;
-                    if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_UP) != 0) sx |= 0x1;
-                    if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_DOWN) != 0) sx |= 0x2;
-                    if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_LEFT) != 0) sx |= 0x4;
-                    if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT) != 0) sx |= 0x8;
-                    sx *= srcSize;
-                    sy = color * srcSize;
-                    if (bone) sy += 9 * srcSize;
-                }
-            }
+            final Image img = ((RuntimeImage.Slick) runtimeImage).image;
 
             int imageWidth = img.getWidth();
             if ((sx >= imageWidth) && (imageWidth != -1)) sx = 0;
@@ -455,51 +453,7 @@ public class RendererExtension {
             Graphics2D graphics = customGraphics.getGraphicsSwing((RendererSwing) receiver, true);
             if (graphics == null) return;
 
-            if ((color <= Block.BLOCK_COLOR_INVALID)) return;
-            if (skin >= ResourceHolderSwing.imgNormalBlockList.size()) skin = 0;
-
-            boolean isSpecialBlocks = (color >= Block.BLOCK_COLOR_COUNT);
-            boolean isSticky = ResourceHolderSwing.blockStickyFlagList.get(skin);
-
-            int size = (int) (16 * scale);
-
-            int srcSize;
-            if (scale <= 0.5f) {
-                srcSize = 8;
-            } else if (scale <= 1.0f) {
-                srcSize = 16;
-            } else {
-                srcSize = 32;
-            }
-
-            java.awt.Image img = null;
-            if (scale <= 0.5f)
-                img = ResourceHolderSwing.imgSmallBlockList.get(skin);
-            else if (scale > 1.0f)
-                img = ResourceHolderSwing.imgBigBlockList.get(skin);
-            else
-                img = ResourceHolderSwing.imgNormalBlockList.get(skin);
-
-            int sx = color * srcSize;
-            if (bone) sx += 9 * srcSize;
-            int sy = 0;
-            if (isSpecialBlocks) sx = ((color - Block.BLOCK_COLOR_COUNT) + 18) * srcSize;
-
-            if (isSticky) {
-                if (isSpecialBlocks) {
-                    sx = (color - Block.BLOCK_COLOR_COUNT) * srcSize;
-                    sy = 18 * srcSize;
-                } else {
-                    sx = 0;
-                    if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_UP) != 0) sx |= 0x1;
-                    if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_DOWN) != 0) sx |= 0x2;
-                    if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_LEFT) != 0) sx |= 0x4;
-                    if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT) != 0) sx |= 0x8;
-                    sx *= srcSize;
-                    sy = color * srcSize;
-                    if (bone) sy += 9 * srcSize;
-                }
-            }
+            final java.awt.Image img = ((RuntimeImage.Swing) runtimeImage).image;
 
             int imageWidth = img.getWidth(null);
             if ((sx >= imageWidth) && (imageWidth != -1)) sx = 0;
@@ -606,51 +560,7 @@ public class RendererExtension {
                 SDLSurface graphics = customGraphics.getGraphicsSDL((RendererSDL) receiver, true);
                 if (graphics == null) return;
 
-                if (color <= Block.BLOCK_COLOR_INVALID) return;
-                if (skin >= ResourceHolderSDL.imgNormalBlockList.size()) skin = 0;
-
-                boolean isSpecialBlocks = (color >= Block.BLOCK_COLOR_COUNT);
-                boolean isSticky = ResourceHolderSDL.blockStickyFlagList.get(skin);
-
-                int size = (int) (16 * scale);
-
-                int srcSize;
-                if (scale <= 0.5f) {
-                    srcSize = 8;
-                } else if (scale <= 1.0f) {
-                    srcSize = 16;
-                } else {
-                    srcSize = 32;
-                }
-
-                SDLSurface img = null;
-                if (scale <= 0.5f)
-                    img = ResourceHolderSDL.imgSmallBlockList.get(skin);
-                else if (scale > 1.0f)
-                    img = ResourceHolderSDL.imgBigBlockList.get(skin);
-                else
-                    img = ResourceHolderSDL.imgNormalBlockList.get(skin);
-
-                int sx = color * srcSize;
-                if (bone) sx += 9 * srcSize;
-                int sy = 0;
-                if (isSpecialBlocks) sx = ((color - Block.BLOCK_COLOR_COUNT) + 18) * srcSize;
-
-                if (isSticky) {
-                    if (isSpecialBlocks) {
-                        sx = (color - Block.BLOCK_COLOR_COUNT) * srcSize;
-                        sy = 18 * srcSize;
-                    } else {
-                        sx = 0;
-                        if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_UP) != 0) sx |= 0x1;
-                        if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_DOWN) != 0) sx |= 0x2;
-                        if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_LEFT) != 0) sx |= 0x4;
-                        if ((attr & Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT) != 0) sx |= 0x8;
-                        sx *= srcSize;
-                        sy = color * srcSize;
-                        if (bone) sy += 9 * srcSize;
-                    }
-                }
+                SDLSurface img = ((RuntimeImage.SDL) runtimeImage).image;
 
                 int imageWidth = img.getWidth();
                 if ((sx >= imageWidth) && (imageWidth != -1)) sx = 0;

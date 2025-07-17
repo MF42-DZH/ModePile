@@ -379,6 +379,73 @@ public class CustomResourceHolder {
         }
     }
 
+    /** Represents a blockskin size. */
+    public enum BlockSize {
+        SMALL, NORMAL, BIG;
+
+        public static BlockSize fromScale(float scale) {
+            if (scale <= 0.5f) return SMALL;
+            else if (scale > 1.0f) return BIG;
+            else return NORMAL;
+        }
+    }
+
+    /**
+     * Get a block skin for a particular scale of rendering.
+     *
+     * @param scale Render scale
+     * @param skin  Block skin number
+     * @return Runtime image of block skin, or null if runtime is undefined.
+     */
+    public RuntimeImage<?> getBlockSkin(float scale, int skin) {
+        return getBlockSkin(BlockSize.fromScale(scale), skin);
+    }
+
+    /**
+     * Get a block skin for a particular size of block.
+     *
+     * @param size Block size
+     * @param skin Block skin number
+     * @return Runtime image of block skin, or null if runtime is undefined.
+     */
+    public RuntimeImage<?> getBlockSkin(BlockSize size, int skin) {
+        switch (holderType) {
+            case SLICK:
+                if (size == BlockSize.SMALL) return new RuntimeImage.Slick(ResourceHolder.imgSmallBlockList.get(skin));
+                else if (size == BlockSize.NORMAL) return new RuntimeImage.Slick(ResourceHolder.imgNormalBlockList.get(skin));
+                else return new RuntimeImage.Slick(ResourceHolder.imgBigBlockList.get(skin));
+            case SWING:
+                if (size == BlockSize.SMALL) return new RuntimeImage.Swing(ResourceHolderSwing.imgSmallBlockList.get(skin));
+                else if (size == BlockSize.NORMAL) return new RuntimeImage.Swing(ResourceHolderSwing.imgNormalBlockList.get(skin));
+                else return new RuntimeImage.Swing(ResourceHolderSwing.imgBigBlockList.get(skin));
+            case SDL:
+                if (size == BlockSize.SMALL) return new RuntimeImage.SDL(ResourceHolderSDL.imgSmallBlockList.get(skin));
+                else if (size == BlockSize.NORMAL) return new RuntimeImage.SDL(ResourceHolderSDL.imgNormalBlockList.get(skin));
+                else return new RuntimeImage.SDL(ResourceHolderSDL.imgBigBlockList.get(skin));
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Get if a particular block skin supports connected textures.
+     *
+     * @param skin Block skin number
+     * @return If block skin supports connected blocks.
+     */
+    public boolean getSkinStickyFlag(int skin) {
+        switch (holderType) {
+            case SLICK:
+                return ResourceHolder.blockStickyFlagList.get(skin);
+            case SWING:
+                return ResourceHolderSwing.blockStickyFlagList.get(skin);
+            case SDL:
+                return ResourceHolderSDL.blockStickyFlagList.get(skin);
+            default:
+                return false;
+        }
+    }
+
     /**
      * Sets rotation centre for an image when using Slick renderer.
      *
@@ -466,6 +533,7 @@ public class CustomResourceHolder {
 
         return bigFont;
     }
+
 
     /**
      * Improved implementation of <code>NormalFont.printFont</code>, that uses all three
