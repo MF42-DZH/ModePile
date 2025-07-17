@@ -3,7 +3,6 @@ package zeroxfc.nullpo.custom.modes;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.Objects;
 import java.util.Random;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
@@ -19,7 +18,6 @@ import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
-import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
@@ -601,10 +599,6 @@ public class MultiNextMarathon extends MarathonModeBase {
                 return true;
             }
 
-//            if (engine.statc[1] == 0) {
-//                canSwitchNext = true;
-//            }
-
             if (auditoryASMR || lastUsedNext == WhichQueue.LEFT) {
                 SoundLoader.playPannedSound(engine, "piece" + leftQueue.queue.peek().id, -1f);
             }
@@ -725,7 +719,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                 int rt = engine.getRotateDirection(move);
 
                 // rotationできるか判定
-                if(engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY, rt, engine.field) == false)
+                if(!engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY, rt, engine.field))
                 {
                     // Wallkickなしでrotationできるとき
                     rotated = true;
@@ -833,7 +827,7 @@ public class MultiNextMarathon extends MarathonModeBase {
         int move = 0;
         boolean sidemoveflag = false;	// この frame に横移動したらtrue
 
-        if((engine.statc[0] > 0) || (engine.ruleopt.moveFirstFrame == true)) {
+        if((engine.statc[0] > 0) || (engine.ruleopt.moveFirstFrame)) {
             // 横移動
             boolean onGroundBeforeMove = engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY + 1, engine.field);
 
@@ -932,13 +926,13 @@ public class MultiNextMarathon extends MarathonModeBase {
 
             if(!engine.ruleopt.softdropGravitySpeedLimit || (engine.ruleopt.softdropSpeed < 1.0f)) {
                 // Old Soft Drop codes
-                if( (engine.ctrl.isPress(engine.getDown()) == true) &&
-                    (engine.softdropContinuousUse == false) &&
-                    (engine.ruleopt.softdropEnable == true) &&
-                    ((engine.isDiagonalMoveEnabled() == true) || (sidemoveflag == false)) &&
-                    ((engine.ruleopt.moveUpAndDown == true) || (updown == false)) )
+                if( (engine.ctrl.isPress(engine.getDown())) &&
+                    (!engine.softdropContinuousUse) &&
+                    (engine.ruleopt.softdropEnable) &&
+                    ((engine.isDiagonalMoveEnabled()) || (!sidemoveflag)) &&
+                    ((engine.ruleopt.moveUpAndDown) || (!updown)) )
                 {
-                    if((engine.ruleopt.softdropMultiplyNativeSpeed == true) || (engine.speed.denominator <= 0))
+                    if((engine.ruleopt.softdropMultiplyNativeSpeed) || (engine.speed.denominator <= 0))
                         engine.gcount += (int)(engine.speed.gravity * engine.ruleopt.softdropSpeed);
                     else
                         engine.gcount += (int)(engine.speed.denominator * engine.ruleopt.softdropSpeed);
@@ -952,7 +946,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                     (engine.ruleopt.moveUpAndDown || !updown) &&
                     (engine.ruleopt.softdropMultiplyNativeSpeed || (engine.speed.gravity < (int)(engine.speed.denominator * engine.ruleopt.softdropSpeed))) )
                 {
-                    if((engine.ruleopt.softdropMultiplyNativeSpeed == true) || (engine.speed.denominator <= 0)) {
+                    if((engine.ruleopt.softdropMultiplyNativeSpeed) || (engine.speed.denominator <= 0)) {
                         // gcount += (int)(speed.gravity * ruleopt.softdropSpeed);
                         engine.gcount = (int)(engine.speed.gravity * engine.ruleopt.softdropSpeed);
                     } else {
@@ -1008,8 +1002,8 @@ public class MultiNextMarathon extends MarathonModeBase {
         }
 
         // 接地と固定
-        if( (engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY + 1, engine.field) == true) &&
-            ((engine.statc[0] > 0) || (engine.ruleopt.moveFirstFrame == true)) )
+        if( (engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY + 1, engine.field)) &&
+            ((engine.statc[0] > 0) || (engine.ruleopt.moveFirstFrame)) )
         {
             if((engine.lockDelayNow == 0) && (engine.getLockDelay() > 0))
                 engine.playSE("step");
@@ -1087,7 +1081,7 @@ public class MultiNextMarathon extends MarathonModeBase {
             }
 
             // 固定
-            if( ((engine.lockDelayNow >= engine.getLockDelay()) && (engine.getLockDelay() > 0)) || (instantlock == true) ) {
+            if( ((engine.lockDelayNow >= engine.getLockDelay()) && (engine.getLockDelay() > 0)) || (instantlock) ) {
                 if(engine.ruleopt.lockflash > 0) engine.nowPieceObject.setDarkness(-0.8f);
 
                 // T-Spin判定
