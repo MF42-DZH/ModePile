@@ -6,6 +6,7 @@ import java.util.Random;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 
 public class FieldScatter {
     /**
@@ -64,7 +65,7 @@ public class FieldScatter {
                         new DoubleVector(
                             rdm.nextDouble() * 8, rdm.nextDouble() * Math.PI * 2, true
                         ),
-                        -1, 1, 1, PhysicsObject.ANCHOR_POINT_TL, blk.color
+                        -1, 1, 1, ObjectAlignment.TOP_LEFT, blk.color
                     ));
 
                     if (clearBlocks) receiver.blockBreak(engine, playerID, j, i, blk);
@@ -107,7 +108,7 @@ public class FieldScatter {
                     new DoubleVector(
                         rdm.nextDouble() * 8, rdm.nextDouble() * Math.PI * 2, true
                     ),
-                    -1, 1, 1, PhysicsObject.ANCHOR_POINT_TL, blk.color
+                    -1, 1, 1, ObjectAlignment.TOP_LEFT, blk.color
                 ));
 
                 receiver.blockBreak(engine, playerID, j, i, blk);

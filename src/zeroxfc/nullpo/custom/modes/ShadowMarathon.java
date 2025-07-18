@@ -2338,8 +2338,8 @@ public class ShadowMarathon extends MarathonModeBase {
             }
 
             if (fallPieceDraw != null) {
-                rendererExtension.drawPiece(receiver, (int) fallPieceLoc[0] + 2, (int) fallPieceLoc[1] + 2, fallPieceDraw, 1f, (1f / 3f));
-                rendererExtension.drawPiece(receiver, (int) fallPieceLoc[0], (int) fallPieceLoc[1], fallPieceDraw, 1f, 0f);
+                rendererExtension.drawScaledPiece(receiver, (int) fallPieceLoc[0] + 2, (int) fallPieceLoc[1] + 2, fallPieceDraw, 1f, (1f / 3f));
+                rendererExtension.drawScaledPiece(receiver, (int) fallPieceLoc[0], (int) fallPieceLoc[1], fallPieceDraw, 1f, 0f);
             }
         }
 

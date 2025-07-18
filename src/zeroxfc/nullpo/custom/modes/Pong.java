@@ -13,6 +13,7 @@ import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.PhysicsObject;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 
 public class Pong extends PuzzleGameEngine {
     // private static Logger log = Logger.getLogger(Pong.class);
@@ -278,8 +279,8 @@ public class Pong extends PuzzleGameEngine {
 
     private void resetPhysicsObjects(boolean resetPaddles) {
         DoubleVector position = new DoubleVector((fieldBoxMinX + fieldBoxMaxX) / 2d, (fieldBoxMinY + fieldBoxMaxY) / 2d, false);
-        ball = new PhysicsObject(position, DoubleVector.zero(), -1, 1, 1, PhysicsObject.ANCHOR_POINT_MM, Block.BLOCK_COLOR_GREEN);
-        ball.PROPERTY_Static = false;
+        ball = new PhysicsObject(position, DoubleVector.zero(), -1, 1, 1, ObjectAlignment.MIDDLE_MIDDLE, Block.BLOCK_COLOR_GREEN);
+        ball.isStatic = false;
 
         recentCollision = 0;
         lastCollision = 0;
@@ -288,11 +289,11 @@ public class Pong extends PuzzleGameEngine {
             DoubleVector playerPosition = new DoubleVector(fieldBoxMinX, (fieldBoxMinY + fieldBoxMaxY) / 2d, false);
             DoubleVector computerPosition = new DoubleVector(fieldBoxMaxX, (fieldBoxMinY + fieldBoxMaxY) / 2d, false);
 
-            paddlePlayer = new PhysicsObject(playerPosition, DoubleVector.zero(), -1, 2, 4, PhysicsObject.ANCHOR_POINT_ML, Block.BLOCK_COLOR_CYAN);
-            paddleComputer = new PhysicsObject(computerPosition, DoubleVector.zero(), -1, 2, 4, PhysicsObject.ANCHOR_POINT_MR, Block.BLOCK_COLOR_RED);
+            paddlePlayer = new PhysicsObject(playerPosition, DoubleVector.zero(), -1, 2, 4, ObjectAlignment.MIDDLE_LEFT, Block.BLOCK_COLOR_CYAN);
+            paddleComputer = new PhysicsObject(computerPosition, DoubleVector.zero(), -1, 2, 4, ObjectAlignment.MIDDLE_RIGHT, Block.BLOCK_COLOR_RED);
 
-            paddlePlayer.PROPERTY_Static = false;
-            paddleComputer.PROPERTY_Static = false;
+            paddlePlayer.isStatic = false;
+            paddleComputer.isStatic = false;
 
             computerRange = computerActionRandomiser.nextDouble() * 32;
         }

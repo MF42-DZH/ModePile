@@ -34,6 +34,7 @@ package zeroxfc.nullpo.custom.libs;
 
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 
 public class SideWaveText {
     public static final int MaxLifeTime = 120;
@@ -120,7 +121,7 @@ public class SideWaveText {
             scale = baseScale - (baseScale * ((float) (lifeTime - 24) / 96));
         }
 
-        GameTextUtilities.drawDirectTextAlign(engine, x, y, GameTextUtilities.ALIGN_MIDDLE_MIDDLE, text, color, scale);
+        GameTextUtilities.drawDirectTextAlign(engine, x, y, ObjectAlignment.MIDDLE_MIDDLE, text, color, scale);
     }
 
     public int getLifeTime() {

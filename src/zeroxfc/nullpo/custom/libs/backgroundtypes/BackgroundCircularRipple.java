@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
+import zeroxfc.nullpo.custom.libs.types.ImageChunk;
 
 public class BackgroundCircularRipple extends AnimatedBackgroundHook {
     public static final int DEF_FIELD_DIM = 8;
@@ -114,7 +116,7 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
             chunkGrid = new ImageChunk[DEF_GRID_HEIGHT][DEF_GRID_WIDTH];
             for (int y = 0; y < DEF_GRID_HEIGHT; y++) {
                 for (int x = 0; x < DEF_GRID_WIDTH; x++) {
-                    chunkGrid[y][x] = new ImageChunk(ImageChunk.ANCHOR_POINT_MM, new int[] { (DEF_FIELD_DIM * x) + (DEF_FIELD_DIM / 2), (DEF_FIELD_DIM * y) + (DEF_FIELD_DIM / 2) }, new int[] { (DEF_FIELD_DIM * x), (DEF_FIELD_DIM * y) }, new int[] { DEF_FIELD_DIM, DEF_FIELD_DIM }, new float[] { DEF_BASE_SCALE, DEF_BASE_SCALE });
+                    chunkGrid[y][x] = new ImageChunk(ObjectAlignment.MIDDLE_MIDDLE, new int[] { (DEF_FIELD_DIM * x) + (DEF_FIELD_DIM / 2), (DEF_FIELD_DIM * y) + (DEF_FIELD_DIM / 2) }, new int[] { (DEF_FIELD_DIM * x), (DEF_FIELD_DIM * y) }, new int[] { DEF_FIELD_DIM, DEF_FIELD_DIM }, new float[] { DEF_BASE_SCALE, DEF_BASE_SCALE });
                 }
             }
         } else {
@@ -136,7 +138,7 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
             chunkGrid = new ImageChunk[h][w];
             for (int y = 0; y < h; y++) {
                 for (int x = 0; x < w; x++) {
-                    chunkGrid[y][x] = new ImageChunk(ImageChunk.ANCHOR_POINT_MM, new int[] { (cellWidth * x) + (cellWidth / 2), (cellHeight * y) + (cellHeight / 2) }, new int[] { (cellWidth * x), (cellHeight * y) }, new int[] { cellWidth, cellHeight }, new float[] { pulseBaseScale, pulseBaseScale });
+                    chunkGrid[y][x] = new ImageChunk(ObjectAlignment.MIDDLE_MIDDLE, new int[] { (cellWidth * x) + (cellWidth / 2), (cellHeight * y) + (cellHeight / 2) }, new int[] { (cellWidth * x), (cellHeight * y) }, new int[] { cellWidth, cellHeight }, new float[] { pulseBaseScale, pulseBaseScale });
                 }
             }
         }
@@ -225,12 +227,8 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
             customHolder.drawImage(engine, imageName, 0, 0);
             priorityList.removeIf(imageChunk -> almostEqual(imageChunk.getScale()[0], 1, 0.005));
         }
-        for (ImageChunk i : priorityList) {
-            int[] pos = i.getDrawLocation();
-            int[] ddim = i.getDrawDimensions();
-            int[] sloc = i.getSourceLocation();
-            int[] sdim = i.getSourceDimensions();
-            customHolder.drawOffsetImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], 255, 255, 255, 255);
+        for (ImageChunk chunk : priorityList) {
+            customHolder.drawOffsetImage(engine, imageName, chunk, 255, 255, 255, 255);
         }
     }
 

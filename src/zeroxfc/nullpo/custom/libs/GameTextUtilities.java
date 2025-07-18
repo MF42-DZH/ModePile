@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Random;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 
 public class GameTextUtilities {
     /**
@@ -57,18 +58,7 @@ public class GameTextUtilities {
         EventReceiver.COLOR_PINK,
     };
 
-    /**
-     * Text alignment option
-     */
-    public static final int ALIGN_TOP_LEFT = 0,
-        ALIGN_TOP_MIDDLE = 1,
-        ALIGN_TOP_RIGHT = 2,
-        ALIGN_MIDDLE_LEFT = 3,
-        ALIGN_MIDDLE_MIDDLE = 4,
-        ALIGN_MIDDLE_RIGHT = 5,
-        ALIGN_BOTTOM_LEFT = 6,
-        ALIGN_BOTTOM_MIDDLE = 7,
-        ALIGN_BOTTOM_RIGHT = 8;
+    private GameTextUtilities() {}
 
     /**
      * Rainbow colour count
@@ -289,21 +279,21 @@ public class GameTextUtilities {
     }
 
     public static void drawAlignedText(GameEngine engine, int startX, int startY, Text text) {
-        drawAlignedText(engine, startX, startY, text, ALIGN_TOP_LEFT);
+        drawAlignedText(engine, startX, startY, text, ObjectAlignment.TOP_LEFT);
     }
 
-    public static void drawAlignedText(GameEngine engine, int startX, int startY, Text text, int alignment) {
+    public static void drawAlignedText(GameEngine engine, int startX, int startY, Text text, ObjectAlignment alignment) {
         int offsetX, offsetY;
 
         switch (alignment) {
-            case ALIGN_TOP_MIDDLE:
-            case ALIGN_MIDDLE_MIDDLE:
-            case ALIGN_BOTTOM_MIDDLE:
+            case TOP_MIDDLE:
+            case MIDDLE_MIDDLE:
+            case BOTTOM_MIDDLE:
                 offsetX = text.getWidth() / 2;
                 break;
-            case ALIGN_TOP_RIGHT:
-            case ALIGN_MIDDLE_RIGHT:
-            case ALIGN_BOTTOM_RIGHT:
+            case TOP_RIGHT:
+            case MIDDLE_RIGHT:
+            case BOTTOM_RIGHT:
                 offsetX = text.getWidth();
                 break;
             default:
@@ -312,14 +302,14 @@ public class GameTextUtilities {
         }
 
         switch (alignment) {
-            case ALIGN_MIDDLE_LEFT:
-            case ALIGN_MIDDLE_MIDDLE:
-            case ALIGN_MIDDLE_RIGHT:
+            case MIDDLE_LEFT:
+            case MIDDLE_MIDDLE:
+            case MIDDLE_RIGHT:
                 offsetY = text.getHeight() / 2;
                 break;
-            case ALIGN_BOTTOM_LEFT:
-            case ALIGN_BOTTOM_MIDDLE:
-            case ALIGN_BOTTOM_RIGHT:
+            case BOTTOM_LEFT:
+            case BOTTOM_MIDDLE:
+            case BOTTOM_RIGHT:
                 offsetY = text.getHeight();
                 break;
             default:
@@ -331,10 +321,10 @@ public class GameTextUtilities {
     }
 
     public static void drawAlignedScoreText(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, Text text) {
-        drawAlignedScoreText(receiver, engine, playerID, smallGrid, x, y, text, ALIGN_TOP_LEFT);
+        drawAlignedScoreText(receiver, engine, playerID, smallGrid, x, y, text, ObjectAlignment.TOP_LEFT);
     }
 
-    public static void drawAlignedScoreText(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, Text text, int alignment) {
+    public static void drawAlignedScoreText(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, Text text, ObjectAlignment alignment) {
         int gridSize = smallGrid ? 8 : 16;
 
         drawAlignedText(
@@ -347,10 +337,10 @@ public class GameTextUtilities {
     }
 
     public static void drawAlignedMenuText(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, Text text) {
-        drawAlignedMenuText(receiver, engine, playerID, smallGrid, x, y, text, ALIGN_TOP_LEFT);
+        drawAlignedMenuText(receiver, engine, playerID, smallGrid, x, y, text, ObjectAlignment.TOP_LEFT);
     }
 
-    public static void drawAlignedMenuText(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, Text text, int alignment) {
+    public static void drawAlignedMenuText(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, Text text, ObjectAlignment alignment) {
         int gridSize = smallGrid ? 8 : 16;
 
         drawAlignedText(
@@ -423,18 +413,18 @@ public class GameTextUtilities {
      * @param texts          The text block to draw
      * @param alignment      Alignment of the texts bounding box
      */
-    public static void drawAlignedTextBlock(GameEngine engine, int startX, int startY, boolean pinTop, TextBlock texts, int alignment) {
+    public static void drawAlignedTextBlock(GameEngine engine, int startX, int startY, boolean pinTop, TextBlock texts, ObjectAlignment alignment) {
         int offsetX, offsetY;
 
         switch (alignment) {
-            case ALIGN_TOP_MIDDLE:
-            case ALIGN_MIDDLE_MIDDLE:
-            case ALIGN_BOTTOM_MIDDLE:
+            case TOP_MIDDLE:
+            case MIDDLE_MIDDLE:
+            case BOTTOM_MIDDLE:
                 offsetX = texts.getWidth() / 2;
                 break;
-            case ALIGN_TOP_RIGHT:
-            case ALIGN_MIDDLE_RIGHT:
-            case ALIGN_BOTTOM_RIGHT:
+            case TOP_RIGHT:
+            case MIDDLE_RIGHT:
+            case BOTTOM_RIGHT:
                 offsetX = texts.getWidth();
                 break;
             default:
@@ -443,14 +433,14 @@ public class GameTextUtilities {
         }
 
         switch (alignment) {
-            case ALIGN_MIDDLE_LEFT:
-            case ALIGN_MIDDLE_MIDDLE:
-            case ALIGN_MIDDLE_RIGHT:
+            case MIDDLE_LEFT:
+            case MIDDLE_MIDDLE:
+            case MIDDLE_RIGHT:
                 offsetY = texts.getHeight() / 2;
                 break;
-            case ALIGN_BOTTOM_LEFT:
-            case ALIGN_BOTTOM_MIDDLE:
-            case ALIGN_BOTTOM_RIGHT:
+            case BOTTOM_LEFT:
+            case BOTTOM_MIDDLE:
+            case BOTTOM_RIGHT:
                 offsetY = texts.getHeight();
                 break;
             default:
@@ -474,7 +464,7 @@ public class GameTextUtilities {
      * @param pinTop         Pin line to top instead of bottom when varying scale text exists
      * @param texts          The text block to draw
      */
-    public static void drawAlignedScoreTextBlock(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, boolean pinTop, TextBlock texts, int alignment) {
+    public static void drawAlignedScoreTextBlock(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, boolean pinTop, TextBlock texts, ObjectAlignment alignment) {
         int gridSize = smallGrid ? 8 : 16;
 
         drawAlignedTextBlock(
@@ -500,7 +490,7 @@ public class GameTextUtilities {
      * @param pinTop         Pin line to top instead of bottom when varying scale text exists
      * @param texts          The text block to draw
      */
-    public static void drawAlignedMenuTextBlock(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, boolean pinTop, TextBlock texts, int alignment) {
+    public static void drawAlignedMenuTextBlock(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, boolean pinTop, TextBlock texts, ObjectAlignment alignment) {
         int gridSize = smallGrid ? 8 : 16;
 
         drawAlignedTextBlock(
@@ -582,7 +572,7 @@ public class GameTextUtilities {
      * @param scale     Scale of string
      */
     @Deprecated
-    public static void drawDirectTextAlign(GameEngine engine, int x, int y, int alignment, String str, Integer color, Float scale) {
+    public static void drawDirectTextAlign(GameEngine engine, int x, int y, ObjectAlignment alignment, String str, Integer color, Float scale) {
         if (color == null) color = 0;
         if (scale == null) scale = 1f;
         if (str == null) return;
@@ -603,7 +593,7 @@ public class GameTextUtilities {
      * @param scale     Scale of string
      */
     @Deprecated
-    public static void drawScoreTextAlign(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int alignment, String str, Integer color, Float scale) {
+    public static void drawScoreTextAlign(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, ObjectAlignment alignment, String str, Integer color, Float scale) {
         if (color == null) color = 0;
         if (scale == null) scale = 1f;
         if (str == null) return;
@@ -625,7 +615,7 @@ public class GameTextUtilities {
      * @param scale     Scale of string
      */
     @Deprecated
-    public static void drawMenuTextAlign(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, int alignment, String str, Integer color, Float scale) {
+    public static void drawMenuTextAlign(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, ObjectAlignment alignment, String str, Integer color, Float scale) {
         if (color == null) color = 0;
         if (scale == null) scale = 1f;
         if (str == null) return;
@@ -740,7 +730,7 @@ public class GameTextUtilities {
             }
         }
 
-        drawAlignedScoreTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ALIGN_TOP_LEFT);
+        drawAlignedScoreTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ObjectAlignment.TOP_LEFT);
     }
 
     /**
@@ -771,7 +761,7 @@ public class GameTextUtilities {
             }
         }
 
-        drawAlignedMenuTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ALIGN_TOP_LEFT);
+        drawAlignedMenuTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ObjectAlignment.TOP_LEFT);
     }
 
     /**
@@ -785,15 +775,10 @@ public class GameTextUtilities {
      * @param scale        Scale of text
      */
     public static void drawRandomRainbowDirectString(GameEngine engine, int x, int y, String str, Random randomEngine, float scale) {
-        int offset = 0;
         final List<Text> chars = new LinkedList<>();
 
         for (int i = 0; i < str.length(); i++) {
-            if (str.charAt(i) == ' ') {
-                offset++;
-            } else {
-                chars.add(Text.custom(str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)], scale));
-            }
+            chars.add(Text.custom(str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)], scale));
         }
 
         drawDirectTextBlock(engine, x, y, false, new TextBlock(chars));
@@ -812,18 +797,13 @@ public class GameTextUtilities {
      * @param scale        Scale of text
      */
     public static void drawRandomRainbowScoreString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, Random randomEngine, float scale) {
-        int offset = 0;
         final List<Text> chars = new LinkedList<>();
 
         for (int i = 0; i < str.length(); i++) {
-            if (str.charAt(i) == ' ') {
-                offset++;
-            } else {
-                chars.add(Text.custom(str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)], scale));
-            }
+            chars.add(Text.custom(str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)], scale));
         }
 
-        drawAlignedScoreTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ALIGN_TOP_LEFT);
+        drawAlignedScoreTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ObjectAlignment.TOP_LEFT);
     }
 
     /**
@@ -839,18 +819,13 @@ public class GameTextUtilities {
      * @param scale        Scale of text
      */
     public static void drawRandomRainbowMenuString(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, String str, Random randomEngine, float scale) {
-        int offset = 0;
         final List<Text> chars = new LinkedList<>();
 
         for (int i = 0; i < str.length(); i++) {
-            if (str.charAt(i) == ' ') {
-                offset++;
-            } else {
-                chars.add(Text.custom(str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)], scale));
-            }
+            chars.add(Text.custom(str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)], scale));
         }
 
-        drawAlignedMenuTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ALIGN_TOP_LEFT);
+        drawAlignedMenuTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ObjectAlignment.TOP_LEFT);
     }
 
     // endregion Rainbow Text

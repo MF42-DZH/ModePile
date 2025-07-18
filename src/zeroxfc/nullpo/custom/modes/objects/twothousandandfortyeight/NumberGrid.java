@@ -6,7 +6,7 @@ import java.util.Random;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
-import zeroxfc.nullpo.custom.libs.ValueWrapper;
+import zeroxfc.nullpo.custom.libs.types.Box;
 
 public class NumberGrid {
     // region Static Fields
@@ -143,7 +143,7 @@ public class NumberGrid {
         return localField;
     }
 
-    public boolean moveSquares(GameEngine engine, EventReceiver receiver, int playerID, int direction, ValueWrapper counter) {
+    public boolean moveSquares(GameEngine engine, EventReceiver receiver, int playerID, int direction, Box<Integer> counter) {
         boolean moved = false;
         boolean merged = false;
 
@@ -165,7 +165,10 @@ public class NumberGrid {
 
                             moved = true;
                             merged = true;
-                            counter.valueInt += getCell(x, tY).getValue();
+
+                            final int fx = x;
+                            counter.modify(v -> v + getCell(fx, tY).getValue());
+
                             receiver.blockBreak(engine, playerID, x * 2, tY * 2, getBlock(getCell(x, tY).getValue()));
                             receiver.blockBreak(engine, playerID, x * 2 + 1, tY * 2, getBlock(getCell(x, tY).getValue()));
                             receiver.blockBreak(engine, playerID, x * 2, tY * 2 + 1, getBlock(getCell(x, tY).getValue()));
@@ -190,7 +193,10 @@ public class NumberGrid {
 
                             moved = true;
                             merged = true;
-                            counter.valueInt += getCell(x, tY).getValue();
+
+                            final int fx = x;
+                            counter.modify(v -> v + getCell(fx, tY).getValue());
+
                             receiver.blockBreak(engine, playerID, x * 2, tY * 2, getBlock(getCell(x, tY).getValue()));
                             receiver.blockBreak(engine, playerID, x * 2 + 1, tY * 2, getBlock(getCell(x, tY).getValue()));
                             receiver.blockBreak(engine, playerID, x * 2, tY * 2 + 1, getBlock(getCell(x, tY).getValue()));
@@ -215,7 +221,10 @@ public class NumberGrid {
 
                             moved = true;
                             merged = true;
-                            counter.valueInt += getCell(tX, y).getValue();
+
+                            final int fY = y;
+                            counter.modify(v -> v + getCell(tX, fY).getValue());
+
                             receiver.blockBreak(engine, playerID, tX * 2, y * 2, getBlock(getCell(tX, y).getValue()));
                             receiver.blockBreak(engine, playerID, tX + 1, y * 2, getBlock(getCell(tX, y).getValue()));
                             receiver.blockBreak(engine, playerID, tX * 2, y * 2 + 1, getBlock(getCell(tX, y).getValue()));
@@ -240,7 +249,10 @@ public class NumberGrid {
 
                             moved = true;
                             merged = true;
-                            counter.valueInt += getCell(tX, y).getValue();
+
+                            final int fY = y;
+                            counter.modify(v -> v + getCell(tX, fY).getValue());
+
                             receiver.blockBreak(engine, playerID, tX * 2, y * 2, getBlock(getCell(tX, y).getValue()));
                             receiver.blockBreak(engine, playerID, tX + 1, y * 2, getBlock(getCell(tX, y).getValue()));
                             receiver.blockBreak(engine, playerID, tX * 2, y * 2 + 1, getBlock(getCell(tX, y).getValue()));

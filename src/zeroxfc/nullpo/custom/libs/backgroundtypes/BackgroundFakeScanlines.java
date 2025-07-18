@@ -3,6 +3,8 @@ package zeroxfc.nullpo.custom.libs.backgroundtypes;
 import java.util.Random;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
+import zeroxfc.nullpo.custom.libs.types.ImageChunk;
 
 public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
     private static final int AMT = 480 / 2;
@@ -69,7 +71,7 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
         // Generate chunks
         chunks = new ImageChunk[AMT];
         for (int i = 0; i < chunks.length; i++) {
-            chunks[i] = new ImageChunk(ImageChunk.ANCHOR_POINT_TL, new int[] { 0, ((480 / AMT) * i) + ((480 / AMT) / 2) }, new int[] { 0, (480 / AMT) * i }, new int[] { 640, (480 / AMT) }, new float[] { 1f, 1f });
+            chunks[i] = new ImageChunk(ObjectAlignment.TOP_LEFT, new int[] { 0, ((480 / AMT) * i) + ((480 / AMT) / 2) }, new int[] { 0, (480 / AMT) * i }, new int[] { 640, (480 / AMT) }, new float[] { 1f, 1f });
         }
 
         phase = 0;
@@ -112,11 +114,7 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
             col -= (float) (0.025 * colourRandom.nextDouble());
             int colour = (int) (255 * col);
 
-            int[] pos = chunks[id].getDrawLocation();
-            int[] ddim = chunks[id].getDrawDimensions();
-            int[] sloc = chunks[id].getSourceLocation();
-            int[] sdim = chunks[id].getSourceDimensions();
-            customHolder.drawOffsetImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], colour, colour, colour, 255);
+            customHolder.drawOffsetImage(engine, imageName, chunks[id], colour, colour, colour, 255);
         }
     }
 

@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
@@ -142,7 +143,7 @@ public class MultiNextMarathon extends MarathonModeBase {
 
             rendererExtension.drawAlignedScaledPiece(
                 receiver,
-                cx, cy, RendererExtension.ALIGN_TOP_LEFT,
+                cx, cy, ObjectAlignment.TOP_LEFT,
                 this.piece, 1.0f, Interpolation.lerp(0.0f, 0.333f, (double) lifetime / MAX_LIFETIME)
             );
         }
@@ -1313,13 +1314,13 @@ public class MultiNextMarathon extends MarathonModeBase {
                     GameTextUtilities.drawAlignedMenuText(
                         receiver, engine, playerID, true,
                         0, -8, GameTextUtilities.Text.ofSmall("NEXT", EventReceiver.COLOR_ORANGE),
-                        GameTextUtilities.ALIGN_TOP_LEFT
+                        ObjectAlignment.TOP_LEFT
                     );
                 } else {
                     GameTextUtilities.drawAlignedMenuText(
                         receiver, engine, playerID, true,
                         (engine.field.getWidth() * 2), -8, GameTextUtilities.Text.ofSmall("NEXT", EventReceiver.COLOR_ORANGE),
-                        GameTextUtilities.ALIGN_TOP_RIGHT
+                        ObjectAlignment.TOP_RIGHT
                     );
                 }
 
@@ -1329,13 +1330,13 @@ public class MultiNextMarathon extends MarathonModeBase {
                     GameTextUtilities.drawAlignedMenuText(
                         receiver, engine, playerID, true,
                         0, -9, GameTextUtilities.Text.ofSmall("LAST", lastColor),
-                        GameTextUtilities.ALIGN_TOP_LEFT
+                        ObjectAlignment.TOP_LEFT
                     );
                 } else {
                     GameTextUtilities.drawAlignedMenuText(
                         receiver, engine, playerID, true,
                         (engine.field.getWidth() * 2), -9, GameTextUtilities.Text.ofSmall("LAST", lastColor),
-                        GameTextUtilities.ALIGN_TOP_RIGHT
+                        ObjectAlignment.TOP_RIGHT
                     );
                 }
 
@@ -1359,7 +1360,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                             y2 = (baseY - 52) + 40 + (40 * (i - 1)) - ((piece.getMaximumBlockY() + 1) * 8);
                         }
 
-                        int alignment = i == 0 ? RendererExtension.ALIGN_TOP_LEFT : RendererExtension.ALIGN_TOP_RIGHT;
+                        final ObjectAlignment alignment = i == 0 ? ObjectAlignment.TOP_LEFT : ObjectAlignment.TOP_RIGHT;
 
                         rendererExtension.drawAlignedScaledPiece(
                             receiver,
@@ -1389,7 +1390,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                             y2 = (baseY - 52) + 40 + (40 * (i - 1)) - ((piece.getMaximumBlockY() + 1) * 8);
                         }
 
-                        int alignment = i == 0 ? RendererExtension.ALIGN_TOP_RIGHT : RendererExtension.ALIGN_TOP_LEFT;
+                        final ObjectAlignment alignment = i == 0 ? ObjectAlignment.TOP_RIGHT : ObjectAlignment.TOP_LEFT;
 
                         rendererExtension.drawAlignedScaledPiece(
                             receiver,

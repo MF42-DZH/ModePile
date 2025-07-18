@@ -43,6 +43,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _ArrayRandomiser_ - Generates a permutation of an array.
 * _BlockParticle_ - Animated block particle for line clear effects.
 * _BlockParticleCollection_ - Collection class for easy generation, update and drawing of block particles.
+* _Box_ - A simple mutable box.
 * _BufferedPrimitiveDrawingHook_ - For fast primitive drawing.
 * _DoubleVector_ - 2D vector type that uses doubles for more precision.
 * _CustomResourceHolder_ - Allows the use of custom images and BGM in a mode.
@@ -66,7 +67,6 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _SoundLoader_ - Allows the use of custom SFX.
 * _SpeedTableBuilder_ - A more fluent way of constructing speed tables for gamemodes.
 * _StaticFlyInText_ - Similar to _FlyInOutText_, but the text does not fly back out.
-* _ValueWrapper_ - Class that holds a set of one of each primitive numbers.
 * _WeightedRandomiser_ - A weighted pseudorandom number generator. 
 
 ## Compilation Instructions:

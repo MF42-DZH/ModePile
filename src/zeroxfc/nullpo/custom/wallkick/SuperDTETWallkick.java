@@ -50,20 +50,20 @@ public class SuperDTETWallkick implements Wallkick {
     public WallkickResult executeWallkick(int x, int y, int rtDir, int rtOld, int rtNew, boolean allowUpward, Piece piece, Field field, Controller ctrl) {
         int x2, y2;
 
-        for (int i = 0; i < WALLKICK.length; i++) {
+        for (int[] ints : WALLKICK) {
             if (rtDir < 0 || rtDir == 2) {
-                x2 = WALLKICK[i][0];
+                x2 = ints[0];
             } else {
-                x2 = -WALLKICK[i][0];
+                x2 = -ints[0];
             }
-            y2 = WALLKICK[i][1];
+            y2 = ints[1];
 
             if (piece.big) {
                 x2 *= 2;
                 y2 *= 2;
             }
 
-            if (piece.checkCollision(x + x2, y + y2, rtNew, field) == false) {
+            if (!piece.checkCollision(x + x2, y + y2, rtNew, field)) {
                 return new WallkickResult(x2, y2, rtNew);
             }
         }

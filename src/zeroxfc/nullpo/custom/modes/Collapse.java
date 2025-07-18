@@ -11,9 +11,6 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.game.subsystem.mode.DummyMode;
-import mu.nu.nullpo.gui.sdl.MouseInputSDL;
-import mu.nu.nullpo.gui.slick.MouseInput;
-import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
@@ -21,6 +18,7 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.MouseParser;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.SideWaveText;
@@ -1512,13 +1510,13 @@ public class Collapse extends DummyMode {
                         GameTextUtilities.drawAlignedText(
                             engine, x, y,
                             GameTextUtilities.Text.customMixColor(sideWaveText.getText(), EventReceiver.COLOR_YELLOW, 255, 255, 255, alpha, scale),
-                            GameTextUtilities.ALIGN_MIDDLE_MIDDLE
+                            ObjectAlignment.MIDDLE_MIDDLE
                         );
                     } else {
                         GameTextUtilities.drawAlignedText(
                             engine, x, y,
                             GameTextUtilities.Text.customMixColor(sideWaveText.getText(), EventReceiver.COLOR_ORANGE, 255, 255, 255, alpha, scale),
-                            GameTextUtilities.ALIGN_MIDDLE_MIDDLE
+                            ObjectAlignment.MIDDLE_MIDDLE
                         );
                     }
                 }

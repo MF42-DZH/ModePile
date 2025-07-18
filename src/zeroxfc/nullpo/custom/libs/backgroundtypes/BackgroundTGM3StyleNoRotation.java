@@ -36,7 +36,7 @@ import java.util.Random;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
-import zeroxfc.nullpo.custom.libs.ValueWrapper;
+import zeroxfc.nullpo.custom.libs.types.Box;
 import zeroxfc.nullpo.custom.libs.types.RuntimeImage;
 
 public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
@@ -52,6 +52,19 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
     private final CustomResourceHolder.Runtime holderType;
     private final double sizeX;
     private final double sizeY;
+
+    private static class Data {
+        public double angle;
+        public float scale;
+        public int frame;
+
+        public Data() {
+            this.angle = 0d;
+            this.scale = 0f;
+            this.frame = 0;
+        }
+    }
+
     /**
      * Inside each instance:
      * <p>
@@ -59,8 +72,9 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
      * valueFloat - scale (current / limit)
      * valueInt - frame (timer / limit)
      */
-    private ValueWrapper lastValues, currentValues, targetValues;
+    private Box<Data> lastValues, currentValues, targetValues;
     private Random valueRandomiser;
+
     /**
      * Panning amount variables.
      */
@@ -74,11 +88,11 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
         setImageName("localBG");
         holderType = CustomResourceHolder.getCurrentNullpominoRuntime();
 
-        lastValues = new ValueWrapper();
-        currentValues = new ValueWrapper();
-        currentValues.valueFloat = MIN_SCALE;
+        lastValues = new Box<>(new Data());
+        currentValues = new Box<>(new Data());
+        currentValues.getValue().scale = MIN_SCALE;
 
-        targetValues = new ValueWrapper();
+        targetValues = new Box<>(new Data());
 
         lastPan = new int[2];
         currentPan = new int[2];
@@ -134,13 +148,13 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
         // Set current as last for LERP.
         lastPan[0] = currentPan[0];
         lastPan[1] = currentPan[1];
-        lastValues.copy(currentValues);
+        lastValues.share(currentValues);
 
         // Reset frame timer
-        currentValues.valueInt = 0;
+        currentValues.getValue().frame = 0;
 
         // Set new time limit
-        targetValues.valueInt = valueRandomiser.nextInt(MAX_TRAVEL_TIME - MIN_TRAVEL_TIME + 1) + MIN_TRAVEL_TIME;
+        targetValues.getValue().frame = valueRandomiser.nextInt(MAX_TRAVEL_TIME - MIN_TRAVEL_TIME + 1) + MIN_TRAVEL_TIME;
 
         //  (holderType == HOLDER_SLICK) {
         // 	// Set new rotation
@@ -153,8 +167,8 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
         float ns;
         do {
             ns = (float) (valueRandomiser.nextDouble() * (MAX_SCALE - MIN_SCALE)) + MIN_SCALE;
-        } while (!almostEqual(ns, currentValues.valueFloat, 1f));
-        targetValues.valueFloat = ns;
+        } while (!almostEqual(ns, currentValues.getValue().scale, 1f));
+        targetValues.getValue().scale = ns;
 
         // Find max pan from centre
         // int[] imgDim = customHolder.getImageDimensions(imageName);
@@ -192,18 +206,18 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
     @Override
     public void update() {
         hasUpdated = true;
-        currentValues.valueInt++;
-        if (currentValues.valueInt > targetValues.valueInt) {
-            currentValues.valueInt = 0;
+        currentValues.getValue().frame++;
+        if (currentValues.getValue().frame > targetValues.getValue().frame) {
+            currentValues.getValue().frame = 0;
             setNewTarget();
         } else {
-            double t = (double) currentValues.valueInt / (double) targetValues.valueInt;
+            double t = (double) currentValues.getValue().frame / (double) targetValues.getValue().frame;
 
             // if (holderType == HOLDER_SLICK) {
             // 	currentValues.valueDouble = Interpolation.sineStep(lastValues.valueDouble, targetValues.valueDouble, t);
             // 	customHolder.setRotation(imageName, currentValues.valueDouble.floatValue());
             // }
-            currentValues.valueFloat = (float) Interpolation.sineStep(lastValues.valueFloat, targetValues.valueFloat, t);
+            currentValues.getValue().scale = (float) Interpolation.sineStep(lastValues.getValue().scale, targetValues.getValue().scale, t);
 
             // int[] imgDim = customHolder.getImageDimensions(imageName);
             // sizeX = (imgDim[1] * Math.sin(Math.toRadians(currentValues.valueDouble))) + (imgDim[0] * Math.cos(Math.toRadians(currentValues.valueDouble)));
@@ -231,14 +245,14 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
     @Override
     public void reset() {
         if (hasUpdated) {
-            lastValues = new ValueWrapper();
-            currentValues = new ValueWrapper();
-            currentValues.valueFloat = MIN_SCALE;
-            targetValues = new ValueWrapper();
+            lastValues = new Box<>(new Data());
+            currentValues = new Box<>(new Data());
+            currentValues.getValue().scale = MIN_SCALE;
+            targetValues = new Box<>(new Data());
 
-            lastValues.valueFloat = 1f;
-            currentValues.valueFloat = MIN_SCALE;
-            targetValues.valueFloat = 1f;
+            lastValues.getValue().scale = 1f;
+            currentValues.getValue().scale = MIN_SCALE;
+            targetValues.getValue().scale = 1f;
 
             lastPan = new int[2];
             currentPan = new int[2];
@@ -258,15 +272,13 @@ public class BackgroundTGM3StyleNoRotation extends AnimatedBackgroundHook {
         int[] rawImgDim = customHolder.getImageDimensions(imageName);
         int[] imgDim = customHolder.getImageDimensions(imageName);
 
-        // log.debug(String.format("%d, %d", imgDim[0], imgDim[1]));
-
-        imgDim[0] *= currentValues.valueFloat;
-        imgDim[1] *= currentValues.valueFloat;
+        imgDim[0] = (int) (imgDim[0] * currentValues.getValue().scale);
+        imgDim[1] = (int) (imgDim[1] * currentValues.getValue().scale);
 
         int v = 255;
         if (dimTimer > 0) {
             int t = dimTimer - 15;
-            v = Interpolation.lerp(0, 255, (double) Math.abs(t) / 15d);
+            v = Interpolation.lerp(0, 255, Math.abs(t) / 15d);
         }
 
         /*

@@ -6,6 +6,7 @@ import mu.nu.nullpo.gui.sdl.RendererSDL;
 import mu.nu.nullpo.gui.slick.RendererSlick;
 import mu.nu.nullpo.gui.swing.RendererSwing;
 import org.apache.log4j.Logger;
+import zeroxfc.nullpo.custom.libs.types.LazyLoadException;
 
 public class BufferedPrimitiveDrawingHook {
     /**

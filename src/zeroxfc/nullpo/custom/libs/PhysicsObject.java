@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import org.apache.log4j.Logger;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 
 /**
  * PhysicsObject
@@ -45,39 +46,16 @@ import org.apache.log4j.Logger;
  * Has a bounding box collision system.
  */
 public class PhysicsObject implements Cloneable {
-    /**
-     * Anchor points for position.
-     * <p>
-     * This selects where the position represents on the object.
-     * <p>
-     * TL = top-left corner.
-     * TM = top-middle.
-     * TR = top-right corner.
-     * ML = middle-left.
-     * MM = centre.
-     * MR = middle-right.
-     * LL = bottom-left corner.
-     * LM = bottom-middle.
-     * LR = bottom-right corner.
-     */
-    public static final int ANCHOR_POINT_TL = 0,
-        ANCHOR_POINT_TM = 1,
-        ANCHOR_POINT_TR = 2,
-        ANCHOR_POINT_ML = 3,
-        ANCHOR_POINT_MM = 4,
-        ANCHOR_POINT_MR = 5,
-        ANCHOR_POINT_LL = 6,
-        ANCHOR_POINT_LM = 7,
-        ANCHOR_POINT_LR = 8;
     private static final Logger log = Logger.getLogger(PhysicsObject.class);
+
     /**
      * Property identitifiers. Is set automatically during constructions but can be overridden by external methods.
      * <p>
-     * PROPERTY_Static is default true if the object cannot move.
-     * PROPERTY_Collision is default true if the object can collide with other objects.
-     * PROPERTY_Destructible is default true if the object can be destroyed.
+     * <code>isStatic</code> is default true if the object cannot move.
+     * <code>isCollidable</code> is default true if the object can collide with other objects.
+     * <code>isDestructible</code> is default true if the object can be destroyed.
      */
-    public boolean PROPERTY_Static, PROPERTY_Collision, PROPERTY_Destructible;
+    public boolean isStatic, isCollidable, isDestructible;
 
     /**
      * Object "Health". Set to -1 to make indestructible.
@@ -85,13 +63,14 @@ public class PhysicsObject implements Cloneable {
     public int collisionsToDestroy;
 
     public DoubleVector position, velocity;
-    public int blockSizeX, blockSizeY, anchorPoint, colour, bounces;
+    public int blockSizeX, blockSizeY, colour, bounces;
+    public ObjectAlignment anchorPoint;
 
     public PhysicsObject() {
-        this(new DoubleVector(0, 0, false), new DoubleVector(0, 0, false), -1, 1, 1, 0, 1);
+        this(new DoubleVector(0, 0, false), new DoubleVector(0, 0, false), -1, 1, 1, ObjectAlignment.TOP_LEFT, 1);
     }
 
-    public PhysicsObject(DoubleVector position, DoubleVector velocity, int collisionsToDestroy, int blockSizeX, int blockSizeY, int anchorPoint, int colour) {
+    public PhysicsObject(DoubleVector position, DoubleVector velocity, int collisionsToDestroy, int blockSizeX, int blockSizeY, ObjectAlignment anchorPoint, int colour) {
         this.position = position;
         this.velocity = velocity;
         this.collisionsToDestroy = collisionsToDestroy;
@@ -101,9 +80,9 @@ public class PhysicsObject implements Cloneable {
         this.colour = colour;
         this.bounces = 0;
 
-        PROPERTY_Static = velocity.getMagnitude() == 0;
-        PROPERTY_Destructible = collisionsToDestroy > 0;
-        PROPERTY_Collision = true;
+        isStatic = velocity.getMagnitude() == 0;
+        isDestructible = collisionsToDestroy > 0;
+        isCollidable = true;
     }
 
     /**
@@ -115,8 +94,8 @@ public class PhysicsObject implements Cloneable {
      * @return Boolean that says if the instances are intersecting.
      */
     public static boolean checkCollision(PhysicsObject a, PhysicsObject b) {
-        if (!a.PROPERTY_Collision) return false;
-        if (!b.PROPERTY_Collision) return false;
+        if (!a.isCollidable) return false;
+        if (!b.isCollidable) return false;
 
         double[][] bboxA = a.getBoundingBox();
         double aMinX = bboxA[0][0];
@@ -187,31 +166,31 @@ public class PhysicsObject implements Cloneable {
 
         double[] anchor = new double[] { 0, 0 };
         switch (anchorPoint) {
-            case ANCHOR_POINT_TL:
+            case TOP_LEFT:
                 anchor = new double[] { 0, 0 };
                 break;
-            case ANCHOR_POINT_TM:
+            case TOP_MIDDLE:
                 anchor = new double[] { sizeX / 2.0, 0 };
                 break;
-            case ANCHOR_POINT_TR:
+            case TOP_RIGHT:
                 anchor = new double[] { sizeX - 1, 0 };
                 break;
-            case ANCHOR_POINT_ML:
+            case MIDDLE_LEFT:
                 anchor = new double[] { 0, sizeY / 2.0 };
                 break;
-            case ANCHOR_POINT_MM:
+            case MIDDLE_MIDDLE:
                 anchor = new double[] { sizeX / 2.0, sizeY / 2.0 };
                 break;
-            case ANCHOR_POINT_MR:
+            case MIDDLE_RIGHT:
                 anchor = new double[] { sizeX - 1, sizeY / 2.0 };
                 break;
-            case ANCHOR_POINT_LL:
+            case BOTTOM_LEFT:
                 anchor = new double[] { 0, sizeY - 1 };
                 break;
-            case ANCHOR_POINT_LM:
+            case BOTTOM_MIDDLE:
                 anchor = new double[] { sizeX / 2.0, sizeY - 1 };
                 break;
-            case ANCHOR_POINT_LR:
+            case BOTTOM_RIGHT:
                 anchor = new double[] { sizeX - 1, sizeY - 1 };
                 break;
         }
@@ -275,7 +254,7 @@ public class PhysicsObject implements Cloneable {
      * Do one movement tick.
      */
     public void move() {
-        if (!PROPERTY_Static) position = DoubleVector.add(position, velocity);
+        if (!isStatic) position = DoubleVector.add(position, velocity);
     }
 
     /**
@@ -286,7 +265,7 @@ public class PhysicsObject implements Cloneable {
      * @return Did the object collide at all?
      */
     public boolean move(int subticks, ArrayList<PhysicsObject> obstacles, boolean retract) {
-        if (PROPERTY_Static) return false;
+        if (isStatic) return false;
         DoubleVector v = DoubleVector.div(velocity, subticks);
 
         for (int i = 0; i < subticks; i++) {
@@ -311,7 +290,7 @@ public class PhysicsObject implements Cloneable {
      * @return Did the object collide at all?
      */
     public boolean move(int subticks, PhysicsObject[] obstacles, boolean retract) {
-        if (PROPERTY_Static) return false;
+        if (isStatic) return false;
         DoubleVector v = DoubleVector.div(velocity, subticks);
 
         for (int i = 0; i < subticks; i++) {
@@ -332,7 +311,7 @@ public class PhysicsObject implements Cloneable {
      * Do one movement tick with a custom velocity.
      */
     public void move(DoubleVector velocity) {
-        if (!PROPERTY_Static) position = DoubleVector.add(position, velocity);
+        if (!isStatic) position = DoubleVector.add(position, velocity);
     }
 
     /**
@@ -353,9 +332,9 @@ public class PhysicsObject implements Cloneable {
             clone.anchorPoint = anchorPoint;
             clone.colour = colour;
 
-            clone.PROPERTY_Static = PROPERTY_Static;
-            clone.PROPERTY_Destructible = PROPERTY_Destructible;
-            clone.PROPERTY_Collision = PROPERTY_Collision;
+            clone.isStatic = isStatic;
+            clone.isDestructible = isDestructible;
+            clone.isCollidable = isCollidable;
 
             return clone;
         } catch (Exception e) {
@@ -379,8 +358,8 @@ public class PhysicsObject implements Cloneable {
         this.anchorPoint = object.anchorPoint;
         this.colour = object.colour;
 
-        this.PROPERTY_Static = object.PROPERTY_Static;
-        this.PROPERTY_Destructible = object.PROPERTY_Destructible;
-        this.PROPERTY_Collision = object.PROPERTY_Collision;
+        this.isStatic = object.isStatic;
+        this.isDestructible = object.isDestructible;
+        this.isCollidable = object.isCollidable;
     }
 }

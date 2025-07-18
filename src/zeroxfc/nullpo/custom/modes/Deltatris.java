@@ -12,6 +12,7 @@ import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.ShakingText;
@@ -522,7 +523,7 @@ public class Deltatris extends MarathonModeBase {
             riy = receiver.getScoreDisplayPositionY(engine, playerID) + 13 * 16;
 
             GameTextUtilities.drawDirectTextAlign(engine, rix, riy,
-                GameTextUtilities.ALIGN_TOP_LEFT,
+                ObjectAlignment.TOP_LEFT,
                 String.format("%.2f", multiplier) + "X",
                 (engine.stat == GameEngine.STAT_MOVE && engine.statc[0] > engine.speed.lockDelay * 3) ? EventReceiver.COLOR_RED : (mScale > 1 ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_WHITE),
                 mScale);
@@ -547,7 +548,7 @@ public class Deltatris extends MarathonModeBase {
             ix = receiver.getScoreDisplayPositionX(engine, playerID);
             iy = receiver.getScoreDisplayPositionY(engine, playerID) + 18 * 16 + 4;
             rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
-                RendererExtension.ALIGN_TOP_LEFT,
+                ObjectAlignment.TOP_LEFT,
                 engine.statistics.totalPieceLocked < PIECES_MAX[difficulty] ? (float) Math.min(1, engine.statistics.totalPieceLocked / (double) PIECES_MAX[difficulty]) : (engine.statistics.time / 12 % 2 == 0 ? 1f : 0f),
                 2f, 2f);
 

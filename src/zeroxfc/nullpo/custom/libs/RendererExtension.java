@@ -34,7 +34,6 @@ package zeroxfc.nullpo.custom.libs;
 
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Piece;
@@ -46,9 +45,7 @@ import mu.nu.nullpo.gui.sdl.RendererSDL;
 import mu.nu.nullpo.gui.sdl.ResourceHolderSDL;
 import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
 import mu.nu.nullpo.gui.slick.RendererSlick;
-import mu.nu.nullpo.gui.slick.ResourceHolder;
 import mu.nu.nullpo.gui.swing.RendererSwing;
-import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import org.apache.log4j.Logger;
 import org.newdawn.slick.Color;
 import org.newdawn.slick.Graphics;
@@ -57,25 +54,25 @@ import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
 import sdljava.video.SDLVideo;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.types.RuntimeImage;
 
 public class RendererExtension {
-    /**
-     * Block break effect types used in addBlockBreakEffect()
-     */
-    public static final int TYPE_NORMAL_BREAK = 1, TYPE_GEM_BREAK = 2;
-    /**
-     * Text alignment option
-     */
-    public static final int ALIGN_TOP_LEFT = 0,
-        ALIGN_TOP_MIDDLE = 1,
-        ALIGN_TOP_RIGHT = 2,
-        ALIGN_MIDDLE_LEFT = 3,
-        ALIGN_MIDDLE_MIDDLE = 4,
-        ALIGN_MIDDLE_RIGHT = 5,
-        ALIGN_BOTTOM_LEFT = 6,
-        ALIGN_BOTTOM_MIDDLE = 7,
-        ALIGN_BOTTOM_RIGHT = 8;
+    /** Type of break effect. */
+    public enum BreakEffect {
+        NORMAL(1), GEM(2);
+
+        private final int value;
+
+        BreakEffect(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
+
     /**
      * Debug logger
      */
@@ -99,44 +96,6 @@ public class RendererExtension {
 
     public RendererExtension(CustomResourceHolder customGraphics) {
         this.customGraphics = customGraphics;
-    }
-
-    /**
-     * Draw piece
-     *
-     * @param x        X-Coordinate of piece
-     * @param y        Y-Coordinate of piece
-     * @param piece    The piece to draw
-     * @param scale    Scale factor at which the piece is drawn in (0.5f, 1f or 2f)
-     * @param darkness Darkness value (0f = None, negative = lighter, positive = darker)
-     */
-    public void drawPiece(EventReceiver receiver, int x, int y, Piece piece, float scale, float darkness) {
-        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
-
-        Class<?> local;
-        Method localMethod;
-
-        switch (renderer) {
-            case SLICK:
-                local = RendererSlick.class;
-                break;
-            case SWING:
-                local = RendererSwing.class;
-                break;
-            case SDL:
-                local = RendererSDL.class;
-                break;
-            default:
-                return;
-        }
-
-        try {
-            localMethod = local.getDeclaredMethod("drawPiece", int.class, int.class, Piece.class, float.class, float.class);
-            localMethod.setAccessible(true);
-            localMethod.invoke(receiver, x, y, piece, scale, darkness);
-        } catch (Exception e) {
-            if (DEBUG) log.error("Failed to extract and invoke drawPiece() method from renderer.");
-        }
     }
 
     /**
@@ -230,24 +189,24 @@ public class RendererExtension {
      * @param receiver  Renderer to draw with
      * @param x         X-coordinate of piece's top-left corner
      * @param y         Y-coordinate of piece's top-left corner
-     * @param alignment Alignment setting ID (use the ones in this class)
+     * @param alignment Alignment setting (use <code>ObjectAlignment</code>)
      * @param piece     The piece to draw
      * @param scale     Scale factor at which the piece is drawn in
      * @param darkness  Darkness value (0f = None, negative = lighter, positive = darker)
      */
-    public void drawAlignedScaledPiece(EventReceiver receiver, int x, int y, int alignment, Piece piece, float scale, float darkness) {
+    public void drawAlignedScaledPiece(EventReceiver receiver, int x, int y, ObjectAlignment alignment, Piece piece, float scale, float darkness) {
         final int baseSize = 16 * Math.max(piece.getWidth(), piece.getHeight());
         int offsetX, offsetY;
 
         switch (alignment) {
-            case ALIGN_TOP_MIDDLE:
-            case ALIGN_MIDDLE_MIDDLE:
-            case ALIGN_BOTTOM_MIDDLE:
+            case TOP_MIDDLE:
+            case MIDDLE_MIDDLE:
+            case BOTTOM_MIDDLE:
                 offsetX = (int) (baseSize * 0.5f * scale);
                 break;
-            case ALIGN_TOP_RIGHT:
-            case ALIGN_MIDDLE_RIGHT:
-            case ALIGN_BOTTOM_RIGHT:
+            case TOP_RIGHT:
+            case MIDDLE_RIGHT:
+            case BOTTOM_RIGHT:
                 offsetX = (int) (baseSize * scale);
                 break;
             default:
@@ -256,14 +215,14 @@ public class RendererExtension {
         }
 
         switch (alignment) {
-            case ALIGN_MIDDLE_LEFT:
-            case ALIGN_MIDDLE_MIDDLE:
-            case ALIGN_MIDDLE_RIGHT:
+            case MIDDLE_LEFT:
+            case MIDDLE_MIDDLE:
+            case MIDDLE_RIGHT:
                 offsetY = (int) (baseSize * 0.5f * scale);
                 break;
-            case ALIGN_BOTTOM_LEFT:
-            case ALIGN_BOTTOM_MIDDLE:
-            case ALIGN_BOTTOM_RIGHT:
+            case BOTTOM_LEFT:
+            case BOTTOM_MIDDLE:
+            case BOTTOM_RIGHT:
                 offsetY = (int) (baseSize * scale);
                 break;
             default:
@@ -289,7 +248,7 @@ public class RendererExtension {
      */
     public void addBlockBreakEffect(EventReceiver receiver, int x, int y, Block blk) {
         if (receiver == null || blk == null) return;
-        addBlockBreakEffect(receiver, blk.isGemBlock() ? 2 : 1, x, y, blk.getDrawColor());
+        addBlockBreakEffect(receiver, blk.isGemBlock() ? BreakEffect.GEM : BreakEffect.NORMAL, x, y, blk.getDrawColor());
     }
 
     /**
@@ -301,7 +260,7 @@ public class RendererExtension {
      * @param y          Y-Coordinate of top left corner of 16x16 block
      * @param color      Effect colour
      */
-    public void addBlockBreakEffect(EventReceiver receiver, int effectType, int x, int y, int color) {
+    public void addBlockBreakEffect(EventReceiver receiver, BreakEffect effectType, int x, int y, int color) {
         if (receiver == null) return;
 
         final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
@@ -338,12 +297,10 @@ public class RendererExtension {
                  * Use @SuppressWarnings("unchecked").
                  */
                 list = (ArrayList<EffectObject>) (effectList.get(receiver));
-
-                list.add(new EffectObject(effectType, x, y, color));
-                effectList.set(receiver, list);
+                list.add(new EffectObject(effectType.getValue(), x, y, color));
             }
         } catch (Exception e) {
-            if (DEBUG) log.error("Failed to extract, modify and place back effectList.");
+            if (DEBUG) log.error("Failed to extract and modify effectList.");
         }
     }
 
@@ -426,7 +383,6 @@ public class RendererExtension {
             graphics.drawImage(img, x, y, x + size, y + size, sx, sy, sx + srcSize, sy + srcSize, filter);
 
             if (isSticky && !isSpecialBlocks) {
-                int d = 16 * size;
                 int h = size / 2;
                 int d2 = 16 * srcSize;
                 int h2 = srcSize / 2;
@@ -513,7 +469,6 @@ public class RendererExtension {
                 graphics.drawImage(img, x, y, x + size, y + size, sx, sy, sx + srcSize, sy + srcSize, null);
 
                 if (isSticky && !isSpecialBlocks) {
-                    int d = 16 * size;
                     int h = size / 2;
                     int d2 = 16 * srcSize;
                     int h2 = srcSize / 2;
@@ -570,7 +525,6 @@ public class RendererExtension {
                 img.blitSurface(rectSrc, graphics, rectDst);
 
                 if (isSticky && !isSpecialBlocks) {
-                    int d = 16 * size;
                     int h = (size / 2);
                     int d2 = 16 * srcSize;
                     int h2 = srcSize / 2;
@@ -628,7 +582,7 @@ public class RendererExtension {
      * @param receiver  Renderer to draw with
      * @param x         X-coordinate of block anchor point
      * @param y         Y-coordinate of block anchor point
-     * @param alignment Alignment setting ID (use the ones in this class)
+     * @param alignment Alignment setting (use <code>ObjectAlignment</code>)
      * @param color     Block colour (use colours in <code>Block</code> class)
      * @param skin      Block skin (when in doubt use <code>getSkin()</code> on a <code>GameEngine</code> instance)
      * @param bone      Use bone block skin?
@@ -637,19 +591,19 @@ public class RendererExtension {
      * @param scale     Scale of drawing
      * @param attr      Block attributes (use attrs in <code>Block</code> class and combine with <code>|</code>, or use <code>0</code> for none)
      */
-    public void drawAlignedScaledBlock(EventReceiver receiver, int x, int y, int alignment, int color, int skin, boolean bone, float darkness, float alpha, float scale, int attr) {
+    public void drawAlignedScaledBlock(EventReceiver receiver, int x, int y, ObjectAlignment alignment, int color, int skin, boolean bone, float darkness, float alpha, float scale, int attr) {
         final int baseSize = 16;
         int offsetX, offsetY;
 
         switch (alignment) {
-            case ALIGN_TOP_MIDDLE:
-            case ALIGN_MIDDLE_MIDDLE:
-            case ALIGN_BOTTOM_MIDDLE:
+            case TOP_MIDDLE:
+            case MIDDLE_MIDDLE:
+            case BOTTOM_MIDDLE:
                 offsetX = (int) (baseSize * 0.5f * scale);
                 break;
-            case ALIGN_TOP_RIGHT:
-            case ALIGN_MIDDLE_RIGHT:
-            case ALIGN_BOTTOM_RIGHT:
+            case TOP_RIGHT:
+            case MIDDLE_RIGHT:
+            case BOTTOM_RIGHT:
                 offsetX = (int) (baseSize * scale);
                 break;
             default:
@@ -658,14 +612,14 @@ public class RendererExtension {
         }
 
         switch (alignment) {
-            case ALIGN_MIDDLE_LEFT:
-            case ALIGN_MIDDLE_MIDDLE:
-            case ALIGN_MIDDLE_RIGHT:
+            case MIDDLE_LEFT:
+            case MIDDLE_MIDDLE:
+            case MIDDLE_RIGHT:
                 offsetY = (int) (baseSize * 0.5f * scale);
                 break;
-            case ALIGN_BOTTOM_LEFT:
-            case ALIGN_BOTTOM_MIDDLE:
-            case ALIGN_BOTTOM_RIGHT:
+            case BOTTOM_LEFT:
+            case BOTTOM_MIDDLE:
+            case BOTTOM_RIGHT:
                 offsetY = (int) (baseSize * scale);
                 break;
             default:
@@ -781,7 +735,7 @@ public class RendererExtension {
         }
     }
 
-    public void drawAlignedSpeedMeter(EventReceiver receiver, int x, int y, int alignment, float value, float scaleX, float scaleY) {
+    public void drawAlignedSpeedMeter(EventReceiver receiver, int x, int y, ObjectAlignment alignment, float value, float scaleX, float scaleY) {
         drawAlignedSpeedMeter(receiver, x, y, alignment, value, scaleX, scaleY, SPEED_METER_GREEN, SPEED_METER_RED);
     }
 
@@ -791,27 +745,27 @@ public class RendererExtension {
      * @param receiver  Renderer to draw with
      * @param x         X-coordinate of anchor point
      * @param y         Y-coordinate of anchor point
-     * @param alignment Alignment setting ID (use the ones in this class)
+     * @param alignment Alignment setting (use <code>ObjectAlignment</code>)
      * @param value     Float in the range <code>0 <= value <= 1</code> that denotes how full the meter is
      * @param scaleX   Horizontal scale factor of speed meter drawn
      * @param scaleY   Vertical scale factor of speed meter drawn
      * @param colorBack  Base color (default: green)
      * @param colorFront Fill color (default: red)
      */
-    public void drawAlignedSpeedMeter(EventReceiver receiver, int x, int y, int alignment, float value, float scaleX, float scaleY, int[] colorBack, int[] colorFront) {
+    public void drawAlignedSpeedMeter(EventReceiver receiver, int x, int y, ObjectAlignment alignment, float value, float scaleX, float scaleY, int[] colorBack, int[] colorFront) {
         final int baseWidth = (int) (42 * scaleX);
         final int baseHeight = (int) (4 * scaleY);
 
         int offsetX, offsetY;
         switch (alignment) {
-            case ALIGN_TOP_MIDDLE:
-            case ALIGN_MIDDLE_MIDDLE:
-            case ALIGN_BOTTOM_MIDDLE:
+            case TOP_MIDDLE:
+            case MIDDLE_MIDDLE:
+            case BOTTOM_MIDDLE:
                 offsetX = (int) (baseWidth * 0.5f * scaleX);
                 break;
-            case ALIGN_TOP_RIGHT:
-            case ALIGN_MIDDLE_RIGHT:
-            case ALIGN_BOTTOM_RIGHT:
+            case TOP_RIGHT:
+            case MIDDLE_RIGHT:
+            case BOTTOM_RIGHT:
                 offsetX = (int) (baseWidth * scaleX);
                 break;
             default:
@@ -820,14 +774,14 @@ public class RendererExtension {
         }
 
         switch (alignment) {
-            case ALIGN_MIDDLE_LEFT:
-            case ALIGN_MIDDLE_MIDDLE:
-            case ALIGN_MIDDLE_RIGHT:
+            case MIDDLE_LEFT:
+            case MIDDLE_MIDDLE:
+            case MIDDLE_RIGHT:
                 offsetY = (int) (baseHeight * 0.5f * scaleY);
                 break;
-            case ALIGN_BOTTOM_LEFT:
-            case ALIGN_BOTTOM_MIDDLE:
-            case ALIGN_BOTTOM_RIGHT:
+            case BOTTOM_LEFT:
+            case BOTTOM_MIDDLE:
+            case BOTTOM_RIGHT:
                 offsetY = (int) (baseHeight * scaleY);
                 break;
             default:

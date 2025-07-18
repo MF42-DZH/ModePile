@@ -13,7 +13,7 @@ import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
-import zeroxfc.nullpo.custom.libs.ValueWrapper;
+import zeroxfc.nullpo.custom.libs.types.Box;
 import zeroxfc.nullpo.custom.modes.objects.twothousandandfortyeight.NumberGrid;
 
 public class TwoThousandAndFortyEight extends DummyMode {
@@ -41,7 +41,7 @@ public class TwoThousandAndFortyEight extends DummyMode {
     private int[][] rankingScore;
     private int localState;
     private int lastMove;
-    private ValueWrapper score;
+    private Box<Integer> score;
     private int moves;
     private int lastScoreTime;
     private int lastScore;
@@ -467,7 +467,7 @@ public class TwoThousandAndFortyEight extends DummyMode {
     private boolean statMove(GameEngine engine, int playerID) {
         if (engine.statc[0] == 0) {
             moves = 0;
-            score = new ValueWrapper(0);
+            score = new Box<>(0);
 
             for (int y = 0; y < FIELD_DIMENSION; y++) {
                 for (int x = 0; x < FIELD_DIMENSION; x++) {
@@ -481,10 +481,10 @@ public class TwoThousandAndFortyEight extends DummyMode {
             if (moved) moves++;
 
             if (!moved) {
-                if (score.valueInt > 0) {
+                if (score.getValue() > 0) {
                     lastScoreTime = 0;
                     lastScore = engine.statistics.score;
-                    engine.statistics.score += score.valueInt;
+                    engine.statistics.score += score.getValue();
                 }
 
                 if (moves > 0) mainGrid.createSquare();

@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package zeroxfc.nullpo.custom.libs;
+package zeroxfc.nullpo.custom.libs.types;
 
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;

@@ -46,6 +46,7 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import org.apache.log4j.Logger;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 
 public class ProfileProperties {
     /**
@@ -707,10 +708,10 @@ public class ProfileProperties {
                 case CUSTOM_STATE_INITIAL_SCREEN:
                     // region INITIAL SCREEN
                     GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 0,
-                        GameTextUtilities.ALIGN_TOP_MIDDLE, "PLAYER", colourHeading,
+                        ObjectAlignment.TOP_MIDDLE, "PLAYER", colourHeading,
                         2f);
                     GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 2,
-                        GameTextUtilities.ALIGN_TOP_MIDDLE, "DATA", colourHeading,
+                        ObjectAlignment.TOP_MIDDLE, "DATA", colourHeading,
                         2f);
 
                     receiver.drawMenuFont(engine, playerID, 0, 8, "A: LOG IN", EventReceiver.COLOR_YELLOW);
@@ -723,16 +724,16 @@ public class ProfileProperties {
                 case CUSTOM_STATE_NAME_INPUT:
                     // region NAME INPUT
                     GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 0,
-                        GameTextUtilities.ALIGN_TOP_MIDDLE, "NAME", colourHeading,
+                        ObjectAlignment.TOP_MIDDLE, "NAME", colourHeading,
                         2f);
                     GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 2,
-                        GameTextUtilities.ALIGN_TOP_MIDDLE, "ENTRY", colourHeading,
+                        ObjectAlignment.TOP_MIDDLE, "ENTRY", colourHeading,
                         2f);
 
-                    GameTextUtilities.drawAlignedMenuText(receiver, engine, playerID, false, 2, 8, GameTextUtilities.Text.ofBig(nameEntry), GameTextUtilities.ALIGN_TOP_LEFT);
+                    GameTextUtilities.drawAlignedMenuText(receiver, engine, playerID, false, 2, 8, GameTextUtilities.Text.ofBig(nameEntry), ObjectAlignment.TOP_LEFT);
                     int c = 0;
                     if ((engine.statc[0] / 6) % 2 == 0) c = EventReceiver.COLOR_YELLOW;
-                    GameTextUtilities.drawAlignedMenuText(receiver, engine, playerID, false, 2 + (nameEntry.length() * 2), 8, GameTextUtilities.Text.custom(ProfileProperties.getCharAt(currentChar), c, 2f), GameTextUtilities.ALIGN_TOP_LEFT);
+                    GameTextUtilities.drawAlignedMenuText(receiver, engine, playerID, false, 2 + (nameEntry.length() * 2), 8, GameTextUtilities.Text.custom(ProfileProperties.getCharAt(currentChar), c, 2f), ObjectAlignment.TOP_LEFT);
 
                     receiver.drawMenuFont(engine, playerID, 0, 18, "ENTER ACCOUNT\nNAME.");
                     // endregion
@@ -740,13 +741,13 @@ public class ProfileProperties {
                 case CUSTOM_STATE_PASSWORD_INPUT:
                     // region PASSWORD INPUT
                     GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 0,
-                        GameTextUtilities.ALIGN_TOP_MIDDLE, "PASS", colourHeading,
+                        ObjectAlignment.TOP_MIDDLE, "PASS", colourHeading,
                         2f);
                     GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 2,
-                        GameTextUtilities.ALIGN_TOP_MIDDLE, "ENTRY", colourHeading,
+                        ObjectAlignment.TOP_MIDDLE, "ENTRY", colourHeading,
                         2f);
 
-                    GameTextUtilities.drawAlignedMenuText(receiver, engine, playerID, false, 2, 8, GameTextUtilities.Text.ofBig(nameEntry), GameTextUtilities.ALIGN_TOP_LEFT);
+                    GameTextUtilities.drawAlignedMenuText(receiver, engine, playerID, false, 2, 8, GameTextUtilities.Text.ofBig(nameEntry), ObjectAlignment.TOP_LEFT);
 
                     for (int x = 0; x < 6; x++) {
                         String chr = "c";
@@ -772,7 +773,7 @@ public class ProfileProperties {
                     }
 
                     GameTextUtilities.drawMenuTextAlign(receiver, engine, playerID, 5, 9,
-                        GameTextUtilities.ALIGN_TOP_MIDDLE, s, col,
+                        ObjectAlignment.TOP_MIDDLE, s, col,
                         2f);
                     // endregion
                     break;

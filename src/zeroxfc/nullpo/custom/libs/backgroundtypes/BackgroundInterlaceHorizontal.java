@@ -2,6 +2,8 @@ package zeroxfc.nullpo.custom.libs.backgroundtypes;
 
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
+import zeroxfc.nullpo.custom.libs.types.ImageChunk;
 
 public class BackgroundInterlaceHorizontal extends AnimatedBackgroundHook {
     private static final int SCREEN_WIDTH = 640;
@@ -59,7 +61,7 @@ public class BackgroundInterlaceHorizontal extends AnimatedBackgroundHook {
 
         for (int i = 0; i < chunks.length; i++) {
             final boolean left = leftOdd && (i % 2 == 1);
-            final int anchorType = left ? ImageChunk.ANCHOR_POINT_TR : ImageChunk.ANCHOR_POINT_TL;
+            final ObjectAlignment anchorType = left ? ObjectAlignment.TOP_RIGHT : ObjectAlignment.TOP_LEFT;
             final int[] anchorLocation = new int[] { left ? SCREEN_WIDTH : 0, i * rowHeight };
             final int[] srcLocation = new int[] { 0, i * rowHeight };
             chunks[i] = new ImageChunk(anchorType, anchorLocation, srcLocation, new int[] { 640, rowHeight }, new float[] { baseScale, 1f });
@@ -114,12 +116,8 @@ public class BackgroundInterlaceHorizontal extends AnimatedBackgroundHook {
      */
     @Override
     public void draw(GameEngine engine, int playerID) {
-        for (ImageChunk i : chunks) {
-            int[] pos = i.getDrawLocation();
-            int[] ddim = i.getDrawDimensions();
-            int[] sloc = i.getSourceLocation();
-            int[] sdim = i.getSourceDimensions();
-            customHolder.drawOffsetImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], 255, 255, 255, 255);
+        for (ImageChunk chunk : chunks) {
+            customHolder.drawOffsetImage(engine, imageName, chunk, 255, 255, 255, 255);
         }
     }
 

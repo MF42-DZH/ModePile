@@ -35,7 +35,6 @@ package zeroxfc.nullpo.custom.libs;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
@@ -61,6 +60,7 @@ import sdljava.mixer.MixMusic;
 import sdljava.mixer.SDLMixer;
 import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
+import zeroxfc.nullpo.custom.libs.types.ImageChunk;
 import zeroxfc.nullpo.custom.libs.types.RuntimeImage;
 import zeroxfc.nullpo.custom.libs.types.RuntimeMusic;
 
@@ -698,8 +698,8 @@ public class CustomResourceHolder {
     /**
      * Draws image to game.
      *
-     * @param engine   GameEngine to draw with.
-     * @param name     Identifier of image.
+     * @param engine   GameEngine to draw with
+     * @param name     Identifier of image
      * @param x        X position of top-left
      * @param y        Y position of top-left
      * @param x2       X position of bottom-right
@@ -739,8 +739,8 @@ public class CustomResourceHolder {
     /**
      * Draws image to game.
      *
-     * @param engine   GameEngine to draw with.
-     * @param name     Identifier of image.
+     * @param engine   GameEngine to draw with
+     * @param name     Identifier of image
      * @param x        X position
      * @param y        Y position
      * @param srcX     Source X position
@@ -775,8 +775,8 @@ public class CustomResourceHolder {
     /**
      * Draws image to game.
      *
-     * @param engine   GameEngine to draw with.
-     * @param name     Identifier of image.
+     * @param engine   GameEngine to draw with
+     * @param name     Identifier of image
      * @param x        X position
      * @param y        Y position
      * @param sx       X size
@@ -809,6 +809,27 @@ public class CustomResourceHolder {
         );
     }
 
+
+    /**
+     * Draws image to game via the <code>ImageChunk</code> coordinate handler.
+     *
+     * @param engine GameEngine to draw with
+     * @param name   Identifier of image
+     * @param chunk  Chunk of image to draw
+     * @param red    Red component
+     * @param green  Green component
+     * @param blue   Blue component
+     * @param alpha  Alpha componena
+     */
+    public void drawOffsetImage(GameEngine engine, String name, ImageChunk chunk, int red, int green, int blue, int alpha) {
+        final int[] dpos = chunk.getDrawLocation();
+        final int[] ddim = chunk.getDrawDimensions();
+        final int[] sloc = chunk.getSourceLocation();
+        final int[] sdim = chunk.getSourceDimensions();
+
+        drawOffsetImage(engine, name, dpos[0], dpos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], red, green, blue, alpha);
+    }
+
     /**
      * Draws whole image to game with no tint.
      *
@@ -823,21 +844,12 @@ public class CustomResourceHolder {
     }
 
     /**
-     * Draws image to game with string colour definition.
-     * 8 character RRGGBBAA hex code or 6 character RRGGBB hex code.
+     * Turns a 8 character RRGGBBAA hex code or 6 character RRGGBB hex code into a colour array.
      *
-     * @param engine   GameEngine to draw with.
-     * @param name     Identifier of image.
-     * @param x        X position
-     * @param y        Y position
-     * @param srcX     Source X position
-     * @param srcY     Source Y position
-     * @param srcSizeX Source X size
-     * @param srcSizeY Source Y size
-     * @param color    Hex. code string of colour.
-     * @param scale    Image scale
+     * @param color Hex. code string of colour.
+     * @return Array representing RGBA or <code>null</code> if string is invalid.
      */
-    public void drawImage(GameEngine engine, String name, int x, int y, int srcX, int srcY, int srcSizeX, int srcSizeY, String color, float scale) {
+    public static int[] parseColor(String color) {
         String lc;
         lc = color.replace("#", "");
         lc = lc.toLowerCase();
@@ -845,7 +857,7 @@ public class CustomResourceHolder {
         String red, green, blue, alpha = "FF";
 
         if (lc.length() != 8 && lc.length() != 6) {
-            return;
+            return null;
         }
 
         red = lc.substring(0, 2);
@@ -853,13 +865,20 @@ public class CustomResourceHolder {
         blue = lc.substring(4, 6);
         if (lc.length() == 8) alpha = lc.substring(6, 8);
 
-        int r, g, b, a;
-        r = Integer.parseInt(red, 16);
-        g = Integer.parseInt(green, 16);
-        b = Integer.parseInt(blue, 16);
-        a = lc.length() == 8 ? Integer.parseInt(alpha, 16) : 255;
+        try {
+            int r, g, b, a;
+            r = Integer.parseInt(red, 16);
+            g = Integer.parseInt(green, 16);
+            b = Integer.parseInt(blue, 16);
+            a = lc.length() == 8 ? Integer.parseInt(alpha, 16) : 255;
 
-        drawImage(engine, name, x, y, srcX, srcY, srcSizeX, srcSizeY, r, g, b, a, scale);
+            return new int[] { r, g, b, a };
+        } catch (NumberFormatException e) {
+            log.error("Failed to parse '" + color + "' as a valid colour!");
+            log.error(e);
+
+            return null;
+        }
     }
 
     // Generic load music worker function.

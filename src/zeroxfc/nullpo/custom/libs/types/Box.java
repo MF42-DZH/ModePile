@@ -30,22 +30,43 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package zeroxfc.nullpo.custom.libs;
+package zeroxfc.nullpo.custom.libs.types;
 
-/** Signifies that an exception has occurred while lazy-loading a value. */
-public class LazyLoadException extends RuntimeException {
+import java.util.function.Function;
 
-  public LazyLoadException() {}
+/** A generic mutable box for one value. */
+public class Box<V> {
+    private V value;
 
-  public LazyLoadException(String message) {
-    super(message);
-  }
+    public Box(V value) {
+        this.setValue(value);
+    }
 
-  public LazyLoadException(String message, Throwable cause) {
-    super(message, cause);
-  }
+    public <T> Box<T> map(Function<V, T> func) {
+        return new Box<>(func.apply(value));
+    }
 
-  public LazyLoadException(Throwable cause) {
-    super(cause);
-  }
+    public <T> Box<T> ap(Box<Function<V, T>> func) {
+        return new Box<>(func.value.apply(value));
+    }
+
+    public <T> Box<T> flatMap(Function<V, Box<T>> func) {
+        return func.apply(value);
+    }
+
+    public void modify(Function<V, V> func) {
+        setValue(func.apply(getValue()));
+    }
+
+    public void share(Box<V> vw) {
+        this.setValue(vw.getValue());
+    }
+
+    public V getValue() {
+        return value;
+    }
+
+    public void setValue(V value) {
+        this.value = value;
+    }
 }

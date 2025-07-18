@@ -441,12 +441,13 @@ zeroxfc.nullpo.custom.random.FixedTerrorInstinctRandomizer
 
 ----------
 
-28 Libraries:
+29 Libraries:
 
 AnimatedBackgroundHook - Allows the simple animation of backgrounds, DTET/TI style.
 ArrayRandomiser - Generates a permutation of an array.
 BlockParticle - Animated block particle for line clear effects.
 BlockParticleCollection - Collection class for easy generation, update and drawing of block particles.
+Box - A simple mutable box.
 BufferedPrimitiveDrawingHook - For fast primitive drawing.
 CustomResourceHolder - Allows the use of custom images and BGM in a mode.
 DoubleVector - 2D vector type that uses doubles for more precision.
@@ -469,7 +470,6 @@ ShakingText - Text that vibrates around a fixed point.
 SideWaveText - Super Collapse II-styled text popups.
 SoundLoader - Allows the use of custom SFX.
 StaticFlyInText - Similar to FlyInOutText, but the text does not fly back out.
-ValueWrapper - Class that holds a set of one of each primitive numbers.
 WeightedRandomiser - A weighted pseudorandom number generator.
 SpeedTableBuilder - A fluent interface for building speed tables for gamemodes.
 

@@ -37,6 +37,7 @@ import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import org.apache.log4j.Logger;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 
 public class ExamSpinner {
     /**
@@ -194,21 +195,21 @@ public class ExamSpinner {
             // region MAIN HEADING
             int HBX = baseX + 80;
             for (int i = 0; i < splitHeadingText.length; i++) {
-                GameTextUtilities.drawDirectTextAlign(engine, HBX, baseY + (size * i), GameTextUtilities.ALIGN_TOP_MIDDLE, splitHeadingText[i], color, 1f);
+                GameTextUtilities.drawDirectTextAlign(engine, HBX, baseY + (size * i), ObjectAlignment.TOP_MIDDLE, splitHeadingText[i], color, 1f);
             }
             // endregion MAIN HEADING
 
             // region SUBHEADING
             int SHBY = baseY + (size * 4);
             for (int i = 0; i < splitSubheadingText.length; i++) {
-                GameTextUtilities.drawDirectTextAlign(engine, HBX, SHBY + (size * i), GameTextUtilities.ALIGN_TOP_MIDDLE, splitSubheadingText[i], color, 1f);
+                GameTextUtilities.drawDirectTextAlign(engine, HBX, SHBY + (size * i), ObjectAlignment.TOP_MIDDLE, splitSubheadingText[i], color, 1f);
             }
             // endregion SUBHEADING
 
             // region GRADE
             int GBY = baseY + (size * 9);
             for (int i = 0; i < splitGradeText.length; i++) {
-                GameTextUtilities.drawDirectTextAlign(engine, HBX, GBY + (size * i), GameTextUtilities.ALIGN_TOP_MIDDLE, splitGradeText[i], color, splitGradeText.length == 1 ? 2f : 1f);
+                GameTextUtilities.drawDirectTextAlign(engine, HBX, GBY + (size * i), ObjectAlignment.TOP_MIDDLE, splitGradeText[i], color, splitGradeText.length == 1 ? 2f : 1f);
             }
             // endregion GRADE
 
@@ -218,35 +219,35 @@ public class ExamSpinner {
                     // Pass1
                     for (int i = 0; i < splitPossibilityText[0].length; i++) {
                         if ((locations[0] % 320) <= 160)
-                            GameTextUtilities.drawDirectTextAlign(engine, baseX + (locations[0] % 320), PBY + (size * i), GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                            GameTextUtilities.drawDirectTextAlign(engine, baseX + (locations[0] % 320), PBY + (size * i), ObjectAlignment.MIDDLE_MIDDLE,
                                 splitPossibilityText[0][i], color, 1f);
                     }
 
                     // Fail1
                     for (int i = 0; i < splitPossibilityText[1].length; i++) {
                         if ((locations[1] % 320) <= 160)
-                            GameTextUtilities.drawDirectTextAlign(engine, baseX + (locations[1] % 320), PBY + (size * i), GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                            GameTextUtilities.drawDirectTextAlign(engine, baseX + (locations[1] % 320), PBY + (size * i), ObjectAlignment.MIDDLE_MIDDLE,
                                 splitPossibilityText[1][i], EventReceiver.COLOR_DARKBLUE, 1f);
                     }
 
                     // Pass1
                     for (int i = 0; i < splitPossibilityText[0].length; i++) {
                         if ((locations[2] % 320) <= 160)
-                            GameTextUtilities.drawDirectTextAlign(engine, baseX + (locations[2] % 320), PBY + (size * i), GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                            GameTextUtilities.drawDirectTextAlign(engine, baseX + (locations[2] % 320), PBY + (size * i), ObjectAlignment.MIDDLE_MIDDLE,
                                 splitPossibilityText[0][i], color, 1f);
                     }
 
                     // Fail1
                     for (int i = 0; i < splitPossibilityText[1].length; i++) {
                         if ((locations[3] % 320) <= 160)
-                            GameTextUtilities.drawDirectTextAlign(engine, baseX + (locations[3] % 320), PBY + (size * i), GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                            GameTextUtilities.drawDirectTextAlign(engine, baseX + (locations[3] % 320), PBY + (size * i), ObjectAlignment.MIDDLE_MIDDLE,
                                 splitPossibilityText[1][i], EventReceiver.COLOR_DARKBLUE, 1f);
                     }
                 } else if (lifeTime < spinDuration + 120) {
                     int offset = (lifeTime % 3) - 1;
                     // FailShake
                     for (int i = 0; i < splitPossibilityText[1].length; i++) {
-                        GameTextUtilities.drawDirectTextAlign(engine, HBX + offset, PBY + (size * i), GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                        GameTextUtilities.drawDirectTextAlign(engine, HBX + offset, PBY + (size * i), ObjectAlignment.MIDDLE_MIDDLE,
                             splitPossibilityText[1][i], EventReceiver.COLOR_DARKBLUE, 1f);
                     }
 
@@ -270,12 +271,12 @@ public class ExamSpinner {
                     if (selectedOutcome == 0) {
                         // PASS
                         for (int i = 0; i < splitPossibilityText[0].length; i++) {
-                            GameTextUtilities.drawDirectTextAlign(engine, HBX, PBY + (size * i), GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                            GameTextUtilities.drawDirectTextAlign(engine, HBX, PBY + (size * i), ObjectAlignment.MIDDLE_MIDDLE,
                                 splitPossibilityText[0][i], color, 1f);
                         }
                     } else {
                         for (int i = 0; i < splitPossibilityText[1].length; i++) {
-                            GameTextUtilities.drawDirectTextAlign(engine, HBX, PBY + (size * i), GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                            GameTextUtilities.drawDirectTextAlign(engine, HBX, PBY + (size * i), ObjectAlignment.MIDDLE_MIDDLE,
                                 splitPossibilityText[1][i], EventReceiver.COLOR_DARKBLUE, 1f);
                         }
                     }
@@ -284,12 +285,12 @@ public class ExamSpinner {
                 if (selectedOutcome == 0) {
                     // PASS
                     for (int i = 0; i < splitPossibilityText[0].length; i++) {
-                        GameTextUtilities.drawDirectTextAlign(engine, HBX, PBY + (size * i), GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                        GameTextUtilities.drawDirectTextAlign(engine, HBX, PBY + (size * i), ObjectAlignment.MIDDLE_MIDDLE,
                             splitPossibilityText[0][i], color, 1f);
                     }
                 } else {
                     for (int i = 0; i < splitPossibilityText[1].length; i++) {
-                        GameTextUtilities.drawDirectTextAlign(engine, HBX, PBY + (size * i), GameTextUtilities.ALIGN_MIDDLE_MIDDLE,
+                        GameTextUtilities.drawDirectTextAlign(engine, HBX, PBY + (size * i), ObjectAlignment.MIDDLE_MIDDLE,
                             splitPossibilityText[1][i], EventReceiver.COLOR_DARKBLUE, 1f);
                     }
                 }

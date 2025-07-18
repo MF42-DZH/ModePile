@@ -11,6 +11,7 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
@@ -653,15 +654,15 @@ public class Constantris extends MarathonModeBase {
             if (restrictionViolationFrame > 0 && bonusFrame <= 0) {
                 int xx = receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (engine.field.getWidth() / 2) * 16;
                 int yy = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 8, GameTextUtilities.ALIGN_TOP_MIDDLE, "RESTRICTION", EventReceiver.COLOR_RED, 1f);
-                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 24, GameTextUtilities.ALIGN_TOP_MIDDLE, "VIOLATION", EventReceiver.COLOR_RED, 1f);
+                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 8, ObjectAlignment.TOP_MIDDLE, "RESTRICTION", EventReceiver.COLOR_RED, 1f);
+                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 24, ObjectAlignment.TOP_MIDDLE, "VIOLATION", EventReceiver.COLOR_RED, 1f);
             }
 
             if (bonusFrame > 0) {
                 int xx = receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (engine.field.getWidth() / 2) * 16;
                 int yy = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 8, GameTextUtilities.ALIGN_TOP_MIDDLE, "TARGET", EventReceiver.COLOR_GREEN, 1f);
-                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 24, GameTextUtilities.ALIGN_TOP_MIDDLE, "BONUS", EventReceiver.COLOR_GREEN, 1f);
+                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 8, ObjectAlignment.TOP_MIDDLE, "TARGET", EventReceiver.COLOR_GREEN, 1f);
+                GameTextUtilities.drawDirectTextAlign(engine, xx, yy + 24, ObjectAlignment.TOP_MIDDLE, "BONUS", EventReceiver.COLOR_GREEN, 1f);
             }
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;

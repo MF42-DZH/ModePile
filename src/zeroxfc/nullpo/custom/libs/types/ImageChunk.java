@@ -30,23 +30,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package zeroxfc.nullpo.custom.libs.backgroundtypes;
+package zeroxfc.nullpo.custom.libs.types;
 
+/** Represents a chunk of an image to draw. */
 public class ImageChunk {
-    public static final int ANCHOR_POINT_TL = 0, ANCHOR_POINT_TM = 1, ANCHOR_POINT_TR = 2, ANCHOR_POINT_ML = 3, ANCHOR_POINT_MM = 4, ANCHOR_POINT_MR = 5, ANCHOR_POINT_LL = 6, ANCHOR_POINT_LM = 7, ANCHOR_POINT_LR = 8;
     private final int[] sourceLocation;
-    private int anchorType;
+    private ObjectAlignment alignment;
     private int[] anchorLocation;
     private int[] drawLocation;
     private int[] sourceDimensions;
     private float[] scale;
 
     public ImageChunk() {
-        this(0, new int[] { 0, 0 }, new int[] { 0, 0 }, new int[] { 1, 1 }, new float[] { 1, 1 });
+        this(ObjectAlignment.TOP_LEFT, new int[] { 0, 0 }, new int[] { 0, 0 }, new int[] { 1, 1 }, new float[] { 1, 1 });
     }
 
-    public ImageChunk(int anchorType, int[] anchorLocation, int[] sourceLocation, int[] sourceDimensions, float[] scale) {
-        this.anchorType = anchorType;
+    public ImageChunk(ObjectAlignment alignment, int[] anchorLocation, int[] sourceLocation, int[] sourceDimensions, float[] scale) {
+        this.alignment = alignment;
         this.anchorLocation = anchorLocation;
         this.sourceLocation = sourceLocation;
         this.sourceDimensions = sourceDimensions;
@@ -58,29 +58,29 @@ public class ImageChunk {
     private void calibrateDrawLocation() {
         int[] ddim = getDrawDimensions();
 
-        switch (anchorType) {
-            case ANCHOR_POINT_TM:
+        switch (alignment) {
+            case TOP_MIDDLE:
                 drawLocation = new int[] { anchorLocation[0] - (ddim[0] / 2), anchorLocation[1] };
                 break;
-            case ANCHOR_POINT_TR:
+            case TOP_RIGHT:
                 drawLocation = new int[] { anchorLocation[0] - ddim[0], anchorLocation[1] };
                 break;
-            case ANCHOR_POINT_ML:
+            case MIDDLE_LEFT:
                 drawLocation = new int[] { anchorLocation[0], anchorLocation[1] - (ddim[1] / 2) };
                 break;
-            case ANCHOR_POINT_MM:
+            case MIDDLE_MIDDLE:
                 drawLocation = new int[] { anchorLocation[0] - (ddim[0] / 2), anchorLocation[1] - (ddim[1] / 2) };
                 break;
-            case ANCHOR_POINT_MR:
+            case MIDDLE_RIGHT:
                 drawLocation = new int[] { anchorLocation[0] - ddim[0], anchorLocation[1] - (ddim[1] / 2) };
                 break;
-            case ANCHOR_POINT_LL:
+            case BOTTOM_LEFT:
                 drawLocation = new int[] { anchorLocation[0], anchorLocation[1] - ddim[1] };
                 break;
-            case ANCHOR_POINT_LM:
+            case BOTTOM_MIDDLE:
                 drawLocation = new int[] { anchorLocation[0] - (ddim[0] / 2), anchorLocation[1] - ddim[1] };
                 break;
-            case ANCHOR_POINT_LR:
+            case BOTTOM_RIGHT:
                 drawLocation = new int[] { anchorLocation[0] - ddim[0], anchorLocation[1] - ddim[1] };
                 break;
             default:
@@ -89,12 +89,12 @@ public class ImageChunk {
         }
     }
 
-    public int getAnchorType() {
-        return anchorType;
+    public ObjectAlignment getAlignment() {
+        return alignment;
     }
 
-    public void setAnchorType(int anchorType) {
-        this.anchorType = anchorType;
+    public void setAlignment(ObjectAlignment alignment) {
+        this.alignment = alignment;
         calibrateDrawLocation();
     }
 

@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
+import zeroxfc.nullpo.custom.libs.types.ImageChunk;
 
 public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
     private static final int AMT = 480 / 3;
@@ -103,7 +105,7 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
         if (pulseBaseScale == null || pulseScaleVariance == null || sliceSize == null) {
             chunks = new ImageChunk[AMT];
             for (int i = 0; i < chunks.length; i++) {
-                chunks[i] = new ImageChunk(ImageChunk.ANCHOR_POINT_ML, new int[] { 0, ((480 / AMT) * i) + ((480 / AMT) / 2) }, new int[] { 0, (480 / AMT) * i }, new int[] { 640, (480 / AMT) }, new float[] { 1f, BASE_SCALE });
+                chunks[i] = new ImageChunk(ObjectAlignment.MIDDLE_LEFT, new int[] { 0, ((480 / AMT) * i) + ((480 / AMT) / 2) }, new int[] { 0, (480 / AMT) * i }, new int[] { 640, (480 / AMT) }, new float[] { 1f, BASE_SCALE });
             }
 
             this.reverse = reverse;
@@ -115,7 +117,7 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
 
             chunks = new ImageChunk[sliceSize];
             for (int i = 0; i < chunks.length; i++) {
-                chunks[i] = new ImageChunk(ImageChunk.ANCHOR_POINT_ML, new int[] { 0, ((480 / sliceSize) * i) + ((480 / sliceSize) / 2) }, new int[] { 0, (480 / sliceSize) * i }, new int[] { 640, (480 / sliceSize) }, new float[] { 1f, pulseBaseScale });
+                chunks[i] = new ImageChunk(ObjectAlignment.MIDDLE_LEFT, new int[] { 0, ((480 / sliceSize) * i) + ((480 / sliceSize) / 2) }, new int[] { 0, (480 / sliceSize) * i }, new int[] { 640, (480 / sliceSize) }, new float[] { 1f, pulseBaseScale });
             }
 
             this.reverse = reverse;
@@ -177,12 +179,8 @@ public class BackgroundHorizontalBars extends AnimatedBackgroundHook {
             priorityList.removeIf(imageChunk -> almostEqual(imageChunk.getScale()[1], 1, 0.005));
         }
 
-        for (ImageChunk i : priorityList) {
-            int[] pos = i.getDrawLocation();
-            int[] ddim = i.getDrawDimensions();
-            int[] sloc = i.getSourceLocation();
-            int[] sdim = i.getSourceDimensions();
-            customHolder.drawOffsetImage(engine, imageName, pos[0], pos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], 255, 255, 255, 255);
+        for (ImageChunk chunk : priorityList) {
+            customHolder.drawOffsetImage(engine, imageName, chunk, 255, 255, 255, 255);
         }
     }
 
