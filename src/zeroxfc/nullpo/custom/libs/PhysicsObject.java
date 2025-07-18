@@ -32,7 +32,7 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import org.apache.log4j.Logger;
@@ -264,7 +264,7 @@ public class PhysicsObject implements Cloneable {
      * @param obstacles All obstacles.
      * @return Did the object collide at all?
      */
-    public boolean move(int subticks, ArrayList<PhysicsObject> obstacles, boolean retract) {
+    public boolean move(int subticks, Collection<PhysicsObject> obstacles, boolean retract) {
         if (isStatic) return false;
         DoubleVector v = DoubleVector.div(velocity, subticks);
 
