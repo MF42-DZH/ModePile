@@ -77,8 +77,8 @@ public class SpeedTableBuilder {
     }
 
     private void verifyLevel(int changeLevel, LinkedList<Integer> levelList) {
-        if (levelList.isEmpty() || levelList.peekLast() < changeLevel) return;
-        throw new IllegalArgumentException("Level change is lower than previous level change: " + levelList.peekLast() + " -> " + changeLevel);
+        if (levelList.isEmpty() || levelList.peekLast() <= changeLevel) return;
+        throw new IllegalArgumentException("Level change is lower than or equal to previous level change: " + levelList.peekLast() + " -> " + changeLevel);
     }
 
     public SpeedTableBuilder addGravity(int num, int den, int changeLevel) {
@@ -91,6 +91,10 @@ public class SpeedTableBuilder {
         return this;
     }
 
+    public SpeedTableBuilder addTerminalGravity(int num, int den) {
+        return addGravity(num, den, Integer.MAX_VALUE);
+    }
+
     public SpeedTableBuilder addARE(int are, int changeLevel) {
         verifyLevel(changeLevel, areLevels);
 
@@ -98,6 +102,10 @@ public class SpeedTableBuilder {
         areLevels.add(changeLevel);
 
         return this;
+    }
+
+    public SpeedTableBuilder addTerminalARE(int are) {
+        return addARE(are, Integer.MAX_VALUE);
     }
 
     public SpeedTableBuilder addLineARE(int are, int changeLevel) {
@@ -109,6 +117,10 @@ public class SpeedTableBuilder {
         return this;
     }
 
+    public SpeedTableBuilder addTerminalLineARE(int are) {
+        return addLineARE(are, Integer.MAX_VALUE);
+    }
+
     public SpeedTableBuilder addLineDelay(int delay, int changeLevel) {
         verifyLevel(changeLevel, lineDelayLevels);
 
@@ -116,6 +128,10 @@ public class SpeedTableBuilder {
         lineDelayLevels.add(changeLevel);
 
         return this;
+    }
+
+    public SpeedTableBuilder addTerminalLineDelay(int delay) {
+        return addLineDelay(delay, Integer.MAX_VALUE);
     }
 
     public SpeedTableBuilder addLockDelay(int delay, int changeLevel) {
@@ -127,6 +143,10 @@ public class SpeedTableBuilder {
         return this;
     }
 
+    public SpeedTableBuilder addTerminalLockDelay(int delay) {
+        return addLockDelay(delay, Integer.MAX_VALUE);
+    }
+
     public SpeedTableBuilder addDAS(int delay, int changeLevel) {
         verifyLevel(changeLevel, dasLevels);
 
@@ -134,6 +154,10 @@ public class SpeedTableBuilder {
         dasLevels.add(changeLevel);
 
         return this;
+    }
+
+    public SpeedTableBuilder addTerminalDAS(int delay) {
+        return addDAS(delay, Integer.MAX_VALUE);
     }
 
     public IntFunction<SpeedParam> buildSpeedTable() {
@@ -144,6 +168,15 @@ public class SpeedTableBuilder {
             || lockDelayLevels.isEmpty()
             || dasLevels.isEmpty()) {
             throw new IllegalStateException("One or more value tables are empty!");
+        }
+
+        if (gravityLevels.peekLast() < Integer.MAX_VALUE
+            || areLevels.peekLast() < Integer.MAX_VALUE
+            || lineAreLevels.peekLast() < Integer.MAX_VALUE
+            || lineDelayLevels.peekLast() < Integer.MAX_VALUE
+            || lockDelayLevels.peekLast() < Integer.MAX_VALUE
+            || dasLevels.peekLast() < Integer.MAX_VALUE) {
+            throw new IllegalStateException("One or more tables not capped with a terminal value!");
         }
 
         final List<Integer> localGravityNumeratorValues = new ArrayList<>(this.gravityNumeratorValues);
