@@ -35,9 +35,9 @@ import zeroxfc.nullpo.custom.libs.particles.SurfaceSparks;
 public class GradeMania4 extends DummyMode {
     private static final Logger log = Logger.getLogger(GradeMania4.class);
 
-    private static final int CURRENT_VERSION = 1;
+    private static final int CURRENT_VERSION = 2;
 
-    private static final IntFunction<SpeedParam> SPEED_TABLE = new SpeedTableBuilder()
+    private static final IntFunction<SpeedParam> V1_SPEED_TABLE = SpeedTableBuilder.createNew()
         .addGravity(4, 256, 30)
         .addGravity(6, 256, 35)
         .addGravity(8, 256, 40)
@@ -77,17 +77,110 @@ public class GradeMania4 extends DummyMode {
         .addLineARE(10, 800)
         .addLineARE(4, 900)
         .addTerminalLineARE(4)
+        .addDAS(15, 500)
+        .addDAS(9, 900)
+        .addTerminalDAS(7)
+        .addTerminalLockDelay(31)
         .addLineDelay(40, 500)
         .addLineDelay(25, 600)
         .addLineDelay(16, 700)
         .addLineDelay(12, 800)
         .addLineDelay(6, 900)
         .addTerminalLineDelay(6)
-        .addTerminalLockDelay(31)
-        .addDAS(15, 500)
-        .addDAS(9, 900)
-        .addTerminalDAS(7)
         .buildSpeedTable();
+
+    private static final IntFunction<SpeedParam> V2_SPEED_TABLE_SLOW = SpeedTableBuilder.createNew()
+        .addGravity(4, 256, 30)
+        .addGravity(6, 256, 35)
+        .addGravity(8, 256, 40)
+        .addGravity(10, 256, 50)
+        .addGravity(12, 256, 60)
+        .addGravity(16, 256, 70)
+        .addGravity(32, 256, 80)
+        .addGravity(48, 256, 90)
+        .addGravity(64, 256, 100)
+        .addGravity(80, 256, 120)
+        .addGravity(96, 256, 140)
+        .addGravity(112, 256, 160)
+        .addGravity(128, 256, 170)
+        .addGravity(144, 256, 200)
+        .addGravity(4, 256, 220)
+        .addGravity(32, 256, 230)
+        .addGravity(64, 256, 233)
+        .addGravity(96, 256, 236)
+        .addGravity(128, 256, 239)
+        .addGravity(160, 256, 243)
+        .addGravity(192, 256, 247)
+        .addGravity(224, 256, 251)
+        .addGravity(256, 256, 300)
+        .addGravity(512, 256, 330)
+        .addGravity(768, 256, 360)
+        .addGravity(1024, 256, 400)
+        .addGravity(1280, 256, 420)
+        .addGravity(1024, 256, 450)
+        .addGravity(768, 256, 500)
+        .addTerminalGravity(-1, 256)
+        .addTerminalARE(26)
+        .addTerminalLineARE(30)
+        .addTerminalDAS(15)
+        .addTerminalLockDelay(31)
+        .addTerminalLineDelay(41)
+        .buildSpeedTable();
+
+    private static final IntFunction<SpeedParam> V2_SPEED_TABLE_FAST = SpeedTableBuilder.createNew()
+        .addGravity(4, 256, 30)
+        .addGravity(6, 256, 35)
+        .addGravity(8, 256, 40)
+        .addGravity(10, 256, 50)
+        .addGravity(12, 256, 60)
+        .addGravity(16, 256, 70)
+        .addGravity(32, 256, 80)
+        .addGravity(48, 256, 90)
+        .addGravity(64, 256, 100)
+        .addGravity(80, 256, 120)
+        .addGravity(96, 256, 140)
+        .addGravity(112, 256, 160)
+        .addGravity(128, 256, 170)
+        .addGravity(144, 256, 200)
+        .addGravity(4, 256, 220)
+        .addGravity(32, 256, 230)
+        .addGravity(64, 256, 233)
+        .addGravity(96, 256, 236)
+        .addGravity(128, 256, 239)
+        .addGravity(160, 256, 243)
+        .addGravity(192, 256, 247)
+        .addGravity(224, 256, 251)
+        .addGravity(256, 256, 300)
+        .addGravity(512, 256, 330)
+        .addGravity(768, 256, 360)
+        .addGravity(1024, 256, 400)
+        .addGravity(1280, 256, 420)
+        .addGravity(1024, 256, 450)
+        .addGravity(768, 256, 500)
+        .addTerminalGravity(-1, 256)
+        .addARE(14, 700)
+        .addARE(12, 800)
+        .addTerminalARE(10)
+        .addLineARE(23, 500)
+        .addLineARE(14, 800)
+        .addLineARE(8, 900)
+        .addTerminalLineARE(6)
+        .addDAS(11, 900)
+        .addTerminalDAS(9)
+        .addLockDelay(31, 900)
+        .addTerminalLockDelay(27)
+        .addLineDelay(40, 500)
+        .addLineDelay(25, 600)
+        .addLineDelay(16, 700)
+        .addLineDelay(12, 800)
+        .addLineDelay(10, 900)
+        .addTerminalLineDelay(8)
+        .buildSpeedTable();
+
+    private IntFunction<SpeedParam> getSpeedTable() {
+        if (version >= 2) return gameSpeedFast ? V2_SPEED_TABLE_FAST : V2_SPEED_TABLE_SLOW;
+        return V1_SPEED_TABLE;
+    }
 
     private static final int[] TABLE_BGM_FADEOUT = { 280, 480, -1 };
 
@@ -261,6 +354,7 @@ public class GradeMania4 extends DummyMode {
     private boolean hardDropEffect;
     private boolean animatedBackgrounds;
     private boolean sparkEffect;
+    private boolean gameSpeedFast;
 
     // Playtime Variables
     private int leftGrade;
@@ -296,10 +390,10 @@ public class GradeMania4 extends DummyMode {
     private String playerName;
 
     private int rankingRank;
-    private int[][] rankingGradeLeft, rankingGradeRight, rankingLevel, rankingTime;
+    private int[][][] rankingGradeLeft, rankingGradeRight, rankingLevel, rankingTime;
 
     private int rankingRankPlayer;
-    private int[][] rankingGradeLeftPlayer, rankingGradeRightPlayer, rankingLevelPlayer, rankingTimePlayer;
+    private int[][][] rankingGradeLeftPlayer, rankingGradeRightPlayer, rankingLevelPlayer, rankingTimePlayer;
 
     private AnimatedBackgroundHook[] animBgInstances;
 
@@ -329,8 +423,7 @@ public class GradeMania4 extends DummyMode {
                 }
             case MODEPILE:
                 return Math.min(9, fullGameQuota / 1000) + (((engine.statistics.level >= LEVEL_LIMIT) && (engine.statistics.time <= TIME_LIMIT_TEN_OF_TEN)) ? 1 : 0);
-            case UPDATED_ORIGINAL:
-                // TODO: When original rules are updated, add this in!
+            default:
                 break;
         }
 
@@ -350,8 +443,7 @@ public class GradeMania4 extends DummyMode {
 
     private enum Ruleset {
         ORIGINAL(0, "ORIGINAL"),
-        MODEPILE(1, "MODEPILE"),
-        UPDATED_ORIGINAL(2, "ORIGINAL V2");
+        MODEPILE(1, "MODEPILE");
 
         private final int leaderboard;
         private final String displayName;
@@ -362,7 +454,7 @@ public class GradeMania4 extends DummyMode {
         }
 
         // All rules available
-        private static final Ruleset[] RULES = new Ruleset[] { ORIGINAL, MODEPILE, UPDATED_ORIGINAL };
+        private static final Ruleset[] RULES = new Ruleset[] { ORIGINAL, MODEPILE };
         public static Ruleset[] allRules() {
             return RULES;
         }
@@ -370,9 +462,10 @@ public class GradeMania4 extends DummyMode {
 
     private Ruleset gameRuleset;
 
-    private int rankingBoard() {
+    private int rankingBoardForRule() {
         return gameRuleset.leaderboard;
     }
+    private int rankingBoardForSpeed() { return gameSpeedFast ? 1 : 0; }
 
     @Override
     public String getName() {
@@ -423,6 +516,7 @@ public class GradeMania4 extends DummyMode {
         hardDropEffect = true;
         animatedBackgrounds = false;
         sparkEffect = true;
+        gameSpeedFast = true;
 
         leftGrade = 0;
         rightGrade = 0;
@@ -466,16 +560,16 @@ public class GradeMania4 extends DummyMode {
         }
 
         rankingRank = -1;
-        rankingGradeLeft = new int[2][RANKING_MAX];
-        rankingGradeRight = new int[2][RANKING_MAX];
-        rankingLevel = new int[2][RANKING_MAX];
-        rankingTime = new int[2][RANKING_MAX];
+        rankingGradeLeft = new int[2][2][RANKING_MAX];
+        rankingGradeRight = new int[2][2][RANKING_MAX];
+        rankingLevel = new int[2][2][RANKING_MAX];
+        rankingTime = new int[2][2][RANKING_MAX];
 
         rankingRankPlayer = -1;
-        rankingGradeLeftPlayer = new int[2][RANKING_MAX];
-        rankingGradeRightPlayer = new int[2][RANKING_MAX];
-        rankingLevelPlayer = new int[2][RANKING_MAX];
-        rankingTimePlayer = new int[2][RANKING_MAX];
+        rankingGradeLeftPlayer = new int[2][2][RANKING_MAX];
+        rankingGradeRightPlayer = new int[2][2][RANKING_MAX];
+        rankingLevelPlayer = new int[2][2][RANKING_MAX];
+        rankingTimePlayer = new int[2][2][RANKING_MAX];
 
         if (!owner.replayMode) {
             loadSetting(owner.modeConfig);
@@ -504,9 +598,6 @@ public class GradeMania4 extends DummyMode {
             case 1:
                 gameRuleset = Ruleset.MODEPILE;
                 break;
-            case 2:
-                gameRuleset = Ruleset.UPDATED_ORIGINAL;
-                break;
             default:
                 if (legacyRuleGetter.get()) gameRuleset = Ruleset.MODEPILE;
                 else gameRuleset = Ruleset.ORIGINAL;
@@ -530,6 +621,7 @@ public class GradeMania4 extends DummyMode {
         animatedBackgrounds = prop.getProperty("grademania4.animatedBackgrounds", false);
         sparkEffect = prop.getProperty("grademania4.sparkEffect", true);
         version = prop.getProperty("grademania4.version", 0);
+        gameSpeedFast = prop.getProperty("grademania4.gameSpeedFast", true);
     }
 
     private void saveSetting(CustomProperties prop) {
@@ -544,6 +636,7 @@ public class GradeMania4 extends DummyMode {
         prop.setProperty("grademania4.animatedBackgrounds", animatedBackgrounds);
         prop.setProperty("grademania4.sparkEffect", sparkEffect);
         prop.setProperty("grademania4.version", version);
+        prop.setProperty("grademania4.gameSpeedFast", gameSpeedFast);
     }
 
     private void loadSettingPlayer(ProfileProperties prop) {
@@ -562,6 +655,7 @@ public class GradeMania4 extends DummyMode {
         hardDropEffect = prop.getProperty("grademania4.hardDropEffect", true);
         animatedBackgrounds = prop.getProperty("grademania4.animatedBackgrounds", false);
         sparkEffect = prop.getProperty("grademania4.sparkEffect", true);
+        gameSpeedFast = prop.getProperty("grademania4.gameSpeedFast", true);
     }
 
     private void saveSettingPlayer(ProfileProperties prop) {
@@ -577,33 +671,54 @@ public class GradeMania4 extends DummyMode {
         prop.setProperty("grademania4.hardDropEffect", hardDropEffect);
         prop.setProperty("grademania4.animatedBackgrounds", animatedBackgrounds);
         prop.setProperty("grademania4.sparkEffect", sparkEffect);
+        prop.setProperty("grademania4.gameSpeedFast", gameSpeedFast);
     }
 
     private void loadRanking(CustomProperties prop, String ruleName) {
         for (int i = 0; i < RANKING_MAX; ++i) {
-            rankingGradeLeft[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeL." + i, 0);
-            rankingGradeRight[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeR." + i, 0);
-            rankingLevel[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".level." + i, 0);
-            rankingTime[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".time." + i, 0);
+            rankingGradeLeft[0][0][i] = prop.getProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRight[0][0][i] = prop.getProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevel[0][0][i] = prop.getProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".level." + i, 0);
+            rankingTime[0][0][i] = prop.getProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".time." + i, 0);
 
-            rankingGradeLeft[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeL." + i, 0);
-            rankingGradeRight[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeR." + i, 0);
-            rankingLevel[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".level." + i, 0);
-            rankingTime[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".time." + i, 0);
+            rankingGradeLeft[0][1][i] = prop.getProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRight[0][1][i] = prop.getProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevel[0][1][i] = prop.getProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".level." + i, 0);
+            rankingTime[0][1][i] = prop.getProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".time." + i, 0);
+
+            rankingGradeLeft[1][0][i] = prop.getProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRight[1][0][i] = prop.getProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevel[1][0][i] = prop.getProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".level." + i, 0);
+            rankingTime[1][0][i] = prop.getProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".time." + i, 0);
+
+            rankingGradeLeft[1][1][i] = prop.getProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRight[1][1][i] = prop.getProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevel[1][1][i] = prop.getProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".level." + i, 0);
+            rankingTime[1][1][i] = prop.getProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".time." + i, 0);
         }
     }
 
     private void saveRanking(CustomProperties prop, String ruleName) {
         for (int i = 0; i < RANKING_MAX; ++i) {
-            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeft[0][i]);
-            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeR." + i, rankingGradeRight[0][i]);
-            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".level." + i, rankingLevel[0][i]);
-            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".time." + i, rankingTime[0][i]);
+            prop.setProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeft[0][0][i]);
+            prop.setProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".gradeR." + i, rankingGradeRight[0][0][i]);
+            prop.setProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".level." + i, rankingLevel[0][0][i]);
+            prop.setProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".time." + i, rankingTime[0][0][i]);
 
-            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeft[1][i]);
-            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeR." + i, rankingGradeRight[1][i]);
-            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".level." + i, rankingLevel[1][i]);
-            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".time." + i, rankingTime[1][i]);
+            prop.setProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeft[0][1][i]);
+            prop.setProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".gradeR." + i, rankingGradeRight[0][1][i]);
+            prop.setProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".level." + i, rankingLevel[0][1][i]);
+            prop.setProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".time." + i, rankingTime[0][1][i]);
+
+            prop.setProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeft[1][0][i]);
+            prop.setProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".gradeR." + i, rankingGradeRight[1][0][i]);
+            prop.setProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".level." + i, rankingLevel[1][0][i]);
+            prop.setProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".time." + i, rankingTime[1][0][i]);
+
+            prop.setProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeft[1][1][i]);
+            prop.setProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".gradeR." + i, rankingGradeRight[1][1][i]);
+            prop.setProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".level." + i, rankingLevel[1][1][i]);
+            prop.setProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".time." + i, rankingTime[1][1][i]);
         }
     }
 
@@ -611,15 +726,25 @@ public class GradeMania4 extends DummyMode {
         if (!prop.isLoggedIn()) return;
 
         for (int i = 0; i < RANKING_MAX; ++i) {
-            rankingGradeLeftPlayer[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeL." + i, 0);
-            rankingGradeRightPlayer[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeR." + i, 0);
-            rankingLevelPlayer[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".level." + i, 0);
-            rankingTimePlayer[0][i] = prop.getProperty("grademania4.ranking.original." + ruleName + "." + version + ".time." + i, 0);
+            rankingGradeLeftPlayer[0][0][i] = prop.getProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRightPlayer[0][0][i] = prop.getProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevelPlayer[0][0][i] = prop.getProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".level." + i, 0);
+            rankingTimePlayer[0][0][i] = prop.getProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".time." + i, 0);
 
-            rankingGradeLeftPlayer[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeL." + i, 0);
-            rankingGradeRightPlayer[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeR." + i, 0);
-            rankingLevelPlayer[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".level." + i, 0);
-            rankingTimePlayer[1][i] = prop.getProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".time." + i, 0);
+            rankingGradeLeftPlayer[0][1][i] = prop.getProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRightPlayer[0][1][i] = prop.getProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevelPlayer[0][1][i] = prop.getProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".level." + i, 0);
+            rankingTimePlayer[0][1][i] = prop.getProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".time." + i, 0);
+
+            rankingGradeLeftPlayer[1][0][i] = prop.getProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRightPlayer[1][0][i] = prop.getProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevelPlayer[1][0][i] = prop.getProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".level." + i, 0);
+            rankingTimePlayer[1][0][i] = prop.getProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".time." + i, 0);
+
+            rankingGradeLeftPlayer[1][1][i] = prop.getProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".gradeL." + i, 0);
+            rankingGradeRightPlayer[1][1][i] = prop.getProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".gradeR." + i, 0);
+            rankingLevelPlayer[1][1][i] = prop.getProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".level." + i, 0);
+            rankingTimePlayer[1][1][i] = prop.getProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".time." + i, 0);
         }
     }
 
@@ -627,15 +752,25 @@ public class GradeMania4 extends DummyMode {
         if (!prop.isLoggedIn()) return;
 
         for (int i = 0; i < RANKING_MAX; ++i) {
-            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeftPlayer[0][i]);
-            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".gradeR." + i, rankingGradeRightPlayer[0][i]);
-            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".level." + i, rankingLevelPlayer[0][i]);
-            prop.setProperty("grademania4.ranking.original." + ruleName + "." + version + ".time." + i, rankingTimePlayer[0][i]);
+            prop.setProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeftPlayer[0][0][i]);
+            prop.setProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".gradeR." + i, rankingGradeRightPlayer[0][0][i]);
+            prop.setProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".level." + i, rankingLevelPlayer[0][0][i]);
+            prop.setProperty("grademania4.ranking.slow.original." + ruleName + "." + version + ".time." + i, rankingTimePlayer[0][0][i]);
 
-            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeftPlayer[1][i]);
-            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".gradeR." + i, rankingGradeRightPlayer[1][i]);
-            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".level." + i, rankingLevelPlayer[1][i]);
-            prop.setProperty("grademania4.ranking.modepile." + ruleName + "." + version + ".time." + i, rankingTimePlayer[1][i]);
+            prop.setProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeftPlayer[0][1][i]);
+            prop.setProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".gradeR." + i, rankingGradeRightPlayer[0][1][i]);
+            prop.setProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".level." + i, rankingLevelPlayer[0][1][i]);
+            prop.setProperty("grademania4.ranking.slow.modepile." + ruleName + "." + version + ".time." + i, rankingTimePlayer[0][1][i]);
+
+            prop.setProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeftPlayer[1][0][i]);
+            prop.setProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".gradeR." + i, rankingGradeRightPlayer[1][0][i]);
+            prop.setProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".level." + i, rankingLevelPlayer[1][0][i]);
+            prop.setProperty("grademania4.ranking.fast.original." + ruleName + "." + version + ".time." + i, rankingTimePlayer[1][0][i]);
+
+            prop.setProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeftPlayer[1][1][i]);
+            prop.setProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".gradeR." + i, rankingGradeRightPlayer[1][1][i]);
+            prop.setProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".level." + i, rankingLevelPlayer[1][1][i]);
+            prop.setProperty("grademania4.ranking.fast.modepile." + ruleName + "." + version + ".time." + i, rankingTimePlayer[1][1][i]);
         }
     }
 
@@ -668,16 +803,16 @@ public class GradeMania4 extends DummyMode {
 
         if (rankingRank != -1) {
             for (int i = RANKING_MAX - 1; i > rankingRank; i--) {
-                rankingGradeLeft[rankingBoard()][i] = rankingGradeLeft[rankingBoard()][i - 1];
-                rankingGradeRight[rankingBoard()][i] = rankingGradeRight[rankingBoard()][i - 1];
-                rankingLevel[rankingBoard()][i] = rankingLevel[rankingBoard()][i - 1];
-                rankingTime[rankingBoard()][i] = rankingTime[rankingBoard()][i - 1];
+                rankingGradeLeft[rankingBoardForSpeed()][rankingBoardForRule()][i] = rankingGradeLeft[rankingBoardForSpeed()][rankingBoardForRule()][i - 1];
+                rankingGradeRight[rankingBoardForSpeed()][rankingBoardForRule()][i] = rankingGradeRight[rankingBoardForSpeed()][rankingBoardForRule()][i - 1];
+                rankingLevel[rankingBoardForSpeed()][rankingBoardForRule()][i] = rankingLevel[rankingBoardForSpeed()][rankingBoardForRule()][i - 1];
+                rankingTime[rankingBoardForSpeed()][rankingBoardForRule()][i] = rankingTime[rankingBoardForSpeed()][rankingBoardForRule()][i - 1];
             }
 
-            rankingGradeLeft[rankingBoard()][rankingRank] = gradeL;
-            rankingGradeRight[rankingBoard()][rankingRank] = gradeR;
-            rankingLevel[rankingBoard()][rankingRank] = level;
-            rankingTime[rankingBoard()][rankingRank] = time;
+            rankingGradeLeft[rankingBoardForSpeed()][rankingBoardForRule()][rankingRank] = gradeL;
+            rankingGradeRight[rankingBoardForSpeed()][rankingBoardForRule()][rankingRank] = gradeR;
+            rankingLevel[rankingBoardForSpeed()][rankingBoardForRule()][rankingRank] = level;
+            rankingTime[rankingBoardForSpeed()][rankingBoardForRule()][rankingRank] = time;
         }
 
         if (playerProperties.isLoggedIn()) {
@@ -685,25 +820,25 @@ public class GradeMania4 extends DummyMode {
 
             if (rankingRankPlayer != -1) {
                 for (int i = RANKING_MAX - 1; i > rankingRankPlayer; i--) {
-                    rankingGradeLeftPlayer[rankingBoard()][i] = rankingGradeLeftPlayer[rankingBoard()][i - 1];
-                    rankingGradeRightPlayer[rankingBoard()][i] = rankingGradeRightPlayer[rankingBoard()][i - 1];
-                    rankingLevelPlayer[rankingBoard()][i] = rankingLevelPlayer[rankingBoard()][i - 1];
-                    rankingTimePlayer[rankingBoard()][i] = rankingTimePlayer[rankingBoard()][i - 1];
+                    rankingGradeLeftPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i] = rankingGradeLeftPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i - 1];
+                    rankingGradeRightPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i] = rankingGradeRightPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i - 1];
+                    rankingLevelPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i] = rankingLevelPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i - 1];
+                    rankingTimePlayer[rankingBoardForSpeed()][rankingBoardForRule()][i] = rankingTimePlayer[rankingBoardForSpeed()][rankingBoardForRule()][i - 1];
                 }
 
-                rankingGradeLeftPlayer[rankingBoard()][rankingRankPlayer] = gradeL;
-                rankingGradeRightPlayer[rankingBoard()][rankingRankPlayer] = gradeR;
-                rankingLevelPlayer[rankingBoard()][rankingRankPlayer] = level;
-                rankingTimePlayer[rankingBoard()][rankingRankPlayer] = time;
+                rankingGradeLeftPlayer[rankingBoardForSpeed()][rankingBoardForRule()][rankingRankPlayer] = gradeL;
+                rankingGradeRightPlayer[rankingBoardForSpeed()][rankingBoardForRule()][rankingRankPlayer] = gradeR;
+                rankingLevelPlayer[rankingBoardForSpeed()][rankingBoardForRule()][rankingRankPlayer] = level;
+                rankingTimePlayer[rankingBoardForSpeed()][rankingBoardForRule()][rankingRankPlayer] = time;
             }
         }
     }
 
     private int checkRanking(int gradeL, int gradeR, int level, int time) {
         for (int i = 0; i < RANKING_MAX; ++i) {
-            if (gradeL + gradeR > rankingGradeLeft[rankingBoard()][i] + rankingGradeRight[rankingBoard()][i]) return i;
-            else if (gradeL + gradeR == rankingGradeLeft[rankingBoard()][i] + rankingGradeRight[rankingBoard()][i] && level > rankingLevel[rankingBoard()][i]) return i;
-            else if (gradeL + gradeR == rankingGradeLeft[rankingBoard()][i] + rankingGradeRight[rankingBoard()][i] && level == rankingLevel[rankingBoard()][i] && time < rankingTime[rankingBoard()][i]) return i;
+            if (gradeL + gradeR > rankingGradeLeft[rankingBoardForSpeed()][rankingBoardForRule()][i] + rankingGradeRight[rankingBoardForSpeed()][rankingBoardForRule()][i]) return i;
+            else if (gradeL + gradeR == rankingGradeLeft[rankingBoardForSpeed()][rankingBoardForRule()][i] + rankingGradeRight[rankingBoardForSpeed()][rankingBoardForRule()][i] && level > rankingLevel[rankingBoardForSpeed()][rankingBoardForRule()][i]) return i;
+            else if (gradeL + gradeR == rankingGradeLeft[rankingBoardForSpeed()][rankingBoardForRule()][i] + rankingGradeRight[rankingBoardForSpeed()][rankingBoardForRule()][i] && level == rankingLevel[rankingBoardForSpeed()][rankingBoardForRule()][i] && time < rankingTime[rankingBoardForSpeed()][rankingBoardForRule()][i]) return i;
         }
 
         return -1;
@@ -711,9 +846,9 @@ public class GradeMania4 extends DummyMode {
 
     private int checkRankingPlayer(int gradeL, int gradeR, int level, int time) {
         for (int i = 0; i < RANKING_MAX; ++i) {
-            if (gradeL + gradeR > rankingGradeLeftPlayer[rankingBoard()][i] + rankingGradeRightPlayer[rankingBoard()][i]) return i;
-            else if (gradeL + gradeR == rankingGradeLeftPlayer[rankingBoard()][i] + rankingGradeRightPlayer[rankingBoard()][i] && level > rankingLevelPlayer[rankingBoard()][i]) return i;
-            else if (gradeL + gradeR == rankingGradeLeftPlayer[rankingBoard()][i] + rankingGradeRightPlayer[rankingBoard()][i] && level == rankingLevelPlayer[rankingBoard()][i] && time < rankingTimePlayer[rankingBoard()][i]) return i;
+            if (gradeL + gradeR > rankingGradeLeftPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i] + rankingGradeRightPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i]) return i;
+            else if (gradeL + gradeR == rankingGradeLeftPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i] + rankingGradeRightPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i] && level > rankingLevelPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i]) return i;
+            else if (gradeL + gradeR == rankingGradeLeftPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i] + rankingGradeRightPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i] && level == rankingLevelPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i] && time < rankingTimePlayer[rankingBoardForSpeed()][rankingBoardForRule()][i]) return i;
         }
 
 
@@ -723,7 +858,7 @@ public class GradeMania4 extends DummyMode {
     private static final int EXTRA_ARE = 6;
 
     private void setSpeed(GameEngine engine) {
-        final SpeedParam speed = SPEED_TABLE.apply(
+        final SpeedParam speed = getSpeedTable().apply(
             (version == 0) ? engine.statistics.level - 1 : engine.statistics.level
         );
 
@@ -749,7 +884,7 @@ public class GradeMania4 extends DummyMode {
 
         if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 9);
+            int change = updateCursor(engine, 10);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -758,33 +893,35 @@ public class GradeMania4 extends DummyMode {
                     case 0:
                         int newRule = gameRuleset.leaderboard + change;
 
-                        // TODO: When the updated original rules are available, remove the -1 and change the -2 to a -1.
-                        if (newRule >= Ruleset.allRules().length - 1) newRule = 0;
-                        else if (newRule < 0) newRule = Ruleset.allRules().length - 2;
+                        if (newRule >= Ruleset.allRules().length) newRule = 0;
+                        else if (newRule < 0) newRule = Ruleset.allRules().length - 1;
 
                         gameRuleset = Ruleset.allRules()[newRule];
                         break;
                     case 1:
+                        gameSpeedFast = !gameSpeedFast;
+                        break;
+                    case 2:
                         startLevel += change;
                         if (startLevel < 0) startLevel = 9;
                         if (startLevel > 9) startLevel = 0;
                         break;
-                    case 2:
+                    case 3:
                         showGrade = !showGrade;
                         break;
-                    case 3:
+                    case 4:
                         useClassicGrades = !useClassicGrades;
                         break;
-                    case 4:
+                    case 5:
                         showSectionTime = !showSectionTime;
                         break;
-                    case 5:
+                    case 6:
                         always20g = !always20g;
                         break;
-                    case 6:
+                    case 7:
                         alwaysExtra = !alwaysExtra;
                         break;
-                    case 7:
+                    case 8:
                         hardDropEffect = !hardDropEffect;
 
                         if (animatedBackgrounds) {
@@ -792,10 +929,10 @@ public class GradeMania4 extends DummyMode {
                         }
 
                         break;
-                    case 8:
+                    case 9:
                         animatedBackgrounds = !animatedBackgrounds;
                         break;
-                    case 9:
+                    case 10:
                         sparkEffect = !sparkEffect;
                         break;
                 }
@@ -854,21 +991,22 @@ public class GradeMania4 extends DummyMode {
     @Override
     public void renderSetting(GameEngine engine, int playerID) {
         drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_YELLOW, 0,
-            "VARIANT", gameRuleset.displayName
+            "VARIANT", gameRuleset.displayName,
+            "BASE SPEED", gameSpeedFast ? "FAST" : "SLOW"
         );
-        drawMenu(engine, playerID, receiver, 2, EventReceiver.COLOR_RED, 1,
+        drawMenu(engine, playerID, receiver, 4, EventReceiver.COLOR_RED, 2,
             "LEVEL", String.valueOf(startLevel * 100)
         );
-        drawMenu(engine, playerID, receiver, 4, EventReceiver.COLOR_GREEN, 2,
+        drawMenu(engine, playerID, receiver, 6, EventReceiver.COLOR_GREEN, 3,
             "SHOW GRADE", GeneralUtil.getONorOFF(showGrade),
             "CLASSIC GRS", GeneralUtil.getONorOFF(useClassicGrades),
             "SHOW STIME", GeneralUtil.getONorOFF(showSectionTime)
         );
-        drawMenu(engine, playerID, receiver, 10, EventReceiver.COLOR_BLUE, 5,
+        drawMenu(engine, playerID, receiver, 12, EventReceiver.COLOR_BLUE, 6,
             "20G MODE", GeneralUtil.getONorOFF(always20g),
             "EXTRA MODE", GeneralUtil.getONorOFF(alwaysExtra)
         );
-        drawMenu(engine, playerID, receiver, 14, EventReceiver.COLOR_PINK, 7,
+        drawMenu(engine, playerID, receiver, 16, EventReceiver.COLOR_PINK, 8,
             "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect),
             "ANIM. BGS.", GeneralUtil.getONorOFF(animatedBackgrounds),
             "SPARKS", GeneralUtil.getONorOFF(sparkEffect)
@@ -905,7 +1043,7 @@ public class GradeMania4 extends DummyMode {
         cPiece = null;
 
         // Preserve replay compatibility.
-        final SpeedParam currentParam = SPEED_TABLE.apply(
+        final SpeedParam currentParam = getSpeedTable().apply(
             (version == 0) ? engine.statistics.level - 1 : engine.statistics.level
         );
 
@@ -1105,8 +1243,7 @@ public class GradeMania4 extends DummyMode {
                          fullGameQuota += 175;
                     }
                     break;
-                case UPDATED_ORIGINAL:
-                    // TODO: When new original rules are available, implement this!
+                default:
                     break;
             }
 
@@ -1124,8 +1261,7 @@ public class GradeMania4 extends DummyMode {
                         case MODEPILE:
                             fullGameQuota += 350;
                             break;
-                        case UPDATED_ORIGINAL:
-                            // TODO: When new original rules are available, implement this!
+                        default:
                             break;
                     }
                 }
@@ -1302,6 +1438,8 @@ public class GradeMania4 extends DummyMode {
                 final int avgYVal = avgY.stream().mapToInt(Integer::intValue).sum() / avgY.size();
 
                 ((BackgroundCircularRipple) animBgInstances[0]).manualRipple(avgXVal, avgYVal);
+            } else if (animatedBackgrounds && engine.statistics.level < 110) {
+                animBgInstances[0].reset();
             }
         }
     }
@@ -1324,7 +1462,9 @@ public class GradeMania4 extends DummyMode {
     @Override
     public void renderLast(GameEngine engine, int playerID) {
         receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_BLUE);
-        receiver.drawScoreFont(engine, playerID, 0, 1, "(" + gameRuleset.displayName + " RULES)", EventReceiver.COLOR_BLUE);
+
+        final String ruleString = String.format("%s %s", gameSpeedFast ? "FAST" : "SLOW", gameRuleset.displayName);
+        receiver.drawScoreFont(engine, playerID, 0, 1, "(" + ruleString + " RULES)", EventReceiver.COLOR_BLUE);
 
         if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode))) {
             if ((!owner.replayMode) && (startLevel == 0) && (!alwaysExtra) && (!always20g) && (engine.ai == null)) {
@@ -1343,19 +1483,19 @@ public class GradeMania4 extends DummyMode {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
                         if (rankingRankPlayer != -1) {
                             drawRankGrade(
-                                engine, playerID, 3, topY + i, rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i],
-                                (i == rankingRankPlayer) ? EventReceiver.COLOR_RED : rankGradeColor(rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i]),
+                                engine, playerID, 3, topY + i, rankingGradeLeftPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i], rankingGradeRightPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i],
+                                (i == rankingRankPlayer) ? EventReceiver.COLOR_RED : rankGradeColor(rankingGradeLeftPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i], rankingGradeRightPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i]),
                                 scale
                             );
                         } else {
                             drawRankGrade(
-                                engine, playerID, 3, topY + i, rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i],
-                                rankGradeColor(rankingGradeLeftPlayer[rankingBoard()][i], rankingGradeRightPlayer[rankingBoard()][i]),
+                                engine, playerID, 3, topY + i, rankingGradeLeftPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i], rankingGradeRightPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i],
+                                rankGradeColor(rankingGradeLeftPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i], rankingGradeRightPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i]),
                                 scale
                             );
                         }
-                        receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevelPlayer[rankingBoard()][i]), (i == rankingRankPlayer), scale);
-                        receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTimePlayer[rankingBoard()][i]), (i == rankingRankPlayer), scale);
+                        receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevelPlayer[rankingBoardForSpeed()][rankingBoardForRule()][i]), (i == rankingRankPlayer), scale);
+                        receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTimePlayer[rankingBoardForSpeed()][rankingBoardForRule()][i]), (i == rankingRankPlayer), scale);
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
@@ -1373,19 +1513,19 @@ public class GradeMania4 extends DummyMode {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
                         if (rankingRank != -1) {
                             drawRankGrade(
-                                engine, playerID, 3, topY + i, rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i],
-                                (i == rankingRank) ? EventReceiver.COLOR_RED : rankGradeColor(rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i]),
+                                engine, playerID, 3, topY + i, rankingGradeLeft[rankingBoardForSpeed()][rankingBoardForRule()][i], rankingGradeRight[rankingBoardForSpeed()][rankingBoardForRule()][i],
+                                (i == rankingRank) ? EventReceiver.COLOR_RED : rankGradeColor(rankingGradeLeft[rankingBoardForSpeed()][rankingBoardForRule()][i], rankingGradeRight[rankingBoardForSpeed()][rankingBoardForRule()][i]),
                                 scale
                             );
                         } else {
                             drawRankGrade(
-                                engine, playerID, 3, topY + i, rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i],
-                                rankGradeColor(rankingGradeLeft[rankingBoard()][i], rankingGradeRight[rankingBoard()][i]),
+                                engine, playerID, 3, topY + i, rankingGradeLeft[rankingBoardForSpeed()][rankingBoardForRule()][i], rankingGradeRight[rankingBoardForSpeed()][rankingBoardForRule()][i],
+                                rankGradeColor(rankingGradeLeft[rankingBoardForSpeed()][rankingBoardForRule()][i], rankingGradeRight[rankingBoardForSpeed()][rankingBoardForRule()][i]),
                                 scale
                             );
                         }
-                        receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevel[rankingBoard()][i]), (i == rankingRank), scale);
-                        receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTime[rankingBoard()][i]), (i == rankingRank), scale);
+                        receiver.drawScoreFont(engine, playerID, 10, topY + i, String.valueOf(rankingLevel[rankingBoardForSpeed()][rankingBoardForRule()][i]), (i == rankingRank), scale);
+                        receiver.drawScoreFont(engine, playerID, 16, topY + i, GeneralUtil.getTime(rankingTime[rankingBoardForSpeed()][rankingBoardForRule()][i]), (i == rankingRank), scale);
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, 18, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
@@ -1454,7 +1594,6 @@ public class GradeMania4 extends DummyMode {
                 switch (gameRuleset) {
                     case ORIGINAL:
                         {
-
                             int section = engine.statistics.level / 100 - 1;
                             if (section < 0) section = 0;
 
@@ -1471,7 +1610,6 @@ public class GradeMania4 extends DummyMode {
                         break;
                     case MODEPILE:
                         {
-
                             receiver.drawScoreFont(engine, playerID, 0, 15, fullGameQuota + " / " + 9000, fullGameQuota >= FULL_GAME_QUOTA_LIMIT ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE);
 
                             float value = Math.min(1f, fullGameQuota / (float) FULL_GAME_QUOTA_LIMIT);
@@ -1483,8 +1621,7 @@ public class GradeMania4 extends DummyMode {
                             );
                         }
                         break;
-                    case UPDATED_ORIGINAL:
-                        // TODO: When original rules are updated, add this in!
+                    default:
                         break;
                 }
             }

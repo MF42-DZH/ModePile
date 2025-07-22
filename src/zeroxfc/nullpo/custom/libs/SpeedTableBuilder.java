@@ -1,257 +1,221 @@
 package zeroxfc.nullpo.custom.libs;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.TreeMap;
 import java.util.function.IntFunction;
 import mu.nu.nullpo.game.component.SpeedParam;
+import org.apache.log4j.Logger;
 
 /**
  * Helper utility for building and using speed tables.
  * All values are in frames at 60FPS.
- *
+ * <br />
  * Gravity is expressed as numerator / denominator G (1G = 1 block per frame at 60FPS).
+ * <br />
+ * Side note: making fluent APIs in Java sucks!
  */
-public class SpeedTableBuilder {
-    private final List<Integer> gravityNumeratorValues;
-    private final List<Integer> gravityDenominatorValues;
-    private final LinkedList<Integer> gravityLevels;
+public final class SpeedTableBuilder {
+    private static final Logger log = Logger.getLogger(SpeedTableBuilder.class);
 
-    private final List<Integer> areValues;
-    private final LinkedList<Integer> areLevels;
+    private final TreeMap<Integer, Integer> gravityNumerators;
+    private final TreeMap<Integer, Integer> gravityDenominators;
+    private final TreeMap<Integer, Integer> ares;
+    private final TreeMap<Integer, Integer> lineAres;
+    private final TreeMap<Integer, Integer> dases;
+    private final TreeMap<Integer, Integer> lockDelays;
+    private final TreeMap<Integer, Integer> lineClearDelays;
 
-    private final List<Integer> lineAreValues;
-    private final LinkedList<Integer> lineAreLevels;
-
-    private final List<Integer> lineDelayValues;
-    private final LinkedList<Integer> lineDelayLevels;
-
-    private final List<Integer> lockDelayValues;
-    private final LinkedList<Integer> lockDelayLevels;
-
-    private final List<Integer> dasValues;
-    private final LinkedList<Integer> dasLevels;
-
-    public SpeedTableBuilder() {
-        gravityNumeratorValues = new LinkedList<>();
-        gravityDenominatorValues = new LinkedList<>();
-        gravityLevels = new LinkedList<>();
-
-        areValues = new LinkedList<>();
-        areLevels = new LinkedList<>();
-
-        lineAreValues = new LinkedList<>();
-        lineAreLevels = new LinkedList<>();
-
-        lineDelayValues = new LinkedList<>();
-        lineDelayLevels = new LinkedList<>();
-
-        lockDelayValues = new LinkedList<>();
-        lockDelayLevels = new LinkedList<>();
-
-        dasValues = new LinkedList<>();
-        dasLevels = new LinkedList<>();
+    public static SpeedTableBuilder.ModifiableGravityTable createNew() {
+        return new SpeedTableBuilder().new ModifiableGravityTable();
     }
 
-    public SpeedTableBuilder clear() {
-        gravityNumeratorValues.clear();
-        gravityDenominatorValues.clear();
-        gravityLevels.clear();
-
-        areValues.clear();
-        areLevels.clear();
-
-        lineAreValues.clear();
-        lineAreLevels.clear();
-
-        lineDelayValues.clear();
-        lineDelayLevels.clear();
-
-        lockDelayValues.clear();
-        lockDelayLevels.clear();
-
-        dasValues.clear();
-        dasLevels.clear();
-
-        return this;
+    private SpeedTableBuilder() {
+        gravityNumerators = new TreeMap<>();
+        gravityDenominators = new TreeMap<>();
+        ares = new TreeMap<>();
+        lineAres = new TreeMap<>();
+        dases = new TreeMap<>();
+        lockDelays = new TreeMap<>();
+        lineClearDelays = new TreeMap<>();
     }
 
-    private void verifyLevel(int changeLevel, LinkedList<Integer> levelList) {
-        if (levelList.isEmpty() || levelList.peekLast() <= changeLevel) return;
-        throw new IllegalArgumentException("Level change is lower than or equal to previous level change: " + levelList.peekLast() + " -> " + changeLevel);
+    private static void verifyLevel(int changeLevel, TreeMap<Integer, Integer> levelValues) {
+        if (levelValues.isEmpty()) return;
+
+        final int maxLevel = levelValues.descendingKeySet().first();
+        if (maxLevel <= changeLevel) return;
+
+        final RuntimeException exc = new IllegalArgumentException("Level change is lower than or equal to previous level change: " + maxLevel + " -> " + changeLevel);
+
+        log.error(exc);
+        throw exc;
     }
 
-    public SpeedTableBuilder addGravity(int num, int den, int changeLevel) {
-        verifyLevel(changeLevel, gravityLevels);
+    public final class ModifiableGravityTable {
+        private ModifiableGravityTable() {}
 
-        gravityNumeratorValues.add(num);
-        gravityDenominatorValues.add(den);
-        gravityLevels.add(changeLevel);
+        public ModifiableGravityTable clear() {
+            gravityNumerators.clear();
+            gravityDenominators.clear();
 
-        return this;
-    }
-
-    public SpeedTableBuilder addTerminalGravity(int num, int den) {
-        return addGravity(num, den, Integer.MAX_VALUE);
-    }
-
-    public SpeedTableBuilder addARE(int are, int changeLevel) {
-        verifyLevel(changeLevel, areLevels);
-
-        areValues.add(are);
-        areLevels.add(changeLevel);
-
-        return this;
-    }
-
-    public SpeedTableBuilder addTerminalARE(int are) {
-        return addARE(are, Integer.MAX_VALUE);
-    }
-
-    public SpeedTableBuilder addLineARE(int are, int changeLevel) {
-        verifyLevel(changeLevel, lineAreLevels);
-
-        lineAreValues.add(are);
-        lineAreLevels.add(changeLevel);
-
-        return this;
-    }
-
-    public SpeedTableBuilder addTerminalLineARE(int are) {
-        return addLineARE(are, Integer.MAX_VALUE);
-    }
-
-    public SpeedTableBuilder addLineDelay(int delay, int changeLevel) {
-        verifyLevel(changeLevel, lineDelayLevels);
-
-        lineDelayValues.add(delay);
-        lineDelayLevels.add(changeLevel);
-
-        return this;
-    }
-
-    public SpeedTableBuilder addTerminalLineDelay(int delay) {
-        return addLineDelay(delay, Integer.MAX_VALUE);
-    }
-
-    public SpeedTableBuilder addLockDelay(int delay, int changeLevel) {
-        verifyLevel(changeLevel, lockDelayLevels);
-
-        lockDelayValues.add(delay);
-        lockDelayLevels.add(changeLevel);
-
-        return this;
-    }
-
-    public SpeedTableBuilder addTerminalLockDelay(int delay) {
-        return addLockDelay(delay, Integer.MAX_VALUE);
-    }
-
-    public SpeedTableBuilder addDAS(int delay, int changeLevel) {
-        verifyLevel(changeLevel, dasLevels);
-
-        dasValues.add(delay);
-        dasLevels.add(changeLevel);
-
-        return this;
-    }
-
-    public SpeedTableBuilder addTerminalDAS(int delay) {
-        return addDAS(delay, Integer.MAX_VALUE);
-    }
-
-    public IntFunction<SpeedParam> buildSpeedTable() {
-        if (gravityLevels.isEmpty()
-            || areLevels.isEmpty()
-            || lineAreLevels.isEmpty()
-            || lineDelayLevels.isEmpty()
-            || lockDelayLevels.isEmpty()
-            || dasLevels.isEmpty()) {
-            throw new IllegalStateException("One or more value tables are empty!");
+            return this;
         }
 
-        if (gravityLevels.peekLast() < Integer.MAX_VALUE
-            || areLevels.peekLast() < Integer.MAX_VALUE
-            || lineAreLevels.peekLast() < Integer.MAX_VALUE
-            || lineDelayLevels.peekLast() < Integer.MAX_VALUE
-            || lockDelayLevels.peekLast() < Integer.MAX_VALUE
-            || dasLevels.peekLast() < Integer.MAX_VALUE) {
-            throw new IllegalStateException("One or more tables not capped with a terminal value!");
+        public ModifiableGravityTable addGravity(int num, int den, int changeLevel) {
+            verifyLevel(changeLevel, gravityNumerators);
+            verifyLevel(changeLevel, gravityDenominators);
+
+            gravityNumerators.put(changeLevel, num);
+            gravityDenominators.put(changeLevel, den);
+
+            return this;
         }
 
-        final List<Integer> localGravityNumeratorValues = new ArrayList<>(this.gravityNumeratorValues);
-        final List<Integer> localGravityDenominatorValues = new ArrayList<>(this.gravityDenominatorValues);
-        final List<Integer> localGravityLevels = new ArrayList<>(this.gravityLevels);
+        public ModifiableARETable addTerminalGravity(int num, int den) {
+            addGravity(num, den, Integer.MAX_VALUE);
+            return new ModifiableARETable();
+        }
+    }
 
-        final List<Integer> localAreValues = new ArrayList<>(this.areValues);
-        final List<Integer> localAreLevels = new ArrayList<>(this.areLevels);
+    public final class ModifiableARETable {
+        private ModifiableARETable() {}
 
-        final List<Integer> localLineAreValues = new ArrayList<>(this.lineAreValues);
-        final List<Integer> localLineAreLevels = new ArrayList<>(this.lineAreLevels);
+        public ModifiableARETable clear() {
+            ares.clear();
 
-        final List<Integer> localLineDelayValues = new ArrayList<>(this.lineDelayValues);
-        final List<Integer> localLineDelayLevels = new ArrayList<>(this.lineDelayLevels);
+            return this;
+        }
 
-        final List<Integer> localLockDelayValues = new ArrayList<>(this.lockDelayValues);
-        final List<Integer> localLockDelayLevels = new ArrayList<>(this.lockDelayLevels);
+        public ModifiableARETable addARE(int are, int changeLevel) {
+            verifyLevel(changeLevel, ares);
 
-        final List<Integer> localDasValues = new ArrayList<>(this.dasValues);
-        final List<Integer> localDasLevels = new ArrayList<>(this.dasLevels);
+            ares.put(changeLevel, are);
 
-        return (level) -> {
-            final SpeedParam speed = new SpeedParam();
+            return this;
+        }
 
-            speed.gravity = localGravityNumeratorValues.get(localGravityNumeratorValues.size() - 1);
-            speed.denominator = localGravityDenominatorValues.get(localGravityDenominatorValues.size() - 1);
-            for (int i = 0; i < localGravityLevels.size(); i++) {
-                if (localGravityLevels.get(i) <= level) continue;
+        public ModifiableLineARETable addTerminalARE(int are) {
+            addARE(are, Integer.MAX_VALUE);
+            return new ModifiableLineARETable();
+        }
+    }
 
-                speed.gravity = localGravityNumeratorValues.get(i);
-                speed.denominator = localGravityDenominatorValues.get(i);
-                break;
-            }
+    public final class ModifiableLineARETable {
+        private ModifiableLineARETable() {}
 
-            speed.are = localAreValues.get(localAreValues.size() - 1);
-            for (int i = 0; i < localAreLevels.size(); i++) {
-                if (localAreLevels.get(i) <= level) continue;
+        public ModifiableLineARETable clear() {
+            lineAres.clear();
 
-                speed.are = localAreValues.get(i);
-                break;
-            }
+            return this;
+        }
 
-            speed.areLine = localLineAreValues.get(localLineAreValues.size() - 1);
-            for (int i = 0; i < localLineAreLevels.size(); i++) {
-                if (localLineAreLevels.get(i) <= level) continue;
+        public ModifiableLineARETable addLineARE(int lineAre, int changeLevel) {
+            verifyLevel(changeLevel, lineAres);
 
-                speed.areLine = localLineAreValues.get(i);
-                break;
-            }
+            lineAres.put(changeLevel, lineAre);
 
-            speed.lineDelay = localLineDelayValues.get(localLineDelayValues.size() - 1);
-            for (int i = 0; i < localLineDelayLevels.size(); i++) {
-                if (localLineDelayLevels.get(i) <= level) continue;
+            return this;
+        }
 
-                speed.lineDelay = localLineDelayValues.get(i);
-                break;
-            }
+        public ModifiableDASTable addTerminalLineARE(int lineAre) {
+            addLineARE(lineAre, Integer.MAX_VALUE);
+            return new ModifiableDASTable();
+        }
+    }
 
-            speed.lockDelay = localLockDelayValues.get(localLockDelayValues.size() - 1);
-            for (int i = 0; i < localLockDelayLevels.size(); i++) {
-                if (localLockDelayLevels.get(i) <= level) continue;
+    public final class ModifiableDASTable {
+        private ModifiableDASTable() {}
 
-                speed.lockDelay = localLockDelayValues.get(i);
-                break;
-            }
+        public ModifiableDASTable clear() {
+            dases.clear();
 
-            speed.das = localDasValues.get(localDasValues.size() - 1);
-            for (int i = 0; i < localDasLevels.size(); i++) {
-                if (localDasLevels.get(i) <= level) continue;
+            return this;
+        }
 
-                speed.das = localDasValues.get(i);
-                break;
-            }
+        public ModifiableDASTable addDAS(int das, int changeLevel) {
+            verifyLevel(changeLevel, dases);
 
-            return speed;
-        };
+            dases.put(changeLevel, das);
+
+            return this;
+        }
+
+        public ModifiableLockDelayTable addTerminalDAS(int das) {
+            addDAS(das, Integer.MAX_VALUE);
+            return new ModifiableLockDelayTable();
+        }
+    }
+
+    public final class ModifiableLockDelayTable {
+        private ModifiableLockDelayTable() {}
+
+        public ModifiableLockDelayTable clear() {
+            lockDelays.clear();
+
+            return this;
+        }
+
+        public ModifiableLockDelayTable addLockDelay(int lockDelay, int changeLevel) {
+            verifyLevel(changeLevel, lockDelays);
+
+            lockDelays.put(changeLevel, lockDelay);
+
+            return this;
+        }
+
+        public ModifiableLineDelayTable addTerminalLockDelay(int lockDelay) {
+            addLockDelay(lockDelay, Integer.MAX_VALUE);
+            return new ModifiableLineDelayTable();
+        }
+    }
+
+    public final class ModifiableLineDelayTable {
+        private ModifiableLineDelayTable() {}
+
+        public ModifiableLineDelayTable clear() {
+            lineClearDelays.clear();
+
+            return this;
+        }
+
+        public ModifiableLineDelayTable addLineDelay(int lineDelay, int changeLevel) {
+            verifyLevel(changeLevel, lineClearDelays);
+
+            lineClearDelays.put(changeLevel, lineDelay);
+
+            return this;
+        }
+
+        public FinalizableTable addTerminalLineDelay(int lineDelay) {
+            addLineDelay(lineDelay, Integer.MAX_VALUE);
+            return new FinalizableTable();
+        }
+    }
+
+    public final class FinalizableTable {
+        private FinalizableTable() {}
+
+        public IntFunction<SpeedParam> buildSpeedTable() {
+            final TreeMap<Integer, Integer> localGravityNumerators = new TreeMap<>(gravityNumerators);
+            final TreeMap<Integer, Integer> localGravityDenominators = new TreeMap<>(gravityDenominators);
+            final TreeMap<Integer, Integer> localAres = new TreeMap<>(ares);
+            final TreeMap<Integer, Integer> localLineAres = new TreeMap<>(lineAres);
+            final TreeMap<Integer, Integer> localDases = new TreeMap<>(dases);
+            final TreeMap<Integer, Integer> localLockDelays = new TreeMap<>(lockDelays);
+            final TreeMap<Integer, Integer> localLineClearDelays = new TreeMap<>(lineClearDelays);
+
+            return level -> {
+                final SpeedParam currentSpeed = new SpeedParam();
+
+                currentSpeed.gravity = localGravityNumerators.higherEntry(level).getValue();
+                currentSpeed.denominator = localGravityDenominators.higherEntry(level).getValue();
+                currentSpeed.are = localAres.higherEntry(level).getValue();
+                currentSpeed.areLine = localLineAres.higherEntry(level).getValue();
+                currentSpeed.das = localDases.higherEntry(level).getValue();
+                currentSpeed.lockDelay = localLockDelays.higherEntry(level).getValue();
+                currentSpeed.lineDelay = localLineClearDelays.higherEntry(level).getValue();
+
+                return currentSpeed;
+            };
+        }
     }
 }

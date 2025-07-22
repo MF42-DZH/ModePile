@@ -1,9 +1,8 @@
 package zeroxfc.nullpo.custom.libs;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.TreeMap;
 import java.util.function.IntFunction;
+import org.apache.log4j.Logger;
 
 /**
  * Helper utility for building level-based value tables. Essentially a generified version of
@@ -12,8 +11,9 @@ import java.util.function.IntFunction;
  * Use the static <code>createNew</code> method to start creating a table.
  */
 public final class LevelTableBuilder<T> {
-    private final List<T> values;
-    private final LinkedList<Integer> levels;
+    private static final Logger log = Logger.getLogger(LevelTableBuilder.class);
+
+    private final TreeMap<Integer, T> levelValues;
     private final LevelTableBuilder<T> outer = this;
 
     public static <V> LevelTableBuilder<V>.ModifiableLevelTable createNew() {
@@ -21,30 +21,32 @@ public final class LevelTableBuilder<T> {
     }
 
     private LevelTableBuilder() {
-        values = new LinkedList<>();
-        levels = new LinkedList<>();
+        levelValues = new TreeMap<>();
     }
 
     public final class ModifiableLevelTable {
         private ModifiableLevelTable() {}
 
         public ModifiableLevelTable clear() {
-            values.clear();
-            levels.clear();
-
+            levelValues.clear();
             return this;
         }
 
         private void verifyLevel(int changeLevel) {
-            if (levels.isEmpty() || levels.peekLast() <= changeLevel) return;
-            throw new IllegalArgumentException("Level change is lower than or equal to previous level change: " + levels.peekLast() + " -> " + changeLevel);
+            if (levelValues.isEmpty()) return;
+
+            final int maxLevel = levelValues.descendingKeySet().first();
+            if (maxLevel <= changeLevel) return;
+
+            final RuntimeException exc = new IllegalArgumentException("Level change is lower than or equal to previous level change: " + maxLevel + " -> " + changeLevel);
+
+            log.error(exc);
+            throw exc;
         }
 
         public ModifiableLevelTable addValue(T value, int changeLevel) {
             verifyLevel(changeLevel);
-
-            values.add(value);
-            levels.add(changeLevel);
+            levelValues.put(changeLevel, value);
 
             return this;
         }
@@ -59,26 +61,8 @@ public final class LevelTableBuilder<T> {
         private FinalizedLevelTable() {}
 
         public IntFunction<T> buildLevelTable() {
-            if (levels.isEmpty() || values.isEmpty()) {
-                throw new IllegalStateException("Value or level table is empty!");
-            }
-
-            if (levels.peekLast() < Integer.MAX_VALUE) {
-                throw new IllegalStateException("Have not added terminal value yet!");
-            }
-
-            final List<T> localValues = new ArrayList<>(values);
-            final List<Integer> localLevels = new ArrayList<>(levels);
-
-            return (level) -> {
-                for (int i = 0; i < localLevels.size(); ++i) {
-                    if (localLevels.get(i) <= level) continue;
-                    return localValues.get(i);
-                }
-
-                // This shouldn't happen unless you somehow have more than Integer.MAX_VALUE levels.
-                return null;
-            };
+            final TreeMap<Integer, T> finalizedTable = new TreeMap<>(levelValues);
+            return level -> finalizedTable.higherEntry(level).getValue();
         }
     }
 }
