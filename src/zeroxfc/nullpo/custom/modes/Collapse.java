@@ -219,6 +219,8 @@ public class Collapse extends DummyMode {
 
     private static final double BOMB_CHANCE = (0.01);
 
+    private static final int BONUS_LEVEL_TIME_LIMIT = (15 * 60);
+
     private static final int GAMETYPES = 2;
 
     private int gameTypeRanking() {
@@ -272,6 +274,16 @@ public class Collapse extends DummyMode {
     private MouseParser mouseInput;
     private Multipliers multipliers;
 
+    private boolean isBonusLevel;
+    private boolean bonusSuccess;
+    private int bonusLevelTimer;
+
+    private static boolean nextIsBonus(int level) {
+        // 2, 4, 10, 12, 14, 20, 22, 24, etc.
+        // Levels are zero-indexed.
+        return (level % 10 == 9 || level % 10 == 1 || level % 10 == 3);
+    }
+
     private ProfileProperties playerProperties;
     private int[][][] rankingScorePlayer;
     private int[][][] rankingLevelPlayer;
@@ -281,9 +293,6 @@ public class Collapse extends DummyMode {
     private boolean shrinkPopups;
     private int startLevel;
     private boolean endless;
-
-    // how the hell
-    // TODO: Bonus levels -- formula = 50000 + (40000 * level)
 
     /*
      * ------ MAIN METHODS ------
@@ -339,6 +348,10 @@ public class Collapse extends DummyMode {
         startLevel = 0;
         multipliers = null;
         endless = false;
+
+        isBonusLevel = false;
+        bonusSuccess = false;
+        bonusLevelTimer = 0;
 
         resetSTextArr();
 
@@ -668,7 +681,8 @@ public class Collapse extends DummyMode {
 //		if (engine.ctrl.isPush(Controller.BUTTON_D)) {
 //			engine.resetStatc();
 //			engine.gameEnded();
-//			
+//            linesLeft = 2;
+
 //			engine.stat = GameEngine.STAT_EXCELLENT;
 //			engine.ending = 1;
 //			engine.rainbowAnimate = false;
@@ -682,7 +696,7 @@ public class Collapse extends DummyMode {
             boolean incrementTime = false;
             switch (localState) {
                 case LOCALSTATE_INGAME:
-                    if (!engine.timerActive) engine.timerActive = true;
+                    if (!engine.timerActive && !isBonusLevel) engine.timerActive = true;
                     incrementTime = stateInGame(engine, playerID);
                     break;
                 case LOCALSTATE_TRANSITION:
@@ -775,7 +789,7 @@ public class Collapse extends DummyMode {
 
                 for (int y = 0; y < engine.field.getHeight(); y++) {
                     for (int x = 0; x < engine.field.getWidth(); x++) {
-                        if (isCoordWithinRadius(fieldX, fieldY, x, y, 4.5) && !engine.field.getBlockEmpty(x, y)) {
+                        if (isCoordWithinRadius(fieldX, fieldY, x, y, 5) && !engine.field.getBlockEmpty(x, y)) {
                             engine.field.getBlock(x, y).secondaryColor = engine.field.getBlock(x, y).color;
                             engine.field.getBlock(x, y).setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, true);
 
@@ -801,7 +815,17 @@ public class Collapse extends DummyMode {
             if (engine.field.isEmpty()) {
                 acTime = 0;
                 engine.playSE("bonus");
-                engine.statistics.score += 10000 * (engine.statistics.level + 1);
+
+                if (isBonusLevel) {
+                    engine.statistics.score += 50000 + (40000 * (engine.statistics.level + 1));
+
+                    bonusSuccess = true;
+
+                    engine.resetStatc();
+                    localState = LOCALSTATE_TRANSITION;
+                } else {
+                    engine.statistics.score += 10000 * (engine.statistics.level + 1);
+                }
             }
             engine.statistics.score += score;
         }
@@ -887,108 +911,124 @@ public class Collapse extends DummyMode {
             engine.field.copy(tempFieldCopy);
         }
 
-        spawnTimer++;
+        if (!isBonusLevel) {
+            spawnTimer++;
 
-        if (spawnTimer >= spawnTimerLimit) {
-            spawnTimer = 0;
-            int index = getNextEmpty();
-            if (index != -1) {
-                double coeff = localRandom.nextDouble();
-                int temp = -1;
-
-                // this probably lets you bag for bombs but it should make spires less annoying to deal with
-                final int chanceMultiplier = Math.max(1, engine.field.getHeight() - engine.field.getHighestBlockY() - 10);
-
-                if (coeff <= BOMB_CHANCE * chanceMultiplier && enableBombs && linesLeft != 1) {
-                    temp = wRandomEngineBomb.nextInt();
-
-                    nextBlocks[index] = new Block(tableBombColors[temp], engine.getSkin());
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
-                } else {
-                    temp = wRandomEngine.nextInt();
-
-                    boolean bone = false;
-                    if (temp == wRandomEngine.getMax() && wRandomEngine.getMax() == 5) bone = true;
-
-                    if (linesLeft == 1) {
-                        temp = 5;
-                    }
-
-                    nextBlocks[index] = new Block(tableColors[temp], engine.getSkin());
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_BONE, bone);
-                }
-
-                engine.playSE("move");
-            } else {
-                if (linesLeft > 0) linesLeft--;
-                updateMeter(engine);
-
-                if (linesLeft != 0) {
-                    engine.playSE("rise");
-                    incrementField(engine);
-                }
-
-                resetBlockArray();
-
-                if (linesLeft == 3) {
-                    engine.playSE("gradeup");
-                }
-
-                midgameSpeedSet(engine, playerID);
-
-                if (spawnTimer == 0 && engine.field.getHighestBlockY() <= 2 && engine.field.getHighestBlockY() >= 0) {
-                    engine.playSE("danger");
-                }
-            }
-        } else if (force && getNextEmpty() != -1) {
-            spawnTimer = 0;
-            force = false;
-            while (getNextEmpty() != -1) {
+            if (spawnTimer >= spawnTimerLimit) {
+                spawnTimer = 0;
                 int index = getNextEmpty();
-                double coeff = localRandom.nextDouble();
-                int temp = -1;
+                if (index != -1) {
+                    double coeff = localRandom.nextDouble();
+                    int temp = -1;
 
-                if (coeff <= BOMB_CHANCE * (engine.field.getHighestBlockY() < 4 ? 3 : 1) && enableBombs && linesLeft != 1) {
-                    temp = wRandomEngineBomb.nextInt();
+                    // this probably lets you bag for bombs but it should make spires less annoying to deal with
+                    final int chanceMultiplier = Math.max(1, engine.field.getHeight() - engine.field.getHighestBlockY() - 10);
 
-                    if (linesLeft == 1) {
-                        temp = 5;
+                    if (coeff <= BOMB_CHANCE * chanceMultiplier && enableBombs && linesLeft != 1) {
+                        temp = wRandomEngineBomb.nextInt();
+
+                        nextBlocks[index] = new Block(tableBombColors[temp], engine.getSkin());
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                    } else {
+                        temp = wRandomEngine.nextInt();
+
+                        boolean bone = false;
+                        if (temp == wRandomEngine.getMax() && wRandomEngine.getMax() == 5) bone = true;
+
+                        if (linesLeft == 1) {
+                            temp = 5;
+                        }
+
+                        nextBlocks[index] = new Block(tableColors[temp], engine.getSkin());
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_BONE, bone);
                     }
 
-                    nextBlocks[index] = new Block(tableBombColors[temp], engine.getSkin());
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                    engine.playSE("move");
                 } else {
-                    temp = wRandomEngine.nextInt();
+                    if (linesLeft > 0) linesLeft--;
+                    updateMeter(engine);
 
-                    boolean bone = false;
-                    if (temp == wRandomEngine.getMax() && wRandomEngine.getMax() == 5) bone = true;
-
-                    if (linesLeft == 1) {
-                        temp = 5;
+                    if (linesLeft != 0) {
+                        engine.playSE("rise");
+                        incrementField(engine);
                     }
 
-                    nextBlocks[index] = new Block(tableColors[temp], engine.getSkin());
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_BONE, bone);
+                    resetBlockArray();
+
+                    if (linesLeft == 3) {
+                        engine.playSE("gradeup");
+                    }
+
+                    midgameSpeedSet(engine, playerID);
+
+                    if (spawnTimer == 0 && engine.field.getHighestBlockY() <= 2 && engine.field.getHighestBlockY() >= 0) {
+                        engine.playSE("danger");
+                    }
+                }
+            } else if (force && getNextEmpty() != -1) {
+                spawnTimer = 0;
+                force = false;
+                while (getNextEmpty() != -1) {
+                    int index = getNextEmpty();
+                    double coeff = localRandom.nextDouble();
+                    int temp = -1;
+
+                    if (coeff <= BOMB_CHANCE * (engine.field.getHighestBlockY() < 4 ? 3 : 1) && enableBombs && linesLeft != 1) {
+                        temp = wRandomEngineBomb.nextInt();
+
+                        if (linesLeft == 1) {
+                            temp = 5;
+                        }
+
+                        nextBlocks[index] = new Block(tableBombColors[temp], engine.getSkin());
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                    } else {
+                        temp = wRandomEngine.nextInt();
+
+                        boolean bone = false;
+                        if (temp == wRandomEngine.getMax() && wRandomEngine.getMax() == 5) bone = true;
+
+                        if (linesLeft == 1) {
+                            temp = 5;
+                        }
+
+                        nextBlocks[index] = new Block(tableColors[temp], engine.getSkin());
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_BONE, bone);
+                    }
                 }
             }
-        }
 
-        if (linesLeft == 0) {
-            // Set up the field for level end checks.
-            engine.field.freeFall();
-            for (int i = 0; i < 6; i++) {
-                bringColumnsCloser(engine);
+            if (linesLeft == 0) {
+                // Set up the field for level end checks.
+                engine.field.freeFall();
+                for (int i = 0; i < 6; i++) {
+                    bringColumnsCloser(engine);
+                }
+
+                engine.resetStatc();
+                localState = LOCALSTATE_TRANSITION;
+                return false;
+            }
+        } else {
+            if (--bonusLevelTimer <= 0 && localState != LOCALSTATE_TRANSITION) {
+                engine.playSE("regret");
+
+                bonusSuccess = false;
+
+                engine.resetStatc();
+                localState = LOCALSTATE_TRANSITION;
+                return false;
             }
 
-            engine.resetStatc();
-            localState = LOCALSTATE_TRANSITION;
-            return false;
+            if (bonusLevelTimer <= 180 && bonusLevelTimer > 0 && bonusLevelTimer % 60 == 0 && localState == LOCALSTATE_INGAME) {
+                engine.playSE("countdown");
+            }
         }
 
         if (engine.field.getHighestBlockY() < 0) {
@@ -1012,26 +1052,36 @@ public class Collapse extends DummyMode {
     }
 
     private void updateMeter(GameEngine engine) {
-        if (linesLeft >= 0) {
-            final double proportion = (double) linesLeft / tableLevelLine[engine.statistics.level];
+        if (isBonusLevel) {
+            final double proportion = (double) bonusLevelTimer / BONUS_LEVEL_TIME_LIMIT;
 
             engine.meterValue = (int) (proportion * receiver.getMeterMax(engine));
-            engine.meterColor = GameEngine.METER_COLOR_RED;
-            if (proportion <= 0.75f) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
-            if (proportion <= 0.5f) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
-            if (proportion <= 0.25f) engine.meterColor = GameEngine.METER_COLOR_GREEN;
-        } else if (!endless) {
-            engine.meterValue = receiver.getMeterMax(engine);
             engine.meterColor = GameEngine.METER_COLOR_GREEN;
+            if (proportion <= 0.75f) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
+            if (proportion <= 0.5f) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
+            if (proportion <= 0.25f) engine.meterColor = GameEngine.METER_COLOR_RED;
         } else {
-            final int threshold = endlessThresholds[difficulty];
-            final double proportion = (double) (threshold - (linesSoFar % threshold)) / threshold;
+            if (linesLeft >= 0) {
+                final double proportion = (double) linesLeft / (engine.statistics.level <= 19 ? tableLevelLine[engine.statistics.level] : levelLinesForPast19(engine.statistics.level));
 
-            engine.meterValue = (int) (proportion * receiver.getMeterMax(engine));
-            engine.meterColor = GameEngine.METER_COLOR_RED;
-            if (proportion <= 0.75f) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
-            if (proportion <= 0.5f) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
-            if (proportion <= 0.25f) engine.meterColor = GameEngine.METER_COLOR_GREEN;
+                engine.meterValue = (int) (proportion * receiver.getMeterMax(engine));
+                engine.meterColor = GameEngine.METER_COLOR_RED;
+                if (proportion <= 0.75f) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
+                if (proportion <= 0.5f) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
+                if (proportion <= 0.25f) engine.meterColor = GameEngine.METER_COLOR_GREEN;
+            } else if (!endless) {
+                engine.meterValue = receiver.getMeterMax(engine);
+                engine.meterColor = GameEngine.METER_COLOR_GREEN;
+            } else {
+                final int threshold = endlessThresholds[difficulty];
+                final double proportion = (double) (threshold - (linesSoFar % threshold)) / threshold;
+
+                engine.meterValue = (int) (proportion * receiver.getMeterMax(engine));
+                engine.meterColor = GameEngine.METER_COLOR_RED;
+                if (proportion <= 0.75f) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
+                if (proportion <= 0.5f) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
+                if (proportion <= 0.25f) engine.meterColor = GameEngine.METER_COLOR_GREEN;
+            }
         }
     }
 
@@ -1040,58 +1090,180 @@ public class Collapse extends DummyMode {
     private int endLevelEmptyCounter;
 
     private boolean stateTransition(GameEngine engine, int playerID) {
-        final int fillDuration = endLevelEmpties * 3;
+        if (!isBonusLevel) {
+            final int fillDuration = endLevelEmpties * 3;
 
-        if (engine.statc[0] > fillDuration + 180) {
-            levelUp(engine, false);
-            resetBlockArray();
-            engine.resetStatc();
+            if (engine.statc[0] > fillDuration + 180 && (scoreToDisplay == engine.statistics.score)) {
+                resetBlockArray();
+                engine.resetStatc();
 
-            for (int i = 0; i < lineSpawn; i++) {
-                while (getNextEmpty() != -1) {
-                    int index = getNextEmpty();
-                    int temp = -1;
+                if (nextIsBonus(engine.statistics.level)) {
+                    BonusFields.setBonusField(engine, engine.statistics.score);
 
-                    temp = wRandomEngine.nextInt();
+                    isBonusLevel = true;
+                    bonusLevelTimer = BONUS_LEVEL_TIME_LIMIT;
+                } else {
+                    levelUp(engine, false);
 
-                    boolean bone = false;
-                    if (temp == wRandomEngine.getMax() && wRandomEngine.getMax() == 5) bone = true;
+                    for (int i = 0; i < lineSpawn; i++) {
+                        while (getNextEmpty() != -1) {
+                            int index = getNextEmpty();
+                            int temp = -1;
 
-                    if (linesLeft == 1) {
-                        temp = Block.BLOCK_COLOR_GRAY;
+                            temp = wRandomEngine.nextInt();
+
+                            boolean bone = false;
+                            if (temp == wRandomEngine.getMax() && wRandomEngine.getMax() == 5) bone = true;
+
+                            if (linesLeft == 1) {
+                                temp = Block.BLOCK_COLOR_GRAY;
+                            }
+
+                            nextBlocks[index] = new Block(tableColors[temp], engine.getSkin());
+                            nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                            nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                            nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_BONE, bone);
+                        }
+
+                        incrementField(engine);
+                        resetBlockArray();
                     }
-
-                    nextBlocks[index] = new Block(tableColors[temp], engine.getSkin());
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
-                    nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_BONE, bone);
                 }
 
-                incrementField(engine);
-                resetBlockArray();
+                engine.playSE("go");
+                engine.playSE("rise");
+
+                localState = LOCALSTATE_INGAME;
+                return false;
+            } else if (engine.statc[0] > 0) {
+                final Block nblk = new Block(Block.BLOCK_COLOR_NONE);
+                nblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                nblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                nblk.setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, false);
+
+                final Block gblk = new Block(Block.BLOCK_COLOR_GRAY);
+                gblk.skin = engine.getSkin();
+                gblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                gblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                gblk.setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, false);
+
+                if (engine.statc[0] >= fillDuration) {
+                    int f = (engine.statc[0] - fillDuration) - 60;
+
+                    if (f % 3 == 0 && f >= 0 && (15 - (f / 3)) >= -1) {
+                        for (int x = 0; x < engine.field.getWidth(); x++) {
+                            int y = 15 - (f / 3);
+                            Block blk = engine.field.getBlock(x, y);
+
+
+                            if (blk != null) {
+                                if (blk.color > Block.BLOCK_COLOR_NONE) {
+                                    receiver.blockBreak(engine, playerID, x, y, blk);
+                                    engine.field.getBlock(x, y).copy(nblk);
+                                }
+                            }
+                        }
+                    }
+                } else if (engine.statc[0] % 3 == 0) {
+                    boolean breakOut = false;
+
+                    for (int y = 0; y < engine.field.getHeight() && !breakOut; ++y) {
+                        for (int x = 0; x < engine.field.getWidth(); ++x) {
+                            final Block blk = engine.field.getBlock(x, y);
+                            if (blk != null && blk.isEmpty()) {
+                                breakOut = true;
+                                blk.copy(gblk);
+
+                                engine.playSE("bonuspop");
+                                endLevelEmptyCounter++;
+
+                                if (x == engine.field.getWidth() - 1) {
+                                    for (int x2 = 0; x2 < engine.field.getWidth(); ++x2) {
+                                        if (engine.field.getBlock(x2, y).color != Block.BLOCK_COLOR_GRAY || engine.field.getBlock(x2, y).getAttribute(Block.BLOCK_ATTRIBUTE_BONE))
+                                            break;
+                                        else if (x2 == x) {
+                                            engine.playSE("gem");
+                                            endLevelEmptyRowCounter++;
+
+                                            int shownScore = getRawRowLevelClearBonus(engine, endLevelEmptyRowCounter);
+                                            if (endLevelEmptyRowCounter > 1)
+                                                shownScore = getRawRowLevelClearBonus(engine, endLevelEmptyRowCounter) - getRawRowLevelClearBonus(engine, endLevelEmptyRowCounter - 1);
+
+                                            addSText(
+                                                engine, playerID,
+                                                (engine.field.getWidth() / 2) - 1, y,
+                                                shownScore,
+                                                false, true
+                                            );
+
+                                            for (int x3 = 0; x3 < engine.field.getWidth(); ++x3) {
+                                                engine.field.getBlock(x3, y).elapsedFrames = 0;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (engine.statc[0] == fillDuration + 120) engine.playSE("ready");
+            } else {
+                endLevelEmpties = FieldManipulation.getNumberOfEmptySpaces(engine.field);
+
+                engine.playSE("stageclear");
+                bScore = getLevelClearBonus(engine, false);
+                engine.statistics.score += bScore;
             }
+        } else {
+            if (engine.statc[0] == 240) {
+                engine.playSE("ready");
+            } else if (engine.statc[0] >= 300 && (scoreToDisplay == engine.statistics.score)) {
+                resetBlockArray();
+                engine.resetStatc();
+                levelUp(engine, false);
 
-            engine.playSE("go");
-            engine.playSE("rise");
+                for (int i = 0; i < lineSpawn; i++) {
+                    while (getNextEmpty() != -1) {
+                        int index = getNextEmpty();
+                        int temp = -1;
 
-            localState = LOCALSTATE_INGAME;
-            return false;
-        } else if (engine.statc[0] > 0) {
-            final Block nblk = new Block(Block.BLOCK_COLOR_NONE);
-            nblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
-            nblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
-            nblk.setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, false);
+                        temp = wRandomEngine.nextInt();
 
-            final Block gblk = new Block(Block.BLOCK_COLOR_GRAY);
-            gblk.skin = engine.getSkin();
-            gblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
-            gblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
-            gblk.setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, false);
+                        boolean bone = false;
+                        if (temp == wRandomEngine.getMax() && wRandomEngine.getMax() == 5) bone = true;
 
-            if (engine.statc[0] >= fillDuration) {
-                int f = (engine.statc[0] - fillDuration) - 60;
+                        if (linesLeft == 1) {
+                            temp = Block.BLOCK_COLOR_GRAY;
+                        }
 
-                if (f % 3 == 0 && f >= 0 && (15 - (f / 3)) >= -1) {
+                        nextBlocks[index] = new Block(tableColors[temp], engine.getSkin());
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                        nextBlocks[index].setAttribute(Block.BLOCK_ATTRIBUTE_BONE, bone);
+                    }
+
+                    incrementField(engine);
+                    resetBlockArray();
+                }
+
+                engine.playSE("go");
+                engine.playSE("rise");
+
+                isBonusLevel = false;
+                localState = LOCALSTATE_INGAME;
+                return false;
+            } else if (engine.statc[0] >= 60) {
+                final int f = engine.statc[0] - 60;
+
+                final Block nblk = new Block(Block.BLOCK_COLOR_NONE);
+                nblk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                nblk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                nblk.setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, false);
+
+                if (f % 3 == 0 && 15 - f / 3 >= -1) {
                     for (int x = 0; x < engine.field.getWidth(); x++) {
                         int y = 15 - (f / 3);
                         Block blk = engine.field.getBlock(x, y);
@@ -1105,56 +1277,7 @@ public class Collapse extends DummyMode {
                         }
                     }
                 }
-            } else if (engine.statc[0] % 3 == 0) {
-                boolean breakOut = false;
-
-                for (int y = 0; y < engine.field.getHeight() && !breakOut; ++y) {
-                    for (int x = 0; x < engine.field.getWidth(); ++x) {
-                        final Block blk = engine.field.getBlock(x, y);
-                        if (blk != null && blk.isEmpty()) {
-                            breakOut = true;
-                            blk.copy(gblk);
-
-                            engine.playSE("bonuspop");
-                            endLevelEmptyCounter++;
-
-                            if (x == engine.field.getWidth() - 1) {
-                                for (int x2 = 0; x2 < engine.field.getWidth(); ++x2) {
-                                    if (engine.field.getBlock(x2, y).color != Block.BLOCK_COLOR_GRAY || engine.field.getBlock(x2, y).getAttribute(Block.BLOCK_ATTRIBUTE_BONE)) break;
-                                    else if (x2 == x) {
-                                        engine.playSE("gem");
-                                        endLevelEmptyRowCounter++;
-
-                                        int shownScore = getRawRowLevelClearBonus(engine, endLevelEmptyRowCounter);
-                                        if (endLevelEmptyRowCounter > 1) shownScore = getRawRowLevelClearBonus(engine, endLevelEmptyRowCounter) - getRawRowLevelClearBonus(engine, endLevelEmptyRowCounter - 1);
-
-                                        addSText(
-                                            engine, playerID,
-                                            (engine.field.getWidth() / 2) - 1, y,
-                                            shownScore,
-                                            false, true
-                                        );
-
-                                        for (int x3 = 0; x3 < engine.field.getWidth(); ++x3) {
-                                            engine.field.getBlock(x3, y).elapsedFrames = 0;
-                                        }
-                                    }
-                                }
-                            }
-
-                            break;
-                        }
-                    }
-                }
             }
-
-            if (engine.statc[0] == fillDuration + 120) engine.playSE("ready");
-        } else {
-            endLevelEmpties = FieldManipulation.getNumberOfEmptySpaces(engine.field);
-
-            engine.playSE("stageclear");
-            bScore = getLevelClearBonus(engine, false);
-            engine.statistics.score += bScore;
         }
 
         return true;
@@ -1394,9 +1517,11 @@ public class Collapse extends DummyMode {
 
             if (spawnTimerLimit <= 0) spawnTimerLimit = 1;
         } else {
+            final int effectiveLevel = Math.min(engine.statistics.level, 19);
+            final int lineLimit = engine.statistics.level <= 19 ? tableLevelLine[effectiveLevel] : levelLinesForPast19(engine.statistics.level);
+
             if (linesLeft >= MAX_SPEED_LINE) {
-                int effectiveLevel = Math.min(engine.statistics.level, 19);
-                double fraction = 0.75 + (0.75 * ((double) (linesLeft - MAX_SPEED_LINE) / (tableLevelLine[effectiveLevel] - MAX_SPEED_LINE)));
+                double fraction = 0.75 + (0.75 * ((double) (linesLeft - MAX_SPEED_LINE) / (lineLimit - MAX_SPEED_LINE)));
                 double rawSpeed = 1;
 
                 switch (difficulty) {
@@ -1416,7 +1541,6 @@ public class Collapse extends DummyMode {
                 else spawnTimerLimit = (int) rawSpeed;
             } else {
                 if (linesLeft == 0) {
-                    int effectiveLevel = engine.statistics.level;
                     double rawSpeed = 1;
 
                     switch (difficulty) {
@@ -1590,7 +1714,7 @@ public class Collapse extends DummyMode {
     }
 
     private void incrementScore(GameEngine engine) {
-        if (localState == LOCALSTATE_INGAME) {
+        if (localState == LOCALSTATE_INGAME || isBonusLevel) {
             if (scGetTime % 2 == 0) {
                 scoreToDisplay += (int) Math.min(Math.max(Math.pow((scGetTime >>> 1) - 6.0, 2.0), 1), Math.ceil((engine.statistics.score - scoreToDisplay) * 0.5));
                 if (engine.statistics.score < scoreToDisplay) scoreToDisplay = engine.statistics.score;
@@ -1635,7 +1759,7 @@ public class Collapse extends DummyMode {
             }
         }
 
-        if (localState == LOCALSTATE_INGAME && engine.field != null && engine.field.getHighestBlockY() <= 0) {
+        if (localState == LOCALSTATE_INGAME && engine.field != null && engine.field.getHighestBlockY() <= 0 && !isBonusLevel) {
             engine.framecolor = GameEngine.FRAME_COLOR_RED;
         } else {
             engine.framecolor = GameEngine.FRAME_COLOR_YELLOW;
@@ -1697,7 +1821,8 @@ public class Collapse extends DummyMode {
             receiver.drawScoreFont(engine, playerID, 0, 4, String.valueOf(scoreToDisplay));
 
             receiver.drawScoreFont(engine, playerID, 0, 6, "LEVEL", EventReceiver.COLOR_BLUE);
-            receiver.drawScoreFont(engine, playerID, 0, 7, String.valueOf(engine.statistics.level + 1));
+            if (!isBonusLevel) receiver.drawScoreFont(engine, playerID, 0, 7, String.valueOf(engine.statistics.level + 1));
+            else receiver.drawScoreFont(engine, playerID, 0, 7, "BONUS", EventReceiver.COLOR_YELLOW);
 
             int lineCountColor = EventReceiver.COLOR_WHITE;
             if (linesLeft <= 0) lineCountColor = EventReceiver.COLOR_GREEN;
@@ -1706,8 +1831,13 @@ public class Collapse extends DummyMode {
             receiver.drawScoreFont(engine, playerID, 0, 9, "LINES LEFT", EventReceiver.COLOR_BLUE);
             receiver.drawScoreFont(engine, playerID, 0, 10, linesLeft >= 0 ? String.valueOf(linesLeft) : "INFINITE", lineCountColor);
 
-            receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
-            receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
+            if (isBonusLevel) {
+                receiver.drawScoreFont(engine, playerID, 0, 12, "TIME LIMIT", EventReceiver.COLOR_RED);
+                receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(bonusLevelTimer), bonusLevelTimer <= 180 && bonusLevelTimer % 2 == 1);
+            } else {
+                receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", EventReceiver.COLOR_BLUE);
+                receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
+            }
 
             if (playerProperties.isLoggedIn()) {
                 receiver.drawScoreFont(engine, playerID, 0, 15, "PLAYER", EventReceiver.COLOR_BLUE);
@@ -1719,15 +1849,25 @@ public class Collapse extends DummyMode {
             }
 
             if (localState == LOCALSTATE_TRANSITION) {
-                final String s = String.valueOf(
-                    getRawLevelClearBonus(engine, endLevelEmptyCounter, endLevelEmptyRowCounter)
-                );
+                if (!isBonusLevel || bonusSuccess) {
+                    final String s = isBonusLevel ? String.valueOf(50000 + (40000 * (engine.statistics.level + 1))) : String.valueOf(
+                        getRawLevelClearBonus(engine, endLevelEmptyCounter, endLevelEmptyRowCounter)
+                    );
 
-                final int l = s.length();
-                final int offset = (12 - l) / 2;
-                receiver.drawMenuFont(engine, playerID, 2, 6, "LEVEL UP", (engine.statc[0] / 2) % 2 == 0, EventReceiver.COLOR_YELLOW, EventReceiver.COLOR_ORANGE);
-                receiver.drawMenuFont(engine, playerID, 0, 8, "BONUS POINTS", EventReceiver.COLOR_YELLOW);
-                receiver.drawMenuFont(engine, playerID, offset, 9, s);
+                    final int l = s.length();
+                    final int offset = (12 - l) / 2;
+                    receiver.drawMenuFont(engine, playerID, 2, 6, isBonusLevel ? " GREAT! " : "LEVEL UP", (engine.statc[0] / 2) % 2 == 0, EventReceiver.COLOR_YELLOW, EventReceiver.COLOR_ORANGE);
+                    receiver.drawMenuFont(engine, playerID, 0, 8, "BONUS POINTS", EventReceiver.COLOR_YELLOW);
+                    receiver.drawMenuFont(engine, playerID, offset, 9, s);
+                } else {
+                    receiver.drawMenuFont(engine, playerID, 0, 7, "  TOO BAD!  ", (engine.statc[0] / 2) % 2 == 0);
+                    receiver.drawMenuFont(engine, playerID, 0, 8, "BONUS FAILED", EventReceiver.COLOR_RED);
+                }
+
+                if (nextIsBonus(engine.statistics.level) && !isBonusLevel) {
+                    receiver.drawMenuFont(engine, playerID, 0, 11, "  INCOMING  ", EventReceiver.COLOR_GREEN);
+                    receiver.drawMenuFont(engine, playerID, 0, 12, "BONUS LEVEL!", EventReceiver.COLOR_GREEN);
+                }
             }
 
             if (localState == LOCALSTATE_INGAME) {
@@ -2115,12 +2255,89 @@ public class Collapse extends DummyMode {
         int dX = xTest - x;
         int dY = yTest - y;
 
-        double distance = Math.sqrt((dX * dX) + (dY * dY));
-        return (distance <= radius);
+        final double distance = (double) (dX * dX) + (double) (dY * dY);
+        return (distance <= (radius * radius));
     }
 
     // Is this really all this does lmao?
     private void explode(GameEngine engine) {
         engine.playSE("bombexplode");
+    }
+
+    private static class BonusFields {
+        // Note: 12w x 16h fields
+
+        public static final int[][] BONUS_FIELD_1 = {
+            { 0, 0, 0, 4, 4, 3, 4, 4, 0, 4, 4, 3 },
+            { 0, 0, 0, 4, 3, 3, 4, 0, 0, 4, 3, 3 },
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 0, 0, 4, 3, 3, 4, 0, 0, 4, 3, 3, 3 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+            { 0, 0, 0, 4, 4, 3, 4, 4, 0, 4, 4, 3 },
+            { 0, 0, 0, 4, 3, 3, 4, 0, 0, 4, 3, 3 },
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 0, 0, 4, 3, 3, 4, 0, 0, 4, 3, 3, 3 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+        };
+
+        public static final int[][] BONUS_FIELD_2 = {
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 1, 1, 1, 4, 4, 2, 4, 4, 1, 4, 4, 2 },
+            { 1, 1, 1, 4, 2, 2, 4, 1, 1, 4, 2, 2 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+            { 1, 1, 4, 2, 2, 4, 1, 1, 4, 2, 2, 2 },
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 1, 1, 1, 4, 4, 2, 4, 4, 1, 4, 4, 2 },
+            { 1, 1, 1, 4, 2, 2, 4, 1, 1, 4, 2, 2 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+            { 1, 1, 4, 2, 2, 4, 1, 1, 4, 2, 2, 2 },
+        };
+
+        public static final int[][] BONUS_FIELD_3 = {
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 0, 0, 2, 3, 3, 3, 0, 0, 2, 3, 3, 3 },
+            { 0, 2, 2, 3, 3, 3, 0, 2, 2, 3, 3, 3 },
+            { 2, 2, 2, 3, 3, 3, 2, 2, 2, 3, 3, 3 },
+            { 1, 1, 1, 4, 2, 2, 4, 1, 1, 4, 2, 2 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+            { 1, 1, 4, 2, 2, 4, 1, 1, 4, 2, 2, 2 },
+            { 1, 4, 4, 2, 4, 4, 1, 4, 4, 2, 2, 2 },
+            { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
+            { 0, 0, 2, 3, 3, 3, 0, 0, 2, 3, 3, 3 },
+            { 0, 2, 2, 3, 3, 3, 0, 2, 2, 3, 3, 3 },
+            { 2, 2, 2, 3, 3, 3, 2, 2, 2, 3, 3, 3 },
+            { 1, 1, 1, 4, 2, 2, 4, 1, 1, 4, 2, 2 },
+            { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
+            { 1, 1, 4, 2, 2, 4, 1, 1, 4, 2, 2, 2 },
+            { 1, 4, 4, 2, 4, 4, 1, 4, 4, 2, 2, 2 },
+        };
+
+
+        public static void setBonusField(GameEngine engine, int scoreSeed) {
+            final int[][] selected = new int[][][] { BONUS_FIELD_1, BONUS_FIELD_2, BONUS_FIELD_3 }[scoreSeed % 3];
+
+            for (int y = 0; y < 16; ++y) {
+                for (int x = 0; x < 12; ++x) {
+                    final Block blk = new Block(0, engine.getSkin());
+                    blk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                    blk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+
+                    blk.color = tableColors[(selected[y][x] + scoreSeed) % 5];
+                    engine.field.setBlock(x, y, blk);
+                }
+            }
+        }
     }
 }

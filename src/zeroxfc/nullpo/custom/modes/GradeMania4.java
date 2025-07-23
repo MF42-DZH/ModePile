@@ -37,37 +37,41 @@ public class GradeMania4 extends DummyMode {
 
     private static final int CURRENT_VERSION = 2;
 
-    private static final IntFunction<SpeedParam> V1_SPEED_TABLE = SpeedTableBuilder.createNew()
-        .addGravity(4, 256, 30)
-        .addGravity(6, 256, 35)
-        .addGravity(8, 256, 40)
-        .addGravity(10, 256, 50)
-        .addGravity(12, 256, 60)
-        .addGravity(16, 256, 70)
-        .addGravity(32, 256, 80)
-        .addGravity(48, 256, 90)
-        .addGravity(64, 256, 100)
-        .addGravity(80, 256, 120)
-        .addGravity(96, 256, 140)
-        .addGravity(112, 256, 160)
-        .addGravity(128, 256, 170)
-        .addGravity(144, 256, 200)
-        .addGravity(4, 256, 220)
-        .addGravity(32, 256, 230)
-        .addGravity(64, 256, 233)
-        .addGravity(96, 256, 236)
-        .addGravity(128, 256, 239)
-        .addGravity(160, 256, 243)
-        .addGravity(192, 256, 247)
-        .addGravity(224, 256, 251)
-        .addGravity(256, 256, 300)
-        .addGravity(512, 256, 330)
-        .addGravity(768, 256, 360)
-        .addGravity(1024, 256, 400)
-        .addGravity(1280, 256, 420)
-        .addGravity(1024, 256, 450)
-        .addGravity(768, 256, 500)
-        .addTerminalGravity(-1, 256)
+    private static SpeedTableBuilder.ModifiableARETable makeGravityTable() {
+        return SpeedTableBuilder.createNew()
+            .addGravity(4, 256, 30)
+            .addGravity(6, 256, 35)
+            .addGravity(8, 256, 40)
+            .addGravity(10, 256, 50)
+            .addGravity(12, 256, 60)
+            .addGravity(16, 256, 70)
+            .addGravity(32, 256, 80)
+            .addGravity(48, 256, 90)
+            .addGravity(64, 256, 100)
+            .addGravity(80, 256, 120)
+            .addGravity(96, 256, 140)
+            .addGravity(112, 256, 160)
+            .addGravity(128, 256, 170)
+            .addGravity(144, 256, 200)
+            .addGravity(4, 256, 220)
+            .addGravity(32, 256, 230)
+            .addGravity(64, 256, 233)
+            .addGravity(96, 256, 236)
+            .addGravity(128, 256, 239)
+            .addGravity(160, 256, 243)
+            .addGravity(192, 256, 247)
+            .addGravity(224, 256, 251)
+            .addGravity(256, 256, 300)
+            .addGravity(512, 256, 330)
+            .addGravity(768, 256, 360)
+            .addGravity(1024, 256, 400)
+            .addGravity(1280, 256, 420)
+            .addGravity(1024, 256, 450)
+            .addGravity(768, 256, 500)
+            .addTerminalGravity(-1, 256);
+    }
+
+    private static final IntFunction<SpeedParam> V1_SPEED_TABLE = makeGravityTable()
         .addARE(23, 700)
         .addARE(14, 800)
         .addARE(10, 900)
@@ -89,37 +93,7 @@ public class GradeMania4 extends DummyMode {
         .addTerminalLineDelay(6)
         .buildSpeedTable();
 
-    private static final IntFunction<SpeedParam> V2_SPEED_TABLE_SLOW = SpeedTableBuilder.createNew()
-        .addGravity(4, 256, 30)
-        .addGravity(6, 256, 35)
-        .addGravity(8, 256, 40)
-        .addGravity(10, 256, 50)
-        .addGravity(12, 256, 60)
-        .addGravity(16, 256, 70)
-        .addGravity(32, 256, 80)
-        .addGravity(48, 256, 90)
-        .addGravity(64, 256, 100)
-        .addGravity(80, 256, 120)
-        .addGravity(96, 256, 140)
-        .addGravity(112, 256, 160)
-        .addGravity(128, 256, 170)
-        .addGravity(144, 256, 200)
-        .addGravity(4, 256, 220)
-        .addGravity(32, 256, 230)
-        .addGravity(64, 256, 233)
-        .addGravity(96, 256, 236)
-        .addGravity(128, 256, 239)
-        .addGravity(160, 256, 243)
-        .addGravity(192, 256, 247)
-        .addGravity(224, 256, 251)
-        .addGravity(256, 256, 300)
-        .addGravity(512, 256, 330)
-        .addGravity(768, 256, 360)
-        .addGravity(1024, 256, 400)
-        .addGravity(1280, 256, 420)
-        .addGravity(1024, 256, 450)
-        .addGravity(768, 256, 500)
-        .addTerminalGravity(-1, 256)
+    private static final IntFunction<SpeedParam> V2_SPEED_TABLE_SLOW = makeGravityTable()
         .addTerminalARE(26)
         .addTerminalLineARE(30)
         .addTerminalDAS(15)
@@ -127,37 +101,7 @@ public class GradeMania4 extends DummyMode {
         .addTerminalLineDelay(41)
         .buildSpeedTable();
 
-    private static final IntFunction<SpeedParam> V2_SPEED_TABLE_FAST = SpeedTableBuilder.createNew()
-        .addGravity(4, 256, 30)
-        .addGravity(6, 256, 35)
-        .addGravity(8, 256, 40)
-        .addGravity(10, 256, 50)
-        .addGravity(12, 256, 60)
-        .addGravity(16, 256, 70)
-        .addGravity(32, 256, 80)
-        .addGravity(48, 256, 90)
-        .addGravity(64, 256, 100)
-        .addGravity(80, 256, 120)
-        .addGravity(96, 256, 140)
-        .addGravity(112, 256, 160)
-        .addGravity(128, 256, 170)
-        .addGravity(144, 256, 200)
-        .addGravity(4, 256, 220)
-        .addGravity(32, 256, 230)
-        .addGravity(64, 256, 233)
-        .addGravity(96, 256, 236)
-        .addGravity(128, 256, 239)
-        .addGravity(160, 256, 243)
-        .addGravity(192, 256, 247)
-        .addGravity(224, 256, 251)
-        .addGravity(256, 256, 300)
-        .addGravity(512, 256, 330)
-        .addGravity(768, 256, 360)
-        .addGravity(1024, 256, 400)
-        .addGravity(1280, 256, 420)
-        .addGravity(1024, 256, 450)
-        .addGravity(768, 256, 500)
-        .addTerminalGravity(-1, 256)
+    private static final IntFunction<SpeedParam> V2_SPEED_TABLE_FAST = makeGravityTable()
         .addARE(14, 700)
         .addARE(12, 800)
         .addTerminalARE(10)
@@ -260,7 +204,8 @@ public class GradeMania4 extends DummyMode {
     /**
      * Technically, this gives a bonus to the left-grade.
      */
-    private static final int TIME_LIMIT_TEN_OF_TEN = (356 * 60);
+    private static final int TIME_LIMIT_TEN_OF_TEN_FAST = (356 * 60);
+    private static final int TIME_LIMIT_TEN_OF_TEN_SLOW = (356 * 60); // TODO: Change this when values are out!
 
     /**
      * In the modified ruleset, the point quota is global.
@@ -268,7 +213,7 @@ public class GradeMania4 extends DummyMode {
     private static final int FULL_GAME_QUOTA_LIMIT = 9000;
 
     // NOTE: 0-199 is one section, not two!
-    private static final int[] SECTION_COOL_TIMES = {
+    private static final int[] SECTION_COOL_TIMES_FAST = {
         (76 * 60),
         (39 * 60),
         (40 * 60),
@@ -280,23 +225,44 @@ public class GradeMania4 extends DummyMode {
         (28 * 60)
     };
 
+    // TODO: Change this when values are out!
+    private static final int[] SECTION_COOL_TIMES_SLOW = {
+        (76 * 60),
+        (39 * 60),
+        (40 * 60),
+        (40 * 60),
+        (39 * 60),
+        (35 * 60),
+        (30 * 60),
+        (29 * 60),
+        (28 * 60)
+    };
+
+    private int[] getSectionCoolTimes() {
+        return gameSpeedFast ? SECTION_COOL_TIMES_FAST : SECTION_COOL_TIMES_SLOW;
+    }
+
     private static final int RANKING_MAX = 10;
 
     private static final int SECTION_MAX = 10;
 
     // Credit headings
     private static final String[] CREDIT_HEADINGS = {
+        "GRADE MANIA 4: ",
         "MODE CREATOR:",
         "BASIS:",
         "SPECIAL THANKS GOES TO",
+        "AND SHOUTOUTS TO",
         "CONGRATULATIONS!"
     };
 
     // Credit texts
     private static final String[] CREDIT_TEXTS = {
-        "AZULLIA.",
-        "AE-NORMAL.",
-        "NIGHTSHADE, AKARI, MANDL27.",
+        "CONTRIBUTOR CREDITS",
+        "AZULLIA",
+        "AE-NORMAL",
+        "NIGHTSHADE, AKARI AND MANDL27",
+        "TETRIS.WIKI AND ITS CONTRIBUTORS",
         "YOU HAVE COMPLETED GRADE MANIA 4!"
     };
 
@@ -355,6 +321,7 @@ public class GradeMania4 extends DummyMode {
     private boolean animatedBackgrounds;
     private boolean sparkEffect;
     private boolean gameSpeedFast;
+    private boolean toggleExtra;
 
     // Playtime Variables
     private int leftGrade;
@@ -375,6 +342,7 @@ public class GradeMania4 extends DummyMode {
     private RuleOptions engineExtraRules;
     private int gradePresentTextIndex;
     private int nextTimeTextIndex;
+    private boolean extraState;
 
     private ScrollingMarqueeText creditText;
 
@@ -408,6 +376,8 @@ public class GradeMania4 extends DummyMode {
 
     // Grade recognition system.
     private int getLeftGrade(GameEngine engine) {
+        final int timeLimit = gameSpeedFast ? TIME_LIMIT_TEN_OF_TEN_FAST : TIME_LIMIT_TEN_OF_TEN_SLOW;
+
         switch (gameRuleset) {
             case ORIGINAL:
                 {
@@ -417,12 +387,12 @@ public class GradeMania4 extends DummyMode {
                         if (sectionPoint >= 1000) ++count;
                     }
 
-                    if ((engine.statistics.level >= LEVEL_LIMIT) && (engine.statistics.time <= TIME_LIMIT_TEN_OF_TEN)) ++count;
+                    if ((engine.statistics.level >= LEVEL_LIMIT) && (engine.statistics.time <= timeLimit)) ++count;
 
                     return count;
                 }
             case MODEPILE:
-                return Math.min(9, fullGameQuota / 1000) + (((engine.statistics.level >= LEVEL_LIMIT) && (engine.statistics.time <= TIME_LIMIT_TEN_OF_TEN)) ? 1 : 0);
+                return Math.min(9, fullGameQuota / 1000) + (((engine.statistics.level >= LEVEL_LIMIT) && (engine.statistics.time <= timeLimit)) ? 1 : 0);
             default:
                 break;
         }
@@ -492,6 +462,10 @@ public class GradeMania4 extends DummyMode {
             animBgInstances[9] = new BackgroundFakeScanlines(9);
         }
 
+        for (AnimatedBackgroundHook bg : animBgInstances) {
+            bg.reset();
+        }
+
         SoundLoader.loadSoundset(SoundLoader.SoundSet.FIREWORKS);
 
         engineBaseRules = engine.ruleopt;
@@ -534,6 +508,7 @@ public class GradeMania4 extends DummyMode {
         levelUpFlag = true;
         gradePresentTextIndex = 0;
         nextTimeTextIndex = 0;
+        extraState = false;
 
         engine.ghost = true;
 
@@ -577,6 +552,8 @@ public class GradeMania4 extends DummyMode {
             version = CURRENT_VERSION;
             loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 
+            alwaysExtra = false;
+
             if (playerProperties.isLoggedIn()) {
                 loadSettingPlayer(playerProperties);
                 loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
@@ -616,12 +593,13 @@ public class GradeMania4 extends DummyMode {
         useClassicGrades = prop.getProperty("grademania4.useClassicGrades", false);
         showSectionTime = prop.getProperty("grademania4.showSectionTime", false);
         always20g = prop.getProperty("grademania4.always20g", false);
-        alwaysExtra = prop.getProperty("grademania4.alwaysExtra", false);
+        alwaysExtra = prop.getProperty("grademania4.alwaysExtra", false); // We keep this for compatibility with old replays.
         hardDropEffect = prop.getProperty("grademania4.hardDropEffect", true);
         animatedBackgrounds = prop.getProperty("grademania4.animatedBackgrounds", false);
         sparkEffect = prop.getProperty("grademania4.sparkEffect", true);
         version = prop.getProperty("grademania4.version", 0);
         gameSpeedFast = prop.getProperty("grademania4.gameSpeedFast", true);
+        toggleExtra = prop.getProperty("grademania4.toggleExtra", false);
     }
 
     private void saveSetting(CustomProperties prop) {
@@ -631,12 +609,13 @@ public class GradeMania4 extends DummyMode {
         prop.setProperty("grademania4.useClassicGrades", useClassicGrades);
         prop.setProperty("grademania4.showSectionTime", showSectionTime);
         prop.setProperty("grademania4.always20g", always20g);
-        prop.setProperty("grademania4.alwaysExtra", alwaysExtra);
+        prop.setProperty("grademania4.alwaysExtra", false); // New plays / replays should never save this as true.
         prop.setProperty("grademania4.hardDropEffect", hardDropEffect);
         prop.setProperty("grademania4.animatedBackgrounds", animatedBackgrounds);
         prop.setProperty("grademania4.sparkEffect", sparkEffect);
         prop.setProperty("grademania4.version", version);
         prop.setProperty("grademania4.gameSpeedFast", gameSpeedFast);
+        prop.setProperty("grademania4.toggleExtra", toggleExtra);
     }
 
     private void loadSettingPlayer(ProfileProperties prop) {
@@ -651,11 +630,12 @@ public class GradeMania4 extends DummyMode {
         useClassicGrades = prop.getProperty("grademania4.useClassicGrades", false);
         showSectionTime = prop.getProperty("grademania4.showSectionTime", false);
         always20g = prop.getProperty("grademania4.always20g", false);
-        alwaysExtra = prop.getProperty("grademania4.alwaysExtra", false);
+        alwaysExtra = false; // prop.getProperty("grademania4.alwaysExtra", false); -- Changing this setting has been superceded by toggle extra.
         hardDropEffect = prop.getProperty("grademania4.hardDropEffect", true);
         animatedBackgrounds = prop.getProperty("grademania4.animatedBackgrounds", false);
         sparkEffect = prop.getProperty("grademania4.sparkEffect", true);
         gameSpeedFast = prop.getProperty("grademania4.gameSpeedFast", true);
+        toggleExtra = prop.getProperty("grademania4.toggleExtra", false);
     }
 
     private void saveSettingPlayer(ProfileProperties prop) {
@@ -667,11 +647,12 @@ public class GradeMania4 extends DummyMode {
         prop.setProperty("grademania4.useClassicGrades", useClassicGrades);
         prop.setProperty("grademania4.showSectionTime", showSectionTime);
         prop.setProperty("grademania4.always20g", always20g);
-        prop.setProperty("grademania4.alwaysExtra", alwaysExtra);
+        prop.setProperty("grademania4.alwaysExtra", false); // There is no reason to save this as true anymore due to toggle extra.
         prop.setProperty("grademania4.hardDropEffect", hardDropEffect);
         prop.setProperty("grademania4.animatedBackgrounds", animatedBackgrounds);
         prop.setProperty("grademania4.sparkEffect", sparkEffect);
         prop.setProperty("grademania4.gameSpeedFast", gameSpeedFast);
+        prop.setProperty("grademania4.toggleExtra", toggleExtra);
     }
 
     private void loadRanking(CustomProperties prop, String ruleName) {
@@ -884,7 +865,7 @@ public class GradeMania4 extends DummyMode {
 
         if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 10);
+            int change = updateCursor(engine, 9);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -893,35 +874,39 @@ public class GradeMania4 extends DummyMode {
                     case 0:
                         int newRule = gameRuleset.leaderboard + change;
 
-                        if (newRule >= Ruleset.allRules().length) newRule = 0;
-                        else if (newRule < 0) newRule = Ruleset.allRules().length - 1;
+                        if (newRule >= Ruleset.allRules().length) {
+                            newRule = 0;
+                            gameSpeedFast = !gameSpeedFast;
+                        }
+
+                        else if (newRule < 0) {
+                            newRule = Ruleset.allRules().length - 1;
+                            gameSpeedFast = !gameSpeedFast;
+                        }
 
                         gameRuleset = Ruleset.allRules()[newRule];
                         break;
                     case 1:
-                        gameSpeedFast = !gameSpeedFast;
-                        break;
-                    case 2:
                         startLevel += change;
                         if (startLevel < 0) startLevel = 9;
                         if (startLevel > 9) startLevel = 0;
                         break;
-                    case 3:
+                    case 2:
                         showGrade = !showGrade;
                         break;
-                    case 4:
+                    case 3:
                         useClassicGrades = !useClassicGrades;
                         break;
-                    case 5:
+                    case 4:
                         showSectionTime = !showSectionTime;
+                        break;
+                    case 5:
+                        toggleExtra = !toggleExtra;
                         break;
                     case 6:
                         always20g = !always20g;
                         break;
                     case 7:
-                        alwaysExtra = !alwaysExtra;
-                        break;
-                    case 8:
                         hardDropEffect = !hardDropEffect;
 
                         if (animatedBackgrounds) {
@@ -929,10 +914,10 @@ public class GradeMania4 extends DummyMode {
                         }
 
                         break;
-                    case 9:
+                    case 8:
                         animatedBackgrounds = !animatedBackgrounds;
                         break;
-                    case 10:
+                    case 9:
                         sparkEffect = !sparkEffect;
                         break;
                 }
@@ -991,22 +976,21 @@ public class GradeMania4 extends DummyMode {
     @Override
     public void renderSetting(GameEngine engine, int playerID) {
         drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_YELLOW, 0,
-            "VARIANT", gameRuleset.displayName,
-            "BASE SPEED", gameSpeedFast ? "FAST" : "SLOW"
+            "VARIANT", gameRuleset.displayName + (gameSpeedFast ? "-F" : "-S")
         );
-        drawMenu(engine, playerID, receiver, 4, EventReceiver.COLOR_RED, 2,
+        drawMenu(engine, playerID, receiver, 2, EventReceiver.COLOR_RED, 1,
             "LEVEL", String.valueOf(startLevel * 100)
         );
-        drawMenu(engine, playerID, receiver, 6, EventReceiver.COLOR_GREEN, 3,
+        drawMenu(engine, playerID, receiver, 4, EventReceiver.COLOR_GREEN, 2,
             "SHOW GRADE", GeneralUtil.getONorOFF(showGrade),
             "CLASSIC GRS", GeneralUtil.getONorOFF(useClassicGrades),
-            "SHOW STIME", GeneralUtil.getONorOFF(showSectionTime)
+            "SHOW STIME", GeneralUtil.getONorOFF(showSectionTime),
+            "TOGGLE EXTRA", GeneralUtil.getONorOFF(toggleExtra)
         );
         drawMenu(engine, playerID, receiver, 12, EventReceiver.COLOR_BLUE, 6,
-            "20G MODE", GeneralUtil.getONorOFF(always20g),
-            "EXTRA MODE", GeneralUtil.getONorOFF(alwaysExtra)
+            "20G MODE", GeneralUtil.getONorOFF(always20g)
         );
-        drawMenu(engine, playerID, receiver, 16, EventReceiver.COLOR_PINK, 8,
+        drawMenu(engine, playerID, receiver, 14, EventReceiver.COLOR_PINK, 7,
             "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect),
             "ANIM. BGS.", GeneralUtil.getONorOFF(animatedBackgrounds),
             "SPARKS", GeneralUtil.getONorOFF(sparkEffect)
@@ -1047,17 +1031,27 @@ public class GradeMania4 extends DummyMode {
             (version == 0) ? engine.statistics.level - 1 : engine.statistics.level
         );
 
+        if (toggleExtra && engine.ctrl.isPush(Controller.BUTTON_F)) {
+            extraState = !extraState;
+        } else if (!toggleExtra) {
+            extraState = engine.ctrl.isPress(Controller.BUTTON_F);
+        }
+
         // Extra shortens ARE if it is longer than Extra's ARE.
-        if (engine.ctrl.isPress(Controller.BUTTON_F) || alwaysExtra) {
+        if (engine.gameActive && (extraState || alwaysExtra)) {
             engine.speed.are = Math.min(EXTRA_ARE, currentParam.are);
             engine.speed.areLine = Math.min(EXTRA_ARE, currentParam.areLine);
             engine.ruleopt = engineExtraRules;
             engine.speed.das = Math.min(EXTRA_ARE, currentParam.das);
+
+            if (!alwaysExtra) engine.framecolor = GameEngine.FRAME_COLOR_RED;
         } else {
             engine.speed.are = currentParam.are;
             engine.speed.areLine = currentParam.areLine;
             engine.ruleopt = engineBaseRules;
             engine.speed.das = currentParam.das;
+
+            engine.framecolor = GameEngine.FRAME_COLOR_BLUE;
         }
     }
 
@@ -1267,8 +1261,6 @@ public class GradeMania4 extends DummyMode {
                 }
             }
 
-            if (fullGameQuota > FULL_GAME_QUOTA_LIMIT) fullGameQuota = FULL_GAME_QUOTA_LIMIT;
-
             levelUp(engine);
 
             if (engine.statistics.level >= LEVEL_LIMIT) {
@@ -1277,7 +1269,7 @@ public class GradeMania4 extends DummyMode {
                 engine.ending = 1;
 
                 // Update Section "COOL"
-                if (sectionTime[sectionTime.length - 1] <= SECTION_COOL_TIMES[SECTION_COOL_TIMES.length - 1]) {
+                if (sectionTime[sectionTime.length - 1] <= getSectionCoolTimes()[getSectionCoolTimes().length - 1]) {
                     sectionPoints[sectionPoints.length - 1] += 125;
 
                     if (showGrade) engine.playSE("cool");
@@ -1288,7 +1280,7 @@ public class GradeMania4 extends DummyMode {
                 // Update Section "COOL"
                  if (engine.statistics.level >= 200) {
                     int section = engine.statistics.level / 100 - 2;
-                    if (sectionTime[section] <= SECTION_COOL_TIMES[section]) {
+                    if (sectionTime[section] <= getSectionCoolTimes()[section]) {
                         sectionPoints[section] += 125;
 
                         if (showGrade) engine.playSE("cool");
@@ -1438,8 +1430,6 @@ public class GradeMania4 extends DummyMode {
                 final int avgYVal = avgY.stream().mapToInt(Integer::intValue).sum() / avgY.size();
 
                 ((BackgroundCircularRipple) animBgInstances[0]).manualRipple(avgXVal, avgYVal);
-            } else if (animatedBackgrounds && engine.statistics.level < 110) {
-                animBgInstances[0].reset();
             }
         }
     }
@@ -1684,7 +1674,7 @@ public class GradeMania4 extends DummyMode {
                         String strSectionTime;
                         strSectionTime = String.format("%3d%s%s", temp, strSeparator, GeneralUtil.getTime(sectionTime[i]));
 
-                        receiver.drawScoreFont(engine, playerID, x, 5 + i, strSectionTime, sectionTime[i] <= SECTION_COOL_TIMES[i] ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE);
+                        receiver.drawScoreFont(engine, playerID, x, 5 + i, strSectionTime, sectionTime[i] <= getSectionCoolTimes()[i] ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE);
                     }
                 }
             }
@@ -1763,7 +1753,7 @@ public class GradeMania4 extends DummyMode {
 
             for (int i = 0; i < sectionTime.length; i++) {
                 if (sectionTime[i] > 0) {
-                    receiver.drawMenuFont(engine, playerID, 2, 3 + i, GeneralUtil.getTime(sectionTime[i]), sectionTime[i] < SECTION_COOL_TIMES[i] ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE);
+                    receiver.drawMenuFont(engine, playerID, 2, 3 + i, GeneralUtil.getTime(sectionTime[i]), sectionTime[i] < getSectionCoolTimes()[i] ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE);
                 }
             }
         } else if (engine.statc[1] == 2) {
