@@ -1101,6 +1101,11 @@ public class GradeMania4 extends DummyMode {
         if (engine.statistics.level <= 0) nextSectionLevel = 100;
         if (engine.statistics.level >= 900) nextSectionLevel = LEVEL_LIMIT;
 
+        engine.tspinEnable = true;
+        engine.tspinAllowKick = true;
+        engine.spinCheckType = GameEngine.SPINTYPE_4POINT;
+        engine.tspinminiType = GameEngine.TSPINMINI_TYPE_ROTATECHECK;
+
         levelUpFlag = true;
 
         fireworkRandomiser = new Random(engine.randSeed);

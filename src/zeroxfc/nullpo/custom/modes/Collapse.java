@@ -1713,10 +1713,25 @@ public class Collapse extends DummyMode {
         return true;
     }
 
+    // idk why it sometimes reaches int overflow
+    private static int pointGainForFrame(int frame) {
+        if (frame < 2) return 1;
+
+        int gain = 0;
+
+        for (int i = frame; i > 0; --i) {
+            if (i < 2) gain++;
+            else gain += (int) (Math.floor(Math.pow(1.2, i - 2d) + (i >= 48 ? 1 : 0)));
+        }
+
+        return gain;
+    }
+
     private void incrementScore(GameEngine engine) {
         if (localState == LOCALSTATE_INGAME || isBonusLevel) {
             if (scGetTime % 2 == 0) {
                 scoreToDisplay += (int) Math.min(Math.max(Math.pow((scGetTime >>> 1) - 6.0, 2.0), 1), Math.ceil((engine.statistics.score - scoreToDisplay) * 0.5));
+//                scoreToDisplay += pointGainForFrame(scGetTime >>> 1);
                 if (engine.statistics.score < scoreToDisplay) scoreToDisplay = engine.statistics.score;
             }
 
@@ -1732,6 +1747,7 @@ public class Collapse extends DummyMode {
 
             if (usedTime % 2 == 0) {
                 scoreToDisplay += (int) Math.min(Math.max(Math.pow((usedTime >>> 1) - 6.0, 2.0), 1), Math.ceil((display - scoreToDisplay) * 0.5));
+//                scoreToDisplay += pointGainForFrame(usedTime >>> 1);
                 if (engine.statistics.score < scoreToDisplay) scoreToDisplay = engine.statistics.score;
             }
         }
