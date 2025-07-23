@@ -1,5 +1,6 @@
 package zeroxfc.nullpo.custom.libs;
 
+import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.function.IntFunction;
 import org.apache.log4j.Logger;
@@ -13,7 +14,7 @@ import org.apache.log4j.Logger;
 public final class LevelTableBuilder<T> {
     private static final Logger log = Logger.getLogger(LevelTableBuilder.class);
 
-    private final TreeMap<Integer, T> levelValues;
+    private final NavigableMap<Integer, T> levelValues;
     private final LevelTableBuilder<T> outer = this;
 
     public static <V> LevelTableBuilder<V>.ModifiableLevelTable createNew() {
@@ -24,24 +25,24 @@ public final class LevelTableBuilder<T> {
         levelValues = new TreeMap<>();
     }
 
+    private void verifyLevel(int changeLevel) {
+        if (levelValues.isEmpty()) return;
+
+        final int maxLevel = levelValues.descendingKeySet().first();
+        if (maxLevel <= changeLevel) return;
+
+        final RuntimeException exc = new IllegalArgumentException("Level change is lower than or equal to previous level change: " + maxLevel + " -> " + changeLevel);
+
+        log.error(exc);
+        throw exc;
+    }
+
     public final class ModifiableLevelTable {
         private ModifiableLevelTable() {}
 
         public ModifiableLevelTable clear() {
             levelValues.clear();
             return this;
-        }
-
-        private void verifyLevel(int changeLevel) {
-            if (levelValues.isEmpty()) return;
-
-            final int maxLevel = levelValues.descendingKeySet().first();
-            if (maxLevel <= changeLevel) return;
-
-            final RuntimeException exc = new IllegalArgumentException("Level change is lower than or equal to previous level change: " + maxLevel + " -> " + changeLevel);
-
-            log.error(exc);
-            throw exc;
         }
 
         public ModifiableLevelTable addValue(T value, int changeLevel) {

@@ -3,6 +3,7 @@ package zeroxfc.nullpo.custom.modes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.IntFunction;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
@@ -13,10 +14,10 @@ import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
-import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.LevelTableBuilder;
 import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.MouseParser;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
@@ -132,7 +133,7 @@ public class Collapse extends DummyMode {
     }
 
     private static final int[] tableLevelWeightShift = {
-        0, 3, 6, 9, 12, 15, 18, 10000
+        0, 3, 6, 9, 12, 15, 18, Integer.MAX_VALUE
     };
 
     private static final int[] tableLevelStartLines = {
@@ -140,14 +141,7 @@ public class Collapse extends DummyMode {
         6, 6, 6, 7, 7, 7,
         8, 8, 8, 9, 9, 9,
         10, 10, 10
-    }; // MAX: 2.5 row/s
-
-    private static final int[] tableSpawnSpeedNormal = {
-        15, 15, 15, 14, 14, 13,
-        13, 12, 12, 11, 11, 10,
-        10, 9, 8, 7, 6, 5,
-        4, 3, 2
-    }; // MAX: 2.5 row/s
+    };
 
     private static final int[] tableSpawnSpeedEasy = {
         20, 19, 18, 17, 16, 15,
@@ -156,12 +150,57 @@ public class Collapse extends DummyMode {
         7, 6, 5
     }; // MAX: 1 row/s
 
+    private static final IntFunction<Integer> endlessSpeedTableEasy;
+
+    private static final int[] tableSpawnSpeedNormal = {
+        15, 15, 15, 14, 14, 13,
+        13, 12, 12, 11, 11, 10,
+        10, 9, 8, 7, 6, 5,
+        4, 3, 2
+    }; // MAX: 2.5 row/s
+
+    private static final IntFunction<Integer> endlessSpeedTableNormal;
+
     private static final int[] tableSpawnSpeedHard = {
         12, 12, 12, 12, 11, 11,
         11, 10, 10, 9, 8, 7,
         6, 5, 4, 4, 3, 3,
         2, 2, 1
     }; // MAX: 5 row/s
+
+    private static final IntFunction<Integer> endlessSpeedTableHard;
+
+    static {
+        // Easy
+        LevelTableBuilder<Integer>.ModifiableLevelTable currentTable = LevelTableBuilder.createNew();
+        for (int i = 0; i < tableSpawnSpeedEasy.length - 1; ++i) {
+            currentTable.addValue(tableSpawnSpeedEasy[i], 60 * (i + 1));
+        }
+
+        endlessSpeedTableEasy = currentTable
+            .addTerminalValue(tableSpawnSpeedEasy[tableSpawnSpeedEasy.length - 1])
+            .buildLevelTable();
+
+        // Normal
+        currentTable = LevelTableBuilder.createNew();
+        for (int i = 0; i < tableSpawnSpeedNormal.length - 1; ++i) {
+            currentTable.addValue(tableSpawnSpeedNormal[i], 50 * (i + 1));
+        }
+
+        endlessSpeedTableNormal = currentTable
+            .addTerminalValue(tableSpawnSpeedNormal[tableSpawnSpeedNormal.length - 1])
+            .buildLevelTable();
+
+        // Hard
+        currentTable = LevelTableBuilder.createNew();
+        for (int i = 0; i < tableSpawnSpeedHard.length - 1; ++i) {
+            currentTable.addValue(tableSpawnSpeedHard[i], 40 * (i + 1));
+        }
+
+        endlessSpeedTableHard = currentTable
+            .addTerminalValue(tableSpawnSpeedHard[tableSpawnSpeedHard.length - 1])
+            .buildLevelTable();
+    }
 
     private static final int[] tableLevelLine = {
         20, 30, 40, 50, 60, 70,
@@ -170,7 +209,21 @@ public class Collapse extends DummyMode {
         400, -1
     };
 
+    private static int levelLinesForPast19(int level) {
+        // Levels are zero-indexed, so the minimum here is 19.
+        // Start at 450 onwards. 450 = 50 * 9.
+        return 50 * (level - 10);
+    }
+
+    private static final int[] endlessThresholds = { 180, 150, 120 };
+
     private static final double BOMB_CHANCE = (0.01);
+
+    private static final int GAMETYPES = 2;
+
+    private int gameTypeRanking() {
+        return endless ? 1 : 0;
+    }
 
     private static final int MAX_RANKING = 10;
 
@@ -182,7 +235,7 @@ public class Collapse extends DummyMode {
         "HARD"
     };
 
-    private static final int maxSpeedLine = 8;
+    private static final int MAX_SPEED_LINE = 8;
 
     private static final int HOLDER_SLICK = 0,
         HOLDER_SWING = 1,
@@ -194,11 +247,12 @@ public class Collapse extends DummyMode {
     private GameManager owner;
     private EventReceiver receiver;
     private boolean enableBombs;
-    private int[][] rankingScore;
-    private int[][] rankingLevel;
+    private int[][][] rankingScore;
+    private int[][][] rankingLevel;
     private int bScore;
     private int rankingRank;
     private int difficulty;
+    private int linesSoFar;
     private int linesLeft;
     private int bgm;
     private int cursorX, cursorY;
@@ -219,16 +273,17 @@ public class Collapse extends DummyMode {
     private Multipliers multipliers;
 
     private ProfileProperties playerProperties;
-    private int[][] rankingScorePlayer;
-    private int[][] rankingLevelPlayer;
+    private int[][][] rankingScorePlayer;
+    private int[][][] rankingLevelPlayer;
     private int rankingRankPlayer;
     private boolean showPlayerStats;
     private int outline;
     private boolean shrinkPopups;
     private int startLevel;
+    private boolean endless;
 
+    // how the hell
     // TODO: Bonus levels -- formula = 50000 + (40000 * level)
-    // TODO: Figure out progression past level 20 in order to decouple endless mode into its own setting
 
     /*
      * ------ MAIN METHODS ------
@@ -251,15 +306,16 @@ public class Collapse extends DummyMode {
             playerProperties = new ProfileProperties(EventReceiver.COLOR_ORANGE);
         }
 
-        rankingScorePlayer = new int[MAX_DIFFICULTIES][MAX_RANKING];
-        rankingLevelPlayer = new int[MAX_DIFFICULTIES][MAX_RANKING];
+        rankingScorePlayer = new int[GAMETYPES][MAX_DIFFICULTIES][MAX_RANKING];
+        rankingLevelPlayer = new int[GAMETYPES][MAX_DIFFICULTIES][MAX_RANKING];
         rankingRankPlayer = -1;
 
         enableBombs = false;
-        rankingScore = new int[MAX_DIFFICULTIES][MAX_RANKING];
-        rankingLevel = new int[MAX_DIFFICULTIES][MAX_RANKING];
+        rankingScore = new int[GAMETYPES][MAX_DIFFICULTIES][MAX_RANKING];
+        rankingLevel = new int[GAMETYPES][MAX_DIFFICULTIES][MAX_RANKING];
         rankingRank = -1;
         difficulty = 0;
+        linesSoFar = 0;
         linesLeft = 0;
         bgm = 0;
         cursorX = 0;
@@ -282,6 +338,7 @@ public class Collapse extends DummyMode {
         mouseInput = new MouseParser();
         startLevel = 0;
         multipliers = null;
+        endless = false;
 
         resetSTextArr();
 
@@ -309,7 +366,11 @@ public class Collapse extends DummyMode {
         }
 
         // Stops an annoying flicker when retrying when start level is > 0 (shows as > 1 for display)
-        engine.owner.backgroundStatus.bg = startLevel;
+        if (endless) {
+            engine.owner.backgroundStatus.bg = 0;
+        } else {
+            engine.owner.backgroundStatus.bg = startLevel % 20;
+        }
     }
 
     private void resetSTextArr() {
@@ -363,7 +424,7 @@ public class Collapse extends DummyMode {
         // Menu
         if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 5, playerID);
+            int change = updateCursor(engine, 6, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -375,32 +436,39 @@ public class Collapse extends DummyMode {
                         if (difficulty >= MAX_DIFFICULTIES) difficulty = 0;
                         break;
                     case 1:
-                        startLevel += change;
-                        if (startLevel < 0) startLevel = 19;
-                        if (startLevel > 19) startLevel = 0;
-
-                        engine.owner.backgroundStatus.bg = startLevel;
+                        endless = !endless;
                         break;
                     case 2:
-                        enableBombs = !enableBombs;
+                        if (!endless) {
+                            startLevel += change;
+                            if (startLevel < 0) startLevel = 39;
+                            if (startLevel > 39) startLevel = 0;
+                        }
                         break;
                     case 3:
+                        enableBombs = !enableBombs;
+                        break;
+                    case 4:
                         bgm += change;
                         if (bgm < 0) bgm = 15;
                         if (bgm > 15) bgm = 0;
                         break;
-                    case 4:
+                    case 5:
                         outline += change;
                         if (outline < GameEngine.BLOCK_OUTLINE_NONE) outline = GameEngine.BLOCK_OUTLINE_SAMECOLOR;
                         if (outline > GameEngine.BLOCK_OUTLINE_SAMECOLOR) outline = GameEngine.BLOCK_OUTLINE_NONE;
                         break;
-                    case 5:
+                    case 6:
                         shrinkPopups = !shrinkPopups;
                         break;
                 }
             }
 
-            engine.owner.backgroundStatus.bg = startLevel;
+            if (endless) {
+                engine.owner.backgroundStatus.bg = 0;
+            } else {
+                engine.owner.backgroundStatus.bg = startLevel % 20;
+            }
 
             // Confirm
             if (engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
@@ -466,13 +534,14 @@ public class Collapse extends DummyMode {
         }
 
         drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_RED, 0,
-            "DIFFICULTY", DIFFICULTY_NAMES[difficulty]);
-        drawMenu(engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE, 1,
-            "LEVEL", String.valueOf(startLevel + 1));
+            "DIFFICULTY", DIFFICULTY_NAMES[difficulty],
+            "ENDLESS", GeneralUtil.getONorOFF(endless));
         drawMenu(engine, playerID, receiver, 4, EventReceiver.COLOR_BLUE, 2,
+            "LEVEL", endless ? "N/A" : String.valueOf(startLevel + 1));
+        drawMenu(engine, playerID, receiver, 6, EventReceiver.COLOR_BLUE, 3,
             "BOMBS", GeneralUtil.getONorOFF(enableBombs),
             "BGM", String.valueOf(bgm));
-        drawMenu(engine, playerID, receiver, 8, EventReceiver.COLOR_PINK, 4,
+        drawMenu(engine, playerID, receiver, 10, EventReceiver.COLOR_PINK, 5,
             "OUTLINE", outlineStr,
             "POPUP SHRINK", GeneralUtil.getONorOFF(shrinkPopups));
     }
@@ -515,6 +584,11 @@ public class Collapse extends DummyMode {
             wRandomEngineBomb = new WeightedRandomiser(tableBombColorWeights[0], engine.randSeed + 1);
 
             levelUp(engine, true);
+            if (endless) {
+                engine.owner.backgroundStatus.bg = 0;
+                engine.statistics.level = 0;
+                linesLeft = -1;
+            }
 
             engine.fieldWidth = engine.ruleopt.fieldWidth;
             engine.fieldHeight = engine.ruleopt.fieldHeight;
@@ -863,7 +937,7 @@ public class Collapse extends DummyMode {
                     engine.playSE("gradeup");
                 }
 
-                midgameSpeedSet(engine);
+                midgameSpeedSet(engine, playerID);
 
                 if (spawnTimer == 0 && engine.field.getHighestBlockY() <= 2 && engine.field.getHighestBlockY() >= 0) {
                     engine.playSE("danger");
@@ -918,12 +992,13 @@ public class Collapse extends DummyMode {
         }
 
         if (engine.field.getHighestBlockY() < 0) {
-            if (engine.statistics.level < 19) {
+            if (linesLeft >= 0) {
                 engine.stat = GameEngine.STAT_GAMEOVER;
                 engine.resetStatc();
                 engine.gameEnded();
                 engine.rainbowAnimate = false;
             } else {
+                // Only show excellent for endless sections.
                 engine.stat = GameEngine.STAT_EXCELLENT;
                 engine.resetStatc();
 
@@ -937,16 +1012,26 @@ public class Collapse extends DummyMode {
     }
 
     private void updateMeter(GameEngine engine) {
-        double proportion = (double) linesLeft / tableLevelLine[engine.statistics.level];
         if (linesLeft >= 0) {
+            final double proportion = (double) linesLeft / tableLevelLine[engine.statistics.level];
+
             engine.meterValue = (int) (proportion * receiver.getMeterMax(engine));
             engine.meterColor = GameEngine.METER_COLOR_RED;
             if (proportion <= 0.75f) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
             if (proportion <= 0.5f) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
             if (proportion <= 0.25f) engine.meterColor = GameEngine.METER_COLOR_GREEN;
-        } else {
+        } else if (!endless) {
             engine.meterValue = receiver.getMeterMax(engine);
             engine.meterColor = GameEngine.METER_COLOR_GREEN;
+        } else {
+            final int threshold = endlessThresholds[difficulty];
+            final double proportion = (double) (threshold - (linesSoFar % threshold)) / threshold;
+
+            engine.meterValue = (int) (proportion * receiver.getMeterMax(engine));
+            engine.meterColor = GameEngine.METER_COLOR_RED;
+            if (proportion <= 0.75f) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
+            if (proportion <= 0.5f) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
+            if (proportion <= 0.25f) engine.meterColor = GameEngine.METER_COLOR_GREEN;
         }
     }
 
@@ -1068,7 +1153,7 @@ public class Collapse extends DummyMode {
             endLevelEmpties = FieldManipulation.getNumberOfEmptySpaces(engine.field);
 
             engine.playSE("stageclear");
-            bScore = getLevelClearBonus(engine);
+            bScore = getLevelClearBonus(engine, false);
             engine.statistics.score += bScore;
         }
 
@@ -1114,6 +1199,8 @@ public class Collapse extends DummyMode {
     }
 
     private void incrementField(GameEngine engine) {
+        ++linesSoFar;
+
         for (int y = -1; y < engine.field.getHeight() - 1; y++) {
             for (int x = 0; x < engine.field.getWidth(); x++) {
                 engine.field.getBlock(x, y).copy(engine.field.getBlock(x, y + 1));
@@ -1185,7 +1272,7 @@ public class Collapse extends DummyMode {
         if (!beginning) engine.statistics.level++;
         owner.backgroundStatus.bg = engine.statistics.level % 20;
 
-        int effectiveLevel = engine.statistics.level;
+        int effectiveLevel = Math.min(engine.statistics.level, 19);
 
         multipliers = Multipliers.getForLevel(engine.statistics.level);
 
@@ -1193,7 +1280,9 @@ public class Collapse extends DummyMode {
         resetBlockArray();
 
         lineSpawn = tableLevelStartLines[effectiveLevel];
+
         linesLeft = tableLevelLine[effectiveLevel];
+        if (engine.statistics.level >= 19) linesLeft = levelLinesForPast19(engine.statistics.level);
 
         if (holderType == HOLDER_SWING) {
             fieldX = 0;
@@ -1216,62 +1305,136 @@ public class Collapse extends DummyMode {
         wRandomEngine.setWeights(tableColorWeights[result]);
         wRandomEngineBomb.setWeights(tableBombColorWeights[result]);
 
-        // TODO: Currently this has a bug where the first line of level 20 is slower than all the other lines.
-        //       Figure out a proper way of handling endless levels for the speed curve.
+        double mult = 1.5;
+        if (linesLeft < 0) mult = 1.0;
+
         switch (difficulty) {
             case 0:
-                spawnTimerLimit = (int) (tableSpawnSpeedEasy[effectiveLevel] * 1.5);
+                spawnTimerLimit = (int) (tableSpawnSpeedEasy[effectiveLevel] * mult);
                 break;
             case 1:
-                spawnTimerLimit = (int) (tableSpawnSpeedNormal[effectiveLevel] * 1.5);
+                spawnTimerLimit = (int) (tableSpawnSpeedNormal[effectiveLevel] * mult);
                 break;
             case 2:
-                spawnTimerLimit = (int) (tableSpawnSpeedHard[effectiveLevel] * 1.5);
+                spawnTimerLimit = (int) (tableSpawnSpeedHard[effectiveLevel] * mult);
                 break;
         }
     }
 
-    private void midgameSpeedSet(GameEngine engine) {
-        if (linesLeft >= maxSpeedLine) {
-            int effectiveLevel = engine.statistics.level;
-            double fraction = 0.75 + (0.75 * ((double) (linesLeft - maxSpeedLine) / (tableLevelLine[effectiveLevel] - maxSpeedLine)));
-            double rawSpeed = 1;
+    private void midgameSpeedSet(GameEngine engine, int playerID) {
+        if (endless) {
+            final int oldBg = engine.owner.backgroundStatus.bg;
+            final int threshold = endlessThresholds[difficulty];
 
             switch (difficulty) {
                 case 0:
-                    rawSpeed = fraction * tableSpawnSpeedEasy[effectiveLevel];
+                    spawnTimerLimit = endlessSpeedTableEasy.apply(linesSoFar);
                     break;
                 case 1:
-                    rawSpeed = fraction * tableSpawnSpeedNormal[effectiveLevel];
+                    spawnTimerLimit = endlessSpeedTableNormal.apply(linesSoFar);
                     break;
                 case 2:
-                    rawSpeed = fraction * tableSpawnSpeedHard[effectiveLevel];
+                    spawnTimerLimit = endlessSpeedTableHard.apply(linesSoFar);
+                    break;
+                default:
                     break;
             }
 
-            double mod = rawSpeed % 1;
-            if (mod > 0) spawnTimerLimit = (int) (rawSpeed + 1);
-            else spawnTimerLimit = (int) rawSpeed;
+            engine.owner.backgroundStatus.bg = (linesSoFar / threshold) % 20;
+            engine.statistics.level = linesSoFar / threshold;
+
+            if (engine.statistics.level >= 20) spawnTimerLimit = (int) Math.ceil(spawnTimerLimit * Math.pow(((threshold - 5) / (double) threshold), linesSoFar - (threshold * 20d)));
+            else {
+               spawnTimerLimit = (int) (spawnTimerLimit * Interpolation.smoothStep(1.5, 0.75, (linesSoFar % threshold) / (double) threshold));
+            }
+
+            int effectiveLevel = Math.min(engine.statistics.level, 19);
+            multipliers = Multipliers.getForLevel(engine.statistics.level);
+
+            int result = 0;
+            int is = 0;
+            while (true) {
+                if (tableLevelWeightShift[is + 1] >= effectiveLevel) {
+                    result = is;
+                    break;
+                } else {
+                    is++;
+                }
+            }
+
+            wRandomEngine.setWeights(tableColorWeights[result]);
+            wRandomEngineBomb.setWeights(tableBombColorWeights[result]);
+
+            if (oldBg != engine.owner.backgroundStatus.bg && engine.stat != GameEngine.STAT_EXCELLENT) {
+                engine.playSE("levelup");
+
+                final Field copy = new Field(engine.field);
+
+                // Give level end bonus.
+                engine.field.freeFall();
+                for (int i = 0; i < 6; i++) {
+                    bringColumnsCloser(engine);
+                }
+
+                engine.statistics.level--;
+                final int bonusScore = getLevelClearBonus(engine, true);
+                engine.statistics.level++;
+
+                engine.statistics.score += bonusScore;
+
+                addSText(
+                    engine, playerID,
+                    (engine.field.getWidth() / 2) - 1, 2,
+                    bonusScore,
+                    true, true
+                );
+
+                engine.field.copy(copy);
+            }
+
+            if (spawnTimerLimit <= 0) spawnTimerLimit = 1;
         } else {
-            if (linesLeft < 0) {
-                int effectiveLevel = engine.statistics.level;
+            if (linesLeft >= MAX_SPEED_LINE) {
+                int effectiveLevel = Math.min(engine.statistics.level, 19);
+                double fraction = 0.75 + (0.75 * ((double) (linesLeft - MAX_SPEED_LINE) / (tableLevelLine[effectiveLevel] - MAX_SPEED_LINE)));
                 double rawSpeed = 1;
 
                 switch (difficulty) {
                     case 0:
-                        rawSpeed = 0.75 * tableSpawnSpeedEasy[effectiveLevel];
+                        rawSpeed = fraction * tableSpawnSpeedEasy[effectiveLevel];
                         break;
                     case 1:
-                        rawSpeed = 0.75 * tableSpawnSpeedNormal[effectiveLevel];
+                        rawSpeed = fraction * tableSpawnSpeedNormal[effectiveLevel];
                         break;
                     case 2:
-                        rawSpeed = 0.75 * tableSpawnSpeedHard[effectiveLevel];
+                        rawSpeed = fraction * tableSpawnSpeedHard[effectiveLevel];
                         break;
                 }
 
                 double mod = rawSpeed % 1;
                 if (mod > 0) spawnTimerLimit = (int) (rawSpeed + 1);
                 else spawnTimerLimit = (int) rawSpeed;
+            } else {
+                if (linesLeft == 0) {
+                    int effectiveLevel = engine.statistics.level;
+                    double rawSpeed = 1;
+
+                    switch (difficulty) {
+                        case 0:
+                            rawSpeed = 0.75 * tableSpawnSpeedEasy[effectiveLevel];
+                            break;
+                        case 1:
+                            rawSpeed = 0.75 * tableSpawnSpeedNormal[effectiveLevel];
+                            break;
+                        case 2:
+                            rawSpeed = 0.75 * tableSpawnSpeedHard[effectiveLevel];
+                            break;
+                    }
+
+                    double mod = rawSpeed % 1;
+                    if (mod > 0) spawnTimerLimit = (int) (rawSpeed + 1);
+                    else spawnTimerLimit = (int) rawSpeed;
+                }
             }
         }
     }
@@ -1376,7 +1539,7 @@ public class Collapse extends DummyMode {
 
                 engine.statc[0]++;
             } else {
-                if (enableBombs && startLevel == 0) updateRanking(engine.statistics.score, difficulty, engine.statistics.level + 1);
+                if (enableBombs && startLevel == 0) updateRanking(engine.statistics.score, gameTypeRanking(), difficulty, engine.statistics.level + 1);
                 if (rankingRank != -1) saveRanking(owner.modeConfig);
                 if (rankingRankPlayer != -1 && playerProperties.isLoggedIn()) {
                     saveRankingPlayer(playerProperties);
@@ -1492,7 +1655,9 @@ public class Collapse extends DummyMode {
         if (owner.menuOnly) return;
 
         receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_ORANGE);
-        receiver.drawScoreFont(engine, playerID, 0, 1, "(" + DIFFICULTY_NAMES[difficulty] + " DIFFICULTY)", EventReceiver.COLOR_ORANGE);
+
+        final String ruleString = String.format("%s %s", DIFFICULTY_NAMES[difficulty], endless ? "ENDLESS" : "DIFFICULTY");
+        receiver.drawScoreFont(engine, playerID, 0, 1, "(" + ruleString + ")", EventReceiver.COLOR_ORANGE);
 
         if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode))) {
             if ((!owner.replayMode) && (enableBombs) && (startLevel == 0) && (engine.ai == null)) {
@@ -1503,8 +1668,8 @@ public class Collapse extends DummyMode {
                 if (showPlayerStats) {
                     for (int i = 0; i < MAX_RANKING; i++) {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-                        receiver.drawScoreFont(engine, playerID, 3, topY + i, String.valueOf(rankingScorePlayer[difficulty][i]), (i == rankingRankPlayer), scale);
-                        receiver.drawScoreFont(engine, playerID, 12, topY + i, String.valueOf(rankingLevelPlayer[difficulty][i]), (i == rankingRankPlayer), scale);
+                        receiver.drawScoreFont(engine, playerID, 3, topY + i, String.valueOf(rankingScorePlayer[gameTypeRanking()][difficulty][i]), (i == rankingRankPlayer), scale);
+                        receiver.drawScoreFont(engine, playerID, 12, topY + i, String.valueOf(rankingLevelPlayer[gameTypeRanking()][difficulty][i]), (i == rankingRankPlayer), scale);
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + MAX_RANKING + 1, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
@@ -1514,8 +1679,8 @@ public class Collapse extends DummyMode {
                 } else {
                     for (int i = 0; i < MAX_RANKING; i++) {
                         receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d", i + 1), EventReceiver.COLOR_YELLOW, scale);
-                        receiver.drawScoreFont(engine, playerID, 3, topY + i, String.valueOf(rankingScore[difficulty][i]), (i == rankingRank), scale);
-                        receiver.drawScoreFont(engine, playerID, 12, topY + i, String.valueOf(rankingLevel[difficulty][i]), (i == rankingRank), scale);
+                        receiver.drawScoreFont(engine, playerID, 3, topY + i, String.valueOf(rankingScore[gameTypeRanking()][difficulty][i]), (i == rankingRank), scale);
+                        receiver.drawScoreFont(engine, playerID, 12, topY + i, String.valueOf(rankingLevel[gameTypeRanking()][difficulty][i]), (i == rankingRank), scale);
                     }
 
                     receiver.drawScoreFont(engine, playerID, 0, topY + MAX_RANKING + 1, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
@@ -1645,6 +1810,7 @@ public class Collapse extends DummyMode {
         outline = prop.getProperty("collapse.outline", GameEngine.BLOCK_OUTLINE_NORMAL);
         shrinkPopups = prop.getProperty("collapse.shrinkscorepopups", true);
         startLevel = prop.getProperty("collapse.startlevel", 0);
+        endless = prop.getProperty("collapse.endless", false);
     }
 
     /**
@@ -1659,6 +1825,7 @@ public class Collapse extends DummyMode {
         prop.setProperty("collapse.outline", outline);
         prop.setProperty("collapse.shrinkscorepopups", shrinkPopups);
         prop.setProperty("collapse.startlevel", startLevel);
+        prop.setProperty("collapse.endless", endless);
     }
 
     /**
@@ -1675,6 +1842,7 @@ public class Collapse extends DummyMode {
         outline = prop.getProperty("collapse.outline", GameEngine.BLOCK_OUTLINE_NORMAL);
         shrinkPopups = prop.getProperty("collapse.shrinkscorepopups", true);
         startLevel = prop.getProperty("collapse.startlevel", 0);
+        endless = prop.getProperty("collapse.endless", false);
     }
 
     /**
@@ -1691,6 +1859,7 @@ public class Collapse extends DummyMode {
         prop.setProperty("collapse.outline", outline);
         prop.setProperty("collapse.shrinkscorepopups", shrinkPopups);
         prop.setProperty("collapse.startlevel", startLevel);
+        prop.setProperty("collapse.endless", endless);
     }
 
     /**
@@ -1699,10 +1868,12 @@ public class Collapse extends DummyMode {
      * @param prop Property file
      */
     protected void loadRanking(CustomProperties prop) {
-        for (int i = 0; i < MAX_RANKING; i++) {
-            for (int j = 0; j < MAX_DIFFICULTIES; j++) {
-                rankingScore[j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + j + ".score." + i, 0);
-                rankingLevel[j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + j + ".level." + i, 0);
+        for (int m = 0; m < GAMETYPES; m++) {
+            for (int i = 0; i < MAX_RANKING; i++) {
+                for (int j = 0; j < MAX_DIFFICULTIES; j++) {
+                    rankingScore[m][j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + m + "." + j + ".score." + i, 0);
+                    rankingLevel[m][j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + m + "." + j + ".level." + i, 0);
+                }
             }
         }
     }
@@ -1713,10 +1884,12 @@ public class Collapse extends DummyMode {
      * @param prop Property file
      */
     private void saveRanking(CustomProperties prop) {
-        for (int i = 0; i < MAX_RANKING; i++) {
-            for (int j = 0; j < MAX_DIFFICULTIES; j++) {
-                prop.setProperty("collapse." + VERSION + ".ranking." + j + ".score." + i, rankingScore[j][i]);
-                prop.setProperty("collapse." + VERSION + ".ranking." + j + ".level." + i, rankingLevel[j][i]);
+        for (int m = 0; m < GAMETYPES; m++) {
+            for (int i = 0; i < MAX_RANKING; i++) {
+                for (int j = 0; j < MAX_DIFFICULTIES; j++) {
+                    prop.setProperty("collapse." + VERSION + ".ranking." + m + "." + j + ".score." + i, rankingScore[m][j][i]);
+                    prop.setProperty("collapse." + VERSION + ".ranking." + m + "." + j + ".level." + i, rankingLevel[m][j][i]);
+                }
             }
         }
     }
@@ -1728,10 +1901,13 @@ public class Collapse extends DummyMode {
      */
     private void loadRankingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return;
-        for (int i = 0; i < MAX_RANKING; i++) {
-            for (int j = 0; j < MAX_DIFFICULTIES; j++) {
-                rankingScorePlayer[j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + j + ".score." + i, 0);
-                rankingLevelPlayer[j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + j + ".level." + i, 0);
+
+        for (int m = 0; m < GAMETYPES; m++) {
+            for (int i = 0; i < MAX_RANKING; i++) {
+                for (int j = 0; j < MAX_DIFFICULTIES; j++) {
+                    rankingScorePlayer[m][j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + m + "." + j + ".score." + i, 0);
+                    rankingLevelPlayer[m][j][i] = prop.getProperty("collapse." + VERSION + ".ranking." + m + "." + j + ".level." + i, 0);
+                }
             }
         }
     }
@@ -1743,10 +1919,13 @@ public class Collapse extends DummyMode {
      */
     private void saveRankingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return;
-        for (int i = 0; i < MAX_RANKING; i++) {
-            for (int j = 0; j < MAX_DIFFICULTIES; j++) {
-                prop.setProperty("collapse." + VERSION + ".ranking." + j + ".score." + i, rankingScorePlayer[j][i]);
-                prop.setProperty("collapse." + VERSION + ".ranking." + j + ".level." + i, rankingLevelPlayer[j][i]);
+
+        for (int m = 0; m < GAMETYPES; m++) {
+            for (int i = 0; i < MAX_RANKING; i++) {
+                for (int j = 0; j < MAX_DIFFICULTIES; j++) {
+                    prop.setProperty("collapse." + VERSION + ".ranking." + m + "." + j + ".score." + i, rankingScorePlayer[m][j][i]);
+                    prop.setProperty("collapse." + VERSION + ".ranking." + m + "." + j + ".level." + i, rankingLevelPlayer[m][j][i]);
+                }
             }
         }
     }
@@ -1756,34 +1935,34 @@ public class Collapse extends DummyMode {
      *
      * @param sc Score
      */
-    private void updateRanking(int sc, int type, int lv) {
-        rankingRank = checkRanking(sc, lv, type);
+    private void updateRanking(int sc, int gametype, int difficulty, int lv) {
+        rankingRank = checkRanking(sc, lv, gametype, difficulty);
 
         if (rankingRank != -1) {
             // Shift down ranking entries
             for (int i = MAX_RANKING - 1; i > rankingRank; i--) {
-                rankingScore[type][i] = rankingScore[type][i - 1];
-                rankingLevel[type][i] = rankingLevel[type][i - 1];
+                rankingScore[gametype][difficulty][i] = rankingScore[gametype][difficulty][i - 1];
+                rankingLevel[gametype][difficulty][i] = rankingLevel[gametype][difficulty][i - 1];
             }
 
             // Add new data
-            rankingScore[type][rankingRank] = sc;
-            rankingLevel[type][rankingRank] = lv;
+            rankingScore[gametype][difficulty][rankingRank] = sc;
+            rankingLevel[gametype][difficulty][rankingRank] = lv;
         }
 
         if (playerProperties.isLoggedIn()) {
-            rankingRankPlayer = checkRankingPlayer(sc, lv, type);
+            rankingRankPlayer = checkRankingPlayer(sc, lv, gametype, difficulty);
 
             if (rankingRankPlayer != -1) {
                 // Shift down ranking entries
                 for (int i = MAX_RANKING - 1; i > rankingRankPlayer; i--) {
-                    rankingScorePlayer[type][i] = rankingScorePlayer[type][i - 1];
-                    rankingLevelPlayer[type][i] = rankingLevelPlayer[type][i - 1];
+                    rankingScorePlayer[gametype][difficulty][i] = rankingScorePlayer[gametype][difficulty][i - 1];
+                    rankingLevelPlayer[gametype][difficulty][i] = rankingLevelPlayer[gametype][difficulty][i - 1];
                 }
 
                 // Add new data
-                rankingScorePlayer[type][rankingRankPlayer] = sc;
-                rankingLevelPlayer[type][rankingRankPlayer] = lv;
+                rankingScorePlayer[gametype][difficulty][rankingRankPlayer] = sc;
+                rankingLevelPlayer[gametype][difficulty][rankingRankPlayer] = lv;
             }
         }
     }
@@ -1794,11 +1973,11 @@ public class Collapse extends DummyMode {
      * @param sc Score
      * @return Position (-1 if unranked)
      */
-    private int checkRanking(int sc, int lv, int type) {
+    private int checkRanking(int sc, int lv, int gametype, int difficulty) {
         for (int i = 0; i < MAX_RANKING; i++) {
-            if (sc > rankingScore[type][i]) {
+            if (sc > rankingScore[gametype][difficulty][i]) {
                 return i;
-            } else if (sc == rankingScore[type][i] && lv < rankingLevel[type][i]) {
+            } else if (sc == rankingScore[gametype][difficulty][i] && lv < rankingLevel[gametype][difficulty][i]) {
                 return i;
             }
         }
@@ -1812,11 +1991,11 @@ public class Collapse extends DummyMode {
      * @param sc Score
      * @return Position (-1 if unranked)
      */
-    private int checkRankingPlayer(int sc, int lv, int type) {
+    private int checkRankingPlayer(int sc, int lv, int gametype, int difficulty) {
         for (int i = 0; i < MAX_RANKING; i++) {
-            if (sc > rankingScorePlayer[type][i]) {
+            if (sc > rankingScorePlayer[gametype][difficulty][i]) {
                 return i;
-            } else if (sc == rankingScorePlayer[type][i] && lv < rankingLevelPlayer[type][i]) {
+            } else if (sc == rankingScorePlayer[gametype][difficulty][i] && lv < rankingLevelPlayer[gametype][difficulty][i]) {
                 return i;
             }
         }
@@ -1897,12 +2076,12 @@ public class Collapse extends DummyMode {
         return getRawRowLevelClearBonus(engine, emptyRows) + empties;
     }
 
-    private int getLevelClearBonus(GameEngine engine) {
+    private int getLevelClearBonus(GameEngine engine, boolean ignoreAddedLine) {
         int h = engine.field.getHeight();
         int w = engine.field.getWidth();
 
-        int empties = 0;
-        int emptyRows = 0;
+        int empties = ignoreAddedLine ? w : 0;
+        int emptyRows = ignoreAddedLine ? 1 : 0;
 
         for (int y = 0; y < h; y++) {
             int s = 0;

@@ -1,5 +1,6 @@
 package zeroxfc.nullpo.custom.libs;
 
+import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.function.IntFunction;
 import mu.nu.nullpo.game.component.SpeedParam;
@@ -16,13 +17,13 @@ import org.apache.log4j.Logger;
 public final class SpeedTableBuilder {
     private static final Logger log = Logger.getLogger(SpeedTableBuilder.class);
 
-    private final TreeMap<Integer, Integer> gravityNumerators;
-    private final TreeMap<Integer, Integer> gravityDenominators;
-    private final TreeMap<Integer, Integer> ares;
-    private final TreeMap<Integer, Integer> lineAres;
-    private final TreeMap<Integer, Integer> dases;
-    private final TreeMap<Integer, Integer> lockDelays;
-    private final TreeMap<Integer, Integer> lineClearDelays;
+    private final NavigableMap<Integer, Integer> gravityNumerators;
+    private final NavigableMap<Integer, Integer> gravityDenominators;
+    private final NavigableMap<Integer, Integer> ares;
+    private final NavigableMap<Integer, Integer> lineAres;
+    private final NavigableMap<Integer, Integer> dases;
+    private final NavigableMap<Integer, Integer> lockDelays;
+    private final NavigableMap<Integer, Integer> lineClearDelays;
 
     public static SpeedTableBuilder.ModifiableGravityTable createNew() {
         return new SpeedTableBuilder().new ModifiableGravityTable();
@@ -38,7 +39,7 @@ public final class SpeedTableBuilder {
         lineClearDelays = new TreeMap<>();
     }
 
-    private static void verifyLevel(int changeLevel, TreeMap<Integer, Integer> levelValues) {
+    private static void verifyLevel(int changeLevel, NavigableMap<Integer, Integer> levelValues) {
         if (levelValues.isEmpty()) return;
 
         final int maxLevel = levelValues.descendingKeySet().first();
