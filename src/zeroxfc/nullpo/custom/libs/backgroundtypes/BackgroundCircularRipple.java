@@ -191,6 +191,12 @@ public class BackgroundCircularRipple extends AnimatedBackgroundHook {
                     }
                 }
             }
+        } else {
+            for (ImageChunk[] imageChunks : chunkGrid) {
+                for (ImageChunk chunk : imageChunks) {
+                    chunk.setScale(new float[] { 1f, 1f });
+                }
+            }
         }
 
         for (int i = pulseRadii.size() - 1; i >= 0; i--) {

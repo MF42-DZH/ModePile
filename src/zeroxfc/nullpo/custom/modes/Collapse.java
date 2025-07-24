@@ -3,6 +3,8 @@ package zeroxfc.nullpo.custom.modes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.IntFunction;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
@@ -14,6 +16,7 @@ import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
+import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
@@ -28,6 +31,8 @@ import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.WeightedRandomiser;
 
 public class Collapse extends DummyMode {
+    private static final Logger log = Logger.getLogger(Collapse.class);
+
     // Hey, have any of you played any of the Super Collapse games?
     // Field Dimensions: 12 x 16; 1 Hidden Height
     //
@@ -269,7 +274,7 @@ public class Collapse extends DummyMode {
     private Random localRandom;
     private boolean force;
     private int lineSpawn;
-    private int scoreToDisplay, scGetTime, sinceLastClear;
+    private int scoreToDisplay, currentIncrease, scGetTime, sinceLastClear;
     private int acTime;
     private MouseParser mouseInput;
     private Multipliers multipliers;
@@ -340,6 +345,7 @@ public class Collapse extends DummyMode {
         lineSpawn = 0;
         scoreToDisplay = 0;
         scGetTime = 0;
+        currentIncrease = 0;
         sinceLastClear = 0;
         acTime = -1;
         outline = GameEngine.BLOCK_OUTLINE_NONE;
@@ -678,16 +684,16 @@ public class Collapse extends DummyMode {
 
     @Override
     public boolean onCustom(GameEngine engine, int playerID) {
-//		if (engine.ctrl.isPush(Controller.BUTTON_D)) {
+		if (engine.ctrl.isPush(Controller.BUTTON_D)) {
 //			engine.resetStatc();
 //			engine.gameEnded();
-//            linesLeft = 2;
+            linesLeft = 2;
 
 //			engine.stat = GameEngine.STAT_EXCELLENT;
 //			engine.ending = 1;
 //			engine.rainbowAnimate = false;
 //			return false;
-//		}  // DEBUG CODE.
+		}  // DEBUG CODE.
 
         if (engine.gameActive) {
             parseMouse(engine, playerID);
@@ -1713,24 +1719,33 @@ public class Collapse extends DummyMode {
         return true;
     }
 
-    // idk why it sometimes reaches int overflow
     private static int pointGainForFrame(int frame) {
+        int gain = 0;
+
         if (frame <= 16) {
-            return 1 + ((frame >= 6) ? 1 : 0) + ((frame >= 9) ? 1 : 0) + ((frame >= 16) ? 1 : 0);
+            gain = 1 + ((frame >= 6) ? 1 : 0) + ((frame >= 9) ? 1 : 0) + Math.max(0, frame - 10) + ((frame == 16) ? 1 : 0);
+        } else {
+            gain = 10;
+
+            for (int x = 17; x <= frame; ++x) {
+                gain = Math.toIntExact(MathHelper.clamp(Math.round(gain * 1.2) + (x == 43 || x == 20 ? 1 : 0), 0, Integer.MAX_VALUE));
+            }
         }
 
-        return Math.toIntExact(Math.round(Math.min(Integer.MAX_VALUE, Math.pow(1.2, frame - 2d))));
+        return Math.max(gain, 0);
     }
 
     private void incrementScore(GameEngine engine) {
         if (localState == LOCALSTATE_INGAME || isBonusLevel) {
             if (scGetTime % 2 == 0) {
-                scoreToDisplay += (int) Math.min(Math.max(Math.pow((scGetTime >>> 1) - 6.0, 2.0), 1), Math.ceil((engine.statistics.score - scoreToDisplay) * 0.5));
-//                scoreToDisplay += Math.min(pointGainForFrame(scGetTime >>> 1), (int) Math.ceil((engine.statistics.score - scoreToDisplay) * 0.5));
-                if (engine.statistics.score < scoreToDisplay || scoreToDisplay < 0) scoreToDisplay = engine.statistics.score;
+                currentIncrease = Math.max(1, currentIncrease + pointGainForFrame(scGetTime >>> 1));
+                scoreToDisplay += Math.min(currentIncrease, (int) Math.ceil((engine.statistics.score - scoreToDisplay) * 0.9));
             }
 
-            if (engine.statistics.score <= scoreToDisplay) scGetTime = 0;
+            if (engine.statistics.score <= scoreToDisplay || scoreToDisplay < 0) {
+                scGetTime = 0;
+                currentIncrease = 0;
+            }
         } else if (localState == LOCALSTATE_TRANSITION && engine.stat == GameEngine.STAT_CUSTOM) {
             final int currentBonusDisplay = getRawLevelClearBonus(engine, endLevelEmptyCounter, endLevelEmptyRowCounter);
             final int display = engine.statistics.score - bScore + currentBonusDisplay;
@@ -1741,9 +1756,10 @@ public class Collapse extends DummyMode {
             if (engine.statc[0] >= fillDuration) usedTime = engine.statc[0] - fillDuration;
 
             if (usedTime % 2 == 0) {
-                scoreToDisplay += (int) Math.min(Math.max(Math.pow((usedTime >>> 1) - 6.0, 2.0), 1), Math.ceil((display - scoreToDisplay) * 0.5));
-//                scoreToDisplay += Math.min(pointGainForFrame(usedTime >>> 1), (int) Math.ceil((engine.statistics.score - scoreToDisplay) * 0.5));
-                if (engine.statistics.score < scoreToDisplay || scoreToDisplay < 0) scoreToDisplay = engine.statistics.score;
+                currentIncrease = Math.max(1, currentIncrease + pointGainForFrame(usedTime >>> 1));
+                scoreToDisplay += Math.min(currentIncrease, (int) Math.ceil((display - scoreToDisplay) * 0.9));
+
+                if (engine.statistics.score <= scoreToDisplay || scoreToDisplay < 0) scoreToDisplay = engine.statistics.score;
             }
         }
     }
