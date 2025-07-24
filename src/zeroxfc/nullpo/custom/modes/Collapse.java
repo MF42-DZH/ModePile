@@ -789,7 +789,7 @@ public class Collapse extends DummyMode {
 
                 for (int y = 0; y < engine.field.getHeight(); y++) {
                     for (int x = 0; x < engine.field.getWidth(); x++) {
-                        if (isCoordWithinRadius(fieldX, fieldY, x, y, 5) && !engine.field.getBlockEmpty(x, y)) {
+                        if (MathHelper.isCoordWithinRadius(fieldX, fieldY, x, y, 5) && !engine.field.getBlockEmpty(x, y)) {
                             engine.field.getBlock(x, y).secondaryColor = engine.field.getBlock(x, y).color;
                             engine.field.getBlock(x, y).setAttribute(Block.BLOCK_ATTRIBUTE_ERASE, true);
 
@@ -802,7 +802,7 @@ public class Collapse extends DummyMode {
             }
 
             score *= multipliers.bombClear;
-            explode(engine);
+            engine.playSE("bombexplode");
         } else {
             engine.playSE("noclear");
         }
@@ -2252,33 +2252,10 @@ public class Collapse extends DummyMode {
         return getRawLevelClearBonus(engine, empties, emptyRows);
     }
 
-    /**
-     * Checks if a coordinate is within a certain radius.
-     *
-     * @param x      X-coordinate of circle's centre.
-     * @param y      Y-coordinate of circle's centre.
-     * @param xTest  X-coordinate of test square.
-     * @param yTest  Y-coordinate of test square.
-     * @param radius The testing radius
-     * @return The result of the check. true: within. false: not within.
-     */
-    private boolean isCoordWithinRadius(int x, int y, int xTest, int yTest, double radius) {
-        int dX = xTest - x;
-        int dY = yTest - y;
-
-        final double distance = (double) (dX * dX) + (double) (dY * dY);
-        return (distance <= (radius * radius));
-    }
-
-    // Is this really all this does lmao?
-    private void explode(GameEngine engine) {
-        engine.playSE("bombexplode");
-    }
-
     private static class BonusFields {
         // Note: 12w x 16h fields
 
-        public static final int[][] BONUS_FIELD_1 = {
+        private static final int[][] BONUS_FIELD_1 = {
             { 0, 0, 0, 4, 4, 3, 4, 4, 0, 4, 4, 3 },
             { 0, 0, 0, 4, 3, 3, 4, 0, 0, 4, 3, 3 },
             { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
@@ -2297,7 +2274,7 @@ public class Collapse extends DummyMode {
             { 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2 },
         };
 
-        public static final int[][] BONUS_FIELD_2 = {
+        private static final int[][] BONUS_FIELD_2 = {
             { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
             { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
             { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
@@ -2316,7 +2293,7 @@ public class Collapse extends DummyMode {
             { 1, 1, 4, 2, 2, 4, 1, 1, 4, 2, 2, 2 },
         };
 
-        public static final int[][] BONUS_FIELD_3 = {
+        private static final int[][] BONUS_FIELD_3 = {
             { 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3 },
             { 0, 0, 2, 3, 3, 3, 0, 0, 2, 3, 3, 3 },
             { 0, 2, 2, 3, 3, 3, 0, 2, 2, 3, 3, 3 },

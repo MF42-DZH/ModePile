@@ -454,7 +454,7 @@ public class FieldManipulation {
     /** Compares if two fields are equal. */
     public static boolean fieldEquals(Field a, Field b) {
         if (a.getWidth() != b.getWidth()) return false;
-        if ((a.getHiddenHeight() + a.getHeight()) != (b.getHiddenHeight() + b.getHeight())) return false;
+        if (getFullHeight(a) != getFullHeight(b)) return false;
 
         for (int y = (-1 * a.getHiddenHeight()); y < a.getHeight(); ++y) {
             for (int x = 0; x < a.getWidth(); ++x) {
@@ -629,7 +629,7 @@ public class FieldManipulation {
                     return res3;
                 } else {
                     // Use the lowest common multiple + nearest neighbour scaling check method.
-                    final int lcmWidth = lcm(bboxSizeA[0], bboxSizeB[0]), lcmHeight = lcm(bboxSizeA[1], bboxSizeB[1]);
+                    final int lcmWidth = MathHelper.lcm(bboxSizeA[0], bboxSizeB[0]), lcmHeight = MathHelper.lcm(bboxSizeA[1], bboxSizeB[1]);
 
                     final int multiplierWidthA = lcmWidth / bboxSizeA[0];
                     final int multiplierWidthB = lcmWidth / bboxSizeB[0];
@@ -729,23 +729,6 @@ public class FieldManipulation {
         }
     }
 
-    /*
-     * NOTE: Here's hoping this doesn't slow the game down by much.
-     *
-     * Euler's method?
-     */
-
-    // Recursive method to return gcd of a and b
-    private static int gcd(int a, int b) {
-        if (a == 0) return b;
-        else return gcd(b % a, a);
-    }
-
-    // Method to return LCM of two numbers
-    private static int lcm(int a, int b) {
-        return (a * b) / gcd(a, b);
-    }
-
     /**
      * Gets the full height of a field, including hidden height.
      *
@@ -834,9 +817,8 @@ public class FieldManipulation {
         for (int x = 0; x < field.getWidth(); x++) {
             for (int y = (-1 * field.getHiddenHeight()); y < field.getHeight(); y++) {
                 Block blk = field.getBlock(x, y);
-                if (blk != null) {
-                    if (!blk.isEmpty()) return x;
-                }
+                if (blk != null && !blk.isEmpty()) return x;
+
             }
         }
         return field.getWidth() - 1;
@@ -852,9 +834,8 @@ public class FieldManipulation {
         for (int x = field.getWidth() - 1; x >= 0; x--) {
             for (int y = (-1 * field.getHiddenHeight()); y < field.getHeight(); y++) {
                 Block blk = field.getBlock(x, y);
-                if (blk != null) {
-                    if (!blk.isEmpty()) return x;
-                }
+                if (blk != null && !blk.isEmpty()) return x;
+
             }
         }
         return 0;

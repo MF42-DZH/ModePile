@@ -132,21 +132,26 @@ public class MathHelper {
     }
 
     /**
-     * Gets the greatest common divisor between two integers.<br />
-     * Recursive function.
+     * Gets the greatest common divisor between two integers.
      *
      * @param a int
      * @param b int
      * @return GCD of the two integers
      */
     public static int gcd(int a, int b) {
-        if (a == 0) return b;
-        else return gcd(b % a, a);
+        int temp;
+
+        while (a != 0) {
+            temp = a;
+            a = b % temp;
+            b = temp;
+        }
+
+        return b;
     }
 
     /**
-     * Gets the lowest common multiple between two integers.<br />
-     * Calls <code>gcd(a, b)</code>, a recursive function.
+     * Gets the lowest common multiple between two integers.
      *
      * @param a int
      * @param b int
@@ -178,12 +183,12 @@ public class MathHelper {
      * @param radius The testing radius
      * @return The result of the check. true: within. false: not within.
      */
-    public boolean isCoordWithinRadius(int x, int y, int xTest, int yTest, double radius) {
+    public static boolean isCoordWithinRadius(int x, int y, int xTest, int yTest, double radius) {
         int dX = xTest - x;
         int dY = yTest - y;
 
-        double distance = Math.sqrt((dX * dX) + (dY * dY));
-        return (distance <= radius);
+        double distance = (double) (dX * dX) + (dY * dY);
+        return (distance <= radius * radius);
     }
 
     /**
@@ -195,10 +200,11 @@ public class MathHelper {
      * @param y1 Y-coordinate of the second point
      * @return Direct distance between the two points.
      */
-    public double distanceBetween(int x0, int y0, int x1, int y1) {
+    public static double distanceBetween(int x0, int y0, int x1, int y1) {
         int dX, dY;
         dX = x1 - x0;
         dY = y1 - y0;
+
         return Math.sqrt((dX * dX) + (dY * dY));
     }
 }
