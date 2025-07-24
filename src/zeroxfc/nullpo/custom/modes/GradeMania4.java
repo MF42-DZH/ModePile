@@ -1532,7 +1532,7 @@ public class GradeMania4 extends DummyMode {
 
                 String foursText = "";
 
-                final int expectedFours = (int) Math.floor((engine.statistics.level / (float) LEVEL_LIMIT) * FOUR_GOAL_TEN_OF_TEN_ORIG);
+                final int expectedFours = (int) Math.ceil((engine.statistics.level / (float) LEVEL_LIMIT) * FOUR_GOAL_TEN_OF_TEN_ORIG);
                 if (gameRuleset == Ruleset.FOURS_MODEPILE) foursText = " (" + engine.statistics.totalFour + "/" + FOUR_GOAL_TEN_OF_TEN_MPL + ")";
                 if (gameRuleset == Ruleset.FOURS_ORIGINAL) foursText = " (" + engine.statistics.totalFour + "/" + expectedFours + ")";
 
