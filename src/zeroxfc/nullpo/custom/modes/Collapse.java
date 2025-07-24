@@ -684,16 +684,16 @@ public class Collapse extends DummyMode {
 
     @Override
     public boolean onCustom(GameEngine engine, int playerID) {
-		if (engine.ctrl.isPush(Controller.BUTTON_D)) {
+//		if (engine.ctrl.isPush(Controller.BUTTON_D)) {
 //			engine.resetStatc();
 //			engine.gameEnded();
-            linesLeft = 2;
+//            linesLeft = 2;
 
 //			engine.stat = GameEngine.STAT_EXCELLENT;
 //			engine.ending = 1;
 //			engine.rainbowAnimate = false;
 //			return false;
-		}  // DEBUG CODE.
+//		}  // DEBUG CODE.
 
         if (engine.gameActive) {
             parseMouse(engine, playerID);
@@ -2240,7 +2240,7 @@ public class Collapse extends DummyMode {
     }
 
     private int getRawLevelClearBonus(GameEngine engine, int empties, int emptyRows) {
-        return getRawRowLevelClearBonus(engine, emptyRows) + empties;
+        return getRawRowLevelClearBonus(engine, emptyRows) + (empties * (engine.statistics.level + 1));
     }
 
     private int getLevelClearBonus(GameEngine engine, boolean ignoreAddedLine) {
