@@ -1045,6 +1045,8 @@ public class GradeMania4 extends DummyMode {
 
         engine.b2bEnable = true;
 
+        engine.staffrollEnableStatistics = false;
+
         levelUpFlag = true;
 
         fireworkRandomiser = new Random(engine.randSeed);
