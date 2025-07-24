@@ -33,7 +33,6 @@
 package zeroxfc.nullpo.custom.libs;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Field;
@@ -880,6 +879,14 @@ public class FieldManipulation {
     }
 
     /**
+     * Compares the attribute flag of two blocks.
+     * @return <code>true</code> if their specified attribute flag are set on both or unset on both.
+     */
+    public static boolean compareBlockAttribute(Block a, Block b, int attribute) {
+        return a.getAttribute(attribute) == b.getAttribute(attribute);
+    }
+
+    /**
      * Updates every single block's connection attributes in a field.
      *
      * @param field Field to connect all blocks of.
@@ -891,16 +898,28 @@ public class FieldManipulation {
                 if (block == null || block.isEmpty()) continue;
 
                 Block otherBlock = field.getBlock(x, y - 1);
-                block.setAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_UP, otherBlock != null && otherBlock.color == block.color);
+                block.setAttribute(
+                    Block.BLOCK_ATTRIBUTE_CONNECT_UP,
+                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE)
+                );
 
                 otherBlock = field.getBlock(x, y + 1);
-                block.setAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_DOWN, otherBlock != null && otherBlock.color == block.color);
+                block.setAttribute(
+                    Block.BLOCK_ATTRIBUTE_CONNECT_DOWN,
+                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE)
+                );
 
                 otherBlock = field.getBlock(x - 1, y);
-                block.setAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_LEFT, otherBlock != null && otherBlock.color == block.color);
+                block.setAttribute(
+                    Block.BLOCK_ATTRIBUTE_CONNECT_LEFT,
+                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE)
+                );
 
                 otherBlock = field.getBlock(x + 1, y);
-                block.setAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT, otherBlock != null && otherBlock.color == block.color);
+                block.setAttribute(
+                    Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT,
+                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE)
+                );
             }
         }
     }
