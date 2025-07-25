@@ -1535,8 +1535,11 @@ public class GradeMania4 extends DummyMode {
                 String foursText = "";
 
                 final int expectedFours = (int) Math.ceil((engine.statistics.level / (float) LEVEL_LIMIT) * FOUR_GOAL_TEN_OF_TEN_ORIG);
-                if (gameRuleset == Ruleset.FOURS_MODEPILE) foursText = " (" + engine.statistics.totalFour + "/" + FOUR_GOAL_TEN_OF_TEN_MPL + ")";
-                if (gameRuleset == Ruleset.FOURS_ORIGINAL) foursText = " (" + engine.statistics.totalFour + "/" + expectedFours + ")";
+                if (gameRuleset == Ruleset.FOURS_MODEPILE) foursText = String.format("(%2s/%2s)", engine.statistics.totalFour, FOUR_GOAL_TEN_OF_TEN_MPL);
+                if (gameRuleset == Ruleset.FOURS_ORIGINAL) foursText = String.format("(%2s/%2s)", engine.statistics.totalFour, expectedFours);
+
+                float qbarXScale = 4.2f;
+                if (gameRuleset == Ruleset.FOURS_ORIGINAL || gameRuleset == Ruleset.FOURS_MODEPILE) qbarXScale = 7.325f;
 
                 switch (gameRuleset) {
                     case ORIGINAL:
@@ -1545,13 +1548,12 @@ public class GradeMania4 extends DummyMode {
                             int section = engine.statistics.level / 100 - 1;
                             if (section < 0) section = 0;
 
-                            boolean yellow = sectionPoints[section] >= 1000;
-                            if (gameRuleset == Ruleset.FOURS_ORIGINAL) yellow = yellow && engine.statistics.totalFour >= expectedFours;
+                            final boolean yellow = sectionPoints[section] >= 1000;
 
                             receiver.drawScoreFont(
                                 engine, playerID,
                                 0, 15,
-                                String.format("%4s", sectionPoints[section]) + " / " + 1000 + foursText,
+                                String.format("%4s", sectionPoints[section]) + " / " + 1000,
                                 yellow ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE
                             );
 
@@ -1559,32 +1561,66 @@ public class GradeMania4 extends DummyMode {
 
                             rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
                                 ObjectAlignment.TOP_LEFT, value,
-                                4.2f, 2f,
+                                qbarXScale, 2f,
                                 RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
                             );
+
+                            if (gameRuleset == Ruleset.FOURS_ORIGINAL) {
+                                float foursValue = Math.min(1f, expectedFours <= 0 ? 0f : (float) engine.statistics.totalFour / expectedFours);
+                                final boolean yellowFours = engine.statistics.totalFour >= expectedFours;
+
+                                receiver.drawScoreFont(
+                                    engine, playerID,
+                                    12, 15,
+                                    foursText,
+                                    yellowFours ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE
+                                );
+
+                                rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy + 16,
+                                    ObjectAlignment.TOP_LEFT, foursValue,
+                                    qbarXScale, 2f,
+                                    RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
+                                );
+                            }
                         }
                         break;
                     case MODEPILE:
                     case FOURS_MODEPILE:
                         {
-                            boolean yellow = fullGameQuota >= FULL_GAME_QUOTA_LIMIT;
-                            if (gameRuleset == Ruleset.FOURS_MODEPILE) yellow = yellow && engine.statistics.totalFour >= FOUR_GOAL_TEN_OF_TEN_MPL;
+                            final boolean yellow = fullGameQuota >= FULL_GAME_QUOTA_LIMIT;
 
                             receiver.drawScoreFont(
                                 engine, playerID,
                                 0, 15,
-                                String.format("%4s", fullGameQuota) + " / " + FULL_GAME_QUOTA_LIMIT + foursText,
+                                String.format("%4s", fullGameQuota) + " / " + FULL_GAME_QUOTA_LIMIT,
                                 yellow ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE
                             );
 
                             float value = Math.min(1f, fullGameQuota / (float) FULL_GAME_QUOTA_LIMIT);
-                            if (gameRuleset == Ruleset.FOURS_MODEPILE) value = (value + Math.min(1f, engine.statistics.totalFour / (float) FOUR_GOAL_TEN_OF_TEN_MPL)) / 2f;
 
                             rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy,
                                 ObjectAlignment.TOP_LEFT, value,
-                                4.2f, 2f,
+                                qbarXScale, 2f,
                                 RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
                             );
+
+                            if (gameRuleset == Ruleset.FOURS_MODEPILE) {
+                                float foursValue = Math.min(1f, (float) engine.statistics.totalFour / FOUR_GOAL_TEN_OF_TEN_MPL);
+                                final boolean yellowFours = engine.statistics.totalFour >= FOUR_GOAL_TEN_OF_TEN_MPL;
+
+                                receiver.drawScoreFont(
+                                    engine, playerID,
+                                    12, 15,
+                                    foursText,
+                                    yellowFours ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE
+                                );
+
+                                rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy + 16,
+                                    ObjectAlignment.TOP_LEFT, foursValue,
+                                    qbarXScale, 2f,
+                                    RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
+                                );
+                            }
                         }
                         break;
                     default:
@@ -1594,10 +1630,13 @@ public class GradeMania4 extends DummyMode {
 
             if (playerProperties.isLoggedIn() || !playerName.isEmpty()) {
                 if (showGrade) {
-                    receiver.drawScoreFont(engine, playerID, 0, 18, "PLAYER", EventReceiver.COLOR_BLUE);
+                    int basePlayerY = 18;
+                    if (gameRuleset == Ruleset.FOURS_ORIGINAL || gameRuleset == Ruleset.FOURS_MODEPILE) basePlayerY = 19;
+
+                    receiver.drawScoreFont(engine, playerID, 0, basePlayerY, "PLAYER", EventReceiver.COLOR_BLUE);
                     GameTextUtilities.drawAlignedScoreText(
                         receiver, engine, playerID,
-                        false, 0, 19,
+                        false, 0, basePlayerY + 1,
                         GameTextUtilities.Text.ofBig(owner.replayMode ? playerName : playerProperties.getNameDisplay()),
                         ObjectAlignment.TOP_LEFT
                     );
@@ -1614,7 +1653,7 @@ public class GradeMania4 extends DummyMode {
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
+            if (!pCoordList.isEmpty() && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
