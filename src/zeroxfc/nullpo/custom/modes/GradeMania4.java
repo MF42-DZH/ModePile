@@ -1525,11 +1525,11 @@ public class GradeMania4 extends DummyMode {
             receiver.drawScoreFont(engine, playerID, 0, 11, "TIME", EventReceiver.COLOR_BLUE);
             receiver.drawScoreFont(engine, playerID, 0, 12, GeneralUtil.getTime(engine.statistics.time));
 
-            int ix, iy;
-            ix = receiver.getScoreDisplayPositionX(engine, playerID);
-            iy = receiver.getScoreDisplayPositionY(engine, playerID) + 18 * 14 + 8;
-
             if (showGrade && engine.ending < 2) {
+                int ix, iy;
+                ix = receiver.getScoreDisplayPositionX(engine, playerID);
+                iy = receiver.getScoreDisplayPositionY(engine, playerID) + 18 * 14 + 8;
+
                 receiver.drawScoreFont(engine, playerID, 0, 14, "QUOTA", EventReceiver.COLOR_GREEN);
 
                 String foursText = "";
@@ -1576,7 +1576,7 @@ public class GradeMania4 extends DummyMode {
                                     yellowFours ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE
                                 );
 
-                                rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy + 16,
+                                rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy + 12,
                                     ObjectAlignment.TOP_LEFT, foursValue,
                                     qbarXScale, 2f,
                                     RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
@@ -1615,7 +1615,7 @@ public class GradeMania4 extends DummyMode {
                                     yellowFours ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE
                                 );
 
-                                rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy + 16,
+                                rendererExtension.drawAlignedSpeedMeter(receiver, ix, iy + 12,
                                     ObjectAlignment.TOP_LEFT, foursValue,
                                     qbarXScale, 2f,
                                     RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
