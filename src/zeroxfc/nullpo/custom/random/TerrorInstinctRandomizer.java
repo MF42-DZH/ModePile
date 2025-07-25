@@ -1,6 +1,7 @@
 package zeroxfc.nullpo.custom.random;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import mu.nu.nullpo.game.component.Piece;
@@ -8,6 +9,19 @@ import net.omegaboshi.nullpomino.game.subsystem.randomizer.Randomizer;
 
 public class TerrorInstinctRandomizer extends Randomizer {
     private static final int MAX_ROLLS = 6;
+    private static final int[] PIECE_ORDER = {
+        Piece.PIECE_I,
+        Piece.PIECE_Z,
+        Piece.PIECE_S,
+        Piece.PIECE_J,
+        Piece.PIECE_L,
+        Piece.PIECE_O,
+        Piece.PIECE_T,
+        Piece.PIECE_I3,
+        Piece.PIECE_L3,
+        Piece.PIECE_I2,
+        Piece.PIECE_I1,
+    };
 
     private ArrayList<Integer> piecePool;
     private HashMap<Integer, Integer> histogram;
@@ -23,17 +37,19 @@ public class TerrorInstinctRandomizer extends Randomizer {
 
         count = 0;
 
-        for (int i : pieces) {
-            for (int j = 0; j < 5; j++) {
-                piecePool.add(i);
-            }
+        // For consistency's sake, we'll add the same pieces in order.
+        for (int i : PIECE_ORDER) {
+            if (Arrays.stream(pieces).anyMatch(p -> p == i)) {
+                for (int j = 0; j < 5; j++) {
+                    piecePool.add(i);
+                }
 
-            histogram.put(i, 4);
+                histogram.put(i, 4);
+            }
         }
 
         for (int i = 0; i < 4; i++) {
-            if (i > 1) history.add(Piece.PIECE_S);
-            else history.add(Piece.PIECE_Z);
+            history.add(i > 1 ? Piece.PIECE_S : Piece.PIECE_Z);
         }
     }
 
@@ -55,8 +71,8 @@ public class TerrorInstinctRandomizer extends Randomizer {
      */
     @Override
     public int next() {
-        int bagPos = 0, piece = 0;
-        int droughted = 0, highScore = 0;
+        int bagPos = 0;
+        int piece = 0;
 
         if (count == 0 && !isPieceSZOOnly()) {
             do {
@@ -70,51 +86,56 @@ public class TerrorInstinctRandomizer extends Randomizer {
 
                 if (!history.contains(piece)) break;
 
-                // Originally in the TI code, this line was omitted, causing a bug where the bag is not updated.
-                highScore = 0;
-
-                for (Map.Entry<Integer, Integer> entry : histogram.entrySet()) {
-                    if (highScore < entry.getValue()) {
-                        highScore = entry.getValue();
-                        droughted = entry.getKey();
-                    }
-                }
-
-                piecePool.set(bagPos, droughted);
+                insertDroughtedPieceIntoBagAt(bagPos);
 
                 bagPos = r.nextInt(piecePool.size());
                 piece = piecePool.get(bagPos);
             }
         }
 
-        updateHistogram(piece);
-
-        // Originally in the TI code, this line was omitted, causing a bug where the bag is not updated.
-        highScore = 0;
-
-        for (Map.Entry<Integer, Integer> entry : histogram.entrySet()) {
-            if (highScore < entry.getValue()) {
-                highScore = entry.getValue();
-                droughted = entry.getKey();
-            }
-        }
-
-        piecePool.set(bagPos, droughted);
-
-        history.set(3, history.get(2));
-        history.set(2, history.get(1));
-        history.set(1, history.get(0));
-        history.set(0, piece);
+        updateDroughtHistogram(piece);
+        insertDroughtedPieceIntoBagAt(bagPos);
+        pushHistory(piece);
 
         ++count;
 
         return piece;
     }
 
-    private void updateHistogram(int id) {
-        for (int key : histogram.keySet()) {
-            if (key == id) histogram.put(key, 0);
-            else histogram.put(key, histogram.get(key) + 1);
+    private void pushHistory(int id) {
+        history.set(3, history.get(2));
+        history.set(2, history.get(1));
+        history.set(1, history.get(0));
+        history.set(0, id);
+    }
+
+    private void insertDroughtedPieceIntoBagAt(int bagPos) {
+        // Originally in the TI code there is a bug where the pool failed to be updated correctly in the
+        // rare situation where you exhaust all the rerolls, then having the final roll give you the most droughted piece.
+        // Instead of inserting the newly most droughted piece after the histogram update, it would instead place an instance
+        // of the piece you've been given into the pool.
+        // This update code used to be inside the same function as the piece rolling function, with the highScore variable
+        // being initialised only once at the start, which was what caused the bug, as the variable was not re-initialised
+        // to zero after the piece rolling loop, causing the previously used highScore from the last loop-around to stay
+        // when the find-droughted-then-put-in-pool loop is run.
+        int highScore = 0;
+        int droughted = 0;
+
+        for (int pid : PIECE_ORDER) {
+            final Integer score = histogram.get(pid);
+            if (score != null && highScore < score) {
+                highScore = score;
+                droughted = pid;
+            }
+        }
+
+        piecePool.set(bagPos, droughted);
+    }
+
+    private void updateDroughtHistogram(int id) {
+        for (Map.Entry<Integer, Integer> entry : histogram.entrySet()) {
+            if (entry.getKey() == id) histogram.put(entry.getKey(), 0);
+            else entry.setValue(entry.getValue() + 1);
         }
     }
 }

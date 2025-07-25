@@ -365,7 +365,7 @@
 0.ruleopt.softdropMultiplyNativeSpeed=false
 0.ruleopt.softdropSpeed=1.0
 0.ruleopt.softdropSurfaceLock=false
-0.ruleopt.strRandomizer=zeroxfc.nullpo.custom.random.FixedTerrorInstinctRandomizer
+0.ruleopt.strRandomizer=zeroxfc.nullpo.custom.random.TerrorInstinctRandomizer
 0.ruleopt.strRuleName=CLASSIC-TI
 0.ruleopt.strWallkick=mu.nu.nullpo.game.subsystem.wallkick.ClassicPlusWallkick
 0.ruleopt.style=0

@@ -7,6 +7,7 @@ Guide:
 [Installation Notes]
 
 [!] AGAIN, IF YOU HAVE INSTALLED A PREVIOUS VERSION OF THIS MODPACK, PLEASE REPLACE ALL MODDED FILES. [!]
+[!] For v1.12.x and earlier users: Remove the FixedTerrorInstinctRandomizer class file! [!]
 
 --- If a bin folder exists in the NullpoMino install folder ---
 
@@ -431,13 +432,11 @@ zeroxfc.nullpo.custom.wallkick.FallingDownWallkick
 
 DROUGHTED PIECE BIAS - Biased towards pieces that have been dealt less.
 TERROR INSTINCT - TI's 35-pool 6-roll 4-history randomizer.
-FIXED TERROR INSTINCT - A slightly closer-to-game implementation of the TI randomizer.
 
 To add them to your game, add the following to 'randomizer.lst', also located in '[NullpoMino Directory]/config/list/':
 
 zeroxfc.nullpo.custom.random.DroughtedPieceBiasRandomizer
 zeroxfc.nullpo.custom.random.TerrorInstinctRandomizer
-zeroxfc.nullpo.custom.random.FixedTerrorInstinctRandomizer
 
 ----------
 
