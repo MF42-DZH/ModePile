@@ -2198,7 +2198,7 @@ public class Collapse extends DummyMode {
      * n: number of squares
      *
      * End of level:
-     * (((100*min(n;3))*max(n-3;1))*(x*(x+1))/2)+y
+     * (((100*min(n;3))*max(n-3;1))*(x*(x+1))/2)+(y*n)
      *
      * y: empties
      * x: empty rows

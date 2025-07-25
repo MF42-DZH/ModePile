@@ -88,6 +88,7 @@ public class RendererExtension {
 
     // Local instance for custom resource holder.
     private final CustomResourceHolder customGraphics;
+    private final PrimitiveDrawingHook drawing;
 
     /** Use this constructor when no custom resource holder is used by the gamemode. */
     public RendererExtension() {
@@ -96,6 +97,7 @@ public class RendererExtension {
 
     public RendererExtension(CustomResourceHolder customGraphics) {
         this.customGraphics = customGraphics;
+        this.drawing = new PrimitiveDrawingHook(customGraphics);
     }
 
     /**
@@ -790,5 +792,87 @@ public class RendererExtension {
         }
 
         drawDirectSpeedMeter(receiver, x - offsetX, y - offsetY, value, scaleX, scaleY, colorBack, colorFront);
+    }
+
+    /**
+     * Draws a coloured outline around a game's current piece. Useful for TI-like post-hold outlines.
+     *
+     * @param receiver  Current renderer
+     * @param engine    Current game engine
+     * @param playerID  Current player ID
+     * @param thickness Outline thickness (px, suggested range: [1, 16])
+     * @param color     Outline colour (RGB)
+     */
+    public void drawPieceOutline(EventReceiver receiver, GameEngine engine, int playerID, int thickness, int[] color) {
+        if (engine.nowPieceObject == null) return;
+        if (color.length != 3 || thickness <= 0) return;
+
+        final Piece piece = engine.nowPieceObject;
+
+        final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+        final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+        int tlX, tlY;
+        for (int i = 0; i < piece.getMaxBlock(); ++i) {
+            final Block blk = piece.block[i];
+            final int pdX = piece.dataX[piece.direction][i];
+            final int pdY = piece.dataY[piece.direction][i];
+            final int fX = pdX + engine.nowPieceX;
+            final int fY = pdY + engine.nowPieceY;
+
+            if (fX < 0 || fX >= engine.field.getWidth() || fY < 0 || fY >= engine.field.getHeight()) continue;
+
+            if (!blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_UP)) {
+                tlX = baseX + (fX * 16);
+                tlY = baseY + (fY * 16);
+
+                drawing.drawRectangle(
+                    receiver,
+                    tlX, tlY,
+                    16, thickness,
+                    color[0], color[1], color[2], 255,
+                    true
+                );
+            }
+
+            if (!blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_LEFT)) {
+                tlX = baseX + (fX * 16);
+                tlY = baseY + (fY * 16);
+
+                drawing.drawRectangle(
+                    receiver,
+                    tlX, tlY,
+                    thickness, 16,
+                    color[0], color[1], color[2], 255,
+                    true
+                );
+            }
+
+            if (!blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT)) {
+                tlX = baseX + (fX * 16) + (16 - thickness);
+                tlY = baseY + (fY * 16);
+
+                drawing.drawRectangle(
+                    receiver,
+                    tlX, tlY,
+                    thickness, 16,
+                    color[0], color[1], color[2], 255,
+                    true
+                );
+            }
+
+            if (!blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_DOWN)) {
+                tlX = baseX + (fX * 16);
+                tlY = baseY + (fY * 16) + (16 - thickness);
+
+                drawing.drawRectangle(
+                    receiver,
+                    tlX, tlY,
+                    16, thickness,
+                    color[0], color[1], color[2], 255,
+                    true
+                );
+            }
+        }
     }
 }
