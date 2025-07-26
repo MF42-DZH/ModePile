@@ -426,7 +426,7 @@ public class GradeMania4 extends DummyMode {
             GameTextUtilities.drawAlignedBoundedTextBlock(
                 engine,
                 baseX + (engine.field.getWidth() * 8),
-                Interpolation.lerp(baseY + (engine.field.getHeight() * 16), baseY - MAIN_BLOCK.getHeight(), progress / 0.9),
+                Interpolation.lerp(baseY + (engine.field.getHeight() * 16) - 32, baseY - MAIN_BLOCK.getHeight(), progress / 0.9),
                 baseX - 1, baseY, baseX + (engine.field.getWidth() * 16) + 1, baseY + (engine.field.getHeight() * 16),
                 false, MAIN_BLOCK, ObjectAlignment.TOP_MIDDLE
             );
