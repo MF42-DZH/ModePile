@@ -781,6 +781,8 @@ public class FireworkChallenge extends DummyMode {
             if (blockParticles != null) blockParticles.drawAll(engine, receiver, playerID);
         }
 
+        rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
+
         if (fireworkEmitter != null) fireworkEmitter.draw(receiver);
         if (landingParticles != null) landingParticles.draw(receiver);
     }

@@ -475,8 +475,8 @@ public class IdiotMode extends DummyMode {
         // Engine options
         engine.tspinEnable = true;
         engine.b2bEnable = false;
-        engine.bighalf = false;
-        engine.bigmove = false;
+        engine.bighalf = true; // Why did I have this and bigmove as false for like 7 years lmao???
+        engine.bigmove = true;
         engine.staffrollEnable = true;
         engine.staffrollNoDeath = false;
 
@@ -1152,7 +1152,7 @@ public class IdiotMode extends DummyMode {
                 }
             }
 
-            if (rollStarted) {
+            if (rollStarted && engine.gameActive) {
                 ScrollingMarqueeText usedText = (gameType == GAMETYPE_NORMAL) ? creditObjectShort : creditObjectDefault;
                 usedText.drawAtY(engine, 27.25, engine.displaysize + 1, (double) rollTime / ROLLTIMELIMIT[gameType]);
             }
@@ -1165,6 +1165,10 @@ public class IdiotMode extends DummyMode {
                 receiver.drawMenuFont(engine, playerID, 0, lineOne + 2, "BETTER");
                 receiver.drawMenuFont(engine, playerID, 0, lineOne + 3, "NEXT TIME!");
             }
+        }
+
+        if (gameType == GAMETYPE_OMEN) {
+            rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
         }
 
         if (landingParticles != null) landingParticles.draw(receiver);

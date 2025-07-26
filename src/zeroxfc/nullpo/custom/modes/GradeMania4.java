@@ -427,10 +427,6 @@ public class GradeMania4 extends DummyMode {
         }
     }
 
-    private static final int[] YELLOW_OUTLINE = { 255, 255, 0 };
-    private static final int[] WHITE_OUTLINE = { 240, 240, 240 };
-    private static final int[] DARK_GREY_OUTLINE = { 100, 100, 100 };
-
     private Ruleset gameRuleset;
 
     @Override
@@ -1699,11 +1695,7 @@ public class GradeMania4 extends DummyMode {
             }
         }
 
-        if (engine.gameActive && engine.holdDisable && engine.ruleopt.holdEnable) {
-            final int select = (engine.statc[0] / 4) % 3;
-            final int[] outline =  select == 0 ? YELLOW_OUTLINE : (select == 1 ? WHITE_OUTLINE : DARK_GREY_OUTLINE);
-            rendererExtension.drawPieceOutline(receiver, engine, playerID, 2, outline);
-        }
+        rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
 
         if (fireworks != null) fireworks.draw(receiver);
         if (sparks != null) sparks.draw(receiver);

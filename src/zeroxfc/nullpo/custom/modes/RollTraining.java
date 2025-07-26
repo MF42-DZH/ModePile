@@ -10,6 +10,7 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
+import zeroxfc.nullpo.custom.libs.RendererExtension;
 
 public class RollTraining extends MarathonModeBase {
     /**
@@ -95,6 +96,8 @@ public class RollTraining extends MarathonModeBase {
     private boolean showPlayerStats;
     private String playerName;
 
+    private RendererExtension rendererExtension;
+
     private int getRankIndex() {
         int raw = usedSpeed;
         if (endless) raw += 2;
@@ -154,6 +157,8 @@ public class RollTraining extends MarathonModeBase {
         enableTSpin = false;
         tspinEnableEZ = false;
         big = false;
+
+        rendererExtension = new RendererExtension();
 
         netPlayerInit(engine, playerID);
 
@@ -558,6 +563,10 @@ public class RollTraining extends MarathonModeBase {
                         break;
                 }
             }
+        }
+
+        if (usedSpeed == SPEED_TI) {
+            rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
         }
 
         // NET: Number of spectators

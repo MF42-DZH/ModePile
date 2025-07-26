@@ -87,6 +87,11 @@ public class RendererExtension {
     public static final int[] SPEED_METER_GREEN = { 0, 255, 0 };
     public static final int[] SPEED_METER_RED = { 255, 0, 0 };
 
+    // Default outline colours.
+    public static final int[] YELLOW_OUTLINE = { 255, 255, 0 };
+    public static final int[] WHITE_OUTLINE = { 255, 255, 255 };
+    public static final int[] DARK_GREY_OUTLINE = { 128, 128, 128 };
+
     // Local instance for custom resource holder.
     private final CustomResourceHolder customGraphics;
     private final PrimitiveDrawingHook drawing;
@@ -796,12 +801,29 @@ public class RendererExtension {
     }
 
     /**
+     * Draws a Heboris-style post-hold outline.
+     *
+     * @param receiver  Current renderer
+     * @param engine    Current game engine
+     * @param playerID  Current player ID
+     */
+    public void drawPostHoldOutline(EventReceiver receiver, GameEngine engine, int playerID) {
+        if (engine.nowPieceObject == null) return;
+
+        if (engine.gameActive && engine.holdDisable && engine.ruleopt.holdEnable) {
+            final int select = (engine.statc[0] / 5) % 3;
+            final int[] outline =  select == 0 ? YELLOW_OUTLINE : (select == 1 ? WHITE_OUTLINE : DARK_GREY_OUTLINE);
+            drawPieceOutline(receiver, engine, playerID, engine.nowPieceObject.big ? 4 :  2, outline);
+        }
+    }
+
+    /**
      * Draws a coloured outline around a game's current piece. Useful for TI-like post-hold outlines.
      *
      * @param receiver  Current renderer
      * @param engine    Current game engine
      * @param playerID  Current player ID
-     * @param thickness Outline thickness (px, suggested range: [1, 16])
+     * @param thickness Outline thickness (px, suggested range: [1, 8])
      * @param color     Outline colour (RGB)
      */
     public void drawPieceOutline(EventReceiver receiver, GameEngine engine, int playerID, int thickness, int[] color) {
@@ -809,6 +831,7 @@ public class RendererExtension {
         if (color.length != 3 || thickness <= 0) return;
 
         final Piece piece = engine.nowPieceObject;
+        final int baseScale = piece.big ? 32 : 16;
 
         final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
         final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
@@ -829,8 +852,8 @@ public class RendererExtension {
             final Block blk = piece.block[i];
             final int pdX = piece.dataX[piece.direction][i];
             final int pdY = piece.dataY[piece.direction][i];
-            final int fX = pdX + engine.nowPieceX;
-            final int fY = pdY + engine.nowPieceY;
+            final int fX = (piece.big ? pdX * 2 : pdX) + engine.nowPieceX;
+            final int fY = (piece.big ? pdY * 2 : pdY) + engine.nowPieceY;
 
             if (fX < 0 || fX >= engine.field.getWidth() || fY < 0 || fY >= engine.field.getHeight()) continue;
 
@@ -842,7 +865,7 @@ public class RendererExtension {
                 drawing.drawRectangle(
                     receiver,
                     tlX, tlY,
-                    16, thickness,
+                    baseScale, thickness,
                     color[0], color[1], color[2], 255,
                     true
                 );
@@ -855,20 +878,20 @@ public class RendererExtension {
                 drawing.drawRectangle(
                     receiver,
                     tlX, tlY,
-                    thickness, 16,
+                    thickness, baseScale,
                     color[0], color[1], color[2], 255,
                     true
                 );
             }
 
             if (!blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT)) {
-                tlX = baseX + (fX * 16) + (16 - thickness);
+                tlX = baseX + (fX * 16) + (baseScale - thickness);
                 tlY = baseY + (fY * 16);
 
                 drawing.drawRectangle(
                     receiver,
                     tlX, tlY,
-                    thickness, 16,
+                    thickness, baseScale,
                     color[0], color[1], color[2], 255,
                     true
                 );
@@ -876,12 +899,12 @@ public class RendererExtension {
 
             if (!blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_DOWN)) {
                 tlX = baseX + (fX * 16);
-                tlY = baseY + (fY * 16) + (16 - thickness);
+                tlY = baseY + (fY * 16) + (baseScale - thickness);
 
                 drawing.drawRectangle(
                     receiver,
                     tlX, tlY,
-                    16, thickness,
+                    baseScale, thickness,
                     color[0], color[1], color[2], 255,
                     true
                 );
@@ -906,7 +929,7 @@ public class RendererExtension {
             if (blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_UP)
                 && blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT)
                 && !hasBlockAt.test(pdX + 1, pdY - 1)) {
-                tlX = baseX + (fX * 16) + (16 - thickness);
+                tlX = baseX + (fX * 16) + (baseScale - thickness);
                 tlY = baseY + (fY * 16);
 
                 drawing.drawRectangle(
@@ -922,7 +945,7 @@ public class RendererExtension {
                 && blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_LEFT)
                 && !hasBlockAt.test(pdX - 1, pdY + 1)) {
                 tlX = baseX + (fX * 16);
-                tlY = baseY + (fY * 16) + (16 - thickness);
+                tlY = baseY + (fY * 16) + (baseScale - thickness);
 
                 drawing.drawRectangle(
                     receiver,
@@ -936,8 +959,8 @@ public class RendererExtension {
             if (blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_DOWN)
                 && blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT)
                 && !hasBlockAt.test(pdX + 1, pdY + 1)) {
-                tlX = baseX + (fX * 16) + (16 - thickness);
-                tlY = baseY + (fY * 16) + (16 - thickness);
+                tlX = baseX + (fX * 16) + (baseScale - thickness);
+                tlY = baseY + (fY * 16) + (baseScale - thickness);
 
                 drawing.drawRectangle(
                     receiver,
