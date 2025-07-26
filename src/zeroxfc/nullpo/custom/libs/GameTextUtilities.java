@@ -32,11 +32,14 @@
  */
 package zeroxfc.nullpo.custom.libs;
 
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
+import java.util.WeakHashMap;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
@@ -57,6 +60,10 @@ public class GameTextUtilities {
         EventReceiver.COLOR_PURPLE,
         EventReceiver.COLOR_PINK,
     };
+
+    public enum TextJustification {
+        LEFT, CENTRE, RIGHT, JUSTIFY
+    }
 
     private GameTextUtilities() {}
 
@@ -89,19 +96,15 @@ public class GameTextUtilities {
      * Do not use newlines directly, use the special newline constructor.
      */
     public static class Text {
+        // Cached instances of texts.
+        private static final WeakHashMap<Text, WeakReference<Text>> INSTANCES = new WeakHashMap<>();
+
         public static final int BASE_UNIT = 16;
 
         public final String string;
         public final int colour;
         public final float scale;
         public final int[] rgba;
-
-        private Text(String string, int colour, float scale) {
-            this.string = string;
-            this.colour = colour;
-            this.scale = scale;
-            this.rgba = new int[] { 255, 255, 255, 255 };
-        }
 
         private Text(String string, int colour, float scale, int red, int green, int blue, int alpha) {
             this.string = string;
@@ -110,69 +113,89 @@ public class GameTextUtilities {
             this.rgba = new int[] { red, green, blue, alpha };
         }
 
+        private static Text getInstance(String string, int colour, float scale) {
+            return getInstance(string, colour, scale, 255, 255, 255, 255);
+        }
+
+        private static Text getInstance(String string, int colour, float scale, int red, int green, int blue, int alpha) {
+            final Text text = new Text(string, colour, scale, red, green, blue, alpha);
+
+            final WeakReference<Text> ref = INSTANCES.get(text);
+
+            if (ref != null) {
+                final Text instance = ref.get();
+                if (instance != null) return instance;
+
+            }
+
+            INSTANCES.put(text, new WeakReference<>(text));
+            return text;
+        }
+
         public static Text of(String string) {
-            return new Text(string, EventReceiver.COLOR_WHITE, 1f);
+            return getInstance(string, EventReceiver.COLOR_WHITE, 1f);
         }
 
         public static Text of(String string, int colour) {
-            return new Text(string, colour, 1f);
+            return getInstance(string, colour, 1f);
         }
 
         public static Text ofSmall(String string) {
-            return new Text(string, EventReceiver.COLOR_WHITE, 0.5f);
+            return getInstance(string, EventReceiver.COLOR_WHITE, 0.5f);
         }
 
         public static Text ofSmall(String string, int colour) {
-            return new Text(string, colour, 0.5f);
+            return getInstance(string, colour, 0.5f);
         }
 
         public static Text ofBig(String string) {
-            return new Text(string, EventReceiver.COLOR_WHITE, 2f);
+            return getInstance(string, EventReceiver.COLOR_WHITE, 2f);
         }
 
         public static Text ofBig(String string, int colour) {
-            return new Text(string, colour,  2f);
+            return getInstance(string, colour,  2f);
         }
 
         public static Text custom(String string, int colour, float scale) {
-            return new Text(string, colour, scale);
+            return getInstance(string, colour, scale);
         }
 
         public static Text ofAnyColor(String string, int red, int green, int blue, int alpha) {
-            return new Text(string, EventReceiver.COLOR_WHITE, 1f, red, green, blue, alpha);
+            return getInstance(string, EventReceiver.COLOR_WHITE, 1f, red, green, blue, alpha);
         }
 
         public static Text ofAnyColorSmall(String string, int red, int green, int blue, int alpha) {
-            return new Text(string, EventReceiver.COLOR_WHITE, 0.5f, red, green, blue, alpha);
+            return getInstance(string, EventReceiver.COLOR_WHITE, 0.5f, red, green, blue, alpha);
         }
 
         public static Text ofAnyColorBig(String string, int red, int green, int blue, int alpha) {
-            return new Text(string, EventReceiver.COLOR_WHITE, 2f, red, green, blue, alpha);
+            return getInstance(string, EventReceiver.COLOR_WHITE, 2f, red, green, blue, alpha);
         }
 
         public static Text customAnyColor(String string, int red, int green, int blue, int alpha, float scale) {
-            return new Text(string, EventReceiver.COLOR_WHITE, scale, red, green, blue, alpha);
+            return getInstance(string, EventReceiver.COLOR_WHITE, scale, red, green, blue, alpha);
         }
 
         public static Text ofMixColor(String string, int receiverColour, int red, int green, int blue, int alpha) {
-            return new Text(string, receiverColour, 1f, red, green, blue, alpha);
+            return getInstance(string, receiverColour, 1f, red, green, blue, alpha);
         }
 
         public static Text ofMixColorSmall(String string, int receiverColour, int red, int green, int blue, int alpha) {
-            return new Text(string, receiverColour, 0.5f, red, green, blue, alpha);
+            return getInstance(string, receiverColour, 0.5f, red, green, blue, alpha);
         }
 
         public static Text ofMixColorBig(String string, int receiverColour, int red, int green, int blue, int alpha) {
-            return new Text(string, receiverColour, 2f, red, green, blue, alpha);
+            return getInstance(string, receiverColour, 2f, red, green, blue, alpha);
         }
 
         public static Text customMixColor(String string, int receiverColour, int red, int green, int blue, int alpha, float scale) {
-            return new Text(string, receiverColour, scale, red, green, blue, alpha);
+            return getInstance(string, receiverColour, scale, red, green, blue, alpha);
         }
 
+        private static final Text NEWLINE = new Text("\n", EventReceiver.COLOR_WHITE, 0f, 255, 255, 255, 255);
 
         public static Text newLine() {
-            return new Text("\n", EventReceiver.COLOR_WHITE, 0f);
+            return NEWLINE;
         }
 
         public int getWidth() {
@@ -186,20 +209,67 @@ public class GameTextUtilities {
         public boolean isNewLine() {
             return string.equals("\n") && scale == 0f;
         }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(string, colour, scale, rgba[0], rgba[1], rgba[2], rgba[3]);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Text)) return false;
+            final Text other = (Text) obj;
+
+            return (string.equals(other.string))
+                && (colour == other.colour)
+                && (scale == other.scale)
+                && (rgba[0] == other.rgba[0])
+                && (rgba[1] == other.rgba[1])
+                && (rgba[2] == other.rgba[2])
+                && (rgba[3] == other.rgba[3]);
+        }
     }
 
     /** Representation of a left-aligned block of lines to draw. */
     public static class TextBlock {
+        private static final WeakHashMap<TextBlock, WeakReference<TextBlock>> INSTANCES = new WeakHashMap<>();
+
         private final Text[] texts;
+        private final TextJustification justification;
+
         private int width = -1;
         private int height = -1;
 
-        public TextBlock(Text... texts) {
+        private TextBlock(TextJustification justification, Text... texts) {
+            this.justification = justification;
             this.texts = texts;
         }
 
-        public TextBlock(Collection<Text> texts) {
-            this.texts = texts.toArray(new Text[0]);
+        public static TextBlock of(Text... texts) {
+            return of(TextJustification.LEFT, texts);
+        }
+
+        public static TextBlock of(Collection<Text> texts) {
+            return of(TextJustification.LEFT, texts);
+        }
+
+        public static TextBlock of(TextJustification justification, Text... texts) {
+            final TextBlock block = new TextBlock(justification, texts);
+
+            final WeakReference<TextBlock> ref = INSTANCES.get(block);
+
+            if (ref != null) {
+                final TextBlock instance = ref.get();
+                if (instance != null) return instance;
+
+            }
+
+            INSTANCES.put(block, new WeakReference<>(block));
+            return block;
+        }
+
+        public static TextBlock of(TextJustification justification, Collection<Text> texts) {
+            return of(justification, texts.toArray(new Text[0]));
         }
 
         public Text get(int i) {
@@ -251,6 +321,19 @@ public class GameTextUtilities {
             }
 
             return height;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(justification, Arrays.hashCode(texts));
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof TextBlock)) return false;
+            final TextBlock other = (TextBlock) obj;
+
+            return Arrays.equals(texts, other.texts) && justification == other.justification;
         }
     }
 
@@ -352,15 +435,24 @@ public class GameTextUtilities {
         );
     }
 
+    // Helper for line lengths.
+    private static int getTextsWidth(final Text[] texts, int startIx, int endIx) {
+        int total = 0;
+        for (int ix = startIx; ix < endIx; ++ix) {
+            total += texts[ix].getWidth();
+        }
+
+        return total;
+    }
+
     /**
      * Draws a block of texts defined by a text block.
-     * Text blocks always left-align all lines.
      *
-     * @param engine         <code>GameEngine</code> to draw with
-     * @param startX         Start X-coordinate (Top-Left Corner)
-     * @param startY         Start Y-coortinate (Top-Right Corner)
-     * @param pinTop         Pin line to top instead of bottom when varying scale text exists
-     * @param texts          The text block to draw
+     * @param engine <code>GameEngine</code> to draw with
+     * @param startX Start X-coordinate (Top-Left Corner)
+     * @param startY Start Y-coortinate (Top-Right Corner)
+     * @param pinTop Pin line to top instead of bottom when varying scale text exists
+     * @param texts  The text block to draw
      */
     public static void drawDirectTextBlock(GameEngine engine, int startX, int startY, boolean pinTop, TextBlock texts) {
         int dx = startX;
@@ -370,6 +462,12 @@ public class GameTextUtilities {
         int offset = 0;
         while (offset < texts.length()) {
             final int lineEnd = findLineEndIndex(texts, offset);
+
+            switch (texts.justification) {
+                case CENTRE: dx += (texts.getWidth() - getTextsWidth(texts.texts, offset, lineEnd)) / 2; break;
+                case RIGHT: dx += (texts.getWidth() - getTextsWidth(texts.texts, offset, lineEnd)); break;
+                default: break;
+            }
 
             float maxLineScale = 0f;
             for (int i = offset; i < lineEnd; ++i) {
@@ -391,6 +489,74 @@ public class GameTextUtilities {
                 );
 
                 dx += texts.get(i).getWidth();
+                if (texts.justification == TextJustification.JUSTIFY) {
+                    dx += (texts.getWidth() - getTextsWidth(texts.texts, offset, lineEnd)) / (lineEnd - offset - 1);
+                }
+            }
+
+            dx = startX;
+            dy += (int) (Text.BASE_UNIT * maxLineScale);
+
+            offset = lineEnd + 1;
+        }
+    }
+
+    /**
+     * Draws a block of texts defined by a text block.<br />
+     * Doesn't draw text that is outside a specified bounding box.
+     *
+     * @param engine <code>GameEngine</code> to draw with
+     * @param startX Start X-coordinate (Top-Left Corner)
+     * @param startY Start Y-coortinate (Top-Right Corner)
+     * @param minX   Bounding box's left X
+     * @param minY   Bounding box's top Y
+     * @param maxX   Bounding box's right X
+     * @param maxY   Bounding box's bottom Y
+     * @param pinTop Pin line to top instead of bottom when varying scale text exists
+     * @param texts  The text block to draw
+     */
+    public static void drawBoundedDirectTextBlock(GameEngine engine, int startX, int startY, int minX, int minY, int maxX, int maxY, boolean pinTop, TextBlock texts) {
+        int dx = startX;
+        int dy = startY;
+
+        // Process all lines.
+        int offset = 0;
+        while (offset < texts.length()) {
+            final int lineEnd = findLineEndIndex(texts, offset);
+
+            switch (texts.justification) {
+                case CENTRE: dx += (texts.getWidth() - getTextsWidth(texts.texts, offset, lineEnd)) / 2; break;
+                case RIGHT: dx += (texts.getWidth() - getTextsWidth(texts.texts, offset, lineEnd)); break;
+                default: break;
+            }
+
+            float maxLineScale = 0f;
+            for (int i = offset; i < lineEnd; ++i) {
+                maxLineScale = Math.max(texts.get(i).scale, maxLineScale);
+            }
+
+            for (int i = offset; i < lineEnd; ++i) {
+                final Text text = texts.get(i);
+
+                if (dx >= minX && dy >= minY && (dx + text.getWidth()) <= maxX && (dy + text.getHeight()) <= maxY) {
+                    getCustomGraphics().drawString(
+                        engine,
+                        dx,
+                        pinTop ? dy : dy + (int) ((maxLineScale - texts.get(i).scale) * Text.BASE_UNIT),
+                        text.string,
+                        text.colour,
+                        text.rgba[0],
+                        text.rgba[1],
+                        text.rgba[2],
+                        text.rgba[3],
+                        text.scale
+                    );
+                }
+
+                dx += texts.get(i).getWidth();
+                if (texts.justification == TextJustification.JUSTIFY) {
+                    dx += (texts.getWidth() - getTextsWidth(texts.texts, offset, lineEnd)) / (lineEnd - offset - 1);
+                }
             }
 
             dx = startX;
@@ -452,18 +618,75 @@ public class GameTextUtilities {
     }
 
     /**
-     * Draws a block of score texts defined by a text block.
+     * Draws a block of texts defined by a text block.
      * Text blocks always left-align all lines.
      * <p>
-     * <code>x</code> and <code>y</code> determine where in the score grid to draw the text.
+     * Alignment only modifies alignment by the text block's bounding box.
+     * Doesn't draw text that is outside a separate bounding box.
      *
-     * @param receiver       <code>EventReceiver</code> to get position info from
      * @param engine         <code>GameEngine</code> to draw with
-     * @param x              Start X-coordinate (Top-Left Cornern Grid)
-     * @param y              Start Y-coortinate (Top-Right Corner in Grid)
+     * @param startX         Start X-coordinate (Top-Left Corner)
+     * @param startY         Start Y-coortinate (Top-Right Corner)
+     * @param minX           Bounding box's left X
+     * @param minY           Bounding box's top Y
+     * @param maxX           Bounding box's right X
+     * @param maxY           Bounding box's bottom Y
      * @param pinTop         Pin line to top instead of bottom when varying scale text exists
      * @param texts          The text block to draw
+     * @param alignment      Alignment of the texts bounding box
      */
+    public static void drawAlignedBoundedTextBlock(GameEngine engine, int startX, int startY, int minX, int minY, int maxX, int maxY, boolean pinTop, TextBlock texts, ObjectAlignment alignment) {
+        int offsetX, offsetY;
+
+        switch (alignment) {
+            case TOP_MIDDLE:
+            case MIDDLE_MIDDLE:
+            case BOTTOM_MIDDLE:
+                offsetX = texts.getWidth() / 2;
+                break;
+            case TOP_RIGHT:
+            case MIDDLE_RIGHT:
+            case BOTTOM_RIGHT:
+                offsetX = texts.getWidth();
+                break;
+            default:
+                offsetX = 0;
+                break;
+        }
+
+        switch (alignment) {
+            case MIDDLE_LEFT:
+            case MIDDLE_MIDDLE:
+            case MIDDLE_RIGHT:
+                offsetY = texts.getHeight() / 2;
+                break;
+            case BOTTOM_LEFT:
+            case BOTTOM_MIDDLE:
+            case BOTTOM_RIGHT:
+                offsetY = texts.getHeight();
+                break;
+            default:
+                offsetY = 0;
+                break;
+        }
+
+        drawBoundedDirectTextBlock(engine, startX - offsetX, startY - offsetY, minX, minY, maxX, maxY, pinTop, texts);
+    }
+
+
+        /**
+         * Draws a block of score texts defined by a text block.
+         * Text blocks always left-align all lines.
+         * <p>
+         * <code>x</code> and <code>y</code> determine where in the score grid to draw the text.
+         *
+         * @param receiver       <code>EventReceiver</code> to get position info from
+         * @param engine         <code>GameEngine</code> to draw with
+         * @param x              Start X-coordinate (Top-Left Cornern Grid)
+         * @param y              Start Y-coortinate (Top-Right Corner in Grid)
+         * @param pinTop         Pin line to top instead of bottom when varying scale text exists
+         * @param texts          The text block to draw
+         */
     public static void drawAlignedScoreTextBlock(EventReceiver receiver, GameEngine engine, int playerID, boolean smallGrid, int x, int y, boolean pinTop, TextBlock texts, ObjectAlignment alignment) {
         int gridSize = smallGrid ? 8 : 16;
 
@@ -699,7 +922,7 @@ public class GameTextUtilities {
             }
         }
 
-        drawDirectTextBlock(engine, x, y, false, new TextBlock(chars));
+        drawDirectTextBlock(engine, x, y, false, TextBlock.of(TextJustification.LEFT, chars));
     }
 
     /**
@@ -730,7 +953,7 @@ public class GameTextUtilities {
             }
         }
 
-        drawAlignedScoreTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ObjectAlignment.TOP_LEFT);
+        drawAlignedScoreTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, TextBlock.of(TextJustification.LEFT, chars), ObjectAlignment.TOP_LEFT);
     }
 
     /**
@@ -761,7 +984,7 @@ public class GameTextUtilities {
             }
         }
 
-        drawAlignedMenuTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ObjectAlignment.TOP_LEFT);
+        drawAlignedMenuTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, TextBlock.of(TextJustification.LEFT, chars), ObjectAlignment.TOP_LEFT);
     }
 
     /**
@@ -781,7 +1004,7 @@ public class GameTextUtilities {
             chars.add(Text.custom(str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)], scale));
         }
 
-        drawDirectTextBlock(engine, x, y, false, new TextBlock(chars));
+        drawDirectTextBlock(engine, x, y, false, TextBlock.of(TextJustification.LEFT, chars));
     }
 
     /**
@@ -803,7 +1026,7 @@ public class GameTextUtilities {
             chars.add(Text.custom(str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)], scale));
         }
 
-        drawAlignedScoreTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ObjectAlignment.TOP_LEFT);
+        drawAlignedScoreTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, TextBlock.of(TextJustification.LEFT, chars), ObjectAlignment.TOP_LEFT);
     }
 
     /**
@@ -825,7 +1048,7 @@ public class GameTextUtilities {
             chars.add(Text.custom(str.substring(i, i + 1), RAINBOW_ORDER[randomEngine.nextInt(RAINBOW_COLOURS)], scale));
         }
 
-        drawAlignedMenuTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, new TextBlock(chars), ObjectAlignment.TOP_LEFT);
+        drawAlignedMenuTextBlock(receiver, engine, playerID, scale == 0.5f, x, y, false, TextBlock.of(TextJustification.LEFT, chars), ObjectAlignment.TOP_LEFT);
     }
 
     // endregion Rainbow Text

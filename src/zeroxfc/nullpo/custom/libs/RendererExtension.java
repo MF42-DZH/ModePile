@@ -33,7 +33,7 @@
 package zeroxfc.nullpo.custom.libs;
 
 import java.awt.*;
-import java.lang.reflect.Field;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.function.BiPredicate;
 import mu.nu.nullpo.game.component.Block;
@@ -970,6 +970,122 @@ public class RendererExtension {
                     true
                 );
             }
+        }
+    }
+
+    /**
+     * Draw a game engine's field.
+     *
+     * @param receiver    Current renderer
+     * @param engine      Current game engine
+     * @param x           X-coordinate of top-left corner
+     * @param y           Y-coordinate of top-left corner
+     * @param displaySize Field display size
+     */
+    public void drawField(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize) {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+
+        try {
+            Method drawFieldMethod = null;
+
+            switch (renderer) {
+                case SLICK:
+                    drawFieldMethod = RendererSlick.class.getDeclaredMethod("drawField", int.class, int.class, GameEngine.class, int.class);
+                    break;
+                case SWING:
+                    drawFieldMethod = RendererSwing.class.getDeclaredMethod("drawField", int.class, int.class, GameEngine.class, int.class);
+                    break;
+                case SDL:
+                    drawFieldMethod = RendererSDL.class.getDeclaredMethod("drawField", int.class, int.class, GameEngine.class, int.class);
+                    break;
+                default:
+                    break;
+            }
+
+            if (drawFieldMethod == null) return;
+
+            drawFieldMethod.setAccessible(true);
+            drawFieldMethod.invoke(receiver, x, y, engine, displaySize);
+        } catch (Exception e) {
+            log.error("Failed to draw field:");
+            log.error(e);
+        }
+    }
+
+    /**
+     * Draw a game engine's frame.
+     *
+     * @param receiver    Current renderer
+     * @param engine      Current game engine
+     * @param x           X-coordinate of top-left corner
+     * @param y           Y-coordinate of top-left corner
+     * @param displaySize Field display size
+     */
+    public void drawFrame(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize) {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+
+        try {
+            Method drawFieldMethod = null;
+
+            switch (renderer) {
+                case SLICK:
+                    drawFieldMethod = RendererSlick.class.getDeclaredMethod("drawFrame", int.class, int.class, GameEngine.class, int.class);
+                    break;
+                case SWING:
+                    drawFieldMethod = RendererSwing.class.getDeclaredMethod("drawFrame", int.class, int.class, GameEngine.class, int.class);
+                    break;
+                case SDL:
+                    drawFieldMethod = RendererSDL.class.getDeclaredMethod("drawFrame", int.class, int.class, GameEngine.class, int.class);
+                    break;
+                default:
+                    break;
+            }
+
+            if (drawFieldMethod == null) return;
+
+            drawFieldMethod.setAccessible(true);
+            drawFieldMethod.invoke(receiver, x, y, engine, displaySize);
+        } catch (Exception e) {
+            log.error("Failed to draw frame:");
+            log.error(e);
+        }
+    }
+
+    /**
+     * Draw a game engine's next queues.
+     *
+     * @param receiver    Current renderer
+     * @param engine      Current game engine
+     * @param x           X-coordinate of top-left corner
+     * @param y           Y-coordinate of top-left corner
+     */
+    public void drawNext(EventReceiver receiver, GameEngine engine, int x, int y) {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+
+        try {
+            Method drawFieldMethod = null;
+
+            switch (renderer) {
+                case SLICK:
+                    drawFieldMethod = RendererSlick.class.getDeclaredMethod("drawNext", int.class, int.class, GameEngine.class);
+                    break;
+                case SWING:
+                    drawFieldMethod = RendererSwing.class.getDeclaredMethod("drawNext", int.class, int.class, GameEngine.class);
+                    break;
+                case SDL:
+                    drawFieldMethod = RendererSDL.class.getDeclaredMethod("drawNext", int.class, int.class, GameEngine.class);
+                    break;
+                default:
+                    break;
+            }
+
+            if (drawFieldMethod == null) return;
+
+            drawFieldMethod.setAccessible(true);
+            drawFieldMethod.invoke(receiver, x, y, engine);
+        } catch (Exception e) {
+            log.error("Failed to draw frame:");
+            log.error(e);
         }
     }
 }

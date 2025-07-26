@@ -21,10 +21,10 @@ import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
-import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.*;
@@ -150,12 +150,12 @@ public class GradeMania4 extends DummyMode {
 
     private static GameTextUtilities.TextBlock getDisplayGradeBlock(int left, int right, int color, float scale) {
         if (left + right == 19) {
-            return new GameTextUtilities.TextBlock(
+            return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.Text.custom("M", color, scale),
                 GameTextUtilities.Text.custom("ASTER", color, scale * 0.5f)
             );
         } else if (left + right == 20) {
-            return new GameTextUtilities.TextBlock(
+            return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.Text.custom("G", color, scale),
                 GameTextUtilities.Text.custom("RAND ", color, scale * 0.5f),
                 GameTextUtilities.Text.custom("M", color, scale),
@@ -163,7 +163,7 @@ public class GradeMania4 extends DummyMode {
             );
         }
 
-        return new GameTextUtilities.TextBlock(
+        return GameTextUtilities.TextBlock.of(
             GameTextUtilities.Text.custom(TABLE_CLASSIC_GRADE_NAME[left + right], color, 1f)
         );
     }
@@ -173,7 +173,7 @@ public class GradeMania4 extends DummyMode {
     }
 
     private static GameTextUtilities.TextBlock getDisplayAERBlock(int left, int right, int color, float scale) {
-        return new GameTextUtilities.TextBlock(
+        return GameTextUtilities.TextBlock.of(
             GameTextUtilities.Text.custom(String.valueOf(left), color, scale),
             GameTextUtilities.Text.custom(" OF ", color, scale * 0.5f),
             GameTextUtilities.Text.custom(String.valueOf(right), color, scale)
@@ -186,7 +186,7 @@ public class GradeMania4 extends DummyMode {
         else if (right >= 10) color = EventReceiver.COLOR_ORANGE;
         else if (right >= 9) color = EventReceiver.COLOR_GREEN;
 
-        return new GameTextUtilities.TextBlock(
+        return GameTextUtilities.TextBlock.of(
             GameTextUtilities.Text.custom(String.valueOf(left), color, 2f),
             GameTextUtilities.Text.custom(" OF ", color, 1f),
             GameTextUtilities.Text.custom(String.valueOf(right), color, 2f)
@@ -232,25 +232,216 @@ public class GradeMania4 extends DummyMode {
 
     private static final int SECTION_MAX = 10;
 
-    // Credit headings
-    private static final String[] CREDIT_HEADINGS = {
-        "GRADE MANIA 4:",
-        "MODE CREATOR:",
-        "BASIS:",
-        "SPECIAL THANKS GOES TO",
-        "AND SHOUTOUTS TO",
-        "CONGRATULATIONS!"
-    };
+    private static class Credits {
+        private static final int FILTER = 192;
 
-    // Credit texts
-    private static final String[] CREDIT_TEXTS = {
-        "CONTRIBUTOR CREDITS",
-        "AZULLIA",
-        "AE-NORMAL",
-        "NIGHTSHADE, AKARI AND MANDL27",
-        "TETRIS.WIKI AND ITS CONTRIBUTORS",
-        "YOU HAVE COMPLETED GRADE MANIA 4!"
-    };
+        private static final GameTextUtilities.Text ENTRY_SEP = GameTextUtilities.Text.custom(" ", EventReceiver.COLOR_WHITE, 0.125f);
+
+        private static GameTextUtilities.Text creditText(String string, int color, float scale) {
+            return GameTextUtilities.Text.customMixColor(string, color, FILTER, FILTER, FILTER, 255, scale);
+        }
+
+        private static final GameTextUtilities.TextBlock MAIN_BLOCK = GameTextUtilities.TextBlock.of(
+            GameTextUtilities.TextJustification.CENTRE,
+            creditText("GRADE", EventReceiver.COLOR_YELLOW, 2f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("MANIA 4", EventReceiver.COLOR_YELLOW, (10f / 7f)),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("BASED ON", EventReceiver.COLOR_WHITE, 0.5f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("AE-NORMAL", EventReceiver.COLOR_CYAN, 1f),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            creditText("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("A.K.A.", EventReceiver.COLOR_WHITE, 0.5f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            creditText("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.625f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.625f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("AKARI", EventReceiver.COLOR_WHITE, 0.625f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("JAVA REFLECTION", EventReceiver.COLOR_RED, 0.625f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.625f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            creditText("SPECIAL THANKS", EventReceiver.COLOR_YELLOW, 0.7f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("NULLNONAME", EventReceiver.COLOR_WHITE, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("TETRIS.WIKI", EventReceiver.COLOR_WHITE, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("OSHISAURES", EventReceiver.COLOR_PINK, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("GLITCHYPSI", EventReceiver.COLOR_CYAN, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("FARTERYHR", EventReceiver.COLOR_WHITE, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("GRAV", EventReceiver.COLOR_PINK, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("DM DOKURO", EventReceiver.COLOR_RED, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("SIMPLEFLIPS", EventReceiver.COLOR_YELLOW, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("ZAPPOOLA", EventReceiver.COLOR_PINK, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("KINGSTATIC", EventReceiver.COLOR_BLUE, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("TGDNERROTH", EventReceiver.COLOR_CYAN, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("MRXBAS", EventReceiver.COLOR_YELLOW, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("TEAKANJI", EventReceiver.COLOR_PURPLE, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("VENTILO_", EventReceiver.COLOR_PURPLE, 0.65f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("MY 6THFRM CLASSMATES", EventReceiver.COLOR_BLUE, 0.5f),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            creditText("YOU!", EventReceiver.COLOR_ORANGE, 1.5f),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.newLine(),
+            creditText("CONGRATULATIONS!", EventReceiver.COLOR_YELLOW, 0.62f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("YOU HAVE CLEARED", EventReceiver.COLOR_YELLOW, 0.5f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("GRADE MANIA 4!", EventReceiver.COLOR_YELLOW, 0.5f)
+        );
+
+        private static final GameTextUtilities.TextBlock FINAL_BLOCK = GameTextUtilities.TextBlock.of(
+            GameTextUtilities.TextJustification.CENTRE,
+            creditText("MODE", EventReceiver.COLOR_GREEN, 2f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("PILE", EventReceiver.COLOR_GREEN, 2f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("PRESENTED BY", EventReceiver.COLOR_WHITE, 0.5f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("AZULLIA, MANDL27", EventReceiver.COLOR_YELLOW, 0.625f),
+            GameTextUtilities.Text.newLine(),
+            ENTRY_SEP,
+            GameTextUtilities.Text.newLine(),
+            creditText("NIGHTSHADE", EventReceiver.COLOR_YELLOW, 0.625f)
+        );
+
+        public static void draw(EventReceiver receiver, GameEngine engine, int playerID, double progress) {
+            final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+            final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+            GameTextUtilities.drawAlignedBoundedTextBlock(
+                engine,
+                baseX + (engine.field.getWidth() * 8),
+                Interpolation.lerp(baseY + (engine.field.getHeight() * 16), baseY - MAIN_BLOCK.getHeight(), progress / 0.9),
+                baseX - 1, baseY, baseX + (engine.field.getWidth() * 16) + 1, baseY + (engine.field.getHeight() * 16),
+                false, MAIN_BLOCK, ObjectAlignment.TOP_MIDDLE
+            );
+
+            if (progress > 0.65) {
+                GameTextUtilities.drawAlignedBoundedTextBlock(
+                    engine,
+                    baseX + (engine.field.getWidth() * 8),
+                    Interpolation.lerp(baseY + (engine.field.getHeight() * 16), baseY + (engine.field.getHeight() * 8), Math.min(1d, (progress - 0.65) / 0.25)),
+                    baseX - 1, baseY, baseX + (engine.field.getWidth() * 16) + 1, baseY + (engine.field.getHeight() * 16),
+                    false, FINAL_BLOCK, ObjectAlignment.MIDDLE_MIDDLE
+                );
+            }
+        }
+    }
 
     private static final String[] HEADING_AER = {
         "YOUR AER",
@@ -262,11 +453,11 @@ public class GradeMania4 extends DummyMode {
 
     private static GameTextUtilities.TextBlock secretGradeBlock(int secretGrade) {
         if (secretGrade < 19) {
-            return new GameTextUtilities.TextBlock(
+            return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.Text.custom(TABLE_SECRET_GRADE_NAME[secretGrade - 1], EventReceiver.COLOR_WHITE, 1f)
             );
         } else {
-            return new GameTextUtilities.TextBlock(
+            return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.Text.custom("G", EventReceiver.COLOR_YELLOW, 1f),
                 GameTextUtilities.Text.custom("RAND ", EventReceiver.COLOR_YELLOW, 0.5f),
                 GameTextUtilities.Text.custom("M", EventReceiver.COLOR_YELLOW, 1f),
@@ -282,7 +473,7 @@ public class GradeMania4 extends DummyMode {
         int color = EventReceiver.COLOR_WHITE;
         if (secretGrade >= 19) color = EventReceiver.COLOR_YELLOW;
 
-        return new GameTextUtilities.TextBlock(
+        return GameTextUtilities.TextBlock.of(
             GameTextUtilities.Text.custom(String.valueOf(left), color, scale * 2f),
             GameTextUtilities.Text.custom(" OF ", color, scale * 1f),
             GameTextUtilities.Text.custom(String.valueOf(right), color, scale * 2f)
@@ -328,8 +519,6 @@ public class GradeMania4 extends DummyMode {
     private int gradePresentTextIndex;
     private int nextTimeTextIndex;
     private boolean extraState;
-
-    private ScrollingMarqueeText creditText;
 
     private CustomResourceHolder customGraphics;
     private RendererExtension rendererExtension;
@@ -502,8 +691,6 @@ public class GradeMania4 extends DummyMode {
         extraState = false;
 
         engine.ghost = true;
-
-        creditText = new ScrollingMarqueeText(CREDIT_HEADINGS, CREDIT_TEXTS, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
 
         customGraphics = new CustomResourceHolder();
         rendererExtension = new RendererExtension(customGraphics);
@@ -997,6 +1184,47 @@ public class GradeMania4 extends DummyMode {
         if (animatedBackgrounds && engine.owner.backgroundStatus.bg < 0) {
             animBgInstances[engine.owner.backgroundStatus.bg + SECTION_MAX].draw(engine, playerID);
         }
+
+        // Field Redraw.
+        if (engine.gameActive && engine.ending == 2) {
+            int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
+            int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
+
+            if (engine.displaysize != -1) {
+                rendererExtension.drawNext(receiver, engine, offsetX, offsetY);
+                rendererExtension.drawFrame(receiver, engine, offsetX, offsetY + 48, engine.displaysize);
+            } else {
+                rendererExtension.drawFrame(receiver, engine, offsetX, offsetY, -1);
+            }
+        }
+
+        if ((engine.gameActive) && (engine.ending == 2)) {
+            int time = ROLL_TIME_LIMIT - rollTime;
+            if (time < 0) time = 0;
+            receiver.drawScoreFont(engine, playerID, 0, 14, "ROLL TIME", EventReceiver.COLOR_BLUE);
+            receiver.drawScoreFont(engine, playerID, 0, 15, GeneralUtil.getTime(time), ((time > 0) && (time < 10 * 60)));
+
+            Credits.draw(receiver, engine, playerID, (double) rollTime / ROLL_TIME_LIMIT);
+        }
+
+        // Field Redraw.
+        if (engine.gameActive && engine.ending == 2) {
+            int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
+            int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
+
+            if (engine.displaysize != -1) {
+                rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 52, engine.displaysize);
+            } else {
+                rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 4, -1);
+            }
+
+            if (engine.stat == GameEngine.STAT_MOVE) {
+                engine.isVisible = true;
+                receiver.renderMove(engine, playerID);
+                engine.isVisible = false;
+            }
+        }
+
     }
 
     @Override
@@ -1291,7 +1519,7 @@ public class GradeMania4 extends DummyMode {
         }
 
         // Ending
-        if ((engine.gameActive) && (engine.ending == 2) ) {
+        if ((engine.gameActive) && (engine.ending == 2)) {
             rollTime++;
 
             int remainRollTime = ROLL_TIME_LIMIT - rollTime;
@@ -1313,6 +1541,8 @@ public class GradeMania4 extends DummyMode {
                 fireworksLeft = getFireworkLaunchCount(getCombinedGrade(engine));
             }
         }
+
+        engine.isVisible = !engine.gameActive || engine.ending != 2;
 
         if (animatedBackgrounds && (owner.backgroundStatus.bg + SECTION_MAX < 10)) {
             animBgInstances[owner.backgroundStatus.bg + SECTION_MAX].update();
@@ -1661,14 +1891,6 @@ public class GradeMania4 extends DummyMode {
                 }
             }
 
-            if ((engine.gameActive) && (engine.ending == 2)) {
-                int time = ROLL_TIME_LIMIT - rollTime;
-                if (time < 0) time = 0;
-                receiver.drawScoreFont(engine, playerID, 0, 14, "ROLL TIME", EventReceiver.COLOR_BLUE);
-                receiver.drawScoreFont(engine, playerID, 0, 15, GeneralUtil.getTime(time), ((time > 0) && (time < 10 * 60)));
-                creditText.drawAtY(engine, 27.25, engine.displaysize + 1, (double) rollTime / ROLL_TIME_LIMIT);
-            }
-
             // Section Time
             if ((showSectionTime) && (sectionTime != null)) {
                 int x = (receiver.getNextDisplayType() == 2) ? 8 : 12;
@@ -1731,9 +1953,6 @@ public class GradeMania4 extends DummyMode {
             if (getCombinedGrade(engine) >= 20) gcolor = EventReceiver.COLOR_YELLOW;
             else if (rGrade >= 10) gcolor = EventReceiver.COLOR_ORANGE;
             else if (rGrade >= 9) gcolor = EventReceiver.COLOR_GREEN;
-
-            int sgcolor = EventReceiver.COLOR_WHITE;
-            if (secretGrade >= 19) sgcolor = EventReceiver.COLOR_YELLOW;
 
             receiver.drawMenuFont(engine, playerID, 0, 2, useClassicGrades ? "GRADE" : "AER", EventReceiver.COLOR_BLUE);
 
@@ -1855,7 +2074,7 @@ public class GradeMania4 extends DummyMode {
         return true;
     }
 
-    private final GameTextUtilities.TextBlock grandMasterTextBlock = new GameTextUtilities.TextBlock(
+    private final GameTextUtilities.TextBlock grandMasterTextBlock = GameTextUtilities.TextBlock.of(
         GameTextUtilities.Text.custom("G", EventReceiver.COLOR_YELLOW, 2.5f),
         GameTextUtilities.Text.custom("RAND", EventReceiver.COLOR_YELLOW, 1.25f),
         GameTextUtilities.Text.newLine(),
@@ -1866,7 +2085,7 @@ public class GradeMania4 extends DummyMode {
     private GameTextUtilities.TextBlock masterTextBlock(int left, int right) {
         int color = right == 10 ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN;
 
-        return new GameTextUtilities.TextBlock(
+        return GameTextUtilities.TextBlock.of(
             GameTextUtilities.Text.custom("M", color, 2.5f),
             GameTextUtilities.Text.custom("ASTER", color, 1.25f)
         );
@@ -1993,7 +2212,7 @@ public class GradeMania4 extends DummyMode {
                     offsetX + (16 * engine.field.getWidth() / 2) + 4,
                     offsetY + 326,
                     false,
-                    new GameTextUtilities.TextBlock(
+                    GameTextUtilities.TextBlock.of(
                         GameTextUtilities.Text.custom("BUT", EventReceiver.COLOR_ORANGE, 0.7f),
                         GameTextUtilities.Text.custom("... ", EventReceiver.COLOR_ORANGE, 0.35f),
                         GameTextUtilities.Text.custom("LET'S GO BETTER", EventReceiver.COLOR_ORANGE, 0.7f)
