@@ -33,13 +33,16 @@
 package zeroxfc.nullpo.custom.libs;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.WeakHashMap;
+import java.util.stream.Collectors;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
@@ -91,11 +94,16 @@ public class GameTextUtilities {
         return customGraphics;
     }
 
+    @FunctionalInterface
+    public interface TextBlockElement {
+        Collection<Text> toInsert();
+    }
+
     /**
      * Representation of a piece of text to draw.
      * Do not use newlines directly, use the special newline constructor.
      */
-    public static class Text {
+    public static class Text implements TextBlockElement {
         // Cached instances of texts.
         private static final WeakHashMap<Text, WeakReference<Text>> INSTANCES = new WeakHashMap<>();
 
@@ -130,6 +138,14 @@ public class GameTextUtilities {
 
             INSTANCES.put(text, new WeakReference<>(text));
             return text;
+        }
+
+        @Override
+        public Collection<Text> toInsert() {
+            final Collection<Text> coll = new ArrayList<>(1);
+            coll.add(this);
+
+            return coll;
         }
 
         public static Text of(String string) {
@@ -206,6 +222,14 @@ public class GameTextUtilities {
             return (int) (BASE_UNIT * scale);
         }
 
+
+        public static TextBlockElement blankLine(float scale) {
+            return texts(
+                custom(" ", EventReceiver.COLOR_WHITE, scale),
+                newLine()
+            );
+        }
+
         public boolean isNewLine() {
             return string.equals("\n") && scale == 0f;
         }
@@ -230,6 +254,11 @@ public class GameTextUtilities {
         }
     }
 
+    /** Collect a set of texts to one collection, for use with the flattening constructor of TextBlock. */
+    public static TextBlockElement texts(Text... text) {
+        return () -> Arrays.stream(text).collect(Collectors.toList());
+    }
+
     /** Representation of a left-aligned block of lines to draw. */
     public static class TextBlock {
         private static final WeakHashMap<TextBlock, WeakReference<TextBlock>> INSTANCES = new WeakHashMap<>();
@@ -245,11 +274,29 @@ public class GameTextUtilities {
             this.texts = texts;
         }
 
-        public static TextBlock of(Text... texts) {
-            return of(TextJustification.LEFT, texts);
+        public static TextBlock of(TextBlockElement firstCollection, TextBlockElement... textCollections) {
+            return of(TextJustification.LEFT, firstCollection, textCollections);
         }
 
-        public static TextBlock of(Collection<Text> texts) {
+        public static TextBlock of(TextJustification justification, TextBlockElement firstCollection, TextBlockElement... textCollections) {
+            final Collection<Text> identity = new ArrayList<>(firstCollection.toInsert());
+            final Collection<Text> flattened = Arrays.stream(textCollections).sequential().map(TextBlockElement::toInsert).reduce(identity, (l, r) -> { l.addAll(r); return l; });
+            return of(justification, flattened.toArray(new Text[0]));
+        }
+
+        @SafeVarargs
+        public static TextBlock of(Collection<Text> firstCollection, Collection<Text>... textCollections) {
+            return of(TextJustification.LEFT, firstCollection, textCollections);
+        }
+
+        @SafeVarargs
+        public static TextBlock of(TextJustification justification, Collection<Text> firstCollection, Collection<Text>... textCollections) {
+            final Collection<Text> identity = new ArrayList<>(firstCollection);
+            final Collection<Text> flattened = Arrays.stream(textCollections).sequential().reduce(identity, (l, r) -> { l.addAll(r); return l; });
+            return of(justification, flattened.toArray(new Text[0]));
+        }
+
+        public static TextBlock of(Text... texts) {
             return of(TextJustification.LEFT, texts);
         }
 
@@ -521,7 +568,7 @@ public class GameTextUtilities {
 
         // Process all lines.
         int offset = 0;
-        while (offset < texts.length()) {
+        while (offset < texts.length() && dy < maxY) {
             final int lineEnd = findLineEndIndex(texts, offset);
 
             switch (texts.justification) {
@@ -557,6 +604,8 @@ public class GameTextUtilities {
                 if (texts.justification == TextJustification.JUSTIFY) {
                     dx += (texts.getWidth() - getTextsWidth(texts.texts, offset, lineEnd)) / (lineEnd - offset - 1);
                 }
+
+                if (dx > maxX) break;
             }
 
             dx = startX;

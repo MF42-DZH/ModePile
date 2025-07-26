@@ -46,7 +46,9 @@ import mu.nu.nullpo.gui.sdl.RendererSDL;
 import mu.nu.nullpo.gui.sdl.ResourceHolderSDL;
 import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
 import mu.nu.nullpo.gui.slick.RendererSlick;
+import mu.nu.nullpo.gui.slick.ResourceHolder;
 import mu.nu.nullpo.gui.swing.RendererSwing;
+import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import org.apache.log4j.Logger;
 import org.newdawn.slick.Color;
 import org.newdawn.slick.Graphics;
@@ -1085,6 +1087,53 @@ public class RendererExtension {
             drawFieldMethod.invoke(receiver, x, y, engine);
         } catch (Exception e) {
             log.error("Failed to draw frame:");
+            log.error(e);
+        }
+    }
+
+    /**
+     * Draws a background image of the default background images that NullpoMino loads.
+     *
+     * @param receiver Current renderer
+     * @param engine   Current game engine
+     * @param bg       Background [0, 19]
+     */
+    public void drawDefaultBackground(EventReceiver receiver, GameEngine engine, int bg) {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+
+        try {
+            final Field showBg = EventReceiver.class.getDeclaredField("showbg");
+            showBg.setAccessible(true);
+
+            if (bg < 0 || bg > 19 || !((Boolean) showBg.get(receiver))) return;
+
+            RuntimeImage<?> image = null;
+            switch (renderer) {
+                case SLICK:
+                    image = new RuntimeImage.Slick(ResourceHolder.imgPlayBG[bg]);
+                    break;
+                case SWING:
+                    image = new RuntimeImage.Swing(ResourceHolderSwing.imgPlayBG[bg]);
+                    break;
+                case SDL:
+                    image = new RuntimeImage.SDL(ResourceHolderSDL.imgPlayBG[bg]);
+                    break;
+                default:
+                    break;
+            }
+
+            if (image == null) return;
+            customGraphics.drawImage(
+                engine,
+                "bg" + bg,
+                image,
+                0, 0, 640, 480,
+                0, 0, 640, 480,
+                255, 255, 255, 255,
+                false
+            );
+        } catch (Exception e) {
+            log.error("Failed to draw bg:");
             log.error(e);
         }
     }

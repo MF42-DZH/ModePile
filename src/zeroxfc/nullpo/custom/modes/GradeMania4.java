@@ -1,5 +1,6 @@
 package zeroxfc.nullpo.custom.modes;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -235,187 +236,125 @@ public class GradeMania4 extends DummyMode {
     private static class Credits {
         private static final int FILTER = 192;
 
+        @Deprecated
         private static final GameTextUtilities.Text ENTRY_SEP = GameTextUtilities.Text.custom(" ", EventReceiver.COLOR_WHITE, 0.125f);
 
-        private static GameTextUtilities.Text creditText(String string, int color, float scale) {
-            return GameTextUtilities.Text.customMixColor(string, color, FILTER, FILTER, FILTER, 255, scale);
+        private static GameTextUtilities.TextBlockElement entrySep() {
+            return GameTextUtilities.Text.blankLine(0.25f);
+        }
+
+        private static GameTextUtilities.TextBlockElement creditText(String string, int color, float scale) {
+            return GameTextUtilities.texts(
+                GameTextUtilities.Text.customMixColor(string, color, FILTER, FILTER, FILTER, 255, scale),
+                GameTextUtilities.Text.newLine()
+            );
         }
 
         private static final GameTextUtilities.TextBlock MAIN_BLOCK = GameTextUtilities.TextBlock.of(
             GameTextUtilities.TextJustification.CENTRE,
             creditText("GRADE", EventReceiver.COLOR_YELLOW, 2f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("MANIA 4", EventReceiver.COLOR_YELLOW, (10f / 7f)),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("BASED ON", EventReceiver.COLOR_WHITE, 0.5f),
+            entrySep(),
+            creditText("AE-NORMAL", EventReceiver.COLOR_CYAN, 0.95f),
             GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
-            creditText("AE-NORMAL", EventReceiver.COLOR_CYAN, 1f),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.blankLine(4f),
             creditText("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
-            creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
+            creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1.2f),
+            entrySep(),
             creditText("A.K.A.", EventReceiver.COLOR_WHITE, 0.5f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
             GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.blankLine(4f),
             creditText("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
-            creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.625f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
-            creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.625f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
-            creditText("AKARI", EventReceiver.COLOR_WHITE, 0.625f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
-            creditText("JAVA REFLECTION", EventReceiver.COLOR_RED, 0.625f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
-            creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.625f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
+            creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.8f),
+            entrySep(),
+            creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.8f),
+            entrySep(),
+            creditText("AKARI", EventReceiver.COLOR_WHITE, 0.8f),
+            entrySep(),
+            creditText("JAVA REFLECTION", EventReceiver.COLOR_RED, 0.65f),
+            entrySep(),
+            creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.65f),
+            entrySep(),
             creditText("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f),
             GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.blankLine(4f),
             creditText("SPECIAL THANKS", EventReceiver.COLOR_YELLOW, 0.7f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("NULLNONAME", EventReceiver.COLOR_WHITE, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("TETRIS.WIKI", EventReceiver.COLOR_WHITE, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
-            creditText("OSHISAURES", EventReceiver.COLOR_PINK, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
+            creditText("THE OSHISAURES", EventReceiver.COLOR_PINK, 0.65f),
+            entrySep(),
             creditText("GLITCHYPSI", EventReceiver.COLOR_CYAN, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("FARTERYHR", EventReceiver.COLOR_WHITE, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("GRAV", EventReceiver.COLOR_PINK, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("DM DOKURO", EventReceiver.COLOR_RED, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("SIMPLEFLIPS", EventReceiver.COLOR_YELLOW, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("ZAPPOOLA", EventReceiver.COLOR_PINK, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("KINGSTATIC", EventReceiver.COLOR_BLUE, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
-            creditText("TGDNERROTH", EventReceiver.COLOR_CYAN, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
+            creditText("TDGNERROTH", EventReceiver.COLOR_CYAN, 0.65f),
+            entrySep(),
             creditText("MRXBAS", EventReceiver.COLOR_YELLOW, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("TEAKANJI", EventReceiver.COLOR_PURPLE, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("VENTILO_", EventReceiver.COLOR_PURPLE, 0.65f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
+            creditText("ROMAJIMILTONAMULO", EventReceiver.COLOR_GREEN, 0.575f),
+            entrySep(),
+            creditText("NICK666101", EventReceiver.COLOR_PURPLE, 0.65f),
+            entrySep(),
+            creditText("LEIKAISHO", EventReceiver.COLOR_RED, 0.65f),
+            entrySep(),
             creditText("MY 6THFRM CLASSMATES", EventReceiver.COLOR_BLUE, 0.5f),
             GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
+            GameTextUtilities.Text.blankLine(1f),
+            creditText("YOU!", EventReceiver.COLOR_ORANGE, 1.75f),
             GameTextUtilities.Text.newLine(),
-            creditText("YOU!", EventReceiver.COLOR_ORANGE, 1.5f),
+            GameTextUtilities.Text.blankLine(4f),
+            creditText("CONGRATULATIONS!", EventReceiver.COLOR_YELLOW, 0.625f),
+            entrySep(),
+            creditText("YOU HAVE CLEARED", EventReceiver.COLOR_YELLOW, 0.625f),
+            entrySep(),
+            creditText("GRADE MANIA 4!", EventReceiver.COLOR_YELLOW, 0.625f),
             GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.of(" "),
-            GameTextUtilities.Text.newLine(),
-            creditText("CONGRATULATIONS!", EventReceiver.COLOR_YELLOW, 0.62f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
-            creditText("YOU HAVE CLEARED", EventReceiver.COLOR_YELLOW, 0.5f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
-            creditText("GRADE MANIA 4!", EventReceiver.COLOR_YELLOW, 0.5f)
+            GameTextUtilities.Text.blankLine(4f),
+            creditText("THANK YOU", EventReceiver.COLOR_WHITE, (10f / 9f)),
+            entrySep(),
+            creditText("FOR STICKING", EventReceiver.COLOR_WHITE, (10f / 12f)),
+            entrySep(),
+            creditText("WITH MODEPILE", EventReceiver.COLOR_WHITE, (10f / 13f)),
+            entrySep(),
+            creditText("FOR ALL THESE", EventReceiver.COLOR_WHITE, (10f / 13f)),
+            entrySep(),
+            creditText("YEARS!", EventReceiver.COLOR_WHITE, 1f)
         );
 
         private static final GameTextUtilities.TextBlock FINAL_BLOCK = GameTextUtilities.TextBlock.of(
             GameTextUtilities.TextJustification.CENTRE,
             creditText("MODE", EventReceiver.COLOR_GREEN, 2f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("PILE", EventReceiver.COLOR_GREEN, 2f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("PRESENTED BY", EventReceiver.COLOR_WHITE, 0.5f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("AZULLIA, MANDL27", EventReceiver.COLOR_YELLOW, 0.625f),
-            GameTextUtilities.Text.newLine(),
-            ENTRY_SEP,
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
             creditText("NIGHTSHADE", EventReceiver.COLOR_YELLOW, 0.625f)
         );
 
@@ -1185,6 +1124,10 @@ public class GradeMania4 extends DummyMode {
             animBgInstances[engine.owner.backgroundStatus.bg + SECTION_MAX].draw(engine, playerID);
         }
 
+        if (!animatedBackgrounds && engine.ending == 2) {
+            rendererExtension.drawDefaultBackground(receiver, engine, previousBg);
+        }
+
         // Field Redraw.
         if (engine.gameActive && engine.ending == 2) {
             int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
@@ -1217,14 +1160,17 @@ public class GradeMania4 extends DummyMode {
             } else {
                 rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 4, -1);
             }
-
-            if (engine.stat == GameEngine.STAT_MOVE) {
-                engine.isVisible = true;
-                receiver.renderMove(engine, playerID);
-                engine.isVisible = false;
-            }
         }
+    }
 
+    @Override
+    public void renderMove(GameEngine engine, int playerID) {
+        // Field Redraw.
+        if (engine.gameActive && engine.ending == 2) {
+            engine.isVisible = true;
+            receiver.renderMove(engine, playerID);
+            engine.isVisible = false;
+        }
     }
 
     @Override
@@ -1493,6 +1439,8 @@ public class GradeMania4 extends DummyMode {
         }
     }
 
+    private int previousBg;
+
     @Override
     public void onLast(GameEngine engine, int playerID) {
         final int oldGrade = leftGrade + rightGrade;
@@ -1543,6 +1491,16 @@ public class GradeMania4 extends DummyMode {
         }
 
         engine.isVisible = !engine.gameActive || engine.ending != 2;
+
+        if (engine.owner.backgroundStatus.bg >= 0 && engine.ending == 0 && !animatedBackgrounds) {
+            previousBg = engine.owner.backgroundStatus.bg;
+        } else if (!animatedBackgrounds && engine.ending == 2) {
+            engine.owner.backgroundStatus.bg = -1;
+        }
+
+        if (!animatedBackgrounds && engine.ending != 2) {
+            engine.owner.backgroundStatus.bg = previousBg;
+        }
 
         if (animatedBackgrounds && (owner.backgroundStatus.bg + SECTION_MAX < 10)) {
             animBgInstances[owner.backgroundStatus.bg + SECTION_MAX].update();
