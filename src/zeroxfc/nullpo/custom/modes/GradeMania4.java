@@ -428,7 +428,7 @@ public class GradeMania4 extends DummyMode {
     }
 
     private static final int[] YELLOW_OUTLINE = { 255, 255, 0 };
-    private static final int[] WHITE_OUTLINE = { 255, 255, 255 };
+    private static final int[] WHITE_OUTLINE = { 240, 240, 240 };
 
     private Ruleset gameRuleset;
 

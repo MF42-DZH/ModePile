@@ -35,6 +35,7 @@ package zeroxfc.nullpo.custom.libs;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.function.BiPredicate;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.event.EventReceiver;
@@ -812,6 +813,17 @@ public class RendererExtension {
         final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
         final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
 
+        final BiPredicate<Integer, Integer> hasBlockAt = (x, y) -> {
+            for (int i = 0; i < piece.getMaxBlock(); ++i) {
+                final int pdX = piece.dataX[piece.direction][i];
+                final int pdY = piece.dataY[piece.direction][i];
+
+                if (pdX == x && pdY == y) return true;
+            }
+
+            return false;
+        };
+
         int tlX, tlY;
         for (int i = 0; i < piece.getMaxBlock(); ++i) {
             final Block blk = piece.block[i];
@@ -822,6 +834,7 @@ public class RendererExtension {
 
             if (fX < 0 || fX >= engine.field.getWidth() || fY < 0 || fY >= engine.field.getHeight()) continue;
 
+            // Sides
             if (!blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_UP)) {
                 tlX = baseX + (fX * 16);
                 tlY = baseY + (fY * 16);
@@ -869,6 +882,67 @@ public class RendererExtension {
                     receiver,
                     tlX, tlY,
                     16, thickness,
+                    color[0], color[1], color[2], 255,
+                    true
+                );
+            }
+
+            // Corners
+            if (blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_UP)
+                && blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_LEFT)
+                && !hasBlockAt.test(pdX - 1, pdY - 1)) {
+                tlX = baseX + (fX * 16);
+                tlY = baseY + (fY * 16);
+
+                drawing.drawRectangle(
+                    receiver,
+                    tlX, tlY,
+                    thickness, thickness,
+                    color[0], color[1], color[2], 255,
+                    true
+                );
+            }
+
+            if (blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_UP)
+                && blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT)
+                && !hasBlockAt.test(pdX + 1, pdY - 1)) {
+                tlX = baseX + (fX * 16) + (16 - thickness);
+                tlY = baseY + (fY * 16);
+
+                drawing.drawRectangle(
+                    receiver,
+                    tlX, tlY,
+                    thickness, thickness,
+                    color[0], color[1], color[2], 255,
+                    true
+                );
+            }
+
+            if (blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_DOWN)
+                && blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_LEFT)
+                && !hasBlockAt.test(pdX - 1, pdY + 1)) {
+                tlX = baseX + (fX * 16);
+                tlY = baseY + (fY * 16) + (16 - thickness);
+
+                drawing.drawRectangle(
+                    receiver,
+                    tlX, tlY,
+                    thickness, thickness,
+                    color[0], color[1], color[2], 255,
+                    true
+                );
+            }
+
+            if (blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_DOWN)
+                && blk.getAttribute(Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT)
+                && !hasBlockAt.test(pdX + 1, pdY + 1)) {
+                tlX = baseX + (fX * 16) + (16 - thickness);
+                tlY = baseY + (fY * 16) + (16 - thickness);
+
+                drawing.drawRectangle(
+                    receiver,
+                    tlX, tlY,
+                    thickness, thickness,
                     color[0], color[1], color[2], 255,
                     true
                 );
