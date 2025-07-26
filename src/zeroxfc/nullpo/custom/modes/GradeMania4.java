@@ -234,7 +234,7 @@ public class GradeMania4 extends DummyMode {
 
     // Credit headings
     private static final String[] CREDIT_HEADINGS = {
-        "GRADE MANIA 4: ",
+        "GRADE MANIA 4:",
         "MODE CREATOR:",
         "BASIS:",
         "SPECIAL THANKS GOES TO",
@@ -429,6 +429,7 @@ public class GradeMania4 extends DummyMode {
 
     private static final int[] YELLOW_OUTLINE = { 255, 255, 0 };
     private static final int[] WHITE_OUTLINE = { 240, 240, 240 };
+    private static final int[] DARK_GREY_OUTLINE = { 100, 100, 100 };
 
     private Ruleset gameRuleset;
 
@@ -1699,7 +1700,8 @@ public class GradeMania4 extends DummyMode {
         }
 
         if (engine.gameActive && engine.holdDisable && engine.ruleopt.holdEnable) {
-            final int[] outline = (engine.statc[0] / 6) % 2 == 0 ? YELLOW_OUTLINE : WHITE_OUTLINE;
+            final int select = (engine.statc[0] / 4) % 3;
+            final int[] outline =  select == 0 ? YELLOW_OUTLINE : (select == 1 ? WHITE_OUTLINE : DARK_GREY_OUTLINE);
             rendererExtension.drawPieceOutline(receiver, engine, playerID, 2, outline);
         }
 
