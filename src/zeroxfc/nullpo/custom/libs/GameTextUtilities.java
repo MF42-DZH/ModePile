@@ -133,7 +133,6 @@ public class GameTextUtilities {
             if (ref != null) {
                 final Text instance = ref.get();
                 if (instance != null) return instance;
-
             }
 
             INSTANCES.put(text, new WeakReference<>(text));
@@ -255,11 +254,26 @@ public class GameTextUtilities {
     }
 
     /** Collect a set of texts to one collection, for use with the flattening constructor of TextBlock. */
-    public static TextBlockElement texts(Text... text) {
-        return () -> Arrays.stream(text).collect(Collectors.toList());
+    public static TextBlockElement texts(Text text, Text... otherTexts) {
+        return () -> {
+            final Collection<Text> result = new ArrayList<>(text.toInsert());
+            result.addAll(Arrays.asList(otherTexts));
+
+            return result;
+        };
     }
 
-    /** Representation of a left-aligned block of lines to draw. */
+    /** Collect a set of texts to one collection, for use with the flattening constructor of TextBlock. */
+    public static TextBlockElement textElems(TextBlockElement text, TextBlockElement... otherTexts) {
+        return () -> {
+            final Collection<Text> result = new ArrayList<>(text.toInsert());
+            Arrays.stream(otherTexts).forEach(t -> result.addAll(t.toInsert()));
+
+            return result;
+        };
+    }
+
+        /** Representation of a left-aligned block of lines to draw. */
     public static class TextBlock {
         private static final WeakHashMap<TextBlock, WeakReference<TextBlock>> INSTANCES = new WeakHashMap<>();
 
@@ -308,7 +322,6 @@ public class GameTextUtilities {
             if (ref != null) {
                 final TextBlock instance = ref.get();
                 if (instance != null) return instance;
-
             }
 
             INSTANCES.put(block, new WeakReference<>(block));

@@ -1100,41 +1100,32 @@ public class RendererExtension {
      */
     public void drawDefaultBackground(EventReceiver receiver, GameEngine engine, int bg) {
         final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+        if (bg < 0 || bg > 19) return;
 
-        try {
-            final Field showBg = EventReceiver.class.getDeclaredField("showbg");
-            showBg.setAccessible(true);
-
-            if (bg < 0 || bg > 19 || !((Boolean) showBg.get(receiver))) return;
-
-            RuntimeImage<?> image = null;
-            switch (renderer) {
-                case SLICK:
-                    image = new RuntimeImage.Slick(ResourceHolder.imgPlayBG[bg]);
-                    break;
-                case SWING:
-                    image = new RuntimeImage.Swing(ResourceHolderSwing.imgPlayBG[bg]);
-                    break;
-                case SDL:
-                    image = new RuntimeImage.SDL(ResourceHolderSDL.imgPlayBG[bg]);
-                    break;
-                default:
-                    break;
-            }
-
-            if (image == null) return;
-            customGraphics.drawImage(
-                engine,
-                "bg" + bg,
-                image,
-                0, 0, 640, 480,
-                0, 0, 640, 480,
-                255, 255, 255, 255,
-                false
-            );
-        } catch (Exception e) {
-            log.error("Failed to draw bg:");
-            log.error(e);
+        RuntimeImage<?> image = null;
+        switch (renderer) {
+            case SLICK:
+                image = new RuntimeImage.Slick(ResourceHolder.imgPlayBG[bg]);
+                break;
+            case SWING:
+                image = new RuntimeImage.Swing(ResourceHolderSwing.imgPlayBG[bg]);
+                break;
+            case SDL:
+                image = new RuntimeImage.SDL(ResourceHolderSDL.imgPlayBG[bg]);
+                break;
+            default:
+                break;
         }
+
+        if (image == null) return;
+        customGraphics.drawImage(
+            engine,
+            "bg" + bg,
+            image,
+            0, 0, 640, 480,
+            0, 0, 640, 480,
+            255, 255, 255, 255,
+            true
+        );
     }
 }

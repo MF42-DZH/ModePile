@@ -236,9 +236,6 @@ public class GradeMania4 extends DummyMode {
     private static class Credits {
         private static final int FILTER = 192;
 
-        @Deprecated
-        private static final GameTextUtilities.Text ENTRY_SEP = GameTextUtilities.Text.custom(" ", EventReceiver.COLOR_WHITE, 0.125f);
-
         private static GameTextUtilities.TextBlockElement entrySep() {
             return GameTextUtilities.Text.blankLine(0.25f);
         }
@@ -259,19 +256,19 @@ public class GradeMania4 extends DummyMode {
             creditText("BASED ON", EventReceiver.COLOR_WHITE, 0.5f),
             entrySep(),
             creditText("AE-NORMAL", EventReceiver.COLOR_CYAN, 0.95f),
-            GameTextUtilities.Text.newLine(),
+            entrySep(),
+            creditText("(WITH SPITE)", EventReceiver.COLOR_WHITE, 0.75f),
             GameTextUtilities.Text.blankLine(4f),
             creditText("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
-            entrySep(),
+            GameTextUtilities.Text.blankLine(1f),
             creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1.2f),
             entrySep(),
             creditText("A.K.A.", EventReceiver.COLOR_WHITE, 0.5f),
             entrySep(),
             creditText("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
-            GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.blankLine(4f),
             creditText("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
-            entrySep(),
+            GameTextUtilities.Text.blankLine(1f),
             creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.8f),
             entrySep(),
             creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.8f),
@@ -283,14 +280,9 @@ public class GradeMania4 extends DummyMode {
             creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.65f),
             entrySep(),
             creditText("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f),
-            GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.blankLine(4f),
             creditText("SPECIAL THANKS", EventReceiver.COLOR_YELLOW, 0.7f),
-            entrySep(),
-            creditText("NULLNONAME", EventReceiver.COLOR_WHITE, 0.65f),
-            entrySep(),
-            creditText("TETRIS.WIKI", EventReceiver.COLOR_WHITE, 0.65f),
-            entrySep(),
+            GameTextUtilities.Text.blankLine(1f),
             creditText("THE OSHISAURES", EventReceiver.COLOR_PINK, 0.65f),
             entrySep(),
             creditText("GLITCHYPSI", EventReceiver.COLOR_CYAN, 0.65f),
@@ -322,27 +314,39 @@ public class GradeMania4 extends DummyMode {
             creditText("LEIKAISHO", EventReceiver.COLOR_RED, 0.65f),
             entrySep(),
             creditText("MY 6THFRM CLASSMATES", EventReceiver.COLOR_BLUE, 0.5f),
-            GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.blankLine(1f),
             creditText("YOU!", EventReceiver.COLOR_ORANGE, 1.75f),
-            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.blankLine(4f),
+            creditText("SHOUTOUTS TO", EventReceiver.COLOR_YELLOW, 0.7f),
+            GameTextUtilities.Text.blankLine(1f),
+            creditText("NULLNONAME", EventReceiver.COLOR_WHITE, 0.65f),
+            entrySep(),
+            creditText("TETRIS.WIKI", EventReceiver.COLOR_WHITE, 0.65f),
+            entrySep(),
+            creditText("HARD DROP WIKI", EventReceiver.COLOR_WHITE, 0.65f),
+            entrySep(),
+            creditText("ALL HEBORIS PLAYERS", EventReceiver.COLOR_WHITE, 0.525f),
+            entrySep(),
+            creditText("ALL #GM SERIES PLAYERS", EventReceiver.COLOR_WHITE, 0.45f),
+            entrySep(),
+            creditText("ALL NULLPOMINO PLAYERS", EventReceiver.COLOR_WHITE, 0.45f),
+            entrySep(),
             GameTextUtilities.Text.blankLine(4f),
             creditText("CONGRATULATIONS!", EventReceiver.COLOR_YELLOW, 0.625f),
             entrySep(),
             creditText("YOU HAVE CLEARED", EventReceiver.COLOR_YELLOW, 0.625f),
             entrySep(),
             creditText("GRADE MANIA 4!", EventReceiver.COLOR_YELLOW, 0.625f),
-            GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.blankLine(4f),
-            creditText("THANK YOU", EventReceiver.COLOR_WHITE, (10f / 9f)),
+            creditText("THANK YOU", EventReceiver.COLOR_WHITE, (10f / 13f)),
             entrySep(),
-            creditText("FOR STICKING", EventReceiver.COLOR_WHITE, (10f / 12f)),
+            creditText("FOR STICKING", EventReceiver.COLOR_WHITE, (10f / 13f)),
             entrySep(),
             creditText("WITH MODEPILE", EventReceiver.COLOR_WHITE, (10f / 13f)),
             entrySep(),
             creditText("FOR ALL THESE", EventReceiver.COLOR_WHITE, (10f / 13f)),
             entrySep(),
-            creditText("YEARS!", EventReceiver.COLOR_WHITE, 1f)
+            creditText("YEARS!", EventReceiver.COLOR_WHITE, (10f / 13f))
         );
 
         private static final GameTextUtilities.TextBlock FINAL_BLOCK = GameTextUtilities.TextBlock.of(
@@ -365,16 +369,16 @@ public class GradeMania4 extends DummyMode {
             GameTextUtilities.drawAlignedBoundedTextBlock(
                 engine,
                 baseX + (engine.field.getWidth() * 8),
-                Interpolation.lerp(baseY + (engine.field.getHeight() * 16), baseY - MAIN_BLOCK.getHeight(), progress / 0.9),
+                (int) Math.floor(Interpolation.lerp(baseY + (engine.field.getHeight() * 16d), baseY - (double) MAIN_BLOCK.getHeight(), progress / 0.9)),
                 baseX - 1, baseY, baseX + (engine.field.getWidth() * 16) + 1, baseY + (engine.field.getHeight() * 16),
                 false, MAIN_BLOCK, ObjectAlignment.TOP_MIDDLE
             );
 
-            if (progress > 0.65) {
+            if (progress > 0.775) {
                 GameTextUtilities.drawAlignedBoundedTextBlock(
                     engine,
                     baseX + (engine.field.getWidth() * 8),
-                    Interpolation.lerp(baseY + (engine.field.getHeight() * 16), baseY + (engine.field.getHeight() * 8), Math.min(1d, (progress - 0.65) / 0.25)),
+                    (int) Math.floor(Interpolation.lerp(baseY + (engine.field.getHeight() * 16d), baseY + (engine.field.getHeight() * 8d), Math.min(1d, (progress - 0.775) / 0.125))),
                     baseX - 1, baseY, baseX + (engine.field.getWidth() * 16) + 1, baseY + (engine.field.getHeight() * 16),
                     false, FINAL_BLOCK, ObjectAlignment.MIDDLE_MIDDLE
                 );
