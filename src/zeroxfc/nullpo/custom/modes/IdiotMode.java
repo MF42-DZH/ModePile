@@ -1167,9 +1167,7 @@ public class IdiotMode extends DummyMode {
             }
         }
 
-        if (gameType == GAMETYPE_OMEN) {
-            rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
-        }
+        rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
 
         if (landingParticles != null) landingParticles.draw(receiver);
     }

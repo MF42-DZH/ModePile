@@ -606,9 +606,7 @@ public class RollTraining extends MarathonModeBase {
             }
         }
 
-        if (usedSpeed == SPEED_TI) {
-            rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
-        }
+        rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
 
         // NET: Number of spectators
         netDrawSpectatorsCount(engine, 0, 18);
