@@ -100,6 +100,8 @@ public class ModePileCredits {
             entrySep(),
             creditText("LEIKAISHO", EventReceiver.COLOR_RED, 0.65f),
             entrySep(),
+            creditText("MARKGAMED7794", EventReceiver.COLOR_PURPLE, 0.65f),
+            entrySep(),
             creditText("MERP", EventReceiver.COLOR_BLUE, 0.65f),
             entrySep(),
             creditText("TIM_THE_ENCHANTER", EventReceiver.COLOR_BLUE, 0.575f),
