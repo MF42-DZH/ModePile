@@ -9,6 +9,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.ModePileCredits;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 
@@ -69,6 +70,39 @@ public class RollTraining extends MarathonModeBase {
         SPEED_SETTINGS[1].das = 8;
     }
 
+    private static final ModePileCredits CREDITS = new ModePileCredits(
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("ROLL", EventReceiver.COLOR_YELLOW, 2f),
+            ModePileCredits.creditText("TRAINING", EventReceiver.COLOR_YELLOW, (10f / 8f)),
+            ModePileCredits.creditText("BASED ON", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.creditText("TAP-MASTER", EventReceiver.COLOR_CYAN, 1f),
+            ModePileCredits.creditText("AND", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.creditTextNoSp("TI-MASTER", EventReceiver.COLOR_CYAN, 1f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditTextNoSp("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
+            GameTextUtilities.Text.blankLine(1f),
+            ModePileCredits.creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1.2f),
+            ModePileCredits.creditText("A.K.A.", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.creditTextNoSp("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
+            GameTextUtilities.Text.blankLine(4f),
+            ModePileCredits.creditTextNoSp("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
+            GameTextUtilities.Text.blankLine(1f),
+            ModePileCredits.creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("AKARI", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("JAVA REFLECTION", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.creditTextNoSp("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("NOW SURVIVE TO", EventReceiver.COLOR_YELLOW, 0.7f),
+            ModePileCredits.creditText("THE END!", EventReceiver.COLOR_YELLOW, 0.7f),
+            ModePileCredits.creditTextNoSp("YOU CAN DO IT!", EventReceiver.COLOR_YELLOW, 0.7f)
+        ),
+        0.775, 0.125
+    );
+
     /**
      * Rankings' scores
      */
@@ -84,6 +118,7 @@ public class RollTraining extends MarathonModeBase {
     private boolean useMRoll;
     private int usedSpeed;
     private boolean endless;
+    private boolean showRoll;
     private double tiGrade;
     private double tapGrade;
     private int lastGrade;
@@ -157,6 +192,7 @@ public class RollTraining extends MarathonModeBase {
         enableTSpin = false;
         tspinEnableEZ = false;
         big = false;
+        showRoll = false;
 
         rendererExtension = new RendererExtension();
 
@@ -208,7 +244,7 @@ public class RollTraining extends MarathonModeBase {
         // Menu
         else if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 3, playerID);
+            int change = updateCursor(engine, 4, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -231,6 +267,9 @@ public class RollTraining extends MarathonModeBase {
                         if (startlevel > 19) startlevel = 0;
                         else if (startlevel < 0) startlevel = 19;
                         engine.owner.backgroundStatus.bg = startlevel;
+                        break;
+                    case 4:
+                        showRoll = !showRoll;
                         break;
                     default:
                         break;
@@ -307,7 +346,9 @@ public class RollTraining extends MarathonModeBase {
                 "TYPE", usedSpeed == SPEED_TAP ? "TAP" : "TI",
                 "M-ROLL", GeneralUtil.getONorOFF(useMRoll),
                 "ENDLESS", GeneralUtil.getONorOFF(endless),
-                "BACKGROUND", String.valueOf(startlevel));
+                "BACKGROUND", String.valueOf(startlevel),
+                "SHOW ROLL", GeneralUtil.getONorOFF(showRoll)
+            );
         }
     }
 
@@ -585,6 +626,42 @@ public class RollTraining extends MarathonModeBase {
         lastGrade = usedSpeed == SPEED_TAP ? (int) tapGrade : (int) tiGrade;
     }
 
+    @Override
+    public void renderFirst(GameEngine engine, int playerID) {
+        if (!endless && engine.gameActive && timer > 0) {
+            rendererExtension.drawDefaultBackground(receiver, engine, startlevel);
+
+            int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
+            int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
+
+            if (engine.displaysize != -1) {
+                rendererExtension.drawNext(receiver, engine, offsetX, offsetY);
+                rendererExtension.drawFrame(receiver, engine, offsetX, offsetY + 48, engine.displaysize);
+            } else {
+                rendererExtension.drawFrame(receiver, engine, offsetX, offsetY, -1);
+            }
+
+            if (showRoll) {
+                CREDITS.draw(receiver, engine, playerID, (double) (TIME_LIMITS[usedSpeed] - timer) / TIME_LIMITS[usedSpeed]);
+            }
+
+            if (engine.displaysize != -1) {
+                rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 52, engine.displaysize);
+            } else {
+                rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 4, -1);
+            }
+        }
+    }
+
+    @Override
+    public void renderMove(GameEngine engine, int playerID) {
+        if (!endless && engine.gameActive && timer > 0) {
+            engine.isVisible = true;
+            receiver.renderMove(engine, playerID);
+            engine.isVisible = false;
+        }
+    }
+
     /*
      * Called after every frame
      */
@@ -623,6 +700,15 @@ public class RollTraining extends MarathonModeBase {
         if (factor >= 0.25 && !endless) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
         if (factor >= 0.5 && !endless) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
         if (factor >= 0.75 && !endless) engine.meterColor = GameEngine.METER_COLOR_RED;
+
+        // FOR CREDITS
+        if (engine.gameActive && !endless && timer > 0) {
+            engine.isVisible = false;
+            engine.owner.backgroundStatus.bg = -1;
+        } else {
+            engine.isVisible = true;
+            engine.owner.backgroundStatus.bg = startlevel;
+        }
 
         if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM) {
             // Show rank
@@ -767,6 +853,7 @@ public class RollTraining extends MarathonModeBase {
         useMRoll = prop.getProperty("rollTraining.useMRoll", true);
         endless = prop.getProperty("rollTraining.endlessMode", false);
         version = prop.getProperty("rollTraining.version", 0);
+        showRoll = prop.getProperty("rollTraining.showRoll", true);
     }
 
     /**
@@ -780,6 +867,7 @@ public class RollTraining extends MarathonModeBase {
         prop.setProperty("rollTraining.useMRoll", useMRoll);
         prop.setProperty("rollTraining.endlessMode", endless);
         prop.setProperty("rollTraining.version", version);
+        prop.setProperty("rollTraining.showRoll", showRoll);
     }
 
     /**
@@ -788,10 +876,13 @@ public class RollTraining extends MarathonModeBase {
      * @param prop Property file
      */
     private void loadSettingPlayer(ProfileProperties prop) {
+        if (!prop.isLoggedIn()) return;
+
         startlevel = prop.getProperty("rollTraining.startlevel", 0);
         usedSpeed = prop.getProperty("rollTraining.usedSpeed", SPEED_TI);
         useMRoll = prop.getProperty("rollTraining.useMRoll", true);
         endless = prop.getProperty("rollTraining.endlessMode", false);
+        showRoll = prop.getProperty("rollTraining.showRoll", true);
     }
 
     /**
@@ -800,10 +891,13 @@ public class RollTraining extends MarathonModeBase {
      * @param prop Property file
      */
     private void saveSettingPlayer(ProfileProperties prop) {
+        if (!prop.isLoggedIn()) return;
+
         prop.setProperty("rollTraining.startlevel", startlevel);
         prop.setProperty("rollTraining.usedSpeed", usedSpeed);
         prop.setProperty("rollTraining.useMRoll", useMRoll);
         prop.setProperty("rollTraining.endlessMode", endless);
+        prop.setProperty("rollTraining.showRoll", showRoll);
     }
 
     /**
@@ -846,6 +940,8 @@ public class RollTraining extends MarathonModeBase {
      * @param ruleName Rule name
      */
     protected void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+        if (!prop.isLoggedIn()) return;
+
         for (int i = 0; i < RANKING_MAX; i++) {
             for (int j = 0; j < GAMETYPE_MAX; j++) {
                 rankingGradePlayer[j][i] = prop.getProperty("rollTraining.ranking." + ruleName + "." + j + ".grade." + i, 0.0);
@@ -862,6 +958,8 @@ public class RollTraining extends MarathonModeBase {
      * @param ruleName Rule name
      */
     private void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+        if (!prop.isLoggedIn()) return;
+
         for (int i = 0; i < RANKING_MAX; i++) {
             for (int j = 0; j < GAMETYPE_MAX; j++) {
                 prop.setProperty("rollTraining.ranking." + ruleName + "." + j + ".grade." + i, rankingGradePlayer[j][i]);

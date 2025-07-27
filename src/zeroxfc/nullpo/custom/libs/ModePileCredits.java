@@ -12,12 +12,20 @@ public class ModePileCredits {
     // Darkening filter for the credits.
     private static final int FILTER = 192;
 
-    public static GameTextUtilities.TextBlockElement entrySep() {
+    private static GameTextUtilities.TextBlockElement entrySep() {
         return GameTextUtilities.Text.blankLine(0.25f);
     }
 
     public static GameTextUtilities.TextBlockElement creditText(String string, int color, float scale) {
-        return GameTextUtilities.texts(
+        return GameTextUtilities.textElems(
+            GameTextUtilities.Text.customMixColor(string, color, FILTER, FILTER, FILTER, 255, scale),
+            GameTextUtilities.Text.newLine(),
+            entrySep()
+        );
+    }
+
+    public static GameTextUtilities.TextBlockElement creditTextNoSp(String string, int color, float scale) {
+        return GameTextUtilities.textElems(
             GameTextUtilities.Text.customMixColor(string, color, FILTER, FILTER, FILTER, 255, scale),
             GameTextUtilities.Text.newLine()
         );
@@ -26,14 +34,10 @@ public class ModePileCredits {
     private static final GameTextUtilities.TextBlock FINAL_BLOCK = GameTextUtilities.TextBlock.of(
         GameTextUtilities.TextJustification.CENTRE,
         creditText("MODE", EventReceiver.COLOR_GREEN, 2f),
-        entrySep(),
         creditText("PILE", EventReceiver.COLOR_GREEN, 2f),
-        entrySep(),
         creditText("PRESENTED BY", EventReceiver.COLOR_WHITE, 0.5f),
-        entrySep(),
         creditText("AZULLIA, MANDL27", EventReceiver.COLOR_YELLOW, 0.625f),
-        entrySep(),
-        creditText("NIGHTSHADE", EventReceiver.COLOR_YELLOW, 0.625f)
+        creditTextNoSp("NIGHTSHADE", EventReceiver.COLOR_YELLOW, 0.625f)
     );
 
     private final GameTextUtilities.TextBlock mainBlock;
@@ -68,85 +72,52 @@ public class ModePileCredits {
             GameTextUtilities.Text.blankLine(4f),
             creatorBlock,
             GameTextUtilities.Text.blankLine(4f),
-            creditText("SPECIAL THANKS", EventReceiver.COLOR_YELLOW, 0.7f),
+            creditTextNoSp("SPECIAL THANKS", EventReceiver.COLOR_YELLOW, 0.7f),
             GameTextUtilities.Text.blankLine(1f),
             creditText("THE OSHISAURES", EventReceiver.COLOR_PINK, 0.65f),
-            entrySep(),
             creditText("GLITCHYPSI", EventReceiver.COLOR_CYAN, 0.65f),
-            entrySep(),
             creditText("FARTERYHR", EventReceiver.COLOR_WHITE, 0.65f),
-            entrySep(),
             creditText("GRAV", EventReceiver.COLOR_PINK, 0.65f),
-            entrySep(),
             creditText("DM DOKURO", EventReceiver.COLOR_RED, 0.65f),
-            entrySep(),
             creditText("SIMPLEFLIPS", EventReceiver.COLOR_YELLOW, 0.65f),
-            entrySep(),
             creditText("ZAPPOOLA", EventReceiver.COLOR_PINK, 0.65f),
-            entrySep(),
             creditText("KINGSTATIC", EventReceiver.COLOR_BLUE, 0.65f),
-            entrySep(),
             creditText("TDGNERROTH", EventReceiver.COLOR_CYAN, 0.65f),
-            entrySep(),
             creditText("MRXBAS", EventReceiver.COLOR_YELLOW, 0.65f),
-            entrySep(),
             creditText("TEAKANJI", EventReceiver.COLOR_PURPLE, 0.65f),
-            entrySep(),
             creditText("VENTILO_", EventReceiver.COLOR_PURPLE, 0.65f),
-            entrySep(),
             creditText("ROMAJIMILTONAMULO", EventReceiver.COLOR_GREEN, 0.575f),
-            entrySep(),
             creditText("NICK666101", EventReceiver.COLOR_PURPLE, 0.65f),
-            entrySep(),
             creditText("LEIKAISHO", EventReceiver.COLOR_RED, 0.65f),
-            entrySep(),
             creditText("MARKGAMED7794", EventReceiver.COLOR_PURPLE, 0.65f),
-            entrySep(),
             creditText("MERP", EventReceiver.COLOR_BLUE, 0.65f),
-            entrySep(),
             creditText("TIM_THE_ENCHANTER", EventReceiver.COLOR_BLUE, 0.575f),
-            entrySep(),
             creditText("LEFALCHIZZLE", EventReceiver.COLOR_BLUE, 0.65f),
-            entrySep(),
             creditText("FATE", EventReceiver.COLOR_BLUE, 0.65f),
-            entrySep(),
             creditText("THEPROGUE", EventReceiver.COLOR_BLUE, 0.65f),
-            entrySep(),
-            creditText("RURURARURI", EventReceiver.COLOR_BLUE, 0.65f),
+            creditTextNoSp("RURURARURI", EventReceiver.COLOR_BLUE, 0.65f),
             GameTextUtilities.Text.blankLine(1f),
-            creditText("YOU!", EventReceiver.COLOR_ORANGE, 1.75f),
+            creditTextNoSp("YOU!", EventReceiver.COLOR_ORANGE, 1.75f),
             GameTextUtilities.Text.blankLine(4f),
-            creditText("SHOUTOUTS TO", EventReceiver.COLOR_YELLOW, 0.7f),
+            creditTextNoSp("SHOUTOUTS TO", EventReceiver.COLOR_YELLOW, 0.7f),
             GameTextUtilities.Text.blankLine(1f),
             creditText("NULLNONAME", EventReceiver.COLOR_WHITE, 0.65f),
-            entrySep(),
             creditText("TETRIS.WIKI", EventReceiver.COLOR_WHITE, 0.65f),
-            entrySep(),
             creditText("HARD DROP WIKI", EventReceiver.COLOR_WHITE, 0.65f),
-            entrySep(),
             creditText("ALL DTET PLAYERS", EventReceiver.COLOR_WHITE, 0.625f),
-            entrySep(),
             creditText("ALL T-EX PLAYERS", EventReceiver.COLOR_WHITE, 0.625f),
-            entrySep(),
             creditText("ALL HEBORIS PLAYERS", EventReceiver.COLOR_WHITE, 0.525f),
-            entrySep(),
             creditText("ALL #GM SERIES PLAYERS", EventReceiver.COLOR_WHITE, 0.45f),
-            entrySep(),
             creditText("ALL NULLPOMINO PLAYERS", EventReceiver.COLOR_WHITE, 0.45f),
-            entrySep(),
-            creditText("ALL SEGATET '99 PLAYERS", EventReceiver.COLOR_WHITE, 0.43f),
+            creditTextNoSp("ALL SEGATET '99 PLAYERS", EventReceiver.COLOR_WHITE, 0.43f),
             GameTextUtilities.Text.blankLine(4f),
             congratulationsBlock,
             GameTextUtilities.Text.blankLine(4f),
             creditText("THANK YOU", EventReceiver.COLOR_WHITE, (10f / 13f)),
-            entrySep(),
             creditText("FOR STICKING", EventReceiver.COLOR_WHITE, (10f / 13f)),
-            entrySep(),
             creditText("WITH MODEPILE", EventReceiver.COLOR_WHITE, (10f / 13f)),
-            entrySep(),
             creditText("FOR ALL THESE", EventReceiver.COLOR_WHITE, (10f / 13f)),
-            entrySep(),
-            creditText("YEARS!", EventReceiver.COLOR_WHITE, (10f / 13f))
+            creditTextNoSp("YEARS!", EventReceiver.COLOR_WHITE, (10f / 13f))
         );
     }
 

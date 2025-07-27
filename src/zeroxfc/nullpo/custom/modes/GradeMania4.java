@@ -237,44 +237,31 @@ public class GradeMania4 extends DummyMode {
     private static final ModePileCredits CREDITS = new ModePileCredits(
         GameTextUtilities.textElems(
             ModePileCredits.creditText("GRADE", EventReceiver.COLOR_YELLOW, 2f),
-            ModePileCredits.entrySep(),
             ModePileCredits.creditText("MANIA 4", EventReceiver.COLOR_YELLOW, (10f / 7f)),
-            ModePileCredits.entrySep(),
             ModePileCredits.creditText("BASED ON", EventReceiver.COLOR_WHITE, 0.5f),
-            ModePileCredits.entrySep(),
             ModePileCredits.creditText("AE-NORMAL", EventReceiver.COLOR_CYAN, 0.95f),
-            ModePileCredits.entrySep(),
-            ModePileCredits.creditText("(WITH SPITE)", EventReceiver.COLOR_WHITE, 0.75f)
+            ModePileCredits.creditTextNoSp("(WITH SPITE)", EventReceiver.COLOR_WHITE, 0.75f)
         ),
         GameTextUtilities.textElems(
-            ModePileCredits.creditText("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
+            ModePileCredits.creditTextNoSp("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
             GameTextUtilities.Text.blankLine(1f),
             ModePileCredits.creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1.2f),
-            ModePileCredits.entrySep(),
             ModePileCredits.creditText("A.K.A.", EventReceiver.COLOR_WHITE, 0.5f),
-            ModePileCredits.entrySep(),
-            ModePileCredits.creditText("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
+            ModePileCredits.creditTextNoSp("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
             GameTextUtilities.Text.blankLine(4f),
-            ModePileCredits.creditText("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
+            ModePileCredits.creditTextNoSp("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
             GameTextUtilities.Text.blankLine(1f),
-            ModePileCredits.creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.8f),
-            ModePileCredits.entrySep(),
-            ModePileCredits.creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.8f),
-            ModePileCredits.entrySep(),
-            ModePileCredits.creditText("AKARI", EventReceiver.COLOR_WHITE, 0.8f),
-            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("AKARI", EventReceiver.COLOR_WHITE, 0.85f),
             ModePileCredits.creditText("JAVA REFLECTION", EventReceiver.COLOR_RED, 0.65f),
-            ModePileCredits.entrySep(),
             ModePileCredits.creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.65f),
-            ModePileCredits.entrySep(),
-            ModePileCredits.creditText("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f)
+            ModePileCredits.creditTextNoSp("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f)
         ),
         GameTextUtilities.textElems(
             ModePileCredits.creditText("CONGRATULATIONS!", EventReceiver.COLOR_YELLOW, 0.625f),
-            ModePileCredits.entrySep(),
             ModePileCredits.creditText("YOU HAVE CLEARED", EventReceiver.COLOR_YELLOW, 0.625f),
-            ModePileCredits.entrySep(),
-            ModePileCredits.creditText("GRADE MANIA 4!", EventReceiver.COLOR_YELLOW, 0.625f)
+            ModePileCredits.creditTextNoSp("GRADE MANIA 4!", EventReceiver.COLOR_YELLOW, 0.625f)
         ),
         0.775, 0.125
     );

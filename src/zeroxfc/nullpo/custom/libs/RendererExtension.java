@@ -812,7 +812,7 @@ public class RendererExtension {
     public void drawPostHoldOutline(EventReceiver receiver, GameEngine engine, int playerID) {
         if (engine.nowPieceObject == null) return;
 
-        if (engine.gameActive && engine.holdDisable && engine.ruleopt.holdEnable) {
+        if (engine.gameActive && engine.stat == GameEngine.STAT_MOVE && engine.holdDisable && engine.ruleopt.holdEnable && (engine.statc[0] > 1 || engine.ruleopt.moveFirstFrame)) {
             final int select = (engine.statc[0] / 5) % 3;
             final int[] outline =  select == 0 ? YELLOW_OUTLINE : (select == 1 ? WHITE_OUTLINE : DARK_GREY_OUTLINE);
             drawPieceOutline(receiver, engine, playerID, engine.nowPieceObject.big ? 4 :  2, outline);

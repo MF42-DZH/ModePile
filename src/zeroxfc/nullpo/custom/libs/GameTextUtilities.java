@@ -94,6 +94,11 @@ public class GameTextUtilities {
         return customGraphics;
     }
 
+    /**
+     * Something that can be used to construct a text block. Due to the overhead of all the collection
+     * handling, it is recommended that constructing text blocks via this interface only occur once, usually in a
+     * static context. This is to minimise performance impact during gameplay.
+     */
     @FunctionalInterface
     public interface TextBlockElement {
         Collection<Text> toInsert();
