@@ -118,6 +118,8 @@ public class ScoreTrial extends MarathonModeBase {
     private LandingParticles landingParticles;
     private boolean hardDropEffect;
 
+    private static final Interpolation.GGCE SCORE_INTERPOLATOR = new Interpolation.GGCE(1.06, 0.9 * 0.9, true);
+
     // Mode name
     public String getName() {
         return "SCORE TRIAL";
@@ -175,6 +177,8 @@ public class ScoreTrial extends MarathonModeBase {
         customGraphics = new CustomResourceHolder(1);
         rendererExtension = new RendererExtension(customGraphics);
         hardDropEffect = true;
+
+        SCORE_INTERPOLATOR.reset();
 
         netPlayerInit(engine, playerID);
 
@@ -405,6 +409,8 @@ public class ScoreTrial extends MarathonModeBase {
         engine.statistics.level = startlevel;
         engine.statistics.levelDispAdd = 0;
 
+        SCORE_INTERPOLATOR.reset();
+
         switch (difficultySelected) {
             case 0:
                 engine.ruleopt.areCancelHold = false;
@@ -549,10 +555,10 @@ public class ScoreTrial extends MarathonModeBase {
         } else {
             receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
             String strScore;
-            if ((lastscore == 0) || (scgettime >= 120)) {
-                strScore = String.valueOf(engine.statistics.score);
+            if (lastscore == 0 || scgettime >= 120) {
+                strScore = String.valueOf(SCORE_INTERPOLATOR.getScoreToDisplay());
             } else {
-                strScore = (int) Interpolation.sineStep(scoreBeforeIncrease, engine.statistics.score, ((double) scgettime / 120.0)) + "(+" + lastscore + ")";
+                strScore = SCORE_INTERPOLATOR.getScoreToDisplay() + "(+" + lastscore + ")";
             }
             receiver.drawScoreFont(engine, playerID, 0, 4, strScore);
 
@@ -634,6 +640,10 @@ public class ScoreTrial extends MarathonModeBase {
     public void onLast(GameEngine engine, int playerID) {
         scgettime++;
 
+        if (engine.gameStarted && !engine.lagStop) {
+            SCORE_INTERPOLATOR.update();
+        }
+
         if (engine.gameStarted && engine.ending == 0) {
             if (engine.stat == GameEngine.STAT_ARE && difficultySelected == 2) {
                 engine.dasCount = engine.speed.das;
@@ -670,6 +680,8 @@ public class ScoreTrial extends MarathonModeBase {
                     baseBonus *= (float) (engine.lives + 1) / (livesStartedWith + 1);
 
                     engine.statistics.score += baseBonus;
+                    SCORE_INTERPOLATOR.setTargetScore(engine.statistics.score);
+
                     lastscore = baseBonus;
                     o = true;
                     l = engine.lives + 1;
@@ -1053,14 +1065,18 @@ public class ScoreTrial extends MarathonModeBase {
             // Add to score
             if (pts > 0) {
                 scoreBeforeIncrease = engine.statistics.score;
-                lastscore = pts;
+                lastscore = scgettime >= 120 ? pts : (lastscore + pts);
                 lastpiece = engine.nowPieceObject.id;
                 scgettime = 0;
-                if (lines >= 1) engine.statistics.scoreFromLineClear += pts;
-                else engine.statistics.scoreFromOtherBonus += pts;
+                engine.statistics.scoreFromLineClear += pts;
                 engine.statistics.score += pts;
+
             }
+        } else {
+            lastscore = 0;
         }
+
+        SCORE_INTERPOLATOR.setTargetScore(engine.statistics.score);
 
         if (engine.statistics.level >= 50 && engine.statistics.level < 200 && lines > 0 && difficultySelected == 2) {
             // Level up
@@ -1135,6 +1151,8 @@ public class ScoreTrial extends MarathonModeBase {
     public void afterSoftDropFall(GameEngine engine, int playerID, int fall) {
         engine.statistics.scoreFromSoftDrop += fall * (engine.statistics.level + 1);
         engine.statistics.score += fall * (engine.statistics.level + 1);
+
+        SCORE_INTERPOLATOR.setTargetScore(engine.statistics.score);
     }
 
     @Override
@@ -1151,8 +1169,8 @@ public class ScoreTrial extends MarathonModeBase {
         engine.statistics.scoreFromHardDrop += ((fall * 3) + 45) * (engine.statistics.level + 1);
         engine.statistics.score += ((fall * 3) + 45) * (engine.statistics.level + 1);
 
-        int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
-        int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+        SCORE_INTERPOLATOR.setTargetScore(engine.statistics.score);
+
         cPiece = new Piece(engine.nowPieceObject);
         for (int i = 1; i <= fall; i++) {
             pCoordList.add(

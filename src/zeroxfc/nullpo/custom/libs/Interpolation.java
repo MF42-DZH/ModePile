@@ -40,6 +40,9 @@ public class Interpolation {
      */
     private static final Logger log = Logger.getLogger(Interpolation.class);
 
+    // This is a static class.
+    private Interpolation() {}
+
     /**
      * Linear interpolation between two <code>int</code> values.
      *
@@ -204,5 +207,110 @@ public class Interpolation {
         final double t = (Math.sin((-1d * OFFSET) + (interpVal * OFFSET * 2)) + 1d) / 2d;
 
         return (1.0 - t) * v0 + v1 * t;
+    }
+
+    /**
+     * Classic GameHouse game-style rolling score helper class.
+     * Formula provided by leikaisho, but some things have been ignored for a more general implementation.
+     */
+    public static class GGCE {
+        private int scoreToDisplay;
+        private int increase;
+        private int targetScore;
+        private int frame;
+
+        private final double gainRate;
+        private final double easeOutFactor;
+        private final boolean fullRate;
+
+        /** Creates a new interpolator with the default values. */
+        public GGCE() {
+            this(1.2, 0.9, false);
+        }
+
+        /**
+         * Creates a new interpolator with custom values.
+         *
+         * @param gainRate      Exponential score gain rate
+         * @param easeOutFactor Ease-out factor (smaller = more ease-out)
+         * @param fullRate      Run this at 60FPS?
+         */
+        public GGCE(double gainRate, double easeOutFactor, boolean fullRate) {
+            reset();
+
+            this.gainRate = gainRate;
+            this.easeOutFactor = easeOutFactor;
+            this.fullRate = fullRate;
+        }
+
+        private int usedFrame() {
+            return fullRate ? frame : (frame >>> 1);
+        }
+
+        private int gainIncrease(int f) {
+            int gain = 0;
+
+            if (f <= 16) {
+                gain = 1 + (f >= 6 ? 1 : 0) + (f >= 9 ? 1 : 0) + Math.max(0, f - 10) + (f == 16 ? 1 : 0);
+            } else {
+                gain = 10;
+
+                for (int x = 17; x <= f; ++x) {
+                    gain = Math.toIntExact(
+                        MathHelper.clamp(
+                            Math.round(gain * gainRate),
+                            0, Integer.MAX_VALUE
+                        )
+                    );
+                }
+            }
+
+            return Math.max(gain, 1);
+        }
+
+        /**
+         * Reset the interpolator completely.
+         */
+        public void reset() {
+            scoreToDisplay = 0;
+            targetScore = 0;
+            increase = 0;
+            frame = 0;
+        }
+
+        /**
+         * Set the next target score for the interpolator.
+         *
+         * @param targetScore New target score.
+         */
+        public void setTargetScore(int targetScore) {
+            this.targetScore = targetScore;
+        }
+
+        /**
+         * Get the current score to display.
+         *
+         * @return The interpolated score to display.
+         */
+        public int getScoreToDisplay() {
+            return scoreToDisplay;
+        }
+
+        /**
+         * Updates the interpolated score. Use this in {@code onLast}.
+         */
+        public void update() {
+            ++frame;
+
+            if (fullRate || (frame % 2 == 0)) {
+                increase = Math.max(1, increase + gainIncrease(usedFrame()));
+                scoreToDisplay += Math.min(increase, (int) Math.ceil((targetScore - scoreToDisplay) * easeOutFactor));
+            }
+
+            if (scoreToDisplay >= targetScore || scoreToDisplay < 0) {
+                frame = 0;
+                increase = 0;
+            }
+        }
     }
 }
