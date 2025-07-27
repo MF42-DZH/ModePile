@@ -118,7 +118,7 @@ public class ScoreTrial extends MarathonModeBase {
     private LandingParticles landingParticles;
     private boolean hardDropEffect;
 
-    private static final Interpolation.GGCE SCORE_INTERPOLATOR = new Interpolation.GGCE(1.06, 0.9 * 0.9, true);
+    private static final Interpolation.GGCE SCORE_INTERPOLATOR = new Interpolation.GGCE(1.06, 1d / 6d, true);
 
     // Mode name
     public String getName() {
