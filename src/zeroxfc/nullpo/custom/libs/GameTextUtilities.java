@@ -274,7 +274,7 @@ public class GameTextUtilities {
     }
 
         /** Representation of a left-aligned block of lines to draw. */
-    public static class TextBlock {
+    public static class TextBlock implements TextBlockElement {
         private static final WeakHashMap<TextBlock, WeakReference<TextBlock>> INSTANCES = new WeakHashMap<>();
 
         private final Text[] texts;
@@ -334,6 +334,13 @@ public class GameTextUtilities {
 
         public Text get(int i) {
             return texts[i];
+        }
+
+        @Override
+        public Collection<Text> toInsert() {
+            // You will lose justification information if embedding a text block inside another.
+            // The outermost text block's justification determines overall justification.
+            return Arrays.asList(texts);
         }
 
         public int length() {

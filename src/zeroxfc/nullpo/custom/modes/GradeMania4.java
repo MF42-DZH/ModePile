@@ -23,6 +23,7 @@ import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.ModePileCredits;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
@@ -233,158 +234,50 @@ public class GradeMania4 extends DummyMode {
 
     private static final int SECTION_MAX = 10;
 
-    private static class Credits {
-        private static final int FILTER = 192;
-
-        private static GameTextUtilities.TextBlockElement entrySep() {
-            return GameTextUtilities.Text.blankLine(0.25f);
-        }
-
-        private static GameTextUtilities.TextBlockElement creditText(String string, int color, float scale) {
-            return GameTextUtilities.texts(
-                GameTextUtilities.Text.customMixColor(string, color, FILTER, FILTER, FILTER, 255, scale),
-                GameTextUtilities.Text.newLine()
-            );
-        }
-
-        private static final GameTextUtilities.TextBlock MAIN_BLOCK = GameTextUtilities.TextBlock.of(
-            GameTextUtilities.TextJustification.CENTRE,
-            creditText("GRADE", EventReceiver.COLOR_YELLOW, 2f),
-            entrySep(),
-            creditText("MANIA 4", EventReceiver.COLOR_YELLOW, (10f / 7f)),
-            entrySep(),
-            creditText("BASED ON", EventReceiver.COLOR_WHITE, 0.5f),
-            entrySep(),
-            creditText("AE-NORMAL", EventReceiver.COLOR_CYAN, 0.95f),
-            entrySep(),
-            creditText("(WITH SPITE)", EventReceiver.COLOR_WHITE, 0.75f),
-            GameTextUtilities.Text.blankLine(4f),
-            creditText("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
+    private static final ModePileCredits CREDITS = new ModePileCredits(
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("GRADE", EventReceiver.COLOR_YELLOW, 2f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("MANIA 4", EventReceiver.COLOR_YELLOW, (10f / 7f)),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("BASED ON", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("AE-NORMAL", EventReceiver.COLOR_CYAN, 0.95f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("(WITH SPITE)", EventReceiver.COLOR_WHITE, 0.75f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
             GameTextUtilities.Text.blankLine(1f),
-            creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1.2f),
-            entrySep(),
-            creditText("A.K.A.", EventReceiver.COLOR_WHITE, 0.5f),
-            entrySep(),
-            creditText("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
+            ModePileCredits.creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1.2f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("A.K.A.", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
             GameTextUtilities.Text.blankLine(4f),
-            creditText("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
+            ModePileCredits.creditText("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
             GameTextUtilities.Text.blankLine(1f),
-            creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.8f),
-            entrySep(),
-            creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.8f),
-            entrySep(),
-            creditText("AKARI", EventReceiver.COLOR_WHITE, 0.8f),
-            entrySep(),
-            creditText("JAVA REFLECTION", EventReceiver.COLOR_RED, 0.65f),
-            entrySep(),
-            creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.65f),
-            entrySep(),
-            creditText("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f),
-            GameTextUtilities.Text.blankLine(4f),
-            creditText("SPECIAL THANKS", EventReceiver.COLOR_YELLOW, 0.7f),
-            GameTextUtilities.Text.blankLine(1f),
-            creditText("THE OSHISAURES", EventReceiver.COLOR_PINK, 0.65f),
-            entrySep(),
-            creditText("GLITCHYPSI", EventReceiver.COLOR_CYAN, 0.65f),
-            entrySep(),
-            creditText("FARTERYHR", EventReceiver.COLOR_WHITE, 0.65f),
-            entrySep(),
-            creditText("GRAV", EventReceiver.COLOR_PINK, 0.65f),
-            entrySep(),
-            creditText("DM DOKURO", EventReceiver.COLOR_RED, 0.65f),
-            entrySep(),
-            creditText("SIMPLEFLIPS", EventReceiver.COLOR_YELLOW, 0.65f),
-            entrySep(),
-            creditText("ZAPPOOLA", EventReceiver.COLOR_PINK, 0.65f),
-            entrySep(),
-            creditText("KINGSTATIC", EventReceiver.COLOR_BLUE, 0.65f),
-            entrySep(),
-            creditText("TDGNERROTH", EventReceiver.COLOR_CYAN, 0.65f),
-            entrySep(),
-            creditText("MRXBAS", EventReceiver.COLOR_YELLOW, 0.65f),
-            entrySep(),
-            creditText("TEAKANJI", EventReceiver.COLOR_PURPLE, 0.65f),
-            entrySep(),
-            creditText("VENTILO_", EventReceiver.COLOR_PURPLE, 0.65f),
-            entrySep(),
-            creditText("ROMAJIMILTONAMULO", EventReceiver.COLOR_GREEN, 0.575f),
-            entrySep(),
-            creditText("NICK666101", EventReceiver.COLOR_PURPLE, 0.65f),
-            entrySep(),
-            creditText("LEIKAISHO", EventReceiver.COLOR_RED, 0.65f),
-            entrySep(),
-            creditText("MY 6THFRM CLASSMATES", EventReceiver.COLOR_BLUE, 0.5f),
-            GameTextUtilities.Text.blankLine(1f),
-            creditText("YOU!", EventReceiver.COLOR_ORANGE, 1.75f),
-            GameTextUtilities.Text.blankLine(4f),
-            creditText("SHOUTOUTS TO", EventReceiver.COLOR_YELLOW, 0.7f),
-            GameTextUtilities.Text.blankLine(1f),
-            creditText("NULLNONAME", EventReceiver.COLOR_WHITE, 0.65f),
-            entrySep(),
-            creditText("TETRIS.WIKI", EventReceiver.COLOR_WHITE, 0.65f),
-            entrySep(),
-            creditText("HARD DROP WIKI", EventReceiver.COLOR_WHITE, 0.65f),
-            entrySep(),
-            creditText("ALL HEBORIS PLAYERS", EventReceiver.COLOR_WHITE, 0.525f),
-            entrySep(),
-            creditText("ALL #GM SERIES PLAYERS", EventReceiver.COLOR_WHITE, 0.45f),
-            entrySep(),
-            creditText("ALL NULLPOMINO PLAYERS", EventReceiver.COLOR_WHITE, 0.45f),
-            entrySep(),
-            GameTextUtilities.Text.blankLine(4f),
-            creditText("CONGRATULATIONS!", EventReceiver.COLOR_YELLOW, 0.625f),
-            entrySep(),
-            creditText("YOU HAVE CLEARED", EventReceiver.COLOR_YELLOW, 0.625f),
-            entrySep(),
-            creditText("GRADE MANIA 4!", EventReceiver.COLOR_YELLOW, 0.625f),
-            GameTextUtilities.Text.blankLine(4f),
-            creditText("THANK YOU", EventReceiver.COLOR_WHITE, (10f / 13f)),
-            entrySep(),
-            creditText("FOR STICKING", EventReceiver.COLOR_WHITE, (10f / 13f)),
-            entrySep(),
-            creditText("WITH MODEPILE", EventReceiver.COLOR_WHITE, (10f / 13f)),
-            entrySep(),
-            creditText("FOR ALL THESE", EventReceiver.COLOR_WHITE, (10f / 13f)),
-            entrySep(),
-            creditText("YEARS!", EventReceiver.COLOR_WHITE, (10f / 13f))
-        );
-
-        private static final GameTextUtilities.TextBlock FINAL_BLOCK = GameTextUtilities.TextBlock.of(
-            GameTextUtilities.TextJustification.CENTRE,
-            creditText("MODE", EventReceiver.COLOR_GREEN, 2f),
-            entrySep(),
-            creditText("PILE", EventReceiver.COLOR_GREEN, 2f),
-            entrySep(),
-            creditText("PRESENTED BY", EventReceiver.COLOR_WHITE, 0.5f),
-            entrySep(),
-            creditText("AZULLIA, MANDL27", EventReceiver.COLOR_YELLOW, 0.625f),
-            entrySep(),
-            creditText("NIGHTSHADE", EventReceiver.COLOR_YELLOW, 0.625f)
-        );
-
-        public static void draw(EventReceiver receiver, GameEngine engine, int playerID, double progress) {
-            final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
-            final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-
-            GameTextUtilities.drawAlignedBoundedTextBlock(
-                engine,
-                baseX + (engine.field.getWidth() * 8),
-                (int) Math.floor(Interpolation.lerp(baseY + (engine.field.getHeight() * 16d), baseY - (double) MAIN_BLOCK.getHeight(), progress / 0.9)),
-                baseX - 1, baseY, baseX + (engine.field.getWidth() * 16) + 1, baseY + (engine.field.getHeight() * 16),
-                false, MAIN_BLOCK, ObjectAlignment.TOP_MIDDLE
-            );
-
-            if (progress > 0.775) {
-                GameTextUtilities.drawAlignedBoundedTextBlock(
-                    engine,
-                    baseX + (engine.field.getWidth() * 8),
-                    (int) Math.floor(Interpolation.lerp(baseY + (engine.field.getHeight() * 16d), baseY + (engine.field.getHeight() * 8d), Math.min(1d, (progress - 0.775) / 0.125))),
-                    baseX - 1, baseY, baseX + (engine.field.getWidth() * 16) + 1, baseY + (engine.field.getHeight() * 16),
-                    false, FINAL_BLOCK, ObjectAlignment.MIDDLE_MIDDLE
-                );
-            }
-        }
-    }
+            ModePileCredits.creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.8f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.8f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("AKARI", EventReceiver.COLOR_WHITE, 0.8f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("JAVA REFLECTION", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("CONGRATULATIONS!", EventReceiver.COLOR_YELLOW, 0.625f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("YOU HAVE CLEARED", EventReceiver.COLOR_YELLOW, 0.625f),
+            ModePileCredits.entrySep(),
+            ModePileCredits.creditText("GRADE MANIA 4!", EventReceiver.COLOR_YELLOW, 0.625f)
+        ),
+        0.775, 0.125
+    );
 
     private static final String[] HEADING_AER = {
         "YOUR AER",
@@ -1151,7 +1044,7 @@ public class GradeMania4 extends DummyMode {
             receiver.drawScoreFont(engine, playerID, 0, 14, "ROLL TIME", EventReceiver.COLOR_BLUE);
             receiver.drawScoreFont(engine, playerID, 0, 15, GeneralUtil.getTime(time), ((time > 0) && (time < 10 * 60)));
 
-            Credits.draw(receiver, engine, playerID, (double) rollTime / ROLL_TIME_LIMIT);
+            CREDITS.draw(receiver, engine, playerID, (double) rollTime / ROLL_TIME_LIMIT);
         }
 
         // Field Redraw.
