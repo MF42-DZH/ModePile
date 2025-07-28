@@ -176,25 +176,34 @@ public class CustomResourceHolder {
 
     // There is a race condition between these variables being set and the get from WeakReference being called, but
     // there should be no risk of a (harmful) data race as this code will usually never run past a gamemode's lifetime.
+    private static final Mirror.FieldAccessor<RendererSlick, Graphics> graphicsSlickAccessor;
+    private static final Mirror.FieldAccessor<RendererSwing, Graphics2D> graphicsSwingAccessor;
+    private static final Mirror.FieldAccessor<RendererSDL, SDLSurface> graphicsSDLAccessor;
+
+    static {
+        graphicsSlickAccessor = Mirror.getFieldAccessor(RendererSlick.class, "graphics");
+        graphicsSwingAccessor = Mirror.getFieldAccessor(RendererSwing.class, "graphics");
+
+        // XXX: This is needed because the other runtimes don't load the SDL libraries, in which
+        //      getDeclaredField on the graphics field of the SDL renderer specifically needs SDLException to
+        //      be in the runtime classpath (which the other renderers won't load, duh).
+        if (getCurrentNullpominoRuntime() == Runtime.SDL) {
+            graphicsSDLAccessor = Mirror.getFieldAccessor(RendererSDL.class, "graphics");
+        } else {
+            graphicsSDLAccessor = null;
+        }
+    }
+
     private WeakReference<SDLSurface> graphicsSDL = null;
     private WeakReference<Graphics2D> graphicsSwing = null;
     private WeakReference<Graphics> graphicsSlick = null;
 
     public SDLSurface getGraphicsSDL(RendererSDL renderer, boolean useCache) {
-        if (!useCache || graphicsSDL == null || graphicsSDL.get() == null) {
-            Class<RendererSDL> local = RendererSDL.class;
-            Field localField;
-            try {
-                localField = local.getDeclaredField("graphics");
-                localField.setAccessible(true);
+        if (graphicsSDLAccessor == null) return null;
 
-                if (useCache) graphicsSDL = new WeakReference<>((SDLSurface) localField.get(renderer));
-                else return (SDLSurface) localField.get(renderer);
-            } catch (Exception e) {
-                log.error("Failed to extract graphics from SDL renderer.");
-                log.error(e);
-                return null;
-            }
+        if (!useCache || graphicsSDL == null || graphicsSDL.get() == null) {
+            if (useCache) graphicsSDL = new WeakReference<>(graphicsSDLAccessor.get(renderer));
+            else return graphicsSDLAccessor.get(renderer);
         }
 
         return graphicsSDL.get();
@@ -202,19 +211,8 @@ public class CustomResourceHolder {
 
     public Graphics2D getGraphicsSwing(RendererSwing renderer, boolean useCache) {
         if (!useCache || graphicsSwing == null || graphicsSwing.get() == null) {
-            Class<RendererSwing> local = RendererSwing.class;
-            Field localField;
-            try {
-                localField = local.getDeclaredField("graphics");
-                localField.setAccessible(true);
-
-                if (useCache) graphicsSwing = new WeakReference<>((Graphics2D) localField.get(renderer));
-                else return (Graphics2D) localField.get(renderer);
-            } catch (Exception e) {
-                log.error("Failed to extract graphics from Swing renderer.");
-                log.error(e);
-                return null;
-            }
+            if (useCache) graphicsSwing = new WeakReference<>(graphicsSwingAccessor.get(renderer));
+            else return graphicsSwingAccessor.get(renderer);
         }
 
         return graphicsSwing.get();
@@ -222,19 +220,8 @@ public class CustomResourceHolder {
 
     public Graphics getGraphicsSlick(RendererSlick renderer, boolean useCache) {
         if (!useCache || graphicsSlick == null || graphicsSlick.get() == null) {
-            Class<RendererSlick> local = RendererSlick.class;
-            Field localField;
-            try {
-                localField = local.getDeclaredField("graphics");
-                localField.setAccessible(true);
-
-                if (useCache) graphicsSlick = new WeakReference<>((Graphics) localField.get(renderer));
-                else return (Graphics) localField.get(renderer);
-            } catch (Exception e) {
-                log.error("Failed to extract graphics from Slick renderer.");
-                log.error(e);
-                return null;
-            }
+            if (useCache) graphicsSlick = new WeakReference<>(graphicsSlickAccessor.get(renderer));
+            else return graphicsSlickAccessor.get(renderer);
         }
 
         return graphicsSlick.get();
