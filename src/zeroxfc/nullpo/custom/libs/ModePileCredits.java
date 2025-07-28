@@ -52,6 +52,7 @@ public class ModePileCredits {
      * @param congratulationsBlock Put congratulations message here
      * @param finalBlockOffset     Offset of credits progress for when the ModePile text block shows up
      * @param finalBlockProportion How fast the ModePile text block moves and how long it stays still (smaller = faster and sticks around longer before end of credits)
+     * @param skipSpecialThanks    Skips the special thanks and shoutouts sections, used for short credits
      */
     public ModePileCredits(
         GameTextUtilities.TextBlockElement mainBlockHeader,
