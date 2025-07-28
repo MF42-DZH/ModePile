@@ -440,7 +440,7 @@ zeroxfc.nullpo.custom.random.TerrorInstinctRandomizer
 
 ----------
 
-29 Libraries:
+31 Libraries:
 
 AnimatedBackgroundHook - Allows the simple animation of backgrounds, DTET/TI style.
 ArrayRandomiser - Generates a permutation of an array.
@@ -456,7 +456,9 @@ FieldScatter - A 2D implementation of Sega ***ris '99's block explosion.
 FlyInOutText - Adds text objects that can fly into the screen from the outside, linger, then return to their starting positions before disappearing.
 GameTextUtilities - Adds methods for coloured text and other random text / text obfuscation methods.
 Interpolation - Linear interpolation functions.
+LevelTableBuilder - Generic table builder for level-based progression.
 MathHelper - A few extra mathematical functions such as LCM or GCD.
+Mirror - Helper class for Java reflection.
 MouseParser - Allows the use of mouse inside a mode.
 Particle - Particles for the particle engine.
 ParticleEmitterBase - Particle emitter engine. Used for holding and drawing particles.
