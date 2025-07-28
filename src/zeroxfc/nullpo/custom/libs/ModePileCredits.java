@@ -92,6 +92,7 @@ public class ModePileCredits {
                     creditText("TEAKANJI", EventReceiver.COLOR_PURPLE, 0.65f),
                     creditText("VENTILO_", EventReceiver.COLOR_PURPLE, 0.65f),
                     creditText("ROMAJIMILTONAMULO", EventReceiver.COLOR_GREEN, 0.575f),
+                    creditText("LINEPIECE777", EventReceiver.COLOR_CYAN, 0.65f),
                     creditText("NICK666101", EventReceiver.COLOR_PURPLE, 0.65f),
                     creditText("LEIKAISHO", EventReceiver.COLOR_RED, 0.65f),
                     creditText("WHAMER100", EventReceiver.COLOR_PURPLE, 0.65f),

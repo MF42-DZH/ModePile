@@ -339,7 +339,6 @@ public class Mirror {
      * @param fieldName      Name of field to extract
      * @return               Field accessor wrapper for safely interacting with the field
      */
-    @SuppressWarnings("unchecked")
     public static <U, T extends U, F> FieldAccessor<U, F> getFieldAccessor(Class<T> targetClass, String fieldName) {
         return handleErrors(() -> {
             final Field field = targetClass.getDeclaredField(fieldName);
