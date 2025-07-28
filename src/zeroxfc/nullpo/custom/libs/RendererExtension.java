@@ -943,6 +943,32 @@ public class RendererExtension {
         }
     }
 
+    private static final Mirror.MethodInvoker<EventReceiver, Object> drawFieldMI;
+    private static final Mirror.MethodInvoker<EventReceiver, Object> drawFrameMI;
+    private static final Mirror.MethodInvoker<EventReceiver, Object> drawNextMI;
+
+    static {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+
+        if (renderer == CustomResourceHolder.Runtime.SLICK) {
+            drawFieldMI = Mirror.getMethodInvoker(RendererSlick.class, "drawField", int.class, int.class, GameEngine.class, int.class);
+            drawFrameMI = Mirror.getMethodInvoker(RendererSlick.class, "drawFrame", int.class, int.class, GameEngine.class, int.class);
+            drawNextMI = Mirror.getMethodInvoker(RendererSlick.class, "drawNext", int.class, int.class, GameEngine.class);
+        } else if (renderer == CustomResourceHolder.Runtime.SWING) {
+            drawFieldMI = Mirror.getMethodInvoker(RendererSwing.class, "drawField", int.class, int.class, GameEngine.class, int.class);
+            drawFrameMI = Mirror.getMethodInvoker(RendererSwing.class, "drawFrame", int.class, int.class, GameEngine.class, int.class);
+            drawNextMI = Mirror.getMethodInvoker(RendererSwing.class, "drawNext", int.class, int.class, GameEngine.class);
+        } else if (renderer == CustomResourceHolder.Runtime.SDL) {
+            drawFieldMI = Mirror.getMethodInvoker(RendererSDL.class, "drawField", int.class, int.class, GameEngine.class, int.class);
+            drawFrameMI = Mirror.getMethodInvoker(RendererSDL.class, "drawFrame", int.class, int.class, GameEngine.class, int.class);
+            drawNextMI = Mirror.getMethodInvoker(RendererSDL.class, "drawNext", int.class, int.class, GameEngine.class);
+        } else {
+            drawFieldMI = null;
+            drawFrameMI = null;
+            drawNextMI = null;
+        }
+    }
+
     /**
      * Draw a game engine's field.
      *
@@ -953,33 +979,8 @@ public class RendererExtension {
      * @param displaySize Field display size
      */
     public void drawField(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize) {
-        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
-
-        try {
-            Method drawFieldMethod = null;
-
-            switch (renderer) {
-                case SLICK:
-                    drawFieldMethod = RendererSlick.class.getDeclaredMethod("drawField", int.class, int.class, GameEngine.class, int.class);
-                    break;
-                case SWING:
-                    drawFieldMethod = RendererSwing.class.getDeclaredMethod("drawField", int.class, int.class, GameEngine.class, int.class);
-                    break;
-                case SDL:
-                    drawFieldMethod = RendererSDL.class.getDeclaredMethod("drawField", int.class, int.class, GameEngine.class, int.class);
-                    break;
-                default:
-                    break;
-            }
-
-            if (drawFieldMethod == null) return;
-
-            drawFieldMethod.setAccessible(true);
-            drawFieldMethod.invoke(receiver, x, y, engine, displaySize);
-        } catch (Exception e) {
-            log.error("Failed to draw field:");
-            log.error(e);
-        }
+        if (drawFieldMI == null) return;
+        drawFieldMI.invoke(receiver, x, y,  engine, displaySize);
     }
 
     /**
@@ -992,33 +993,8 @@ public class RendererExtension {
      * @param displaySize Field display size
      */
     public void drawFrame(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize) {
-        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
-
-        try {
-            Method drawFieldMethod = null;
-
-            switch (renderer) {
-                case SLICK:
-                    drawFieldMethod = RendererSlick.class.getDeclaredMethod("drawFrame", int.class, int.class, GameEngine.class, int.class);
-                    break;
-                case SWING:
-                    drawFieldMethod = RendererSwing.class.getDeclaredMethod("drawFrame", int.class, int.class, GameEngine.class, int.class);
-                    break;
-                case SDL:
-                    drawFieldMethod = RendererSDL.class.getDeclaredMethod("drawFrame", int.class, int.class, GameEngine.class, int.class);
-                    break;
-                default:
-                    break;
-            }
-
-            if (drawFieldMethod == null) return;
-
-            drawFieldMethod.setAccessible(true);
-            drawFieldMethod.invoke(receiver, x, y, engine, displaySize);
-        } catch (Exception e) {
-            log.error("Failed to draw frame:");
-            log.error(e);
-        }
+        if (drawFrameMI == null) return;
+        drawFrameMI.invoke(receiver, x, y, engine, displaySize);
     }
 
     /**
@@ -1030,33 +1006,8 @@ public class RendererExtension {
      * @param y           Y-coordinate of top-left corner
      */
     public void drawNext(EventReceiver receiver, GameEngine engine, int x, int y) {
-        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
-
-        try {
-            Method drawFieldMethod = null;
-
-            switch (renderer) {
-                case SLICK:
-                    drawFieldMethod = RendererSlick.class.getDeclaredMethod("drawNext", int.class, int.class, GameEngine.class);
-                    break;
-                case SWING:
-                    drawFieldMethod = RendererSwing.class.getDeclaredMethod("drawNext", int.class, int.class, GameEngine.class);
-                    break;
-                case SDL:
-                    drawFieldMethod = RendererSDL.class.getDeclaredMethod("drawNext", int.class, int.class, GameEngine.class);
-                    break;
-                default:
-                    break;
-            }
-
-            if (drawFieldMethod == null) return;
-
-            drawFieldMethod.setAccessible(true);
-            drawFieldMethod.invoke(receiver, x, y, engine);
-        } catch (Exception e) {
-            log.error("Failed to draw frame:");
-            log.error(e);
-        }
+        if (drawNextMI == null) return;
+        drawNextMI.invoke(receiver, x, y, engine);
     }
 
     /**

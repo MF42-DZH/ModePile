@@ -234,45 +234,118 @@ public class Mirror {
     }
 
     // For objects and references:
+    /** Safely-wrapped field accessor class for reflective gets and sets of the fields of a class. */
+    public static class FieldAccessor<T, R> {
+        private static final Map<FieldAccessor<?, ?>, WeakReference<FieldAccessor<?, ?>>> ACCESSORS = new WeakHashMap<>();
+
+        private final Field field;
+
+        private FieldAccessor(Field field) {
+            this.field = field;
+        }
+
+        @SuppressWarnings("unchecked")
+        private static <T, R> FieldAccessor<T, R> getAccessor(Field field) {
+            final FieldAccessor<T, R> accessor = new FieldAccessor<>(field);
+            final WeakReference<FieldAccessor<?, ?>> ref = ACCESSORS.get(accessor);
+
+            if (ref != null) {
+                final FieldAccessor<?, ?> cached = ref.get();
+                if (cached != null) return (FieldAccessor<T, R>) cached;
+            }
+
+            ACCESSORS.put(accessor, new WeakReference<>(accessor));
+            return accessor;
+        }
+
+        /**
+         * Get the current value of a field in a target instance.
+         *
+         * @param target Target instance (may be {@code null} if method is {@code static})
+         * @return Current value of field
+         */
+        @SuppressWarnings("unchecked")
+        public R get(T target) {
+            try {
+                final Object ret = field.get(target);
+
+                if (ret == null) return null;
+                return (R) ret;
+            } catch (SecurityException e) {
+                log.error("Encountered security exception:");
+                log.error(e);
+            } catch (ClassCastException | IllegalArgumentException e) {
+                log.error("Wrong type:");
+                log.error(e);
+            } catch (IllegalAccessException e) {
+                log.error("Failed to make field accessible, so illegal access performed:");
+                log.error(e);
+            } catch (NullPointerException e) {
+                log.error("Null value caught:");
+                log.error(e);
+            } catch (Exception e) {
+                log.error("Other exception occurred:");
+                log.error(e);
+            }
+
+            return null;
+        }
+
+        /**
+         * Set the current value of a field in a target instance.
+         *
+         * @param target   Target instance (may be {@code null} if method is {@code static})
+         * @param newValue New value to put in field
+         */
+        @SuppressWarnings("unchecked")
+        public void set(T target, R newValue) {
+            try {
+                field.set(target, newValue);
+            } catch (SecurityException e) {
+                log.error("Encountered security exception:");
+                log.error(e);
+            } catch (ClassCastException | IllegalArgumentException e) {
+                log.error("Wrong type:");
+                log.error(e);
+            } catch (IllegalAccessException e) {
+                log.error("Failed to make field accessible, so illegal access performed:");
+                log.error(e);
+            } catch (NullPointerException e) {
+                log.error("Null value caught:");
+                log.error(e);
+            } catch (Exception e) {
+                log.error("Other exception occurred:");
+                log.error(e);
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            // Every different method has a unique hash code.
+            return field.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof FieldAccessor<?, ?>)) return false;
+            return field.equals(((FieldAccessor<?, ?>) obj).field);
+        }
+    }
+
     /**
-     * Get the contents of a field within another class.
+     * Get a field accessor for reflective access to a field.
      *
      * @param targetClass    Target class to reflect
-     * @param target         Instance of target class to get field from
      * @param fieldName      Name of field to extract
-     * @return               Value in field if successful, or {@code null} otherwise.
-     * @param <T>            Target Class Type
-     * @param <F>            Field Type
+     * @return               Field accessor wrapper for safely interacting with the field
      */
     @SuppressWarnings("unchecked")
-    public static <T, F> F getField(Class<T> targetClass, T target, String fieldName) {
+    public static <U, T extends U, F> FieldAccessor<U, F> getFieldAccessor(Class<T> targetClass, String fieldName) {
         return handleErrors(() -> {
             final Field field = targetClass.getDeclaredField(fieldName);
             field.setAccessible(true);
 
-            final Object raw = field.get(target);
-
-            if (raw == null) return null;
-            return (F) raw;
-        });
-    }
-
-    /**
-     * Sets the contents of a field within another class.
-     *
-     * @param targetClass    Target class to reflect
-     * @param target         Instance of target class to get field from
-     * @param fieldName      Name of field to extract
-     * @param newValue       New value to put in field
-     * @param <T>            Target Class Type
-     * @param <F>            Field Type
-     */
-    public static <T, F> void setField(Class<T> targetClass, T target, String fieldName, F newValue) {
-        handleErrorsVoid(() -> {
-            final Field field = targetClass.getDeclaredField(fieldName);
-            field.setAccessible(true);
-
-            field.set(target, newValue);
+            return FieldAccessor.getAccessor(field);
         });
     }
 
@@ -309,10 +382,32 @@ public class Mirror {
          */
         @SuppressWarnings("unchecked")
         public R invoke(T target, Object... args) {
-            final Object ret = handleErrors(() -> method.invoke(target, args));
+            try {
+                final Object ret = method.invoke(target, args);
 
-            if (ret == null) return null;
-            return (R) ret;
+                if (ret == null) return null;
+                return (R) ret;
+            } catch (SecurityException e) {
+                log.error("Encountered security exception:");
+                log.error(e);
+            } catch (ClassCastException | IllegalArgumentException e) {
+                log.error("Wrong type:");
+                log.error(e);
+            } catch (IllegalAccessException e) {
+                log.error("Failed to make field accessible, so illegal access performed:");
+                log.error(e);
+            } catch (NullPointerException e) {
+                log.error("Null value caught:");
+                log.error(e);
+            } catch (InvocationTargetException e) {
+                log.error("Cannot invoke method on target:");
+                log.error(e);
+            } catch (Exception e) {
+                log.error("Other exception occurred:");
+                log.error(e);
+            }
+
+            return null;
         }
 
         @Override
@@ -338,7 +433,7 @@ public class Mirror {
      * @param <T> Target Type
      * @param <R> Method Return Type
      */
-    public static <T, R> MethodInvoker<T, R> getMethodInvoker(Class<T> targetClass, String methodName, Class<?>... argTypes) {
+    public static <U, T extends U, R> MethodInvoker<U, R> getMethodInvoker(Class<T> targetClass, String methodName, Class<?>... argTypes) {
         return handleErrors(() -> {
             final Method method = targetClass.getDeclaredMethod(methodName, argTypes);
             method.setAccessible(true);
