@@ -572,17 +572,17 @@ public class CustomResourceHolder {
 
         // Get font and base scale based on scale factor for best quality.
         // Base unit length is 16px on screen.
-        final int BASE_UNIT = 16;
+        final int baseUnit = 16;
 
         if (scale <= 0.5f) {
             font = getSmallFont();
-            fontBaseScale = BASE_UNIT >>> 1;
+            fontBaseScale = baseUnit >>> 1;
         } else if (scale > 1f) {
             font = getBigFont();
-            fontBaseScale = BASE_UNIT * 2;
+            fontBaseScale = baseUnit * 2;
         } else {
             font = getNormalFont();
-            fontBaseScale = BASE_UNIT;
+            fontBaseScale = baseUnit;
         }
 
         final int strLength = str.length();
@@ -595,10 +595,10 @@ public class CustomResourceHolder {
 
             if (chrAt == 0x0A) {
                 dx = x;
-                dy += BASE_UNIT * scale;
+                dy += baseUnit * scale;
             } else {
-                int sx = ((chrAt - 32) % 32) * fontBaseScale;
-                int sy = ((chrAt - 32) / 32) * fontBaseScale + (receiverTextColour * 3 * fontBaseScale);
+                final int sx = ((chrAt - 32) % 32) * fontBaseScale;
+                final int sy = ((chrAt - 32) / 32) * fontBaseScale + (receiverTextColour * 3 * fontBaseScale);
 
                 drawImage(
                     engine,
@@ -606,8 +606,8 @@ public class CustomResourceHolder {
                     font,
                     dx,
                     dy,
-                    dx + (BASE_UNIT * scale),
-                    dy + (BASE_UNIT * scale),
+                    dx + (baseUnit * scale),
+                    dy + (baseUnit * scale),
                     sx,
                     sy,
                     fontBaseScale,
@@ -619,7 +619,7 @@ public class CustomResourceHolder {
                     true
                 );
 
-                dx += BASE_UNIT * scale;
+                dx += baseUnit * scale;
             }
         }
     }
@@ -658,17 +658,17 @@ public class CustomResourceHolder {
 
         // Get font and base scale based on scale factor for best quality.
         // Base unit length is 16px on screen.
-        final int BASE_UNIT = 16;
+        final int baseUnit = 16;
 
         if (scale <= 0.5f) {
             font = getSmallFont();
-            fontBaseScale = BASE_UNIT >>> 1;
+            fontBaseScale = baseUnit >>> 1;
         } else if (scale > 1f) {
             font = getBigFont();
-            fontBaseScale = BASE_UNIT * 2;
+            fontBaseScale = baseUnit * 2;
         } else {
             font = getNormalFont();
-            fontBaseScale = BASE_UNIT;
+            fontBaseScale = baseUnit;
         }
 
         final int strLength = str.length();
@@ -681,21 +681,21 @@ public class CustomResourceHolder {
 
             if (chrAt == 0x0A) {
                 dx = x;
-                dy += BASE_UNIT * scale;
+                dy += baseUnit * scale;
             } else {
-                int sx = ((chrAt - 32) % 32) * fontBaseScale;
-                int sy = ((chrAt - 32) / 32) * fontBaseScale + (receiverTextColour * 3 * fontBaseScale);
+                final int sx = ((chrAt - 32) % 32) * fontBaseScale;
+                final int sy = ((chrAt - 32) / 32) * fontBaseScale + (receiverTextColour * 3 * fontBaseScale);
 
-                float drawTLX = Math.max(dx, minX);
-                float drawTLY = Math.max(dy, minY);
-                float drawBRX = Math.min(dx + (BASE_UNIT * scale), maxX);
-                float drawBRY = Math.min(dy + (BASE_UNIT * scale), maxY);
-                float offsetSrcTLX = (drawTLX - dx) / (scale / (fontBaseScale / (float) BASE_UNIT));
-                float offsetSrcTLY = (drawTLY - dy) / (scale / (fontBaseScale / (float) BASE_UNIT));
-                float offsetSrcBRX = fontBaseScale - ((drawBRX - dx) / (scale / (fontBaseScale / (float) BASE_UNIT)));
-                float offsetSrcBRY = fontBaseScale - ((drawBRY - dy) / (scale / (fontBaseScale / (float) BASE_UNIT)));
-                float srcSizeX = fontBaseScale - offsetSrcTLX - offsetSrcBRX;
-                float srcSizeY = fontBaseScale - offsetSrcTLY - offsetSrcBRY;
+                final float drawTLX = Math.max(dx, minX);
+                final float drawTLY = Math.max(dy, minY);
+                final float drawBRX = Math.min(dx + (baseUnit * scale), maxX);
+                final float drawBRY = Math.min(dy + (baseUnit * scale), maxY);
+                final float offsetSrcTLX = (drawTLX - dx) / (scale / (fontBaseScale / (float) baseUnit));
+                final float offsetSrcTLY = (drawTLY - dy) / (scale / (fontBaseScale / (float) baseUnit));
+                final float offsetSrcBRX = fontBaseScale - ((drawBRX - dx) / (scale / (fontBaseScale / (float) baseUnit)));
+                final float offsetSrcBRY = fontBaseScale - ((drawBRY - dy) / (scale / (fontBaseScale / (float) baseUnit)));
+                final float srcSizeX = fontBaseScale - offsetSrcTLX - offsetSrcBRX;
+                final float srcSizeY = fontBaseScale - offsetSrcTLY - offsetSrcBRY;
 
                 if (srcSizeX >= 0 && srcSizeY >= 0) {
                     drawImage(
@@ -718,7 +718,7 @@ public class CustomResourceHolder {
                     );
                 }
 
-                dx += BASE_UNIT * scale;
+                dx += baseUnit * scale;
             }
         }
     }

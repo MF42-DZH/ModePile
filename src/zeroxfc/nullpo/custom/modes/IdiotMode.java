@@ -16,13 +16,11 @@ import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
-import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.ModePileCredits;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
-import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
 import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
 
 public class IdiotMode extends DummyMode {
@@ -1683,7 +1681,7 @@ public class IdiotMode extends DummyMode {
     @Override
     public void renderFirst(GameEngine engine, int playerID) {
         if (engine.ending == 2) {
-            rendererExtension.drawDefaultBackground(receiver, engine, previousBg);
+            rendererExtension.drawDefaultBackground(engine, previousBg);
         }
 
         // Field Redraw.

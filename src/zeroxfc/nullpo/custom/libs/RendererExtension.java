@@ -1094,11 +1094,10 @@ public class RendererExtension {
     /**
      * Draws a background image of the default background images that NullpoMino loads.
      *
-     * @param receiver Current renderer
-     * @param engine   Current game engine
-     * @param bg       Background [0, 19]
+     * @param engine Current game engine
+     * @param bg     Background [0, 19]
      */
-    public void drawDefaultBackground(EventReceiver receiver, GameEngine engine, int bg) {
+    public void drawDefaultBackground(GameEngine engine, int bg) {
         final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
         if (bg < 0 || bg > 19) return;
 

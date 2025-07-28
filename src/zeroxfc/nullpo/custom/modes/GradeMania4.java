@@ -1,6 +1,5 @@
 package zeroxfc.nullpo.custom.modes;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -22,7 +21,6 @@ import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
-import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.ModePileCredits;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
@@ -1009,7 +1007,7 @@ public class GradeMania4 extends DummyMode {
         }
 
         if (!animatedBackgrounds && engine.ending == 2) {
-            rendererExtension.drawDefaultBackground(receiver, engine, previousBg);
+            rendererExtension.drawDefaultBackground(engine, previousBg);
         }
 
         // Field Redraw.

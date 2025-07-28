@@ -627,7 +627,7 @@ public class RollTraining extends MarathonModeBase {
     @Override
     public void renderFirst(GameEngine engine, int playerID) {
         if (!endless && engine.gameActive && timer > 0) {
-            rendererExtension.drawDefaultBackground(receiver, engine, startlevel);
+            rendererExtension.drawDefaultBackground(engine, startlevel);
 
             int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
             int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
