@@ -313,7 +313,7 @@ public class IdiotMode extends DummyMode {
             ModePileCredits.creditText("YOU HAVE CLEARED", EventReceiver.COLOR_YELLOW, 0.625f),
             ModePileCredits.creditTextNoSp("IDIOT% MODE!", EventReceiver.COLOR_YELLOW, 0.625f)
         ),
-        0.8, 0.125, false
+        0.775, 0.125, false
     );
 
     private static final ModePileCredits CREDITS_SHORT = new ModePileCredits(
