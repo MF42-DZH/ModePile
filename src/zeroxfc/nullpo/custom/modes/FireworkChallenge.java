@@ -22,6 +22,7 @@ import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.ModePileCredits;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
@@ -107,21 +108,36 @@ public class FireworkChallenge extends DummyMode {
     // Default section times
     private static final int DEFAULT_SECTION_TIME = 6300;
 
-    // Credit headings
-    private static final String[] CREDIT_HEADINGS = {
-        "MODE CREATOR:",
-        "BASIS:",
-        "SPECIAL THANKS GOES TO",
-        "CONGRATULATIONS!"
-    };
-
-    // Credit texts
-    private static final String[] CREDIT_TEXTS = {
-        "AZULLIA.",
-        "TI-EASY.",
-        "GLITCHYPSI, OSHISAURE, NIGHTSHADE, AKARI, THE DRAGON GOD NERROTH.",
-        "YOU HAVE COMPLETED THE FIREWORK CHALLENGE!"
-    };
+    private static final ModePileCredits CREDITS = new ModePileCredits(
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("FIREWORK", EventReceiver.COLOR_YELLOW, (10f / 8f)),
+            ModePileCredits.creditText("CHALLENGE", EventReceiver.COLOR_YELLOW, (10f / 9f)),
+            ModePileCredits.creditText("BASED ON", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.creditTextNoSp("TI-EASY", EventReceiver.COLOR_GREEN, 1f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditTextNoSp("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
+            GameTextUtilities.Text.blankLine(1f),
+            ModePileCredits.creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1.2f),
+            ModePileCredits.creditText("A.K.A.", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.creditTextNoSp("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
+            GameTextUtilities.Text.blankLine(4f),
+            ModePileCredits.creditTextNoSp("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
+            GameTextUtilities.Text.blankLine(1f),
+            ModePileCredits.creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("AKARI", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("JAVA REFLECTION", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.creditTextNoSp("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("CONGRATULATIONS!", EventReceiver.COLOR_YELLOW, 0.625f),
+            ModePileCredits.creditText("YOU HAVE CLEARED", EventReceiver.COLOR_YELLOW, 0.625f),
+            ModePileCredits.creditTextNoSp("FIREWORK CHALLENGE!", EventReceiver.COLOR_YELLOW, (10f / 19f))
+        ),
+        0.775, 0.125, false
+    );
 
     private static final int[] INPUT_SEQUENCE = {
         Controller.BUTTON_DOWN, Controller.BUTTON_DOWN,
@@ -129,10 +145,9 @@ public class FireworkChallenge extends DummyMode {
         Controller.BUTTON_RIGHT, Controller.BUTTON_LEFT,
         Controller.BUTTON_RIGHT, Controller.BUTTON_LEFT,
     };
+
     private static final int headerColour = EventReceiver.COLOR_GREEN;
     private boolean[] presses;
-    // Staff roll object
-    private ScrollingMarqueeText creditObject;
     // ID of last piece
     private int lastPiece;
     // combo during credits
@@ -250,8 +265,6 @@ public class FireworkChallenge extends DummyMode {
         presses = new boolean[] { false, false, false, false, false, false, false, false, false, false };
 
         SoundLoader.loadSoundset(SoundLoader.SoundSet.FIREWORKS);
-
-        creditObject = new ScrollingMarqueeText(CREDIT_HEADINGS, CREDIT_TEXTS, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
 
         owner = engine.owner;
         receiver = engine.owner.receiver;
@@ -541,28 +554,6 @@ public class FireworkChallenge extends DummyMode {
 
         landingParticles = new LandingParticles(customGraphics, engine.randSeed);
 
-        ArrayRandomiser creditScrambler = new ArrayRandomiser(engine.randSeed);
-        int[] arr = new int[CREDIT_HEADINGS.length - 1];
-        for (int i = 0; i < arr.length; i++) {
-            arr[i] = i;
-        }
-        int[] t = creditScrambler.permute(arr);
-        int[] newArr = new int[CREDIT_HEADINGS.length];
-        for (int i = 0; i < t.length; i++) {
-            newArr[i] = t[i];
-        }
-        newArr[CREDIT_HEADINGS.length - 1] = CREDIT_HEADINGS.length - 1;
-
-        String[] ch = new String[CREDIT_HEADINGS.length];
-        String[] ct = new String[CREDIT_HEADINGS.length];
-
-        for (int i = 0; i < newArr.length; i++) {
-            ch[i] = CREDIT_HEADINGS[newArr[i]];
-            ct[i] = CREDIT_TEXTS[newArr[i]];
-        }
-
-        creditObject = new ScrollingMarqueeText(ch, ct, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
-
         sectionTime = new int[SECTION_MAX];
         sectionIsPB = new boolean[SECTION_MAX];
         sectionsComplete = 0;
@@ -744,7 +735,6 @@ public class FireworkChallenge extends DummyMode {
                 if (time < 0) time = 0;
                 receiver.drawScoreFont(engine, playerID, 0, 13, "ROLL TIME", EventReceiver.COLOR_BLUE);
                 receiver.drawScoreFont(engine, playerID, 0, 14, GeneralUtil.getTime(time), ((time > 0) && (time < 10 * 60)));
-                creditObject.drawAtY(engine, 27.25, engine.displaysize + 1, (double) rollTime / MAX_ROLL_TIME);
             } /* else {
 				receiver.drawScoreFont(engine, playerID, 0, 13, "PENDING FIREWORKS", EventReceiver.COLOR_BLUE);
 				receiver.drawScoreFont(engine, playerID, 0, 14, String.valueOf(totalFireworkQueue));
@@ -1258,6 +1248,55 @@ public class FireworkChallenge extends DummyMode {
         return false;
     }
 
+    private int previousBg;
+
+    @Override
+    public void renderFirst(GameEngine engine, int playerID) {
+        if (engine.ending == 2) {
+            rendererExtension.drawDefaultBackground(engine, previousBg);
+        }
+
+        // Field Redraw.
+        if (engine.gameActive && engine.ending == 2) {
+            int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
+            int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
+
+            if (engine.displaysize != -1) {
+                rendererExtension.drawNext(receiver, engine, offsetX, offsetY);
+                rendererExtension.drawFrame(receiver, engine, offsetX, offsetY + 48, engine.displaysize);
+            } else {
+                rendererExtension.drawFrame(receiver, engine, offsetX, offsetY, -1);
+            }
+        }
+
+        if ((engine.gameActive) && (engine.ending == 2)) {
+            CREDITS.draw(receiver, engine, playerID, (double) rollTime / MAX_ROLL_TIME);
+        }
+
+        // Field Redraw.
+        if (engine.gameActive && engine.ending == 2) {
+            int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
+            int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
+
+            if (engine.displaysize != -1) {
+                rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 52, engine.displaysize);
+            } else {
+                rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 4, -1);
+            }
+        }
+
+    }
+
+    @Override
+    public void renderMove(GameEngine engine, int playerID) {
+        // Field Redraw.
+        if (engine.gameActive && engine.ending == 2) {
+            engine.isVisible = true;
+            receiver.renderMove(engine, playerID);
+            engine.isVisible = false;
+        }
+    }
+
     @Override
     public void onLast(GameEngine engine, int playerID) {
         if (scoreColorTimer > 0) scoreColorTimer--;
@@ -1286,6 +1325,18 @@ public class FireworkChallenge extends DummyMode {
             }
 
             lastLineClearTime++;
+        }
+
+        engine.isVisible = !engine.gameActive || engine.ending != 2;
+
+        if (engine.owner.backgroundStatus.bg >= 0 && engine.ending == 0) {
+            previousBg = engine.owner.backgroundStatus.bg;
+        } else if (engine.ending == 2) {
+            engine.owner.backgroundStatus.bg = -1;
+        }
+
+        if (engine.ending != 2) {
+            engine.owner.backgroundStatus.bg = previousBg;
         }
 
         // Ending
