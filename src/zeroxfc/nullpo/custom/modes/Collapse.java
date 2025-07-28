@@ -3,8 +3,6 @@ package zeroxfc.nullpo.custom.modes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.IntFunction;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;

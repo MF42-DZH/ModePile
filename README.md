@@ -53,7 +53,9 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _FlyInOutText_ - Adds text objects that can fly into the screen from the outside, linger, then return to their starting positions before disappearing.
 * _GameTextUtilities_ - Adds methods for coloured text and other random text / text obfuscation methods.
 * _Interpolation_ - Linear interpolation functions.
+* _LevelTableBuilder_ - A general form for _SpeedTableBuilder_ for building other level-based progressions.
 * _MathHelper_ - A few extra mathematical functions such as LCM or GCD.
+* _Mirror_ - Reflective access helper.
 * _MouseParser_ - Allows the use of mouse inside a mode.
 * _Particle_ - Particles for the particle engine.
 * _ParticleEmitterBase_ - Particle emitter engine. Used for holding and drawing particles.
