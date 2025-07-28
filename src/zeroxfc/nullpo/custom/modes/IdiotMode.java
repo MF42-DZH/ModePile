@@ -19,6 +19,7 @@ import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.ArrayRandomiser;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.ModePileCredits;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.ScrollingMarqueeText;
@@ -272,37 +273,84 @@ public class IdiotMode extends DummyMode {
             140, 160, 170, 200, 220, 230, 233, 236, 239, 243,
             247, 251, 300, 330, 360, 400, 420, 450, 500, 10000
         };
-    // Credit headings
-    private static final String[] CREDIT_HEADINGS = {
-        "THIS MODE IS DEDICATED TO",
-        "MODE CREATED BY",
-        "SPECIAL THANKS GOES TO",
-        "CONGRATULATIONS AND THANKS ALSO GOES TO"
-    };
-    // Credit texts
-    private static final String[] CREDIT_TEXTS = {
-        "AKARI AND HER VIDEO, \"SHIRASE IDIOT%\".",
-        "AZULLIA.",
-        "AKARI, OSHISAURE, NIGHTSHADE, GLITCHYPSI AND THE DRAGON GOD NERROTH.",
-        "YOU, FOR ENDURING AND REACHING THE ENDING!"
-    };
+
+    private static final ModePileCredits CREDITS_LONG = new ModePileCredits(
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("IDIOT%", EventReceiver.COLOR_YELLOW, (10f / 6f)),
+            ModePileCredits.creditText("MODE", EventReceiver.COLOR_YELLOW, (10f / 4f)),
+            ModePileCredits.creditText("BASED ON", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.creditText("#GM-MASTER", EventReceiver.COLOR_BLUE, 1f),
+            ModePileCredits.creditText("TAP-MASTER", EventReceiver.COLOR_BLUE, 1f),
+            ModePileCredits.creditText("TAP-DEATH", EventReceiver.COLOR_RED, 1f),
+            ModePileCredits.creditText("TI-MASTER", EventReceiver.COLOR_BLUE, 1f),
+            ModePileCredits.creditText("AND", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.creditTextNoSp("TI-SHIRASE", EventReceiver.COLOR_RED, 1f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditTextNoSp("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
+            GameTextUtilities.Text.blankLine(1f),
+            ModePileCredits.creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1.2f),
+            ModePileCredits.creditText("A.K.A.", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.creditTextNoSp("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
+            GameTextUtilities.Text.blankLine(4f),
+            ModePileCredits.creditTextNoSp("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
+            GameTextUtilities.Text.blankLine(1f),
+            ModePileCredits.creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("AKARI", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("JAVA REFLECTION", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.creditTextNoSp("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f),
+            GameTextUtilities.Text.blankLine(4f),
+            ModePileCredits.creditTextNoSp("INSPIRED BY", EventReceiver.COLOR_YELLOW, 0.7f),
+            GameTextUtilities.Text.blankLine(1f),
+            ModePileCredits.creditText("AKARI", EventReceiver.COLOR_CYAN, 0.85f),
+            ModePileCredits.creditText("AND HER VIDEO:", EventReceiver.COLOR_WHITE, 0.625f),
+            ModePileCredits.creditTextNoSp("\"SHIRASE IDIOT%\"", EventReceiver.COLOR_CYAN, 0.625f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("CONGRATULATIONS!", EventReceiver.COLOR_YELLOW, 0.625f),
+            ModePileCredits.creditText("YOU HAVE CLEARED", EventReceiver.COLOR_YELLOW, 0.625f),
+            ModePileCredits.creditTextNoSp("IDIOT% MODE!", EventReceiver.COLOR_YELLOW, 0.625f)
+        ),
+        0.8, 0.125, false
+    );
+
+    private static final ModePileCredits CREDITS_SHORT = new ModePileCredits(
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("IDIOT%", EventReceiver.COLOR_YELLOW, (10f / 6f)),
+            ModePileCredits.creditText("SHORT", EventReceiver.COLOR_YELLOW, (10f / 5f)),
+            ModePileCredits.creditText("BASED ON", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.creditTextNoSp("TAP-NORMAL", EventReceiver.COLOR_GREEN, 1f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditTextNoSp("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
+            GameTextUtilities.Text.blankLine(1f),
+            ModePileCredits.creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1.2f),
+            ModePileCredits.creditText("A.K.A.", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.creditTextNoSp("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
+            GameTextUtilities.Text.blankLine(4f),
+            ModePileCredits.creditTextNoSp("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
+            GameTextUtilities.Text.blankLine(1f),
+            ModePileCredits.creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("AKARI", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("JAVA REFLECTION", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.creditTextNoSp("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("CONGRATULATIONS!", EventReceiver.COLOR_YELLOW, 0.625f),
+            ModePileCredits.creditText("NOW TRY A HARDER", EventReceiver.COLOR_YELLOW, 0.625f),
+            ModePileCredits.creditTextNoSp("DIFFICULTY!", EventReceiver.COLOR_YELLOW, 0.625f)
+        ),
+        0.775, 0.125, true
+    );
 
     /*
      * [--- VAR BLOCK ---]
      */
-    // Credit headings
-    private static final String[] SHORT_CREDIT_HEADINGS = {
-        "THANK YOU",
-        "SINCE YOU ARE STILL HERE,"
-    };
-    // Credit texts
-    private static final String[] SHORT_CREDIT_TEXTS = {
-        "FOR TRYING IDIOT% MODE!",
-        "NOW TRY AGAIN TO PREVAIL AT A HARDER DIFFICULTY!"
-    };
     private static final int headerColour = EventReceiver.COLOR_PURPLE;
-    private ScrollingMarqueeText creditObjectDefault;  // Default credits
-    private ScrollingMarqueeText creditObjectShort;    // Short credits
     private GameManager owner;        // Current owning GameManager
     private EventReceiver receiver;   // In-game event receiver
     private int nextSectionLv;        // Level number of next section
@@ -390,9 +438,6 @@ public class IdiotMode extends DummyMode {
 
         pCoordList = new ArrayList<>();
         cPiece = null;
-
-        creditObjectDefault = new ScrollingMarqueeText(CREDIT_HEADINGS, CREDIT_TEXTS, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
-        creditObjectShort = new ScrollingMarqueeText(SHORT_CREDIT_HEADINGS, SHORT_CREDIT_TEXTS, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
 
         shouldPlayLSSE = false;
         condescension = true;  // VERY IMPORTANT.
@@ -621,7 +666,7 @@ public class IdiotMode extends DummyMode {
     }
 
     private int getMedalFontColor(int medalColor) {
-        if (medalColor == 1) return EventReceiver.COLOR_RED;
+        if (medalColor == 1) return EventReceiver.COLOR_ORANGE;
         if (medalColor == 2) return EventReceiver.COLOR_WHITE;
         if (medalColor == 3) return EventReceiver.COLOR_YELLOW;
         return -1;
@@ -631,8 +676,7 @@ public class IdiotMode extends DummyMode {
     @Override
     public boolean onSetting(GameEngine engine, int playerID) {
         // Menu
-        // engine.framecolor = GameEngine.FRAME_COLOR_GRAY;
-        if (engine.owner.replayMode == false) {
+        if (!engine.owner.replayMode) {
             // Configuration changes
             int change = updateCursor(engine, 12);
 
@@ -814,28 +858,6 @@ public class IdiotMode extends DummyMode {
         sectionTime = new int[SECTION_MAX[gameType]];
         isSectionPB = new boolean[SECTION_MAX[gameType]];
 
-        ArrayRandomiser creditScrambler = new ArrayRandomiser(engine.randSeed);
-        int[] arr = new int[CREDIT_HEADINGS.length - 1];
-        for (int i = 0; i < arr.length; i++) {
-            arr[i] = i;
-        }
-        int[] t = creditScrambler.permute(arr);
-        int[] newArr = new int[CREDIT_HEADINGS.length];
-        for (int i = 0; i < t.length; i++) {
-            newArr[i] = t[i];
-        }
-        newArr[CREDIT_HEADINGS.length - 1] = CREDIT_HEADINGS.length - 1;
-
-        String[] ch = new String[CREDIT_HEADINGS.length];
-        String[] ct = new String[CREDIT_HEADINGS.length];
-
-        for (int i = 0; i < newArr.length; i++) {
-            ch[i] = CREDIT_HEADINGS[newArr[i]];
-            ct[i] = CREDIT_TEXTS[newArr[i]];
-        }
-
-        creditObjectDefault = new ScrollingMarqueeText(ch, ct, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
-        creditObjectShort = new ScrollingMarqueeText(SHORT_CREDIT_HEADINGS, SHORT_CREDIT_TEXTS, EventReceiver.COLOR_ORANGE, EventReceiver.COLOR_WHITE);
         // torikaned = false;
 
         // shouldPlayLSSE = lvStopSE;
@@ -897,8 +919,6 @@ public class IdiotMode extends DummyMode {
      */
     @Override
     public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
-        int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
-        int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
         cPiece = new Piece(engine.nowPieceObject);
         for (int i = 1; i <= fall; i++) {
             pCoordList.add(
@@ -1150,11 +1170,6 @@ public class IdiotMode extends DummyMode {
                     default:
                         break;
                 }
-            }
-
-            if (rollStarted && engine.gameActive) {
-                ScrollingMarqueeText usedText = (gameType == GAMETYPE_NORMAL) ? creditObjectShort : creditObjectDefault;
-                usedText.drawAtY(engine, 27.25, engine.displaysize + 1, (double) rollTime / ROLLTIMELIMIT[gameType]);
             }
 
             torikaned = (engine.statistics.level == 500) && (engine.stat == GameEngine.STAT_EXCELLENT);
@@ -1663,6 +1678,54 @@ public class IdiotMode extends DummyMode {
         }
     }
 
+    private int previousBg;
+
+    @Override
+    public void renderFirst(GameEngine engine, int playerID) {
+        if (engine.ending == 2) {
+            rendererExtension.drawDefaultBackground(receiver, engine, previousBg);
+        }
+
+        // Field Redraw.
+        if (engine.gameActive && engine.ending == 2) {
+            int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
+            int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
+
+            if (engine.displaysize != -1) {
+                rendererExtension.drawNext(receiver, engine, offsetX, offsetY);
+                rendererExtension.drawFrame(receiver, engine, offsetX, offsetY + 48, engine.displaysize);
+            } else {
+                rendererExtension.drawFrame(receiver, engine, offsetX, offsetY, -1);
+            }
+        }
+
+        if ((engine.gameActive) && (engine.ending == 2)) {
+            (gameType == GAMETYPE_NORMAL ? CREDITS_SHORT : CREDITS_LONG).draw(receiver, engine, playerID, (double) rollTime / ROLLTIMELIMIT[gameType]);
+        }
+
+        // Field Redraw.
+        if (engine.gameActive && engine.ending == 2) {
+            int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
+            int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
+
+            if (engine.displaysize != -1) {
+                rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 52, engine.displaysize);
+            } else {
+                rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 4, -1);
+            }
+        }
+    }
+
+    @Override
+    public void renderMove(GameEngine engine, int playerID) {
+        // Field Redraw.
+        if (engine.gameActive && engine.ending == 2) {
+            engine.isVisible = true;
+            receiver.renderMove(engine, playerID);
+            engine.isVisible = false;
+        }
+    }
+
     // runs last each frame
     @Override
     public void onLast(GameEngine engine, int playerID) {
@@ -1704,6 +1767,18 @@ public class IdiotMode extends DummyMode {
                 engine.resetStatc();
                 engine.stat = GameEngine.STAT_EXCELLENT;
             }
+        }
+
+        engine.isVisible = !engine.gameActive || engine.ending != 2;
+
+        if (engine.owner.backgroundStatus.bg >= 0 && engine.ending == 0) {
+            previousBg = engine.owner.backgroundStatus.bg;
+        } else if (engine.ending == 2) {
+            engine.owner.backgroundStatus.bg = -1;
+        }
+
+        if (engine.ending != 2) {
+            engine.owner.backgroundStatus.bg = previousBg;
         }
 
         if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM) {

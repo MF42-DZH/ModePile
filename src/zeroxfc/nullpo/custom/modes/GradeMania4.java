@@ -263,7 +263,7 @@ public class GradeMania4 extends DummyMode {
             ModePileCredits.creditText("YOU HAVE CLEARED", EventReceiver.COLOR_YELLOW, 0.625f),
             ModePileCredits.creditTextNoSp("GRADE MANIA 4!", EventReceiver.COLOR_YELLOW, 0.625f)
         ),
-        0.775, 0.125
+        0.775, 0.125, false
     );
 
     private static final String[] HEADING_AER = {

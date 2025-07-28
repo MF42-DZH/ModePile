@@ -58,7 +58,8 @@ public class ModePileCredits {
         GameTextUtilities.TextBlockElement creatorBlock,
         GameTextUtilities.TextBlockElement congratulationsBlock,
         double finalBlockOffset,
-        double finalBlockProportion
+        double finalBlockProportion,
+        boolean skipSpecialThanks
     ) {
         assert (finalBlockOffset > 0d && finalBlockOffset <= 1d);
         assert (finalBlockProportion > 0d && finalBlockProportion <= (1d - finalBlockOffset));
@@ -71,45 +72,50 @@ public class ModePileCredits {
             mainBlockHeader,
             GameTextUtilities.Text.blankLine(4f),
             creatorBlock,
-            GameTextUtilities.Text.blankLine(4f),
-            creditTextNoSp("SPECIAL THANKS", EventReceiver.COLOR_YELLOW, 0.7f),
-            GameTextUtilities.Text.blankLine(1f),
-            creditText("THE OSHISAURES", EventReceiver.COLOR_PINK, 0.65f),
-            creditText("GLITCHYPSI", EventReceiver.COLOR_CYAN, 0.65f),
-            creditText("FARTERYHR", EventReceiver.COLOR_WHITE, 0.65f),
-            creditText("GRAV", EventReceiver.COLOR_PINK, 0.65f),
-            creditText("DM DOKURO", EventReceiver.COLOR_RED, 0.65f),
-            creditText("SIMPLEFLIPS", EventReceiver.COLOR_YELLOW, 0.65f),
-            creditText("ZAPPOOLA", EventReceiver.COLOR_PINK, 0.65f),
-            creditText("KINGSTATIC", EventReceiver.COLOR_BLUE, 0.65f),
-            creditText("TDGNERROTH", EventReceiver.COLOR_CYAN, 0.65f),
-            creditText("MRXBAS", EventReceiver.COLOR_YELLOW, 0.65f),
-            creditText("TEAKANJI", EventReceiver.COLOR_PURPLE, 0.65f),
-            creditText("VENTILO_", EventReceiver.COLOR_PURPLE, 0.65f),
-            creditText("ROMAJIMILTONAMULO", EventReceiver.COLOR_GREEN, 0.575f),
-            creditText("NICK666101", EventReceiver.COLOR_PURPLE, 0.65f),
-            creditText("LEIKAISHO", EventReceiver.COLOR_RED, 0.65f),
-            creditText("MARKGAMED7794", EventReceiver.COLOR_PURPLE, 0.65f),
-            creditText("MERP", EventReceiver.COLOR_BLUE, 0.65f),
-            creditText("TIM_THE_ENCHANTER", EventReceiver.COLOR_BLUE, 0.575f),
-            creditText("LEFALCHIZZLE", EventReceiver.COLOR_BLUE, 0.65f),
-            creditText("FATE", EventReceiver.COLOR_BLUE, 0.65f),
-            creditText("THEPROGUE", EventReceiver.COLOR_BLUE, 0.65f),
-            creditTextNoSp("RURURARURI", EventReceiver.COLOR_BLUE, 0.65f),
-            GameTextUtilities.Text.blankLine(1f),
-            creditTextNoSp("YOU!", EventReceiver.COLOR_ORANGE, 1.75f),
-            GameTextUtilities.Text.blankLine(4f),
-            creditTextNoSp("SHOUTOUTS TO", EventReceiver.COLOR_YELLOW, 0.7f),
-            GameTextUtilities.Text.blankLine(1f),
-            creditText("NULLNONAME", EventReceiver.COLOR_WHITE, 0.65f),
-            creditText("TETRIS.WIKI", EventReceiver.COLOR_WHITE, 0.65f),
-            creditText("HARD DROP WIKI", EventReceiver.COLOR_WHITE, 0.65f),
-            creditText("ALL DTET PLAYERS", EventReceiver.COLOR_WHITE, 0.625f),
-            creditText("ALL T-EX PLAYERS", EventReceiver.COLOR_WHITE, 0.625f),
-            creditText("ALL HEBORIS PLAYERS", EventReceiver.COLOR_WHITE, 0.525f),
-            creditText("ALL #GM SERIES PLAYERS", EventReceiver.COLOR_WHITE, 0.45f),
-            creditText("ALL NULLPOMINO PLAYERS", EventReceiver.COLOR_WHITE, 0.45f),
-            creditTextNoSp("ALL SEGATET '99 PLAYERS", EventReceiver.COLOR_WHITE, 0.43f),
+            (skipSpecialThanks
+                ? GameTextUtilities.Text.custom(" ", EventReceiver.COLOR_WHITE, 0f)
+                : GameTextUtilities.textElems(
+                    GameTextUtilities.Text.blankLine(4f),
+                    creditTextNoSp("SPECIAL THANKS", EventReceiver.COLOR_YELLOW, 0.7f),
+                    GameTextUtilities.Text.blankLine(1f),
+                    creditText("THE OSHISAURES", EventReceiver.COLOR_PINK, 0.65f),
+                    creditText("GLITCHYPSI", EventReceiver.COLOR_CYAN, 0.65f),
+                    creditText("FARTERYHR", EventReceiver.COLOR_WHITE, 0.65f),
+                    creditText("GRAV", EventReceiver.COLOR_PINK, 0.65f),
+                    creditText("DM DOKURO", EventReceiver.COLOR_RED, 0.65f),
+                    creditText("SIMPLEFLIPS", EventReceiver.COLOR_YELLOW, 0.65f),
+                    creditText("ZAPPOOLA", EventReceiver.COLOR_PINK, 0.65f),
+                    creditText("KINGSTATIC", EventReceiver.COLOR_BLUE, 0.65f),
+                    creditText("TDGNERROTH", EventReceiver.COLOR_CYAN, 0.65f),
+                    creditText("MRXBAS", EventReceiver.COLOR_YELLOW, 0.65f),
+                    creditText("TEAKANJI", EventReceiver.COLOR_PURPLE, 0.65f),
+                    creditText("VENTILO_", EventReceiver.COLOR_PURPLE, 0.65f),
+                    creditText("ROMAJIMILTONAMULO", EventReceiver.COLOR_GREEN, 0.575f),
+                    creditText("NICK666101", EventReceiver.COLOR_PURPLE, 0.65f),
+                    creditText("LEIKAISHO", EventReceiver.COLOR_RED, 0.65f),
+                    creditText("MARKGAMED7794", EventReceiver.COLOR_PURPLE, 0.65f),
+                    creditText("MERP", EventReceiver.COLOR_BLUE, 0.65f),
+                    creditText("TIM_THE_ENCHANTER", EventReceiver.COLOR_BLUE, 0.575f),
+                    creditText("LEFALCHIZZLE", EventReceiver.COLOR_BLUE, 0.65f),
+                    creditText("FATE", EventReceiver.COLOR_BLUE, 0.65f),
+                    creditText("THEPROGUE", EventReceiver.COLOR_BLUE, 0.65f),
+                    creditTextNoSp("RURURARURI", EventReceiver.COLOR_BLUE, 0.65f),
+                    GameTextUtilities.Text.blankLine(1f),
+                    creditTextNoSp("YOU!", EventReceiver.COLOR_ORANGE, 1.75f),
+                    GameTextUtilities.Text.blankLine(4f),
+                    creditTextNoSp("SHOUTOUTS TO", EventReceiver.COLOR_YELLOW, 0.7f),
+                    GameTextUtilities.Text.blankLine(1f),
+                    creditText("NULLNONAME", EventReceiver.COLOR_WHITE, 0.65f),
+                    creditText("TETRIS.WIKI", EventReceiver.COLOR_WHITE, 0.65f),
+                    creditText("HARD DROP WIKI", EventReceiver.COLOR_WHITE, 0.65f),
+                    creditText("ALL DTET PLAYERS", EventReceiver.COLOR_WHITE, 0.625f),
+                    creditText("ALL T-EX PLAYERS", EventReceiver.COLOR_WHITE, 0.625f),
+                    creditText("ALL HEBORIS PLAYERS", EventReceiver.COLOR_WHITE, 0.525f),
+                    creditText("ALL #GM SERIES PLAYERS", EventReceiver.COLOR_WHITE, 0.45f),
+                    creditText("ALL NULLPOMINO PLAYERS", EventReceiver.COLOR_WHITE, 0.45f),
+                    creditTextNoSp("ALL SEGATET '99 PLAYERS", EventReceiver.COLOR_WHITE, 0.43f)
+                )
+            ),
             GameTextUtilities.Text.blankLine(4f),
             congratulationsBlock,
             GameTextUtilities.Text.blankLine(4f),
@@ -130,6 +136,19 @@ public class ModePileCredits {
      * <p>
      * Suggested use:
      * <pre>
+     * // In onLast:
+     * engine.isVisible = !engine.gameActive || engine.ending != 2;
+     *
+     * if (engine.owner.backgroundStatus.bg >= 0 && engine.ending == 0) {
+     *     previousBg = engine.owner.backgroundStatus.bg;
+     * } else if (engine.ending == 2) {
+     *     engine.owner.backgroundStatus.bg = -1;
+     * }
+     *
+     * if (engine.ending != 2) {
+     *     engine.owner.backgroundStatus.bg = previousBg;
+     * }
+     *
      * // In renderFirst:
      * if (engine.ending == 2) {
      *     rendererExtension.drawDefaultBackground(receiver, engine, previousBg);
@@ -196,7 +215,7 @@ public class ModePileCredits {
             GameTextUtilities.drawAlignedBoundedTextBlock(
                 engine,
                 baseX + (engine.field.getWidth() * 8),
-                (int) Math.floor(Interpolation.lerp(baseY + (engine.field.getHeight() * 16d), baseY + (engine.field.getHeight() * 8d), Math.min(1d, (progress - finalBlockOffset) / finalBlockMoveProportion))),
+                (int) Math.floor(Interpolation.lerp(baseY + (engine.field.getHeight() * 16d) + (FINAL_BLOCK.getHeight() / 2d), baseY + (engine.field.getHeight() * 8d), Math.min(1d, (progress - finalBlockOffset) / finalBlockMoveProportion))),
                 baseX - 1, baseY, baseX + (engine.field.getWidth() * 16) + 1, baseY + (engine.field.getHeight() * 16),
                 false, FINAL_BLOCK, ObjectAlignment.MIDDLE_MIDDLE
             );

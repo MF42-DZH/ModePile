@@ -278,7 +278,7 @@ public class GameTextUtilities {
         };
     }
 
-        /** Representation of a left-aligned block of lines to draw. */
+    /** Representation of a block of lines to draw. */
     public static class TextBlock implements TextBlockElement {
         private static final WeakHashMap<TextBlock, WeakReference<TextBlock>> INSTANCES = new WeakHashMap<>();
 
@@ -593,7 +593,7 @@ public class GameTextUtilities {
 
         // Process all lines.
         int offset = 0;
-        while (offset < texts.length() && dy < maxY) {
+        while (offset < texts.length() && dy <= maxY) {
             final int lineEnd = findLineEndIndex(texts, offset);
 
             switch (texts.justification) {
@@ -610,20 +610,20 @@ public class GameTextUtilities {
             for (int i = offset; i < lineEnd; ++i) {
                 final Text text = texts.get(i);
 
-                if (dx >= minX && dy >= minY && (dx + text.getWidth()) <= maxX && (dy + text.getHeight()) <= maxY) {
-                    getCustomGraphics().drawString(
-                        engine,
-                        dx,
-                        pinTop ? dy : dy + (int) ((maxLineScale - texts.get(i).scale) * Text.BASE_UNIT),
-                        text.string,
-                        text.colour,
-                        text.rgba[0],
-                        text.rgba[1],
-                        text.rgba[2],
-                        text.rgba[3],
-                        text.scale
-                    );
-                }
+                getCustomGraphics().drawClippedString(
+                    engine,
+                    dx,
+                    pinTop ? dy : dy + (int) ((maxLineScale - texts.get(i).scale) * Text.BASE_UNIT),
+                    minX, minY,
+                    maxX, maxY,
+                    text.string,
+                    text.colour,
+                    text.rgba[0],
+                    text.rgba[1],
+                    text.rgba[2],
+                    text.rgba[3],
+                    text.scale
+                );
 
                 dx += texts.get(i).getWidth();
                 if (texts.justification == TextJustification.JUSTIFY) {

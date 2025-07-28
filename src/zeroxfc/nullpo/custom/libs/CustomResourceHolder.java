@@ -616,8 +616,107 @@ public class CustomResourceHolder {
                     green,
                     blue,
                     alpha,
-                    false
+                    true
                 );
+
+                dx += BASE_UNIT * scale;
+            }
+        }
+    }
+
+    /**
+     * Improved implementation of <code>NormalFont.printFont</code>, that uses all three
+     * font sizes at appropriate times, and has better support for newlines at different
+     * scale factors.
+     * <p>
+     * This version also supports post-multiplying the colour of the text.
+     * <p>
+     * This version also lets you set clip boundaries for drawing, where text will be
+     * partially cut-off if overlapping those boundaries.
+     *
+     * @param engine             <code>GameEngine</code> to draw with
+     * @param x                  X-coordinate (Top-Left Corner)
+     * @param y                  Y-coordinate (Top-Left Corner)
+     * @param minX               Minimum X-coordinate for drawing
+     * @param minY               Minimum Y-coordinate for drawing
+     * @param maxX               Maximum X-coordinate for drawing
+     * @param maxY               Maximum Y-coordinate for drawing
+     * @param str                String to draw
+     * @param receiverTextColour Character colour code (from <code>EventReceiver</code>)
+     * @param red                Colour multiplication red component
+     * @param green              Colour multiplication green component
+     * @param blue               Colour multiplication blue component
+     * @param alpha              Render alpha
+     * @param scale              Character scale
+     */
+    public void drawClippedString(GameEngine engine, int x, int y, int minX, int minY, int maxX, int maxY, String str, int receiverTextColour, int red, int green, int blue, int alpha, float scale) {
+        RuntimeImage<?> font;
+        int fontBaseScale;
+
+        // Prevents a div-by-zero.
+        if (scale == 0f) return;
+
+        // Get font and base scale based on scale factor for best quality.
+        // Base unit length is 16px on screen.
+        final int BASE_UNIT = 16;
+
+        if (scale <= 0.5f) {
+            font = getSmallFont();
+            fontBaseScale = BASE_UNIT >>> 1;
+        } else if (scale > 1f) {
+            font = getBigFont();
+            fontBaseScale = BASE_UNIT * 2;
+        } else {
+            font = getNormalFont();
+            fontBaseScale = BASE_UNIT;
+        }
+
+        final int strLength = str.length();
+
+        float dx = x;
+        float dy = y;
+
+        for (int i = 0; i < strLength; ++i) {
+            final int chrAt = str.charAt(i);
+
+            if (chrAt == 0x0A) {
+                dx = x;
+                dy += BASE_UNIT * scale;
+            } else {
+                int sx = ((chrAt - 32) % 32) * fontBaseScale;
+                int sy = ((chrAt - 32) / 32) * fontBaseScale + (receiverTextColour * 3 * fontBaseScale);
+
+                float drawTLX = Math.max(dx, minX);
+                float drawTLY = Math.max(dy, minY);
+                float drawBRX = Math.min(dx + (BASE_UNIT * scale), maxX);
+                float drawBRY = Math.min(dy + (BASE_UNIT * scale), maxY);
+                float offsetSrcTLX = (drawTLX - dx) / (scale / (fontBaseScale / (float) BASE_UNIT));
+                float offsetSrcTLY = (drawTLY - dy) / (scale / (fontBaseScale / (float) BASE_UNIT));
+                float offsetSrcBRX = fontBaseScale - ((drawBRX - dx) / (scale / (fontBaseScale / (float) BASE_UNIT)));
+                float offsetSrcBRY = fontBaseScale - ((drawBRY - dy) / (scale / (fontBaseScale / (float) BASE_UNIT)));
+                float srcSizeX = fontBaseScale - offsetSrcTLX - offsetSrcBRX;
+                float srcSizeY = fontBaseScale - offsetSrcTLY - offsetSrcBRY;
+
+                if (srcSizeX >= 0 && srcSizeY >= 0) {
+                    drawImage(
+                        engine,
+                        "font",
+                        font,
+                        drawTLX,
+                        drawTLY,
+                        drawBRX,
+                        drawBRY,
+                        sx + offsetSrcTLX,
+                        sy + offsetSrcTLY,
+                        srcSizeX,
+                        srcSizeY,
+                        red,
+                        green,
+                        blue,
+                        alpha,
+                        true
+                    );
+                }
 
                 dx += BASE_UNIT * scale;
             }

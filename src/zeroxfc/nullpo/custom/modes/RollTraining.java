@@ -100,7 +100,7 @@ public class RollTraining extends MarathonModeBase {
             ModePileCredits.creditText("THE END!", EventReceiver.COLOR_YELLOW, 0.7f),
             ModePileCredits.creditTextNoSp("YOU CAN DO IT!", EventReceiver.COLOR_YELLOW, 0.7f)
         ),
-        0.775, 0.125
+        0.775, 0.125, false
     );
 
     /**
