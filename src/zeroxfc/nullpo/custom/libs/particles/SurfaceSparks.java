@@ -1,6 +1,5 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
-import java.util.Arrays;
 import java.util.Random;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
@@ -117,7 +116,7 @@ public class SurfaceSparks extends ParticleEmitterBase<SurfaceSparks.Parameters>
             a.setY(9.80665 / 60d);
 
             final Particle particle = new Particle(
-                Particle.ParticleShape.Rectangle,
+                Particle.ParticleShape.RECTANGLE,
                 Interpolation.lerp(12, 20, randomiser.nextDouble()),
                 p,
                 v,

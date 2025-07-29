@@ -440,7 +440,7 @@ zeroxfc.nullpo.custom.random.TerrorInstinctRandomizer
 
 ----------
 
-31 Libraries:
+32 Libraries:
 
 AnimatedBackgroundHook - Allows the simple animation of backgrounds, DTET/TI style.
 ArrayRandomiser - Generates a permutation of an array.
@@ -449,6 +449,7 @@ BlockParticleCollection - Collection class for easy generation, update and drawi
 Box - A simple mutable box.
 BufferedPrimitiveDrawingHook - For fast primitive drawing.
 CustomResourceHolder - Allows the use of custom images and BGM in a mode.
+ColourMixer - Utility for mixing colour formats.
 DoubleVector - 2D vector type that uses doubles for more precision.
 ExamSpinner - TI-style spinner like the one used during Promotion Exam results.
 FieldManipulation - Adds and fixes methods for dealing with the game's Field type.

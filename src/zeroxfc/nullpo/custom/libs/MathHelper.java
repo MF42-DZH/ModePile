@@ -1,6 +1,9 @@
 package zeroxfc.nullpo.custom.libs;
 
 public class MathHelper {
+    // This is a static class.
+    private MathHelper() {}
+
     /**
      * Modulo operator that functions similarly to Python's % operator.
      *

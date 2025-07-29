@@ -105,7 +105,7 @@ public class Fireworks extends ParticleEmitterBase<Object[]> {
                     DoubleVector v = new DoubleVector(2 * randomiser.nextDouble() * maxVelocity - maxVelocity, 2 * randomiser.nextDouble() * Math.PI, true);
 
                     Particle particle = new Particle(
-                        Particle.ParticleShape.Rectangle,
+                        Particle.ParticleShape.RECTANGLE,
                         Interpolation.lerp(minLifeTime, maxLifeTime, randomiser.nextDouble()),
                         origin,
                         v,
@@ -118,7 +118,7 @@ public class Fireworks extends ParticleEmitterBase<Object[]> {
                     particles.add(particle);
 
                     Particle particle2 = new Particle(
-                        Particle.ParticleShape.Rectangle,
+                        Particle.ParticleShape.RECTANGLE,
                         Interpolation.lerp(minLifeTime, maxLifeTime, randomiser.nextDouble()),
                         origin,
                         v,

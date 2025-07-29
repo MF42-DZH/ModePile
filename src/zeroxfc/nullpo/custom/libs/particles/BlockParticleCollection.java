@@ -19,7 +19,7 @@ public class BlockParticleCollection {
     // Animation type
     private final int animationType;
 
-    private RendererExtension rendererExtension;
+    private final RendererExtension rendererExtension;
 
     /**
      * Creates a new collection of particles.

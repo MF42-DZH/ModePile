@@ -24,7 +24,7 @@ public class BlockParticle {
     // Flash
     private boolean isFlashing;
 
-    private RendererExtension rendererExtension;
+    private final RendererExtension rendererExtension;
 
     /**
      * Creates a block particle.

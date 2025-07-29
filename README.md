@@ -45,6 +45,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _BlockParticleCollection_ - Collection class for easy generation, update and drawing of block particles.
 * _Box_ - A simple mutable box.
 * _BufferedPrimitiveDrawingHook_ - For fast primitive drawing.
+* _ColourMixer_ - Utility for mixing colour formats.
 * _DoubleVector_ - 2D vector type that uses doubles for more precision.
 * _CustomResourceHolder_ - Allows the use of custom images and BGM in a mode.
 * _ExamSpinner_ - TI-style spinner like the one used during Promotion Exam results.

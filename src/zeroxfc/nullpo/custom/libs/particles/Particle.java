@@ -20,11 +20,11 @@ public class Particle {
     /**
      * X size
      */
-    private final int sizeX;
+    private int sizeX;
     /**
      * Y size
      */
-    private final int sizeY;
+    private int sizeY;
     /**
      * Red colour component
      */
@@ -186,10 +186,10 @@ public class Particle {
         if (particleLifetime > particleMaxLifetime) return;
 
         switch (shape) {
-            case Rectangle:
+            case RECTANGLE:
                 buffer.drawRectangle((int) position.getX() - (sizeX / 2), (int) position.getY() - (sizeY / 2), sizeX, sizeY, ur, ug, ub, ua, true);
                 break;
-            case Circle:
+            case CIRCLE:
                 buffer.drawOval((int) position.getX() - (sizeX / 2), (int) position.getY() - (sizeY / 2), sizeX, sizeY, ur, ug, ub, ua, true);
                 break;
             default:
@@ -214,11 +214,36 @@ public class Particle {
         return ++particleLifetime > particleMaxLifetime;
     }
 
+    /** Get particle horizontal size. */
+    public int getSizeX() {
+        return sizeX;
+    }
+
+    /** Set particle horizontal size. */
+    public void setSizeX(int sizeX) {
+        this.sizeX = sizeX;
+    }
+
+    /** Get particle vertical size. */
+    public int getSizeY() {
+        return sizeY;
+    }
+
+    /** Set particle vertical size. */
+    public void setSizeY(int sizeY) {
+        this.sizeY = sizeY;
+    }
+
+    /** Get the proportion in which this particle has lived. */
+    public double getLifetimeProportion() {
+        return (double) particleLifetime / particleMaxLifetime;
+    }
+
     /**
      * Particle Shapes
      * Warning: you cannot use circular particles with SDL.
      */
     public enum ParticleShape {
-        Rectangle, Circle
+        RECTANGLE, CIRCLE
     }
 }

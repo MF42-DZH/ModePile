@@ -178,7 +178,7 @@ public class LandingParticles extends ParticleEmitterBase<LandingParticles.Param
                 );
 
                 final Particle particle = new Particle(
-                    Particle.ParticleShape.Rectangle,
+                    Particle.ParticleShape.RECTANGLE,
                     Interpolation.lerp(DEF_MIN_LIFE, DEF_MAX_LIFE, randomiser.nextDouble()),
                     p,
                     v,
