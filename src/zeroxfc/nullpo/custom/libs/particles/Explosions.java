@@ -65,11 +65,21 @@ public class Explosions extends ParticleEmitterBase<Explosions.Charge> {
             final boolean ret = super.update();
 
             if (component == Component.FLAME) {
-                setSizeX((int) Math.ceil(startSizeX * getLifetimeProportion()));
-                setSizeY((int) Math.ceil(startSizeY * getLifetimeProportion()));
+                setSizeX((int) Math.ceil(startSizeX * 1.5 * getLifetimeProportion()));
+                setSizeY((int) Math.ceil(startSizeY * 1.5 * getLifetimeProportion()));
+
+                final double up = 1 - getLifetimeProportion();
+                ua = (int) (alpha * Math.sqrt(up));
+
+                velocity.mul(29d / 30d);
             } else if (component == Component.SMOKE) {
-                setSizeX((int) Math.ceil(startSizeX * (1 + getLifetimeProportion())));
-                setSizeY((int) Math.ceil(startSizeY * (1 + getLifetimeProportion())));
+                setSizeX((int) Math.ceil(startSizeX * (1 + getLifetimeProportion() / 2)));
+                setSizeY((int) Math.ceil(startSizeY * (1 + getLifetimeProportion() / 2)));
+
+                final double up = 1 - getLifetimeProportion();
+                ua = (int) (alpha * Math.sqrt(up));
+
+                velocity.mul(59d / 60d);
             }
 
             return ret;
@@ -93,7 +103,7 @@ public class Explosions extends ParticleEmitterBase<Explosions.Charge> {
 
     @Override
     public void addNumber(int num, Charge params) {
-        for (int i = 0; i < (int) Math.ceil(num * (2 * params.smokeDensity)); ++i) {
+        for (int i = 0; i < (int) Math.ceil(num * (1 + params.smokeDensity)); ++i) {
             final Component component = i < num ? Component.FLAME : Component.SMOKE;
 
             final DoubleVector origin = new DoubleVector(
@@ -103,38 +113,31 @@ public class Explosions extends ParticleEmitterBase<Explosions.Charge> {
             );
 
             final DoubleVector velocity = new DoubleVector(origin.getMagnitude(), origin.getDirection(), true);
+            velocity.div(4);
             velocity.mul(params.speedMult);
-            velocity.div((params.maxLife * 2) / 60d);
-
-            final DoubleVector acceleration = new DoubleVector(origin.getMagnitude(), -origin.getDirection(), true);
-
-            if (component == Component.SMOKE) {
-                acceleration.div((params.maxLife * 2) / 60d);
-                acceleration.add(new DoubleVector(0, -9.80665d / 60d, false));
-            }
 
             origin.add(new DoubleVector(params.centreX, params.centreY, false));
 
             final ColourMixer colourStart = component == Component.FLAME
-                ? (ColourMixer.hsvViaAngle(((randomizer.nextDouble() / 2) + 0.5) * params.temperature * 60.0, params.temperature, 1.0))
+                ? (ColourMixer.hsvViaAngle(((randomizer.nextDouble() / 2) + 0.5) * params.temperature * 60.0, 1 - params.temperature, 1.0))
                 : (ColourMixer.hsl(0, 0, randomizer.nextDouble() / 2));
 
             final ColourMixer colourEnd = component == Component.FLAME
-                ? (ColourMixer.hslViaAngle(60, 1.0, 1.0))
+                ? (ColourMixer.hslViaAngle(60, 1.0, 2d / 3d))
                 : (ColourMixer.hsl(0, 0, 1.0));
 
             int lifetime = randomizer.nextInt(params.maxLife - params.minLife + 1) + params.minLife;
-            if (component == Component.SMOKE) lifetime *= 2;
+            if (component == Component.SMOKE) lifetime = (int) Math.ceil(lifetime * 1.5);
 
-            final int startSize = 3 + (int) Math.ceil(randomizer.nextDouble() * 3);
+            final int startSize = 4 + (int) Math.ceil(randomizer.nextDouble() * 4);
 
             particles.add(
                 new ExplosionParticle(
                     component, lifetime,
-                    origin, velocity, acceleration,
+                    origin, velocity, DoubleVector.zero(),
                     startSize, startSize,
-                    colourStart.getRed8(), colourStart.getGreen8(), colourStart.getBlue8(), 255,
-                    colourEnd.getRed8(), colourEnd.getGreen8(), colourEnd.getBlue8(), component == Component.SMOKE ? 0 : 64
+                    colourStart.getRed8(), colourStart.getGreen8(), colourStart.getBlue8(), component == Component.SMOKE ? 160 : 255,
+                    colourEnd.getRed8(), colourEnd.getGreen8(), colourEnd.getBlue8(), component == Component.SMOKE ? 160 : 255
                 )
             );
         }

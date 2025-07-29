@@ -1751,6 +1751,8 @@ public class Collapse extends DummyMode {
             final int fillDuration = engine.field.getWidth() * (Math.min(endLevelEmptyRowCounter, engine.field.getHeight() - 1)) * 3;
 
             int usedTime = engine.statc[0] % (engine.field.getWidth() * 3);
+            if (usedTime == 0) currentIncrease = 0;
+
             if (engine.statc[0] >= fillDuration) usedTime = engine.statc[0] - fillDuration;
 
             if (usedTime % 2 == 0) {

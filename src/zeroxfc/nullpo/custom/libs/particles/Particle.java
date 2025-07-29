@@ -20,27 +20,27 @@ public class Particle {
     /**
      * X size
      */
-    private int sizeX;
+    protected int sizeX;
     /**
      * Y size
      */
-    private int sizeY;
+    protected int sizeY;
     /**
      * Red colour component
      */
-    private final int red;
+    protected final int red;
     /**
      * Green colour component
      */
-    private final int green;
+    protected final int green;
     /**
      * Blue colour component
      */
-    private final int blue;
+    protected final int blue;
     /**
      * Alpha component
      */
-    private final int alpha;
+    protected final int alpha;
 
     /*
      * Colour variables.
@@ -49,19 +49,19 @@ public class Particle {
     /**
      * Red colour component at end
      */
-    private final int redEnd;
+    protected final int redEnd;
     /**
      * Green colour component at end
      */
-    private final int greenEnd;
+    protected final int greenEnd;
     /**
      * Blue colour component at end
      */
-    private final int blueEnd;
+    protected final int blueEnd;
     /**
      * Alpha component at end
      */
-    private final int alphaEnd;
+    protected final int alphaEnd;
     /**
      * Position vector
      */
