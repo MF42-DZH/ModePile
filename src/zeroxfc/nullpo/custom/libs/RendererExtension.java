@@ -1126,6 +1126,7 @@ public class RendererExtension {
             drawCustomFrame(receiver, engine, x, y, displaySize, frameColourFunc, color.getRed(), color.getGreen(), color.getBlue());
         } else if (renderer == CustomResourceHolder.Runtime.SDL) {
             // Yeah, this isn't happening due to how the SDL renderer uses an image sprite for the meter (?????).
+            // Tinting images also seems to be particularly difficult.
             drawFrame(receiver, engine, x, y, displaySize);
         }
     }

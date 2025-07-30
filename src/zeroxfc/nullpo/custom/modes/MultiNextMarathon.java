@@ -539,6 +539,22 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
     }
 
     @Override
+    public void renderExcellent(GameEngine engine, int playerID) {
+        inRenderExcellent(rendererExtension, receiver, engine, playerID);
+    }
+
+    @Override
+    public void renderGameOver(GameEngine engine, int playerID) {
+        inRenderGameOver(rendererExtension, receiver, engine, playerID);
+    }
+
+    @Override
+    public void renderResult(GameEngine engine, int playerID) {
+        inRenderResult(rendererExtension, receiver, engine, playerID);
+        super.renderResult(engine, playerID);
+    }
+
+    @Override
     public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
         engine.statistics.scoreFromHardDrop += fall * 2;
         engine.statistics.score += fall * 2;
