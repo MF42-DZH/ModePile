@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Random;
-import java.util.function.BiFunction;
+import java.util.function.IntBinaryOperator;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
 import mu.nu.nullpo.game.component.Piece;
@@ -20,13 +20,14 @@ import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.MathHelper;
+import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
 
-public class MultiNextMarathon extends MarathonModeBase {
+public class MultiNextMarathon extends MarathonModeBase implements HasCustomFieldDrawing {
     private static final Logger log = Logger.getLogger(MultiNextMarathon.class);
 
     private static final int HEADER_COLOUR = EventReceiver.COLOR_ORANGE;
@@ -38,7 +39,25 @@ public class MultiNextMarathon extends MarathonModeBase {
     private int[][] rankingScorePlayer;
     private int[][] rankingLinesPlayer;
     private int[][] rankingTimePlayer;
+
+    private int lastBackground;
     private int currentBackground;
+    private int fadeProgress;
+
+    @Override
+    public int getLastBackground() {
+        return lastBackground;
+    }
+
+    @Override
+    public int getCurrentBackground() {
+        return currentBackground;
+    }
+
+    @Override
+    public float getFadeProgress() {
+        return fadeProgress / 200f;
+    }
 
     private QueueHolder leftQueue;
     private QueueHolder rightQueue;
@@ -173,7 +192,12 @@ public class MultiNextMarathon extends MarathonModeBase {
 
     private RuleOptions oldRuleOpt;
 
-    private BiFunction<Integer, Integer, int[]> frameColF;
+    private IntBinaryOperator frameColF;
+
+    @Override
+    public FrameDrawingParameters getFrameDrawingParameters(GameEngine engine, int playerID) {
+        return new FrameDrawingParameters(frameColF, null);
+    }
 
     /*
      * Mode name
@@ -188,32 +212,25 @@ public class MultiNextMarathon extends MarathonModeBase {
         owner = engine.owner;
         receiver = engine.owner.receiver;
 
-        engine.isVisible = false;
-        engine.owner.backgroundStatus.bg = -1;
-        engine.owner.backgroundStatus.fadebg = -1;
+        setupBackgrounds(engine);
+
         selectedNext = WhichQueue.LEFT;
 
-        frameColF = new BiFunction<Integer, Integer, int[]>() {
-            private final int[] tempColour = { 0, 0, 0 };
+        frameColF = (integer, integer2) -> {
+            final int width = engine.field != null ? engine.field.getWidth() : 10;
+            final int height = engine.field != null ? engine.field.getHeight() : 20;
 
-            @Override
-            public int[] apply(Integer integer, Integer integer2) {
-                final int width = engine.field != null ? engine.field.getWidth() : 10;
-                final int height = engine.field != null ? engine.field.getHeight() : 20;
+            final int usedX = getSelectedNext() == WhichQueue.LEFT ? integer : ((width * 4) - integer);
 
-                final int usedX = getSelectedNext() == WhichQueue.LEFT ? integer : ((width * 4) - integer);
+            final int gComponent = Interpolation.lerp(
+                255, 96,
+                MathHelper.clamp(
+                    (Math.max(usedX, integer2) - 1d) / (height * 4),
+                    0d, 1d
+                )
+            );
 
-                tempColour[0] = 255;
-                tempColour[1] = Interpolation.lerp(
-                    255, 96,
-                    MathHelper.clamp(
-                        (Math.max(usedX, integer2) - 1d) / (height * 4),
-                        0d, 1d
-                    )
-                );
-
-                return tempColour;
-            }
+            return (255 << 16) | (gComponent << 8);
         };
 
         lastscore = 0;
@@ -276,7 +293,10 @@ public class MultiNextMarathon extends MarathonModeBase {
             netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
         }
 
+        lastBackground = startlevel;
         currentBackground = startlevel;
+        fadeProgress = 200;
+
         engine.bighalf = true;
         engine.bigmove = true;
         engine.framecolor = GameEngine.FRAME_COLOR_YELLOW;
@@ -310,6 +330,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                             if (startlevel < 0) startlevel = 19;
                             if (startlevel > 19) startlevel = 0;
                         }
+                        lastBackground = startlevel;
                         currentBackground = startlevel;
                         break;
                     case 1:
@@ -342,6 +363,7 @@ public class MultiNextMarathon extends MarathonModeBase {
 
                         if ((startlevel > (tableGameClearLines[goaltype] - 1) / 10) && (tableGameClearLines[goaltype] >= 0)) {
                             startlevel = (tableGameClearLines[goaltype] - 1) / 10;
+                            lastBackground = startlevel;
                             currentBackground = startlevel;
                         }
                         break;
@@ -362,6 +384,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                 }
             }
 
+            lastBackground = startlevel;
             currentBackground = startlevel;
 
             // Confirm
@@ -507,39 +530,12 @@ public class MultiNextMarathon extends MarathonModeBase {
 
     @Override
     public void renderFirst(GameEngine engine, int playerID) {
-        rendererExtension.drawDefaultBackground(engine, currentBackground);
-
-        int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
-        int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
-
-        if (engine.displaysize != -1 && frameColF != null) {
-            rendererExtension.drawNext(receiver, engine, offsetX, offsetY);
-
-            rendererExtension.drawCustomFrame(
-                receiver, engine,
-                offsetX, offsetY + 48, engine.displaysize,
-                frameColF
-            );
-
-            rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 52, engine.displaysize);
-        } else {
-            rendererExtension.drawFrame(receiver, engine, offsetX, offsetY, -1);
-
-            rendererExtension.drawCustomFrame(
-                receiver, engine,
-                offsetX, offsetY + 48, -1,
-                frameColF
-            );
-
-            rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 4, -1);
-        }
+        inRenderFirst(rendererExtension, receiver, engine, playerID);
     }
 
     @Override
     public void renderMove(GameEngine engine, int playerID) {
-        engine.isVisible = true;
-        receiver.renderMove(engine, playerID);
-        engine.isVisible = false;
+        inRenderMove(rendererExtension, receiver, engine, playerID);
     }
 
     @Override
@@ -580,6 +576,10 @@ public class MultiNextMarathon extends MarathonModeBase {
     @Override
     public void onLast(GameEngine engine, int playerID) {
         scgettime++;
+
+        if (fadeProgress < 200) {
+            fadeProgress += 10;
+        }
 
         if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode)) || engine.stat == GameEngine.STAT_CUSTOM) {
             // Show rank
@@ -1728,7 +1728,9 @@ public class MultiNextMarathon extends MarathonModeBase {
             // Level up
             engine.statistics.level++;
 
+            lastBackground = currentBackground;
             currentBackground = engine.statistics.level;
+            fadeProgress = 0;
 
             setSpeed(engine);
             engine.playSE("levelup");

@@ -3,8 +3,8 @@ package zeroxfc.nullpo.custom.libs;
 import java.awt.*;
 import java.lang.reflect.*;
 import java.util.ArrayList;
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.IntBinaryOperator;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.event.EventReceiver;
@@ -1063,7 +1063,23 @@ public class RendererExtension {
         }
     }
 
-    public void drawCustomFrame(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize, BiFunction<Integer, Integer, int[]> frameColourFunc) {
+    /**
+     * Draw a custom playfield frame. Does not work in the SDL renderer. The speed meter's colour will use the default
+     * colours as specified by the current game engine.
+     * <p>
+     * The frame colouring function is expected to return an RGB24 colour as a single int in the lower 24 bits, and its two parameters will
+     * be fed the current chunk of the field frame's relative coordinates to the field. {@code x} (first param) ranges from 0 until
+     * {@code field width * 4 + 2} (and {@code + 2} again if the meter is drawn too), and {@code y} (second param) ranges from 0 until
+     * {@code field height * 4 + 2}.
+     *
+     * @param receiver        Current renderer
+     * @param engine          Current game engine
+     * @param x               Top left X-coordinate
+     * @param y               Top left Y-coodinate
+     * @param displaySize     Display size
+     * @param frameColourFunc Frame colouring function
+     */
+    public void drawCustomFrame(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize, IntBinaryOperator frameColourFunc) {
         final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
 
         if (renderer == CustomResourceHolder.Runtime.SLICK) {
@@ -1114,7 +1130,25 @@ public class RendererExtension {
         }
     }
 
-    public void drawCustomFrame(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize, BiFunction<Integer, Integer, int[]> frameColourFunc, int meterRed, int meterGreen, int meterBlue) {
+    /**
+     * Draw a custom playfield frame. Does not work in the SDL renderer.
+     * <p>
+     * The frame colouring function is expected to return an RGB24 colour as a single int in the lower 24 bits, and its two parameters will
+     * be fed the current chunk of the field frame's relative coordinates to the field. {@code x} (first param) ranges from 0 until
+     * {@code field width * 4 + 2} (and {@code + 2} again if the meter is drawn too), and {@code y} (second param) ranges from 0 until
+     * {@code field height * 4 + 2}.
+     *
+     * @param receiver        Current renderer
+     * @param engine          Current game engine
+     * @param x               Top left X-coordinate
+     * @param y               Top left Y-coodinate
+     * @param displaySize     Display size
+     * @param frameColourFunc Frame colouring function
+     * @param meterRed        Speed meter red component
+     * @param meterGreen      Speed meter green component
+     * @param meterBlue       Speed meter blue component
+     */
+    public void drawCustomFrame(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize, IntBinaryOperator frameColourFunc, int meterRed, int meterGreen, int meterBlue) {
         // Make sure we do have the field images.
         findFieldImages();
         if (fieldBgNormal == null) return;
@@ -1175,7 +1209,10 @@ public class RendererExtension {
 
         for (int bY = 0; bY < fullHeight; ++bY) {
             for (int bX = 0; bX < fullWidth; ++bX) {
-                final int[] colour = frameColourFunc.apply(bX, bY);
+                final int rawColour = frameColourFunc.applyAsInt(bX, bY);
+                final int red = (rawColour >>> 16) & 0xFF;
+                final int green = (rawColour >>> 8) & 0xFF;
+                final int blue = rawColour & 0xFF;
 
                 int dX = x + (baseSize * bX);
                 int dY = y + (baseSize * bY);
@@ -1187,28 +1224,28 @@ public class RendererExtension {
                         customGraphics.drawOffsetImage(
                             engine, WHITE_FRAME_NAME,
                             FrameChunk.TOP_LEFT.atLocation(dX, dY, displaySize),
-                            colour[0], colour[1], colour[2], 255
+                            red, green, blue, 255
                         );
                     } else if (bX == fullWidth - 1) {
                         // Top Right
                         customGraphics.drawOffsetImage(
                             engine, WHITE_FRAME_NAME,
                             FrameChunk.TOP_RIGHT.atLocation(dX, dY, displaySize),
-                            colour[0], colour[1], colour[2], 255
+                            red, green, blue, 255
                         );
                     } else if (showMeter && bX == fullWidth - 3) {
                         // Meter Top
                         customGraphics.drawOffsetImage(
                             engine, WHITE_FRAME_NAME,
                             FrameChunk.METER_SEP_TOP.atLocation(dX, dY, displaySize),
-                            colour[0], colour[1], colour[2], 255
+                            red, green, blue, 255
                         );
                     } else {
                         // Top Middle
                         customGraphics.drawOffsetImage(
                             engine, WHITE_FRAME_NAME,
                             FrameChunk.TOP_MIDDLE.atLocation(dX, dY, displaySize),
-                            colour[0], colour[1], colour[2], 255
+                            red, green, blue, 255
                         );
                     }
                 } else if (bY == fullHeight - 1) {
@@ -1218,28 +1255,28 @@ public class RendererExtension {
                         customGraphics.drawOffsetImage(
                             engine, WHITE_FRAME_NAME,
                             FrameChunk.BOTTOM_LEFT.atLocation(dX, dY, displaySize),
-                            colour[0], colour[1], colour[2], 255
+                            red, green, blue, 255
                         );
                     } else if (bX == fullWidth - 1) {
                         // Bottom Right
                         customGraphics.drawOffsetImage(
                             engine, WHITE_FRAME_NAME,
                             FrameChunk.BOTTOM_RIGHT.atLocation(dX, dY, displaySize),
-                            colour[0], colour[1], colour[2], 255
+                            red, green, blue, 255
                         );
                     } else if (showMeter && bX == fullWidth - 3) {
                         // Meter Bottom
                         customGraphics.drawOffsetImage(
                             engine, WHITE_FRAME_NAME,
                             FrameChunk.METER_SEP_BOTTOM.atLocation(dX, dY, displaySize),
-                            colour[0], colour[1], colour[2], 255
+                            red, green, blue, 255
                         );
                     } else {
                         // Bottom Middle
                         customGraphics.drawOffsetImage(
                             engine, WHITE_FRAME_NAME,
                             FrameChunk.BOTTOM_MIDDLE.atLocation(dX, dY, displaySize),
-                            colour[0], colour[1], colour[2], 255
+                            red, green, blue, 255
                         );
                     }
                 } else {
@@ -1250,21 +1287,21 @@ public class RendererExtension {
                         customGraphics.drawOffsetImage(
                             engine, WHITE_FRAME_NAME,
                             FrameChunk.MIDDLE_LEFT.atLocation(dX, dY, displaySize),
-                            colour[0], colour[1], colour[2], 255
+                            red, green, blue, 255
                         );
                     } else if (bX == fullWidth - 1) {
                         // Middle Right
                         customGraphics.drawOffsetImage(
                             engine, WHITE_FRAME_NAME,
                             FrameChunk.MIDDLE_RIGHT.atLocation(dX, dY, displaySize),
-                            colour[0], colour[1], colour[2], 255
+                            red, green, blue, 255
                         );
                     } else if (showMeter && bX == fullWidth - 3) {
                         // Meter Middle
                         customGraphics.drawOffsetImage(
                             engine, WHITE_FRAME_NAME,
                             FrameChunk.METER_SEP_MIDDLE.atLocation(dX, dY, displaySize),
-                            colour[0], colour[1], colour[2], 255
+                            red, green, blue, 255
                         );
                     }
                 }
@@ -1401,6 +1438,78 @@ public class RendererExtension {
             0, 0, 640, 480,
             0, 0, 640, 480,
             255, 255, 255, 255,
+            true
+        );
+    }
+
+    private static final Mirror.FieldAccessor<EventReceiver, Boolean> heavyEffectAccessor;
+
+    static {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+
+        if (renderer == CustomResourceHolder.Runtime.SLICK) {
+            heavyEffectAccessor = Mirror.getFieldAccessor(RendererSlick.class, "heavyeffect");
+        } else {
+            heavyEffectAccessor = null;
+        }
+    }
+
+    /**
+     * Draws a fading background. Only works on the Slick renderer. Will draw non-fading backgrounds if the user has this disabled.
+     *
+     * @param receiver   Current renderer
+     * @param engine     Current game engine
+     * @param bgFadeFrom Fade from this background
+     * @param bgFadeTo   Fade into this background
+     * @param progress   Fade progress
+     */
+    public void drawFadingBackground(EventReceiver receiver, GameEngine engine, int bgFadeFrom, int bgFadeTo, float progress) {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+        if (bgFadeFrom < 0 || bgFadeFrom > 19 || bgFadeTo < 0 || bgFadeTo > 19) return;
+
+        if (progress < 0f) progress = 0f;
+        else if (progress > 1f) progress = 1f;
+
+        if (heavyEffectAccessor == null || !heavyEffectAccessor.get(receiver)) {
+            drawDefaultBackground(engine, progress > 0f ? bgFadeTo : bgFadeFrom);
+            return;
+        }
+
+        RuntimeImage<?> fadeFrom = null, fadeTo = null;
+        switch (renderer) {
+            case SLICK:
+                fadeFrom = new RuntimeImage.Slick(ResourceHolder.imgPlayBG[bgFadeFrom]);
+                fadeTo = new RuntimeImage.Slick(ResourceHolder.imgPlayBG[bgFadeTo]);
+                break;
+            case SWING:
+                fadeFrom = new RuntimeImage.Swing(ResourceHolderSwing.imgPlayBG[bgFadeFrom]);
+                fadeTo = new RuntimeImage.Swing(ResourceHolderSwing.imgPlayBG[bgFadeTo]);
+                break;
+            case SDL:
+                fadeFrom = new RuntimeImage.SDL(ResourceHolderSDL.imgPlayBG[bgFadeFrom]);
+                fadeTo = new RuntimeImage.SDL(ResourceHolderSDL.imgPlayBG[bgFadeTo]);
+                break;
+            default:
+                break;
+        }
+
+        if (fadeFrom == null || fadeTo == null) return;
+
+        customGraphics.drawImage(
+            engine,
+            "bgF" + bgFadeFrom + "TO" + bgFadeTo,
+            progress < 0.5 ? fadeFrom : fadeTo,
+            0, 0, 640, 480,
+            0, 0, 640, 480,
+            255, 255, 255, 255,
+            true
+        );
+
+        drawing.drawRectangle(
+            receiver,
+            0, 0, 640, 480,
+            0, 0, 0,
+            progress < 0.5 ? Interpolation.lerp(0, 255, progress * 2) : Interpolation.lerp(255, 0, (progress - 0.5) * 2),
             true
         );
     }
