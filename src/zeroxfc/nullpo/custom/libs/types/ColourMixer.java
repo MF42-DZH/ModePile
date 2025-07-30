@@ -192,6 +192,10 @@ public class ColourMixer {
         return hue;
     }
 
+    public int getRGB24() {
+        return (getRed8() << 16) | (getGreen8() << 8) | (getBlue8());
+    }
+
     public double getRed() {
         return red;
     }

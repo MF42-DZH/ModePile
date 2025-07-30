@@ -111,21 +111,21 @@ public interface HasCustomFieldDrawing {
         engine.isVisible = false;
     }
 
-    // Call this in a renderMove override.
+    // Call this in a renderExcellent override.
     default void inRenderExcellent(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
         engine.isVisible = true;
         receiver.renderExcellent(engine, playerID);
         engine.isVisible = false;
     }
 
-    // Call this in a renderMove override.
+    // Call this in a renderGameOver override.
     default void inRenderGameOver(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
         engine.isVisible = true;
         receiver.renderGameOver(engine, playerID);
         engine.isVisible = false;
     }
 
-    // Call this in a renderMove override.
+    // Call this in a renderResult override.
     default void inRenderResult(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
         engine.isVisible = true;
         receiver.renderResult(engine, playerID);

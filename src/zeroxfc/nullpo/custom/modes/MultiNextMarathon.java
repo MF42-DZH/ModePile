@@ -193,10 +193,11 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
     private RuleOptions oldRuleOpt;
 
     private IntBinaryOperator frameColF;
+    private FrameDrawingParameters frameDrawingParameters;
 
     @Override
     public FrameDrawingParameters getFrameDrawingParameters(GameEngine engine, int playerID) {
-        return new FrameDrawingParameters(frameColF, null);
+        return frameDrawingParameters;
     }
 
     /*
@@ -232,6 +233,8 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
 
             return (255 << 16) | (gComponent << 8);
         };
+
+        frameDrawingParameters = new FrameDrawingParameters(frameColF, null);
 
         lastscore = 0;
         scgettime = 0;

@@ -1,6 +1,8 @@
 package zeroxfc.nullpo.custom.modes;
 
 import java.util.ArrayList;
+import java.util.function.IntBinaryOperator;
+import java.util.function.IntSupplier;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
 import mu.nu.nullpo.game.component.Piece;
@@ -15,12 +17,15 @@ import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
+import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
 import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
+import zeroxfc.nullpo.custom.libs.types.ColourMixer;
 import zeroxfc.nullpo.custom.wallkick.TetrisEXWallkick;
 
-public class EXReborn extends DummyMode {
+public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
     private static final int[] tableARE = {
         25, 25, 25, 25, 25, 20, 20, 20, 15, 15, 20, 15, 12, 10, 10, 8, 8, 8, 6, 6, 10
     };
@@ -87,7 +92,6 @@ public class EXReborn extends DummyMode {
     private boolean lvstopse, big, lvupflag, alwaysghost, greying;
     private int lastscore, previousscore, scgettime, bgmlv;
     private int nextseclv;
-    // private int totalFall;
     private int version;
     private ProfileProperties playerProperties;
     private boolean showPlayerStats;
@@ -114,6 +118,41 @@ public class EXReborn extends DummyMode {
     private LandingParticles landingParticles;
     private boolean hardDropEffect;
 
+    private FrameDrawingParameters frameDrawingParameters;
+    private int lastBackground;
+    private int currentBackground;
+    private int fadeProgress;
+
+    @Override
+    public int getLastBackground() {
+        return lastBackground;
+    }
+
+    @Override
+    public int getCurrentBackground() {
+        return currentBackground;
+    }
+
+    @Override
+    public float getFadeProgress() {
+        return fadeProgress / 300f;
+    }
+
+    private void updateFadeProgress() {
+        if (fadeProgress < 300) fadeProgress += 10;
+    }
+
+    private void setNewBg(int newBg) {
+        lastBackground = currentBackground;
+        currentBackground = newBg;
+        fadeProgress = 0;
+    }
+
+    @Override
+    public FrameDrawingParameters getFrameDrawingParameters(GameEngine engine, int playerID) {
+        return frameDrawingParameters;
+    }
+
     /**
      * Mode name
      */
@@ -132,6 +171,74 @@ public class EXReborn extends DummyMode {
 
             showPlayerStats = false;
         }
+
+        lastBackground = 0;
+        currentBackground = 0;
+        fadeProgress = 300;
+
+        frameDrawingParameters = new FrameDrawingParameters(
+            new IntBinaryOperator() {
+                private final ColourMixer mixer = ColourMixer.hsv(0, 0, 0.5);
+
+                @Override
+                public int applyAsInt(int x, int y) {
+                    final int height = engine.field != null ? engine.field.getHeight() : 20;
+                    final int heightTimer = height * 3;
+
+                    final double vMult = Interpolation.lerp(
+                        1.0, 0.5,
+                        MathHelper.clamp(
+                            (Math.max(x, y) - 1d) / (height * 4),
+                            0d, 1d
+                        )
+                    );
+
+                    if (engine.statistics.level < 1000) {
+                        mixer.setHueAngle(0).setSaturation(0).setValue(0.5 * vMult);
+                    } else if (engine.statistics.level < 1004 && engine.stat == GameEngine.STAT_CUSTOM) {
+                        final double mixValue = MathHelper.clamp(
+                            (engine.statc[0] - heightTimer - 120) / 60d,
+                            0d, 1d
+                        );
+
+                        mixer
+                            .setHueAngle(0)
+                            .setSaturation(mixValue * 0.95)
+                            .setValue((0.5 + (mixValue / 2)) * vMult);
+                    } else if (engine.statistics.level < 2000) {
+                        mixer.setHueAngle(0).setSaturation(0.95).setValue(vMult);
+                    } else if (engine.statistics.level < 2004 && engine.stat == GameEngine.STAT_CUSTOM) {
+                        final double mixValue = MathHelper.clamp(
+                            (engine.statc[0] - heightTimer - 120) / 60d,
+                            0d, 1d
+                        );
+
+                        mixer
+                            .setHueAngle(Interpolation.lerp(360d, 210d, mixValue))
+                            .setSaturation(1 - (mixValue * 0.05))
+                            .setValue(vMult);
+                    } else {
+                        mixer.setHueAngle(210).setSaturation(0.95).setValue(vMult);
+                    }
+
+                    return mixer.getRGB24();
+                }
+            },
+            new IntSupplier() {
+                private final ColourMixer mixer = ColourMixer.hsv(0, 1, 1);
+
+                @Override
+                public int getAsInt() {
+                    final double proportion = ((double) (engine.getLockDelay() - engine.lockDelayNow) / engine.getLockDelay());
+                    mixer.setHueAngle(120d * proportion);
+
+                    return mixer.getRGB24();
+                }
+            }
+        );
+
+
+        setupBackgrounds(engine);
 
         rankingRankPlayer = -1;
         rankingScorePlayer = new int[RANKING_MAX];
@@ -276,7 +383,7 @@ public class EXReborn extends DummyMode {
         nextseclv = engine.statistics.level + 100;
         greying = false;
 
-        owner.backgroundStatus.bg = engine.statistics.level / 100;
+//        owner.backgroundStatus.bg = engine.statistics.level / 100;
 
         bgmlv = 0;
 
@@ -1036,6 +1143,22 @@ public class EXReborn extends DummyMode {
         return true;
     }
 
+    @Override
+    public void renderMove(GameEngine engine, int playerID) {
+        inRenderMove(rendererExtension, receiver, engine, playerID);
+        rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
+    }
+
+    @Override
+    public void renderExcellent(GameEngine engine, int playerID) {
+        inRenderExcellent(rendererExtension, receiver, engine, playerID);
+    }
+
+    @Override
+    public void renderGameOver(GameEngine engine, int playerID) {
+        inRenderGameOver(rendererExtension, receiver, engine, playerID);
+    }
+
     /**
      * levelが上がったときの共通処理
      */
@@ -1119,12 +1242,13 @@ public class EXReborn extends DummyMode {
                 }
             } else if (engine.statistics.level >= nextseclv) {
                 // Next Section
-                owner.backgroundStatus.bg = engine.statistics.level / 100;
+//                owner.backgroundStatus.bg = engine.statistics.level / 100;
                 engine.playSE("levelup");
 
-                owner.backgroundStatus.fadesw = true;
-                owner.backgroundStatus.fadecount = 0;
-                owner.backgroundStatus.fadebg = nextseclv / 100;
+//                owner.backgroundStatus.fadesw = true;
+//                owner.backgroundStatus.fadecount = 0;
+//                owner.backgroundStatus.fadebg = nextseclv / 100;
+                setNewBg(engine.statistics.level / 100);
 
                 nextseclv += 100;
                 if (nextseclv > maxLevel) nextseclv = maxLevel;
@@ -1227,6 +1351,11 @@ public class EXReborn extends DummyMode {
         cPiece = null;
     }
 
+    @Override
+    public void renderFirst(GameEngine engine, int playerID) {
+        inRenderFirst(rendererExtension, receiver, engine, playerID);
+    }
+
     /*
      * 各 frame の終わりの処理
      */
@@ -1256,6 +1385,8 @@ public class EXReborn extends DummyMode {
         }
 
         if (landingParticles != null) landingParticles.update();
+
+        updateFadeProgress();
     }
 
     /*
@@ -1399,6 +1530,8 @@ public class EXReborn extends DummyMode {
      */
     @Override
     public void renderResult(GameEngine engine, int playerID) {
+        inRenderResult(rendererExtension, receiver, engine, playerID);
+
         receiver.drawMenuFont(engine, playerID, 0, 0, "kn PAGE" + (engine.statc[1] + 1) + "/2", EventReceiver.COLOR_RED);
 
         if (engine.statc[1] == 0) {
