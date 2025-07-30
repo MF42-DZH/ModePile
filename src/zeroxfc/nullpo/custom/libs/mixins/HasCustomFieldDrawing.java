@@ -15,6 +15,7 @@ public interface HasCustomFieldDrawing {
         private final IntSupplier meterColouringFunction;
 
         public FrameDrawingParameters(IntBinaryOperator frameColouringFunction, IntSupplier meterColouringFunction) {
+            // Only the frame colouring function needs to be not null when this is instantiated.
             assert (frameColouringFunction != null);
 
             this.frameColouringFunction = frameColouringFunction;
@@ -34,7 +35,7 @@ public interface HasCustomFieldDrawing {
     // Background fade progress.
     float getFadeProgress();
 
-    // Set up the game to support this class:
+    // Set up the game to support this mixin's implementations:
     default void setupBackgrounds(GameEngine engine) {
         engine.isVisible = false;
         engine.owner.backgroundStatus.bg = -1;
