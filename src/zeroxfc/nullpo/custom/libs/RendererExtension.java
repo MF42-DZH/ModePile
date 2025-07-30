@@ -3,6 +3,7 @@ package zeroxfc.nullpo.custom.libs;
 import java.awt.*;
 import java.lang.reflect.*;
 import java.util.ArrayList;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Piece;
@@ -25,6 +26,7 @@ import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
 import sdljava.video.SDLVideo;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
+import zeroxfc.nullpo.custom.libs.types.ImageChunk;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.types.RuntimeImage;
 
@@ -66,14 +68,87 @@ public class RendererExtension {
     private final CustomResourceHolder customGraphics;
     private final PrimitiveDrawingHook drawing;
 
+    private static final String WHITE_FRAME_NAME = "frame_white";
+
+    private enum FrameChunk {
+        // There is no MIDDLE_MIDDLE as that is filled by the field background.
+        TOP_LEFT(new int[] { 0, 0 }),
+        TOP_MIDDLE(new int[] { 4, 0 }),
+        TOP_RIGHT(new int[] { 8, 0 }),
+        MIDDLE_LEFT(new int[] { 0, 4 }),
+        MIDDLE_RIGHT(new int[] { 8, 4 }),
+        BOTTOM_LEFT(new int[] { 0, 8 }),
+        BOTTOM_MIDDLE(new int[] { 4, 8 }),
+        BOTTOM_RIGHT(new int[] { 8, 8 }),
+        METER_SEP_TOP(new int[] { 12, 0 }),
+        METER_SEP_MIDDLE(new int[] { 12, 4 }),
+        METER_SEP_BOTTOM(new int[] { 12, 8 });
+
+        private final int[] sourceLocation;
+        private static final int[] DIMS = { 4, 4 };
+        private static final float[] SIZE_S = { 0.5f, 0.5f };
+        private static final float[] SIZE_N = { 1f, 1f };
+        private static final float[] SIZE_L = { 2f, 2f };
+
+        FrameChunk(int[] sourceLocation) {
+            this.sourceLocation = sourceLocation;
+        }
+
+        /**
+         * Gets this frame's chunk in image form.
+         * DO NOT MODIFY ANY OF THE ARRAYS IN THE CHUNK.
+         *
+         * @param x           Top left X coordinate
+         * @param y           Top left Y coordinate
+         * @param displaySize Field display size
+         * @return Image chunk for drawing that part of the frame
+         */
+        public ImageChunk atLocation(int x, int y, int displaySize) {
+            return new ImageChunk(
+                ObjectAlignment.TOP_LEFT,
+                new int[] { x, y },
+                sourceLocation,
+                DIMS,
+                displaySize == 0 ? SIZE_N : (displaySize == -1 ? SIZE_S : SIZE_L)
+            );
+        }
+    }
+
     /** Use this constructor when no custom resource holder is used by the gamemode. */
     public RendererExtension() {
-        this(new CustomResourceHolder(1));
+        this(new CustomResourceHolder(2));
     }
 
     public RendererExtension(CustomResourceHolder customGraphics) {
         this.customGraphics = customGraphics;
         this.drawing = new PrimitiveDrawingHook(customGraphics);
+
+        // Load the white frame image, to eliminate possible stutter from lazy-loading it.
+        final String customSkinDirProp = "custom.skin.directory";
+        final String whiteFrame = "/graphics/" + WHITE_FRAME_NAME + ".png";
+
+        switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
+            case SLICK:
+                customGraphics.loadImage(
+                    mu.nu.nullpo.gui.slick.NullpoMinoSlick.propConfig.getProperty(customSkinDirProp, "res") + whiteFrame,
+                    WHITE_FRAME_NAME
+                );
+                break;
+            case SWING:
+                customGraphics.loadImage(
+                    mu.nu.nullpo.gui.swing.NullpoMinoSwing.propConfig.getProperty(customSkinDirProp, "res") + whiteFrame,
+                    WHITE_FRAME_NAME
+                );
+                break;
+            case SDL:
+                customGraphics.loadImage(
+                    mu.nu.nullpo.gui.sdl.NullpoMinoSDL.propConfig.getProperty(customSkinDirProp, "res") + whiteFrame,
+                    WHITE_FRAME_NAME
+                );
+                break;
+            default:
+                break;
+        }
     }
 
     /**
@@ -939,6 +1014,289 @@ public class RendererExtension {
                     color[0], color[1], color[2], 255,
                     true
                 );
+            }
+        }
+    }
+
+    private static RuntimeImage<?> fieldBgSmall;
+    private static RuntimeImage<?> fieldBgNormal;
+    private static RuntimeImage<?> fieldBgLarge;
+
+    // Slick-only.
+    private static final Mirror.FieldAccessor<EventReceiver, Float> fieldBrightAccessor;
+    private static final Mirror.FieldAccessor<EventReceiver, Boolean> showBgAccessor;
+    private static final Mirror.FieldAccessor<EventReceiver, Boolean> showMeterAccessor;
+
+    static {
+        if (CustomResourceHolder.getCurrentNullpominoRuntime() == CustomResourceHolder.Runtime.SLICK) {
+            fieldBrightAccessor = Mirror.getFieldAccessor(RendererSlick.class, "fieldbgbright");
+            showBgAccessor = Mirror.getFieldAccessor(RendererSlick.class, "showbg");
+        } else {
+            fieldBrightAccessor = null;
+            showBgAccessor = null;
+        }
+
+        showMeterAccessor = Mirror.getFieldAccessor(EventReceiver.class, "showmeter");
+    }
+
+    // Get the field images from the resource holders.
+    private static void findFieldImages() {
+        if (fieldBgNormal != null) return;
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+
+        if (renderer == CustomResourceHolder.Runtime.SLICK) {
+            fieldBgSmall = new RuntimeImage.Slick(ResourceHolder.imgFieldbg2Small);
+            fieldBgNormal = new RuntimeImage.Slick(ResourceHolder.imgFieldbg2);
+            fieldBgLarge = new RuntimeImage.Slick(ResourceHolder.imgFieldbg2Big);
+        } else if (renderer == CustomResourceHolder.Runtime.SWING) {
+            fieldBgSmall = new RuntimeImage.Swing(ResourceHolderSwing.imgFieldbg2Small);
+            fieldBgNormal = new RuntimeImage.Swing(ResourceHolderSwing.imgFieldbg2);
+            fieldBgLarge = new RuntimeImage.Swing(ResourceHolderSwing.imgFieldbg2Big);
+        } else if (renderer == CustomResourceHolder.Runtime.SDL) {
+            fieldBgSmall = new RuntimeImage.SDL(ResourceHolderSDL.imgFieldbg2Small);
+            fieldBgNormal = new RuntimeImage.SDL(ResourceHolderSDL.imgFieldbg2);
+            fieldBgLarge = new RuntimeImage.SDL(ResourceHolderSDL.imgFieldbg2Big);
+        } else {
+            fieldBgSmall = null;
+            fieldBgNormal = null;
+            fieldBgLarge = null;
+        }
+    }
+
+    public void drawCustomFrame(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize, BiFunction<Integer, Integer, int[]> frameColourFunc) {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+
+        if (renderer == CustomResourceHolder.Runtime.SLICK) {
+            org.newdawn.slick.Color color;
+            switch (engine.meterColor) {
+                case GameEngine.METER_COLOR_GREEN:
+                    color = org.newdawn.slick.Color.green;
+                    break;
+                case GameEngine.METER_COLOR_YELLOW:
+                    color = org.newdawn.slick.Color.yellow;
+                    break;
+                case GameEngine.METER_COLOR_ORANGE:
+                    color = org.newdawn.slick.Color.orange;
+                    break;
+                case GameEngine.METER_COLOR_RED:
+                    color = org.newdawn.slick.Color.red;
+                    break;
+                default:
+                    color = org.newdawn.slick.Color.white;
+                    break;
+            }
+
+            drawCustomFrame(receiver, engine, x, y, displaySize, frameColourFunc, color.getRedByte(), color.getGreenByte(), color.getBlueByte());
+        } else if (renderer == CustomResourceHolder.Runtime.SWING) {
+            java.awt.Color color;
+            switch (engine.meterColor) {
+                case GameEngine.METER_COLOR_GREEN:
+                    color = java.awt.Color.green;
+                    break;
+                case GameEngine.METER_COLOR_YELLOW:
+                    color = java.awt.Color.yellow;
+                    break;
+                case GameEngine.METER_COLOR_ORANGE:
+                    color = java.awt.Color.orange;
+                    break;
+                case GameEngine.METER_COLOR_RED:
+                    color = java.awt.Color.red;
+                    break;
+                default:
+                    color = java.awt.Color.white;
+                    break;
+            }
+
+            drawCustomFrame(receiver, engine, x, y, displaySize, frameColourFunc, color.getRed(), color.getGreen(), color.getBlue());
+        } else if (renderer == CustomResourceHolder.Runtime.SDL) {
+            // Yeah, this isn't happening due to how the SDL renderer uses an image sprite for the meter (?????).
+            drawFrame(receiver, engine, x, y, displaySize);
+        }
+    }
+
+    public void drawCustomFrame(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize, BiFunction<Integer, Integer, int[]> frameColourFunc, int meterRed, int meterGreen, int meterBlue) {
+        // Make sure we do have the field images.
+        findFieldImages();
+        if (fieldBgNormal == null) return;
+
+        // See comment in above overload of drawCustomFrame.
+        if (CustomResourceHolder.getCurrentNullpominoRuntime() == CustomResourceHolder.Runtime.SDL) {
+            drawFrame(receiver, engine, x, y, displaySize);
+            return;
+        }
+
+        int baseSize = 4;
+        if (displaySize == -1) baseSize = 2;
+        else if (displaySize == 1) baseSize = 8;
+
+        final boolean showBg = showBgAccessor != null && showBgAccessor.get(receiver);
+        final boolean showMeter = showMeterAccessor.get(receiver);
+
+        int width = 10;
+        int height = 20;
+
+        if (engine != null && engine.field != null) {
+            width = engine.field.getWidth();
+            height = engine.field.getHeight();
+        }
+
+        // Field Background.
+        final int fieldBgBright = (fieldBrightAccessor == null) ? 255 : (int) Math.round(255f * fieldBrightAccessor.get(receiver));
+        if (fieldBgBright > 0) {
+            if (width <= 10 && height <= 20) {
+                RuntimeImage<?> fieldImage = fieldBgNormal;
+                if (displaySize == -1) fieldImage = fieldBgSmall;
+                else if (displaySize == 1) fieldImage = fieldBgLarge;
+
+                customGraphics.drawImage(
+                    engine, "fieldbg2", fieldImage,
+                    x + 4, y + 4,
+                    (x + 4) + (width * baseSize * 4), (y + 4) + (height * baseSize * 4),
+                    0, 0, width * baseSize * 4, height * baseSize * 4,
+                    255, 255, 255, fieldBgBright,
+                    true
+                );
+            } else if (showBg) {
+                drawing.drawRectangle(
+                    receiver,
+                    x + 4, y + 4,
+                    width * baseSize * 4, height * baseSize * 4,
+                    0, 0, 0, fieldBgBright,
+                    true
+                );
+            }
+        }
+
+        // Draws the frame.
+        int fullWidth = (width * 4) + 2;
+        if (showMeter) fullWidth += 2;
+
+        int fullHeight = (height * 4) + 2;
+
+        for (int bY = 0; bY < fullHeight; ++bY) {
+            for (int bX = 0; bX < fullWidth; ++bX) {
+                final int[] colour = frameColourFunc.apply(bX, bY);
+
+                int dX = x + (baseSize * bX);
+                int dY = y + (baseSize * bY);
+
+                if (bY == 0) {
+                    // Top Row
+                    if (bX == 0) {
+                        // Top Left
+                        customGraphics.drawOffsetImage(
+                            engine, WHITE_FRAME_NAME,
+                            FrameChunk.TOP_LEFT.atLocation(dX, dY, displaySize),
+                            colour[0], colour[1], colour[2], 255
+                        );
+                    } else if (bX == fullWidth - 1) {
+                        // Top Right
+                        customGraphics.drawOffsetImage(
+                            engine, WHITE_FRAME_NAME,
+                            FrameChunk.TOP_RIGHT.atLocation(dX, dY, displaySize),
+                            colour[0], colour[1], colour[2], 255
+                        );
+                    } else if (showMeter && bX == fullWidth - 3) {
+                        // Meter Top
+                        customGraphics.drawOffsetImage(
+                            engine, WHITE_FRAME_NAME,
+                            FrameChunk.METER_SEP_TOP.atLocation(dX, dY, displaySize),
+                            colour[0], colour[1], colour[2], 255
+                        );
+                    } else {
+                        // Top Middle
+                        customGraphics.drawOffsetImage(
+                            engine, WHITE_FRAME_NAME,
+                            FrameChunk.TOP_MIDDLE.atLocation(dX, dY, displaySize),
+                            colour[0], colour[1], colour[2], 255
+                        );
+                    }
+                } else if (bY == fullHeight - 1) {
+                    // Bottom Row
+                    if (bX == 0) {
+                        // Bottom Left
+                        customGraphics.drawOffsetImage(
+                            engine, WHITE_FRAME_NAME,
+                            FrameChunk.BOTTOM_LEFT.atLocation(dX, dY, displaySize),
+                            colour[0], colour[1], colour[2], 255
+                        );
+                    } else if (bX == fullWidth - 1) {
+                        // Bottom Right
+                        customGraphics.drawOffsetImage(
+                            engine, WHITE_FRAME_NAME,
+                            FrameChunk.BOTTOM_RIGHT.atLocation(dX, dY, displaySize),
+                            colour[0], colour[1], colour[2], 255
+                        );
+                    } else if (showMeter && bX == fullWidth - 3) {
+                        // Meter Bottom
+                        customGraphics.drawOffsetImage(
+                            engine, WHITE_FRAME_NAME,
+                            FrameChunk.METER_SEP_BOTTOM.atLocation(dX, dY, displaySize),
+                            colour[0], colour[1], colour[2], 255
+                        );
+                    } else {
+                        // Bottom Middle
+                        customGraphics.drawOffsetImage(
+                            engine, WHITE_FRAME_NAME,
+                            FrameChunk.BOTTOM_MIDDLE.atLocation(dX, dY, displaySize),
+                            colour[0], colour[1], colour[2], 255
+                        );
+                    }
+                } else {
+                    // All Other Rows
+                    // Bottom Row
+                    if (bX == 0) {
+                        // Middle Left
+                        customGraphics.drawOffsetImage(
+                            engine, WHITE_FRAME_NAME,
+                            FrameChunk.MIDDLE_LEFT.atLocation(dX, dY, displaySize),
+                            colour[0], colour[1], colour[2], 255
+                        );
+                    } else if (bX == fullWidth - 1) {
+                        // Middle Right
+                        customGraphics.drawOffsetImage(
+                            engine, WHITE_FRAME_NAME,
+                            FrameChunk.MIDDLE_RIGHT.atLocation(dX, dY, displaySize),
+                            colour[0], colour[1], colour[2], 255
+                        );
+                    } else if (showMeter && bX == fullWidth - 3) {
+                        // Meter Middle
+                        customGraphics.drawOffsetImage(
+                            engine, WHITE_FRAME_NAME,
+                            FrameChunk.METER_SEP_MIDDLE.atLocation(dX, dY, displaySize),
+                            colour[0], colour[1], colour[2], 255
+                        );
+                    }
+                }
+            }
+        }
+
+        // Draws the meter.
+        if (showMeter) {
+            int maxHeight = height * baseSize * 4;
+            if (engine != null && engine.meterValue > 0) maxHeight -= engine.meterValue;
+
+            if (maxHeight > 0) {
+                drawing.drawRectangle(
+                    receiver,
+                    x + (width * baseSize * 4) + 8, y + 4,
+                    4, maxHeight,
+                    0, 0, 0, 255,
+                    true
+                );
+            }
+
+            if (engine != null && engine.meterValue > 0) {
+                final int value = Math.min(height * baseSize * 4, engine.meterValue);
+                if (value > 0) {
+                    drawing.drawRectangle(
+                        receiver,
+                        x + (width * baseSize * 4) + 8, y + (height * baseSize * 4) + 3 - (value - 1),
+                        4, value,
+                        meterRed, meterGreen, meterBlue, 255,
+                        true
+                    );
+                }
             }
         }
     }

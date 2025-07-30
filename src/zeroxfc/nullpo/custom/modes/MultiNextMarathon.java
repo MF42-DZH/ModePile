@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.function.BiFunction;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
 import mu.nu.nullpo.game.component.Piece;
@@ -18,6 +19,7 @@ import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
@@ -36,6 +38,7 @@ public class MultiNextMarathon extends MarathonModeBase {
     private int[][] rankingScorePlayer;
     private int[][] rankingLinesPlayer;
     private int[][] rankingTimePlayer;
+    private int currentBackground;
 
     private QueueHolder leftQueue;
     private QueueHolder rightQueue;
@@ -44,6 +47,11 @@ public class MultiNextMarathon extends MarathonModeBase {
     private boolean canSwitchNext;
 
     private enum WhichQueue { LEFT, RIGHT }
+
+    // Need this due to lambda jankery.
+    private WhichQueue getSelectedNext() {
+        return selectedNext;
+    }
 
     private QueueHolder getNext() {
         if (selectedNext == WhichQueue.LEFT) {
@@ -165,6 +173,8 @@ public class MultiNextMarathon extends MarathonModeBase {
 
     private RuleOptions oldRuleOpt;
 
+    private BiFunction<Integer, Integer, int[]> frameColF;
+
     /*
      * Mode name
      */
@@ -177,6 +187,35 @@ public class MultiNextMarathon extends MarathonModeBase {
     public void playerInit(GameEngine engine, int playerID) {
         owner = engine.owner;
         receiver = engine.owner.receiver;
+
+        engine.isVisible = false;
+        engine.owner.backgroundStatus.bg = -1;
+        engine.owner.backgroundStatus.fadebg = -1;
+        selectedNext = WhichQueue.LEFT;
+
+        frameColF = new BiFunction<Integer, Integer, int[]>() {
+            private final int[] tempColour = { 0, 0, 0 };
+
+            @Override
+            public int[] apply(Integer integer, Integer integer2) {
+                final int width = engine.field != null ? engine.field.getWidth() : 10;
+                final int height = engine.field != null ? engine.field.getHeight() : 20;
+
+                final int usedX = getSelectedNext() == WhichQueue.LEFT ? integer : ((width * 4) - integer);
+
+                tempColour[0] = 255;
+                tempColour[1] = Interpolation.lerp(
+                    255, 96,
+                    MathHelper.clamp(
+                        (Math.max(usedX, integer2) - 1d) / (height * 4),
+                        0d, 1d
+                    )
+                );
+
+                return tempColour;
+            }
+        };
+
         lastscore = 0;
         scgettime = 0;
         lastevent = EVENT_NONE;
@@ -237,7 +276,7 @@ public class MultiNextMarathon extends MarathonModeBase {
             netPlayerName = engine.owner.replayProp.getProperty(playerID + ".net.netPlayerName", "");
         }
 
-        engine.owner.backgroundStatus.bg = startlevel;
+        currentBackground = startlevel;
         engine.bighalf = true;
         engine.bigmove = true;
         engine.framecolor = GameEngine.FRAME_COLOR_YELLOW;
@@ -271,7 +310,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                             if (startlevel < 0) startlevel = 19;
                             if (startlevel > 19) startlevel = 0;
                         }
-                        engine.owner.backgroundStatus.bg = startlevel;
+                        currentBackground = startlevel;
                         break;
                     case 1:
                         //enableTSpin = !enableTSpin;
@@ -303,7 +342,7 @@ public class MultiNextMarathon extends MarathonModeBase {
 
                         if ((startlevel > (tableGameClearLines[goaltype] - 1) / 10) && (tableGameClearLines[goaltype] >= 0)) {
                             startlevel = (tableGameClearLines[goaltype] - 1) / 10;
-                            engine.owner.backgroundStatus.bg = startlevel;
+                            currentBackground = startlevel;
                         }
                         break;
                     case 8:
@@ -323,7 +362,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                 }
             }
 
-            engine.owner.backgroundStatus.bg = startlevel;
+            currentBackground = startlevel;
 
             // Confirm
             if (engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
@@ -467,6 +506,43 @@ public class MultiNextMarathon extends MarathonModeBase {
     }
 
     @Override
+    public void renderFirst(GameEngine engine, int playerID) {
+        rendererExtension.drawDefaultBackground(engine, currentBackground);
+
+        int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
+        int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
+
+        if (engine.displaysize != -1 && frameColF != null) {
+            rendererExtension.drawNext(receiver, engine, offsetX, offsetY);
+
+            rendererExtension.drawCustomFrame(
+                receiver, engine,
+                offsetX, offsetY + 48, engine.displaysize,
+                frameColF
+            );
+
+            rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 52, engine.displaysize);
+        } else {
+            rendererExtension.drawFrame(receiver, engine, offsetX, offsetY, -1);
+
+            rendererExtension.drawCustomFrame(
+                receiver, engine,
+                offsetX, offsetY + 48, -1,
+                frameColF
+            );
+
+            rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 4, -1);
+        }
+    }
+
+    @Override
+    public void renderMove(GameEngine engine, int playerID) {
+        engine.isVisible = true;
+        receiver.renderMove(engine, playerID);
+        engine.isVisible = false;
+    }
+
+    @Override
     public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
         engine.statistics.scoreFromHardDrop += fall * 2;
         engine.statistics.score += fall * 2;
@@ -564,6 +640,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                 canSwitchNext = false;
 
                 engine.nowPieceObject.direction = engine.ruleopt.pieceDefaultDirection[engine.nowPieceObject.id];
+                engine.nowPieceObject.updateConnectData();
 
                 getNext().returnPiece(engine.nowPieceObject);
 
@@ -636,6 +713,8 @@ public class MultiNextMarathon extends MarathonModeBase {
             engine.tspinmini = false;
             engine.tspinez = false;
 
+            engine.nowPieceObject.updateConnectData();
+
             if(engine.ending == 0) engine.timerActive = true;
 
             if((engine.ai != null) && (!owner.replayMode || owner.replayRerecord)) engine.ai.newPiece(engine, playerID);
@@ -655,6 +734,7 @@ public class MultiNextMarathon extends MarathonModeBase {
                 canSwitchNext = false;
 
                 engine.nowPieceObject.direction = engine.ruleopt.pieceDefaultDirection[engine.nowPieceObject.id];
+                engine.nowPieceObject.updateConnectData();
 
                 (lastUsedNext == WhichQueue.LEFT ? leftQueue : rightQueue).returnPiece(engine.nowPieceObject);
                 addReturningPiece(engine, playerID, lastUsedNext);
@@ -1198,6 +1278,7 @@ public class MultiNextMarathon extends MarathonModeBase {
         final Piece copy = new Piece(engine.nowPieceObject);
         copy.resetOffsetArray();
         copy.direction = engine.ruleopt.pieceDefaultDirection[copy.id];
+        copy.updateConnectData();
 
         final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
         final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
@@ -1349,6 +1430,8 @@ public class MultiNextMarathon extends MarathonModeBase {
                     for (int i = 0; i < leftQueue.queue.size(); i++) {
                         final Piece piece = new Piece(leftQueue.queue.get(i));
                         piece.resetOffsetArray();
+                        piece.direction = engine.ruleopt.pieceDefaultDirection[piece.id];
+                        piece.updateConnectData();
 
                         int x2, y2;
 
@@ -1379,6 +1462,8 @@ public class MultiNextMarathon extends MarathonModeBase {
                     for (int i = 0; i < rightQueue.queue.size(); i++) {
                         final Piece piece = new Piece(rightQueue.queue.get(i));
                         piece.resetOffsetArray();
+                        piece.direction = engine.ruleopt.pieceDefaultDirection[piece.id];
+                        piece.updateConnectData();
 
                         int x2, y2;
 
@@ -1643,9 +1728,7 @@ public class MultiNextMarathon extends MarathonModeBase {
             // Level up
             engine.statistics.level++;
 
-            owner.backgroundStatus.fadesw = true;
-            owner.backgroundStatus.fadecount = 0;
-            owner.backgroundStatus.fadebg = engine.statistics.level;
+            currentBackground = engine.statistics.level;
 
             setSpeed(engine);
             engine.playSE("levelup");

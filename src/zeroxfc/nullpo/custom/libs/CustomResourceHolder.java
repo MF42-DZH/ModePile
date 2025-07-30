@@ -863,6 +863,45 @@ public class CustomResourceHolder {
         );
     }
 
+    /**
+     * Draws image to game.
+     *
+     * @param engine   GameEngine to draw with
+     * @param logName  Identifier of image for logging
+     * @param image    Runtime image instance
+     * @param x        X position
+     * @param y        Y position
+     * @param sx       X size
+     * @param sy       Y size
+     * @param srcX     Source X position
+     * @param srcY     Source Y position
+     * @param srcSizeX Source X size
+     * @param srcSizeY Source Y size
+     * @param red      Red component
+     * @param green    Green component
+     * @param blue     Blue component
+     * @param alpha    Alpha component
+     */
+    public void drawOffsetImage(GameEngine engine, String logName, RuntimeImage<?> image, int x, int y, int sx, int sy, int srcX, int srcY, int srcSizeX, int srcSizeY, int red, int green, int blue, int alpha) {
+        drawImage(
+            engine,
+            logName,
+            image,
+            x,
+            y,
+            x + sx,
+            y + sy,
+            srcX,
+            srcY,
+            srcSizeX,
+            srcSizeY,
+            red,
+            green,
+            blue,
+            alpha,
+            true
+        );
+    }
 
     /**
      * Draws image to game via the <code>ImageChunk</code> coordinate handler.
@@ -873,7 +912,7 @@ public class CustomResourceHolder {
      * @param red    Red component
      * @param green  Green component
      * @param blue   Blue component
-     * @param alpha  Alpha componena
+     * @param alpha  Alpha component
      */
     public void drawOffsetImage(GameEngine engine, String name, ImageChunk chunk, int red, int green, int blue, int alpha) {
         final int[] dpos = chunk.getDrawLocation();
@@ -883,6 +922,27 @@ public class CustomResourceHolder {
 
         drawOffsetImage(engine, name, dpos[0], dpos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], red, green, blue, alpha);
     }
+
+    /**
+     * Draws image to game via the <code>ImageChunk</code> coordinate handler.
+     *
+     * @param engine  GameEngine to draw with
+     * @param logName Identifier of image for logging
+     * @param chunk   Chunk of image to draw
+     * @param red     Red component
+     * @param green   Green component
+     * @param blue    Blue component
+     * @param alpha   Alpha component
+     */
+    public void drawOffsetImage(GameEngine engine, String logName, RuntimeImage<?> image, ImageChunk chunk, int red, int green, int blue, int alpha) {
+        final int[] dpos = chunk.getDrawLocation();
+        final int[] ddim = chunk.getDrawDimensions();
+        final int[] sloc = chunk.getSourceLocation();
+        final int[] sdim = chunk.getSourceDimensions();
+
+        drawOffsetImage(engine, logName, image, dpos[0], dpos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], red, green, blue, alpha);
+    }
+
 
     /**
      * Draws whole image to game with no tint.
