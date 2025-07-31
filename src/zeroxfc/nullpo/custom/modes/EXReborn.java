@@ -66,7 +66,7 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
 
     private static final int RANKING_MAX = 10;
 
-    private static final int CURRENT_VERSION = 2;
+    private static final int CURRENT_VERSION = 3;
     private static final int headerColour = EventReceiver.COLOR_BLUE;
     /**
      * Rankings' scores
@@ -90,7 +90,8 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
     private int rankingRank;
     private int comboValue;
     private boolean lvstopse, big, lvupflag, alwaysghost, greying;
-    private int lastscore, previousscore, scgettime, bgmlv;
+//    private int lastscore, previousscore, scgettime, bgmlv;
+    private int lastscore, scgettime, bgmlv;
     private int nextseclv;
     private int version;
     private ProfileProperties playerProperties;
@@ -153,6 +154,8 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
         return frameDrawingParameters;
     }
 
+    private final Interpolation.IntInterpolator interpolator = new Interpolation.FibonacciInterpolator(6, 1d / 6d);
+
     /**
      * Mode name
      */
@@ -175,6 +178,8 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
         lastBackground = 0;
         currentBackground = 0;
         fadeProgress = 300;
+
+        interpolator.reset();
 
         frameDrawingParameters = new FrameDrawingParameters(
             new IntBinaryOperator() {
@@ -1194,11 +1199,19 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
             if (comboValue < 1) comboValue = 1;
         }
 
-        int s = (int) (Math.pow(2, (20d - engine.nowPieceY) / 20d) * Math.pow(2, effectiveSection / 5d) * 25);
+        int s;
+        if (version <= 2) {
+            s = (int) (Math.pow(2, (20d - engine.nowPieceY) / 20d) * Math.pow(2, effectiveSection / 5d) * 25);
+        } else {
+            s = (int) (Math.pow(2, (20d - engine.nowPieceObject.getBottom(engine.nowPieceX, engine.nowPieceY, engine.field)) / 20d) * Math.pow(2, effectiveSection / 5d) * 25);
+        }
+
+
         if (version >= 2) {
             // if (totalFall <= 0) s = 0;
             engine.statistics.score += s;
             engine.statistics.scoreFromOtherBonus += s;
+            interpolator.setTargetScore(engine.statistics.score);
             // totalFall = 0;
         }
 
@@ -1221,8 +1234,10 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
                 lastscore = scoreBase * lines;
             }
 
-            previousscore = engine.statistics.score;
+//            previousscore = engine.statistics.score;
             engine.statistics.score += lastscore;
+            interpolator.setTargetScore(engine.statistics.score);
+
             lastscore += s;
             scgettime = 120;
 
@@ -1380,6 +1395,10 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
             }
         }
 
+        if (!engine.lagStop) {
+            interpolator.update();
+        }
+
         if (engine.quitflag) {
             playerProperties = new ProfileProperties(headerColour);
         }
@@ -1398,8 +1417,8 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
 
         receiver.drawScoreFont(engine, playerID, 0, 0, getName(), EventReceiver.COLOR_BLUE);
 
-        if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (owner.replayMode == false))) {
-            if ((owner.replayMode == false) && (big == false) && (engine.ai == null)) {
+        if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode))) {
+            if ((!owner.replayMode) && (!big) && (engine.ai == null) && (!alwaysghost)) {
                 float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
                 int topY = (receiver.getNextDisplayType() == 2) ? 4 : 3;
                 receiver.drawScoreFont(engine, playerID, 3, topY - 1, "SCORE  LEVEL TIME", EventReceiver.COLOR_BLUE, scale);
@@ -1437,7 +1456,7 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
         } else {
             receiver.drawScoreFont(engine, playerID, 0, 2, "SCORE", EventReceiver.COLOR_BLUE);
             String strScore;
-            int sc = (int) Interpolation.sineStep(previousscore, engine.statistics.score, (double) (120 - scgettime) / 120.0);
+            int sc = interpolator.getScoreToDisplay(); // (int) Interpolation.sineStep(previousscore, engine.statistics.score, (double) (120 - scgettime) / 120.0);
             if ((lastscore == 0) || (scgettime <= 0)) {
                 strScore = String.valueOf(sc);
             } else {
@@ -1478,6 +1497,7 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
         if (version < 2) {
             engine.statistics.scoreFromSoftDrop += fall;
             engine.statistics.score += fall;
+            interpolator.setTargetScore(engine.statistics.score);
         }
     }
 
@@ -1489,6 +1509,7 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
         if (version < 2) {
             engine.statistics.scoreFromHardDrop += fall * 2;
             engine.statistics.score += fall * 2;
+            interpolator.setTargetScore(engine.statistics.score);
         }
 
         int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
@@ -1554,7 +1575,7 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
         saveSetting(prop);
 
         // Update rankings
-        if ((!owner.replayMode) && (!big) && (engine.ai == null)) {
+        if ((!owner.replayMode) && (!big) && (!alwaysghost) && (engine.ai == null)) {
             updateRanking(engine.statistics.score, engine.statistics.level, engine.statistics.time);
 
             if (playerProperties.isLoggedIn()) {

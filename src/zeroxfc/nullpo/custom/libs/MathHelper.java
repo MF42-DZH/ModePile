@@ -4,6 +4,54 @@ public class MathHelper {
     // This is a static class.
     private MathHelper() {}
 
+    /** Get the max of an arbitrary number of {@code int}s. */
+    public static int max(int a, int... ints) {
+        for (int i : ints) a = Math.max(a, i);
+        return a;
+    }
+
+    /** Get the max of an arbitrary number of {@code long}s. */
+    public static long max(long a, long... longs) {
+        for (long i : longs) a = Math.max(a, i);
+        return a;
+    }
+
+    /** Get the max of an arbitrary number of {@code float}s. */
+    public static float max(float a, float... floats) {
+        for (float i : floats) a = Math.max(a, i);
+        return a;
+    }
+
+    /** Get the max of an arbitrary number of {@code double}s. */
+    public static double max(double a, double... doubles) {
+        for (double i : doubles) a = Math.max(a, i);
+        return a;
+    }
+
+    /** Get the min of an arbitrary number of {@code int}s. */
+    public static int min(int a, int... ints) {
+        for (int i : ints) a = Math.min(a, i);
+        return a;
+    }
+
+    /** Get the min of an arbitrary number of {@code long}s. */
+    public static long min(long a, long... longs) {
+        for (long i : longs) a = Math.min(a, i);
+        return a;
+    }
+
+    /** Get the min of an arbitrary number of {@code float}s. */
+    public static float min(float a, float... floats) {
+        for (float i : floats) a = Math.min(a, i);
+        return a;
+    }
+
+    /** Get the min of an arbitrary number of {@code double}s. */
+    public static double min(double a, double... doubles) {
+        for (double i : doubles) a = Math.min(a, i);
+        return a;
+    }
+
     /**
      * Modulo operator that functions similarly to Python's % operator.
      *

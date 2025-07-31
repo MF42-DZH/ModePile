@@ -177,14 +177,97 @@ public class Interpolation {
         return (1.0 - t) * v0 + v1 * t;
     }
 
+    /** A class representing a class of time-based integer interpolators (for score displays, etc.). */
+    public abstract static class IntInterpolator {
+        protected int scoreToDisplay;
+        protected int targetScore;
+
+        /** Reset all to zero. */
+        public abstract void reset();
+
+        /** Perform an interpolation step. Usually run in a mode's {@code onLast} method. */
+        public abstract void update();
+
+        /** Set the new target score to reach. */
+        public abstract void setTargetScore(int newTargetScore);
+
+        /** Get the current display score. */
+        public abstract int getScoreToDisplay();
+    }
+
+    /** An interpolator using fibonacci numbers. */
+    public static class FibonacciInterpolator extends IntInterpolator {
+        private int a;
+        private int b;
+        private int frame;
+
+        private final int incrementTick;
+        private final double easeOutFactor;
+
+        public FibonacciInterpolator() {
+            this(12, 1d / 12d);
+        }
+
+        public FibonacciInterpolator(int incrementTick, double easeOutFactor) {
+            assert incrementTick > 0;
+            assert easeOutFactor > 0 && easeOutFactor <= 1;
+
+            this.incrementTick = incrementTick;
+            this.easeOutFactor = easeOutFactor;
+
+            reset();
+        }
+
+        @Override
+        public void reset() {
+            scoreToDisplay = 0;
+            targetScore = 0;
+
+            a = 1;
+            b = 1;
+            frame = 0;
+        }
+
+        @Override
+        public void update() {
+            ++frame;
+
+            scoreToDisplay += Math.min(a, (int) Math.ceil((targetScore - scoreToDisplay) * easeOutFactor));
+            if (scoreToDisplay >= targetScore || scoreToDisplay < 0) {
+                a = 1;
+                b = 1;
+                frame = 0;
+            }
+
+            if (frame >= incrementTick && b > 0) {
+                final int tmp = a;
+                a = b;
+                b = tmp + b;
+
+                frame = 0;
+            }
+        }
+
+        @Override
+        public void setTargetScore(int newTargetScore) {
+            targetScore = newTargetScore;
+        }
+
+        @Override
+        public int getScoreToDisplay() {
+            return scoreToDisplay;
+        }
+    }
+
     /**
      * Classic GameHouse game-style rolling score helper class.
      * Formula provided by leikaisho, but some things have been ignored for a more general implementation.
      */
-    public static class GGCE {
-        private int scoreToDisplay;
+    public static class GGCE extends IntInterpolator {
+        // The current increase in score.
         private int increase;
-        private int targetScore;
+
+        // Current increase frame.
         private int frame;
 
         private final double gainRate;
@@ -239,6 +322,7 @@ public class Interpolation {
         /**
          * Reset the interpolator completely.
          */
+        @Override
         public void reset() {
             scoreToDisplay = 0;
             targetScore = 0;
@@ -249,10 +333,11 @@ public class Interpolation {
         /**
          * Set the next target score for the interpolator.
          *
-         * @param targetScore New target score.
+         * @param newTargetScore New target score.
          */
-        public void setTargetScore(int targetScore) {
-            this.targetScore = targetScore;
+        @Override
+        public void setTargetScore(int newTargetScore) {
+            this.targetScore = newTargetScore;
         }
 
         /**
@@ -260,6 +345,7 @@ public class Interpolation {
          *
          * @return The interpolated score to display.
          */
+        @Override
         public int getScoreToDisplay() {
             return scoreToDisplay;
         }
@@ -267,12 +353,19 @@ public class Interpolation {
         /**
          * Updates the interpolated score. Use this in {@code onLast}.
          */
+        @Override
         public void update() {
             ++frame;
 
-            if (fullRate || (frame % 2 == 0)) {
+            if (frame % 2 == 0) {
                 increase = Math.max(1, increase + gainIncrease(usedFrame()));
-                scoreToDisplay += Math.min(increase, (int) Math.ceil((targetScore - scoreToDisplay) * easeOutFactor));
+            }
+
+            int addition = Math.min(increase, (int) Math.ceil((targetScore - scoreToDisplay) * easeOutFactor));
+            if (fullRate) addition = (int) Math.round(addition / 2d);
+
+            if (fullRate || (frame % 2 == 0)) {
+                scoreToDisplay += addition;
             }
 
             if (scoreToDisplay >= targetScore || scoreToDisplay < 0) {
