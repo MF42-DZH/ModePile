@@ -349,6 +349,10 @@ public class GradeMania4 extends DummyMode implements HasCustomFieldDrawing {
     private int nextTimeTextIndex;
     private boolean extraState;
 
+    private boolean getExtraState() {
+        return extraState;
+    }
+
     private CustomResourceHolder customGraphics;
     private RendererExtension rendererExtension;
     private Fireworks fireworks;
@@ -576,6 +580,10 @@ public class GradeMania4 extends DummyMode implements HasCustomFieldDrawing {
                         mixer.setHueAngle(210).setSaturation(0.95).setLightness(lMult);
                     } else {
                         mixer.setHueAngle(225).setSaturation(0.90).setLightness(lMult);
+                    }
+
+                    if (getExtraState()) {
+                        mixer.setHueAngle(0).setSaturation(1).setLightness(lMult);
                     }
 
                     return mixer.getRGB24();
