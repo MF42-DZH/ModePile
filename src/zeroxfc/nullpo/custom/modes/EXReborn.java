@@ -185,6 +185,29 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
             new IntBinaryOperator() {
                 private final ColourMixer mixer = ColourMixer.hsv(0, 0, 0.5);
 
+                private void pieceLightnessBoost(int y) {
+                    if (engine.nowPieceObject == null || engine.stat != GameEngine.STAT_MOVE) return;
+
+                    double pieceTopY = (double) (engine.nowPieceObject.getMinimumBlockY() + engine.nowPieceY);
+                    double pieceBotY = (double) (engine.nowPieceObject.getMaximumBlockY() + engine.nowPieceY);
+
+                    pieceTopY = (pieceTopY * 4) + 1;
+                    pieceBotY = (pieceBotY * 4) + (engine.nowPieceObject.big ? 9 : 5);
+
+                    final double avgY = (pieceTopY + pieceBotY) / 2d;
+                    final double gapY = Math.abs(avgY - pieceTopY);
+
+                    double distance = Math.abs(y - avgY);
+                    if (y > avgY) distance += 1;
+
+                    mixer.setLightness(
+                        mixer.getLightness() * Interpolation.lerp(
+                            (5d / 3d), 1.0,
+                            MathHelper.clamp((distance - gapY) / gapY, 0d, 1d)
+                        )
+                    );
+                }
+
                 @Override
                 public int applyAsInt(int x, int y) {
                     final int height = engine.field != null ? engine.field.getHeight() : 20;
@@ -225,6 +248,8 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
                     } else {
                         mixer.setHueAngle(210).setSaturation(0.95).setValue(vMult);
                     }
+
+                    pieceLightnessBoost(y);
 
                     return mixer.getRGB24();
                 }

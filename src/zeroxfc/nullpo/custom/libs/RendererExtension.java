@@ -1295,6 +1295,9 @@ public class RendererExtension {
                             FrameChunk.MIDDLE_LEFT.atLocation(dX, dY, displaySize),
                             red, green, blue, 255
                         );
+
+                        // Skip the middle columns.
+                        bX += width * 4;
                     } else if (bX == fullWidth - 1) {
                         // Middle Right
                         customGraphics.drawOffsetImage(
