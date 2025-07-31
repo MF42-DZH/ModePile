@@ -3,8 +3,10 @@ package zeroxfc.nullpo.custom.modes;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.BooleanSupplier;
+import java.util.function.IntBinaryOperator;
 import java.util.function.IntFunction;
-import java.util.function.Supplier;
+import java.util.function.IntSupplier;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
@@ -21,7 +23,11 @@ import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.Interpolation;
+import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.ModePileCredits;
+import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
+import zeroxfc.nullpo.custom.libs.types.ColourMixer;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
@@ -32,7 +38,7 @@ import zeroxfc.nullpo.custom.libs.particles.Fireworks;
 import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
 import zeroxfc.nullpo.custom.libs.particles.SurfaceSparks;
 
-public class GradeMania4 extends DummyMode {
+public class GradeMania4 extends DummyMode implements HasCustomFieldDrawing {
     private static final Logger log = Logger.getLogger(GradeMania4.class);
 
     private static final int CURRENT_VERSION = 2;
@@ -71,6 +77,7 @@ public class GradeMania4 extends DummyMode {
             .addTerminalGravity(-1, 256);
     }
 
+    // region Speed Tables
     private static final IntFunction<SpeedParam> V1_SPEED_TABLE = makeGravityTable()
         .addARE(23, 700)
         .addARE(14, 800)
@@ -120,6 +127,7 @@ public class GradeMania4 extends DummyMode {
         .addLineDelay(10, 900)
         .addTerminalLineDelay(8)
         .buildSpeedTable();
+    // endregion Speed Tables
 
     private IntFunction<SpeedParam> getSpeedTable() {
         if (version >= 2) return gameRuleset.speedTable;
@@ -369,6 +377,38 @@ public class GradeMania4 extends DummyMode {
     private Random sparksRandomiser;
     private SurfaceSparks sparks;
 
+    private int lastBackground;
+    private int currentBackground;
+    private int fadeProgress;
+
+    private void setNewBackground(int newBg) {
+        lastBackground = currentBackground;
+        currentBackground = newBg;
+        fadeProgress = 0;
+    }
+
+    @Override
+    public int getLastBackground() {
+        return lastBackground;
+    }
+
+    @Override
+    public int getCurrentBackground() {
+        return currentBackground;
+    }
+
+    @Override
+    public float getFadeProgress() {
+        return fadeProgress / 300f;
+    }
+
+    private FrameDrawingParameters frameDrawingParameters;
+
+    @Override
+    public FrameDrawingParameters getFrameDrawingParameters(GameEngine engine, int playerID) {
+        return frameDrawingParameters;
+    }
+
     // Grade recognition system.
     private int getLeftGrade(GameEngine engine) {
         switch (gameRuleset) {
@@ -449,6 +489,14 @@ public class GradeMania4 extends DummyMode {
             return RULES;
         }
 
+        public static Ruleset getRuleset(int rulesetId) {
+            for (Ruleset rule : RULES) {
+                if (rule.leaderboard == rulesetId) return rule;
+            }
+
+            return null;
+        }
+
         public boolean isFoursRuleset() {
             return this.name().contains("FOURS");
         }
@@ -464,6 +512,11 @@ public class GradeMania4 extends DummyMode {
 
     private Ruleset gameRuleset;
 
+    // Stops some weird finangling with lambdas.
+    private Ruleset getGameRuleset() {
+        return gameRuleset;
+    }
+
     @Override
     public String getName() {
         return "GRADE MANIA 4";
@@ -473,6 +526,8 @@ public class GradeMania4 extends DummyMode {
     public void playerInit(GameEngine engine, int playerID) {
         owner = engine.owner;
         receiver = engine.owner.receiver;
+
+        setupBackgrounds(engine);
 
         if (animBgInstances == null) {
             animBgInstances = new AnimatedBackgroundHook[SECTION_MAX];
@@ -494,6 +549,40 @@ public class GradeMania4 extends DummyMode {
         }
 
         SoundLoader.loadSoundset(SoundLoader.SoundSet.FIREWORKS);
+
+        frameDrawingParameters = new FrameDrawingParameters(
+            new IntBinaryOperator() {
+                private final ColourMixer mixer = ColourMixer.hslViaAngle(210, 0, 0.5);
+
+                @Override
+                public int applyAsInt(int x, int y) {
+                    final int width = engine.field != null ? engine.field.getWidth() : 10;
+                    final int height = engine.field != null ? engine.field.getHeight() : 20;
+                    final int maxX = RendererExtension.getShowMeter(receiver) ? width * 4 + 4 : width * 4 + 2;
+                    final int maxY = height * 4 + 2;
+
+                    final double distance =
+                        Math.abs((maxY * x) - (maxX * y)) / Math.sqrt((double) (maxY * maxY) + (maxX * maxX));
+
+                    final double lMult = Interpolation.sineStep(
+                        0.85, 0.5,
+                        MathHelper.clamp(
+                            distance / (maxX / 2d),
+                            0d, 1d
+                        )
+                    );
+
+                    if (getGameRuleset().gameFlavour() == GameFlavour.ORIGINAL_TASTE) {
+                        mixer.setHueAngle(210).setSaturation(0.95).setLightness(lMult);
+                    } else {
+                        mixer.setHueAngle(225).setSaturation(0.90).setLightness(lMult);
+                    }
+
+                    return mixer.getRGB24();
+                }
+            },
+            null
+        );
 
         engineBaseRules = engine.ruleopt;
         engineExtraRules = new RuleOptions(engine.ruleopt);
@@ -547,9 +636,6 @@ public class GradeMania4 extends DummyMode {
         engine.comboType = GameEngine.COMBO_TYPE_NORMAL;
         engine.framecolor = GameEngine.FRAME_COLOR_BLUE;
 
-        owner.backgroundStatus.bg = 0;
-        owner.backgroundStatus.fadebg = 0;
-
         engine.staffrollEnable = true;
         engine.staffrollNoDeath = false;
 
@@ -572,10 +658,9 @@ public class GradeMania4 extends DummyMode {
 
         if (!owner.replayMode) {
             loadSetting(owner.modeConfig);
-
-            version = CURRENT_VERSION;
             loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
 
+            version = CURRENT_VERSION;
             alwaysExtra = false;
 
             if (playerProperties.isLoggedIn()) {
@@ -589,26 +674,19 @@ public class GradeMania4 extends DummyMode {
 
             playerName = owner.replayProp.getProperty("grademania4.playerName", "");
         }
+
+        lastBackground = startLevel;
+        currentBackground = startLevel;
+        fadeProgress = 300;
     }
 
-    private void loadRuleset(Supplier<Integer> ruleGetter, Supplier<Boolean> legacyRuleGetter) {
-        switch (ruleGetter.get()) {
-            case 0:
-                gameRuleset = Ruleset.ORIGINAL;
-                break;
-            case 1:
-                gameRuleset = Ruleset.MODEPILE;
-                break;
-            case 2:
-                gameRuleset = Ruleset.FOURS_ORIGINAL;
-                break;
-            case 3:
-                gameRuleset = Ruleset.FOURS_MODEPILE;
-                break;
-            default:
-                if (legacyRuleGetter.get()) gameRuleset = Ruleset.MODEPILE;
-                else gameRuleset = Ruleset.ORIGINAL;
-                break;
+    private void loadRuleset(IntSupplier ruleGetter, BooleanSupplier legacyRuleGetter) {
+        final Ruleset loaded = Ruleset.getRuleset(ruleGetter.getAsInt());
+        if (loaded != null) {
+            gameRuleset = loaded;
+        } else {
+            if (legacyRuleGetter.getAsBoolean()) gameRuleset = Ruleset.MODEPILE;
+            else gameRuleset = Ruleset.ORIGINAL;
         }
     }
 
@@ -684,10 +762,10 @@ public class GradeMania4 extends DummyMode {
     private void loadRanking(CustomProperties prop, String ruleName) {
         for (Ruleset ruleset : Ruleset.RULES) {
             for (int i = 0; i < RANKING_MAX; ++i) {
-                rankingGradeLeft[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".gradeL." + i, 0);
-                rankingGradeRight[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".gradeR." + i, 0);
-                rankingLevel[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".level." + i, 0);
-                rankingTime[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".time." + i, 0);
+                rankingGradeLeft[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".gradeL." + i, 0);
+                rankingGradeRight[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".gradeR." + i, 0);
+                rankingLevel[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".level." + i, 0);
+                rankingTime[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".time." + i, 0);
             }
         }
     }
@@ -695,10 +773,10 @@ public class GradeMania4 extends DummyMode {
     private void saveRanking(CustomProperties prop, String ruleName) {
         for (Ruleset ruleset : Ruleset.RULES) {
             for (int i = 0; i < RANKING_MAX; ++i) {
-                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeft[ruleset.leaderboard][i]);
-                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".gradeR." + i, rankingGradeRight[ruleset.leaderboard][i]);
-                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".level." + i, rankingLevel[ruleset.leaderboard][i]);
-                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".time." + i, rankingTime[ruleset.leaderboard][i]);
+                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".gradeL." + i, rankingGradeLeft[ruleset.leaderboard][i]);
+                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".gradeR." + i, rankingGradeRight[ruleset.leaderboard][i]);
+                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".level." + i, rankingLevel[ruleset.leaderboard][i]);
+                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".time." + i, rankingTime[ruleset.leaderboard][i]);
             }
         }
     }
@@ -708,10 +786,10 @@ public class GradeMania4 extends DummyMode {
 
         for (Ruleset ruleset : Ruleset.RULES) {
             for (int i = 0; i < RANKING_MAX; ++i) {
-                rankingGradeLeftPlayer[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".gradeL." + i, 0);
-                rankingGradeRightPlayer[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".gradeR." + i, 0);
-                rankingLevelPlayer[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".level." + i, 0);
-                rankingTimePlayer[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".time." + i, 0);
+                rankingGradeLeftPlayer[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".gradeL." + i, 0);
+                rankingGradeRightPlayer[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".gradeR." + i, 0);
+                rankingLevelPlayer[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".level." + i, 0);
+                rankingTimePlayer[ruleset.leaderboard][i] = prop.getProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".time." + i, 0);
             }
         }
     }
@@ -721,10 +799,10 @@ public class GradeMania4 extends DummyMode {
 
         for (Ruleset ruleset : Ruleset.RULES) {
             for (int i = 0; i < RANKING_MAX; ++i) {
-                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".gradeL." + i, rankingGradeLeftPlayer[ruleset.leaderboard][i]);
-                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".gradeR." + i, rankingGradeRightPlayer[ruleset.leaderboard][i]);
-                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".level." + i, rankingLevelPlayer[ruleset.leaderboard][i]);
-                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + version + ".time." + i, rankingTime[ruleset.leaderboard][i]);
+                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".gradeL." + i, rankingGradeLeftPlayer[ruleset.leaderboard][i]);
+                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".gradeR." + i, rankingGradeRightPlayer[ruleset.leaderboard][i]);
+                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".level." + i, rankingLevelPlayer[ruleset.leaderboard][i]);
+                prop.setProperty("grademania4.ranking." + ruleset.leaderboardString + "." + ruleName + "." + CURRENT_VERSION + ".time." + i, rankingTime[ruleset.leaderboard][i]);
             }
         }
     }
@@ -829,13 +907,9 @@ public class GradeMania4 extends DummyMode {
 
     @Override
     public boolean onSetting(GameEngine engine, int playerID) {
-        if (animatedBackgrounds) {
-            owner.backgroundStatus.bg = -SECTION_MAX + startLevel;
-            owner.backgroundStatus.fadebg = -SECTION_MAX + startLevel;
-        } else {
-            owner.backgroundStatus.bg = startLevel;
-            owner.backgroundStatus.fadebg = startLevel;
-        }
+        lastBackground = startLevel;
+        currentBackground = startLevel;
+        fadeProgress = 300;
 
         if (!engine.owner.replayMode) {
             // Configuration changes
@@ -860,6 +934,11 @@ public class GradeMania4 extends DummyMode {
                         startLevel += change;
                         if (startLevel < 0) startLevel = 9;
                         if (startLevel > 9) startLevel = 0;
+
+                        lastBackground = startLevel;
+                        currentBackground = startLevel;
+                        fadeProgress = 300;
+
                         break;
                     case 2:
                         showGrade = !showGrade;
@@ -878,11 +957,7 @@ public class GradeMania4 extends DummyMode {
                         break;
                     case 7:
                         hardDropEffect = !hardDropEffect;
-
-                        if (animatedBackgrounds) {
-                            updateBGPulseFrames(engine, 60, 180, 1f);
-                        }
-
+                        updateBGPulseFrames(engine, 60, 180, 1f);
                         break;
                     case 8:
                         animatedBackgrounds = !animatedBackgrounds;
@@ -969,14 +1044,6 @@ public class GradeMania4 extends DummyMode {
 
     @Override
     public boolean onCustom(GameEngine engine, int playerID) {
-        if (animatedBackgrounds) {
-            owner.backgroundStatus.bg = -SECTION_MAX + startLevel;
-            owner.backgroundStatus.fadebg = -SECTION_MAX + startLevel;
-        } else {
-            owner.backgroundStatus.bg = startLevel;
-            owner.backgroundStatus.fadebg = startLevel;
-        }
-
         showPlayerStats = false;
         engine.isInGame = true;
 
@@ -1026,28 +1093,16 @@ public class GradeMania4 extends DummyMode {
     }
 
     @Override
-    public void renderFirst(GameEngine engine, int playerID) {
-        if (animatedBackgrounds && engine.owner.backgroundStatus.bg < 0) {
-            animBgInstances[engine.owner.backgroundStatus.bg + SECTION_MAX].draw(engine, playerID);
+    public void drawBackgroundElements(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
+        if (animatedBackgrounds) {
+            rendererExtension.drawFadingAnimatedBackground(receiver, engine, playerID, animBgInstances[getLastBackground()], animBgInstances[getCurrentBackground()], getFadeProgress());
+        } else {
+            rendererExtension.drawFadingBackground(receiver, engine, getLastBackground(), getCurrentBackground(), getFadeProgress());
         }
+    }
 
-        if (!animatedBackgrounds && engine.ending == 2) {
-            rendererExtension.drawDefaultBackground(engine, previousBg);
-        }
-
-        // Field Redraw.
-        if (engine.gameActive && engine.ending == 2) {
-            int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
-            int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
-
-            if (engine.displaysize != -1) {
-                rendererExtension.drawNext(receiver, engine, offsetX, offsetY);
-                rendererExtension.drawFrame(receiver, engine, offsetX, offsetY + 48, engine.displaysize);
-            } else {
-                rendererExtension.drawFrame(receiver, engine, offsetX, offsetY, -1);
-            }
-        }
-
+    @Override
+    public void drawBetweenFrameAndField(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
         if ((engine.gameActive) && (engine.ending == 2)) {
             int time = ROLL_TIME_LIMIT - rollTime;
             if (time < 0) time = 0;
@@ -1056,40 +1111,28 @@ public class GradeMania4 extends DummyMode {
 
             CREDITS.draw(receiver, engine, playerID, (double) rollTime / ROLL_TIME_LIMIT);
         }
+    }
 
-        // Field Redraw.
-        if (engine.gameActive && engine.ending == 2) {
-            int offsetX = receiver.getFieldDisplayPositionX(engine, playerID);
-            int offsetY = receiver.getFieldDisplayPositionY(engine, playerID);
-
-            if (engine.displaysize != -1) {
-                rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 52, engine.displaysize);
-            } else {
-                rendererExtension.drawField(receiver, engine, offsetX + 4, offsetY + 4, -1);
-            }
-        }
+    @Override
+    public void renderFirst(GameEngine engine, int playerID) {
+        inRenderFirst(rendererExtension, receiver, engine, playerID);
     }
 
     @Override
     public void renderMove(GameEngine engine, int playerID) {
-        // Field Redraw.
-        if (engine.gameActive && engine.ending == 2) {
-            engine.isVisible = true;
-            receiver.renderMove(engine, playerID);
-            engine.isVisible = false;
-        }
+        inRenderMove(rendererExtension, receiver, engine, playerID);
     }
 
     @Override
     public boolean onReady(GameEngine engine, int playerID) {
+
+        lastBackground = startLevel;
+        currentBackground = startLevel;
+        fadeProgress = 300;
         if (engine.statc[0] == 0 && animatedBackgrounds) {
-            engine.owner.backgroundStatus.bg = -SECTION_MAX + startLevel;
             for (AnimatedBackgroundHook bg : animBgInstances) {
                 bg.reset();
             }
-        } else if (!animatedBackgrounds) {
-            engine.owner.backgroundStatus.bg = startLevel;
-            engine.owner.backgroundStatus.fadebg = startLevel;
         }
 
         if (engine.statc[0] == 0) {
@@ -1325,15 +1368,7 @@ public class GradeMania4 extends DummyMode {
                     }
                 }
 
-                owner.backgroundStatus.fadesw = true;
-                owner.backgroundStatus.fadecount = 0;
-
-                owner.backgroundStatus.fadebg = nextSectionLevel / 100;
-
-                if (animatedBackgrounds) {
-                    owner.backgroundStatus.bg = owner.backgroundStatus.fadebg - SECTION_MAX;
-                    owner.backgroundStatus.fadebg = owner.backgroundStatus.fadebg - SECTION_MAX;
-                }
+                setNewBackground(nextSectionLevel / 100);
 
                 if ((TABLE_BGM_FADEOUT[bgmLevel] != -1) && (engine.statistics.level >= TABLE_BGM_CHANGE[bgmLevel])) {
                     bgmLevel++;
@@ -1349,8 +1384,6 @@ public class GradeMania4 extends DummyMode {
             }
         }
     }
-
-    private int previousBg;
 
     @Override
     public void onLast(GameEngine engine, int playerID) {
@@ -1401,20 +1434,16 @@ public class GradeMania4 extends DummyMode {
             }
         }
 
-        engine.isVisible = !engine.gameActive || engine.ending != 2;
-
-        if (engine.owner.backgroundStatus.bg >= 0 && engine.ending == 0 && !animatedBackgrounds) {
-            previousBg = engine.owner.backgroundStatus.bg;
-        } else if (!animatedBackgrounds && engine.ending == 2) {
-            engine.owner.backgroundStatus.bg = -1;
+        if (fadeProgress < 300) {
+            fadeProgress += 10;
         }
 
-        if (!animatedBackgrounds && engine.ending != 2) {
-            engine.owner.backgroundStatus.bg = previousBg;
-        }
+        if (animatedBackgrounds) {
+            if (lastBackground != currentBackground && getFadeProgress() < 0.5f) {
+                animBgInstances[lastBackground].update();
+            }
 
-        if (animatedBackgrounds && (owner.backgroundStatus.bg + SECTION_MAX < 10)) {
-            animBgInstances[owner.backgroundStatus.bg + SECTION_MAX].update();
+            animBgInstances[currentBackground].update();
         }
 
         if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode))) {
@@ -1813,7 +1842,9 @@ public class GradeMania4 extends DummyMode {
     }
 
     @Override
-    public void renderResult( GameEngine engine, int playerID ) {
+    public void renderResult(GameEngine engine, int playerID ) {
+        inRenderResult(rendererExtension, receiver, engine, playerID);
+
         receiver.drawMenuFont(engine, playerID, 0, 0, "kn PAGE" + (engine.statc[1] + 1) + "/3", EventReceiver.COLOR_RED);
 
         if (engine.statc[1] == 0) {
@@ -2172,6 +2203,11 @@ public class GradeMania4 extends DummyMode {
         owner.receiver.onExcellent(engine, playerID);
 
         return true;
+    }
+
+    @Override
+    public void renderExcellent(GameEngine engine, int playerID) {
+        inRenderExcellent(rendererExtension, receiver, engine, playerID);
     }
 
     private void launchFirework(GameEngine engine, int playerID) {

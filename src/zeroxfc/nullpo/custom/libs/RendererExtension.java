@@ -1039,6 +1039,11 @@ public class RendererExtension {
         showMeterAccessor = Mirror.getFieldAccessor(EventReceiver.class, "showmeter");
     }
 
+    /** Checks if the field frame meter is showing. */
+    public static boolean getShowMeter(EventReceiver receiver) {
+        return showMeterAccessor.get(receiver);
+    }
+
     // Get the field images from the resource holders.
     private static void findFieldImages() {
         if (fieldBgNormal != null) return;
@@ -1453,6 +1458,39 @@ public class RendererExtension {
         } else {
             heavyEffectAccessor = null;
         }
+    }
+
+    /**
+     * Draw animated backgrounds that fade between the two. The fade effect only works in the Slick renderer if the
+     * user has fades enabled. Will draw non-fading backgrounds if the user has fades disabled.
+     *
+     * @param receiver Current renderer
+     * @param engine   Current game engine
+     * @param playerID Current player id
+     * @param from     Fade from this background
+     * @param to       Fade into this background
+     * @param progress Fade progress
+     */
+    public void drawFadingAnimatedBackground(EventReceiver receiver, GameEngine engine, int playerID, AnimatedBackgroundHook from, AnimatedBackgroundHook to, float progress) {
+        if (progress < 0f) progress = 0f;
+        else if (progress > 1f) progress = 1f;
+
+        if (heavyEffectAccessor == null || !heavyEffectAccessor.get(receiver)) {
+            if (progress > 0f) to.draw(engine, playerID);
+            else from.draw(engine, playerID);
+            return;
+        }
+
+        if (progress < 0.5) from.draw(engine, playerID);
+        else to.draw(engine, playerID);
+
+        drawing.drawRectangle(
+            receiver,
+            0, 0, 640, 480,
+            0, 0, 0,
+            progress < 0.5 ? Interpolation.lerp(0, 255, progress * 2) : Interpolation.lerp(255, 0, (progress - 0.5) * 2),
+            true
+        );
     }
 
     /**

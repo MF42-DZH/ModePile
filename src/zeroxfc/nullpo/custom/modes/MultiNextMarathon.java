@@ -217,16 +217,17 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
 
         selectedNext = WhichQueue.LEFT;
 
-        frameColF = (integer, integer2) -> {
+        frameColF = (x, y) -> {
             final int width = engine.field != null ? engine.field.getWidth() : 10;
             final int height = engine.field != null ? engine.field.getHeight() : 20;
 
-            final int usedX = getSelectedNext() == WhichQueue.LEFT ? integer : ((width * 4) - integer);
+            final int maxW = RendererExtension.getShowMeter(receiver) ? width * 4 + 4 : width * 4 + 2;
+            final int usedX = getSelectedNext() == WhichQueue.LEFT ? x : (maxW - x);
 
             final int gComponent = Interpolation.lerp(
                 255, 96,
                 MathHelper.clamp(
-                    (Math.max(usedX, integer2) - 1d) / (height * 4),
+                    (Math.max(usedX, y)) / (double) (height * 4 + 2),
                     0d, 1d
                 )
             );

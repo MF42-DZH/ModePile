@@ -5,6 +5,7 @@ import java.util.function.IntSupplier;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
+import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 // Mix this into gamemode classes to add flexible custom field drawing.
 // Make sure to set engine.isVisible to false, and set the current background to -1.
