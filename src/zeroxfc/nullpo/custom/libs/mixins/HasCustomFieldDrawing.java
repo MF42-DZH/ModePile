@@ -8,6 +8,8 @@ import zeroxfc.nullpo.custom.libs.RendererExtension;
 
 // Mix this into gamemode classes to add flexible custom field drawing.
 // Make sure to set engine.isVisible to false, and set the current background to -1.
+// If you do use this, remember to still set sensible frame colours in the GameEngine, as the
+// custom rendering methods default to calling NullpoMino's methods in the SDL renderer.
 public interface HasCustomFieldDrawing {
     class FrameDrawingParameters {
         // Both of these are expected to return RGB24 in the lower 24 bits.

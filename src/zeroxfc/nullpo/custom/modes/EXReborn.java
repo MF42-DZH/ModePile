@@ -1238,6 +1238,9 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
             engine.statistics.score += lastscore;
             interpolator.setTargetScore(engine.statistics.score);
 
+            // I think it looks better when lines reset the interpolation? -- Azullia
+            interpolator.resetIncrements();
+
             lastscore += s;
             scgettime = 120;
 

@@ -374,6 +374,7 @@ public class GradeMania4 extends DummyMode {
         switch (gameRuleset) {
             case ORIGINAL:
             case FOURS_ORIGINAL:
+            case FOURS_FAST_ORIGINAL:
                 {
                     int count = 0;
 
@@ -381,15 +382,16 @@ public class GradeMania4 extends DummyMode {
                         if (sectionPoint >= 1000) ++count;
                     }
 
-                    final boolean opc = gameRuleset == Ruleset.ORIGINAL ? engine.statistics.time <= TIME_LIMIT_TEN_OF_TEN : engine.statistics.totalFour >= FOUR_GOAL_TEN_OF_TEN_ORIG;
+                    final boolean opc = !gameRuleset.isFoursRuleset() ? engine.statistics.time <= TIME_LIMIT_TEN_OF_TEN : engine.statistics.totalFour >= FOUR_GOAL_TEN_OF_TEN_ORIG;
                     if ((engine.statistics.level >= LEVEL_LIMIT) && opc) ++count;
 
                     return count;
                 }
             case MODEPILE:
             case FOURS_MODEPILE:
+            case FOURS_FAST_MODEPILE:
                 {
-                    final boolean mpc = gameRuleset == Ruleset.MODEPILE ? engine.statistics.time <= TIME_LIMIT_TEN_OF_TEN : engine.statistics.totalFour >= FOUR_GOAL_TEN_OF_TEN_MPL;
+                    final boolean mpc = !gameRuleset.isFoursRuleset() ? engine.statistics.time <= TIME_LIMIT_TEN_OF_TEN : engine.statistics.totalFour >= FOUR_GOAL_TEN_OF_TEN_MPL;
                     return Math.min(9, fullGameQuota / 1000) + (((engine.statistics.level >= LEVEL_LIMIT) && mpc) ? 1 : 0);
                 }
             default:
@@ -410,11 +412,17 @@ public class GradeMania4 extends DummyMode {
     private GameManager owner;
     private EventReceiver receiver;
 
+    private enum GameFlavour {
+        ORIGINAL_TASTE, MODEPILE_REMIX
+    }
+
     private enum Ruleset {
         ORIGINAL(0, "original", "ORIGINAL", V2_SPEED_TABLE_FAST),
         MODEPILE(1, "modepile", "MODEPILE", V2_SPEED_TABLE_FAST),
         FOURS_ORIGINAL(2, "foursoriginal", "FOURS ORIG.", V2_SPEED_TABLE_SLOW),
-        FOURS_MODEPILE(3, "foursmodepile", "FOURS MPL.", V2_SPEED_TABLE_SLOW);
+        FOURS_MODEPILE(3, "foursmodepile", "FOURS MPL.", V2_SPEED_TABLE_SLOW),
+        FOURS_FAST_ORIGINAL(4, "foursfastorig", "FAST 4S ORIG.", V2_SPEED_TABLE_FAST),
+        FOURS_FAST_MODEPILE(5, "foursfastmpl", "FAST 4S MPL.", V2_SPEED_TABLE_FAST);
 
         private final int leaderboard;
         private final String leaderboardString;
@@ -429,11 +437,28 @@ public class GradeMania4 extends DummyMode {
         }
 
         // All rules available
-        private static final Ruleset[] RULES = new Ruleset[] { ORIGINAL, MODEPILE, FOURS_ORIGINAL, FOURS_MODEPILE };
+        private static final Ruleset[] RULES = {
+            ORIGINAL, MODEPILE,
+            FOURS_ORIGINAL, FOURS_MODEPILE,
+            FOURS_FAST_ORIGINAL, FOURS_FAST_MODEPILE
+        };
+
         private static final int LEADERBOARDS = RULES.length;
 
         public static Ruleset[] allRules() {
             return RULES;
+        }
+
+        public boolean isFoursRuleset() {
+            return this.name().contains("FOURS");
+        }
+
+        public GameFlavour gameFlavour() {
+            if (this.name().contains("ORIGINAL")) {
+                return GameFlavour.ORIGINAL_TASTE;
+            } else {
+                return GameFlavour.MODEPILE_REMIX;
+            }
         }
     }
 
@@ -1230,12 +1255,14 @@ public class GradeMania4 extends DummyMode {
             switch (gameRuleset) {
                 case ORIGINAL:
                 case FOURS_ORIGINAL:
+                case FOURS_FAST_ORIGINAL:
                     if (lines >= 4) {
                         sectionPoints[currentSection] += 175;
                     }
                     break;
                 case MODEPILE:
                 case FOURS_MODEPILE:
+                case FOURS_FAST_MODEPILE:
                     if (lines < 3) {
                         fullGameQuota += 10 * lines;
                     } else if (lines == 3) {
@@ -1258,10 +1285,12 @@ public class GradeMania4 extends DummyMode {
                     switch (gameRuleset) {
                         case ORIGINAL:
                         case FOURS_ORIGINAL:
+                        case FOURS_FAST_ORIGINAL:
                             sectionPoints[currentSection] += 350;
                             break;
                         case MODEPILE:
                         case FOURS_MODEPILE:
+                        case FOURS_FAST_MODEPILE:
                             fullGameQuota += 350;
                             break;
                         default:
@@ -1605,15 +1634,16 @@ public class GradeMania4 extends DummyMode {
                 String foursText = "";
 
                 final int expectedFours = (int) Math.ceil((engine.statistics.level / (float) LEVEL_LIMIT) * FOUR_GOAL_TEN_OF_TEN_ORIG);
-                if (gameRuleset == Ruleset.FOURS_MODEPILE) foursText = String.format("(%2s/%2s)", engine.statistics.totalFour, FOUR_GOAL_TEN_OF_TEN_MPL);
-                if (gameRuleset == Ruleset.FOURS_ORIGINAL) foursText = String.format("(%2s/%2s)", engine.statistics.totalFour, expectedFours);
+                if (gameRuleset.isFoursRuleset() && gameRuleset.gameFlavour() == GameFlavour.MODEPILE_REMIX) foursText = String.format("(%2s/%2s)", engine.statistics.totalFour, FOUR_GOAL_TEN_OF_TEN_MPL);
+                if (gameRuleset.isFoursRuleset() && gameRuleset.gameFlavour() == GameFlavour.ORIGINAL_TASTE) foursText = String.format("(%2s/%2s)", engine.statistics.totalFour, expectedFours);
 
                 float qbarXScale = 4.2f;
-                if (gameRuleset == Ruleset.FOURS_ORIGINAL || gameRuleset == Ruleset.FOURS_MODEPILE) qbarXScale = 7.325f;
+                if (gameRuleset.isFoursRuleset()) qbarXScale = 7.325f;
 
                 switch (gameRuleset) {
                     case ORIGINAL:
                     case FOURS_ORIGINAL:
+                    case FOURS_FAST_ORIGINAL:
                         {
                             int section = engine.statistics.level / 100 - 1;
                             if (section < 0) section = 0;
@@ -1635,7 +1665,7 @@ public class GradeMania4 extends DummyMode {
                                 RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
                             );
 
-                            if (gameRuleset == Ruleset.FOURS_ORIGINAL) {
+                            if (gameRuleset.isFoursRuleset()) {
                                 float foursValue = Math.min(1f, expectedFours <= 0 ? 0f : (float) engine.statistics.totalFour / expectedFours);
                                 final boolean yellowFours = engine.statistics.totalFour >= expectedFours;
 
@@ -1656,6 +1686,7 @@ public class GradeMania4 extends DummyMode {
                         break;
                     case MODEPILE:
                     case FOURS_MODEPILE:
+                    case FOURS_FAST_MODEPILE:
                         {
                             final boolean yellow = fullGameQuota >= FULL_GAME_QUOTA_LIMIT;
 
@@ -1674,7 +1705,7 @@ public class GradeMania4 extends DummyMode {
                                 RendererExtension.SPEED_METER_RED, RendererExtension.SPEED_METER_GREEN
                             );
 
-                            if (gameRuleset == Ruleset.FOURS_MODEPILE) {
+                            if (gameRuleset.isFoursRuleset()) {
                                 float foursValue = Math.min(1f, (float) engine.statistics.totalFour / FOUR_GOAL_TEN_OF_TEN_MPL);
                                 final boolean yellowFours = engine.statistics.totalFour >= FOUR_GOAL_TEN_OF_TEN_MPL;
 
@@ -1701,7 +1732,7 @@ public class GradeMania4 extends DummyMode {
             if (playerProperties.isLoggedIn() || !playerName.isEmpty()) {
                 if (showGrade) {
                     int basePlayerY = 18;
-                    if (gameRuleset == Ruleset.FOURS_ORIGINAL || gameRuleset == Ruleset.FOURS_MODEPILE) basePlayerY = 19;
+                    if (gameRuleset.isFoursRuleset()) basePlayerY = 19;
 
                     receiver.drawScoreFont(engine, playerID, 0, basePlayerY, "PLAYER", EventReceiver.COLOR_BLUE);
                     GameTextUtilities.drawAlignedScoreText(

@@ -177,13 +177,19 @@ public class Interpolation {
         return (1.0 - t) * v0 + v1 * t;
     }
 
-    /** A class representing a class of time-based integer interpolators (for score displays, etc.). */
+    /**
+     * A class representing a class of time-based integer interpolators (for score displays, etc.).
+     * Typically, these interpolators are monotonic (providing increasing values).
+     */
     public abstract static class IntInterpolator {
         protected int scoreToDisplay;
         protected int targetScore;
 
         /** Reset all to zero. */
         public abstract void reset();
+
+        /** Reset the time / speed of interpolation, without fully resetting all values to zero. */
+        public abstract void resetIncrements();
 
         /** Perform an interpolation step. Usually run in a mode's {@code onLast} method. */
         public abstract void update();
@@ -223,6 +229,11 @@ public class Interpolation {
             scoreToDisplay = 0;
             targetScore = 0;
 
+            resetIncrements();
+        }
+
+        @Override
+        public void resetIncrements() {
             a = 1;
             b = 1;
             frame = 0;
@@ -234,9 +245,7 @@ public class Interpolation {
 
             scoreToDisplay += Math.min(a, (int) Math.ceil((targetScore - scoreToDisplay) * easeOutFactor));
             if (scoreToDisplay >= targetScore || scoreToDisplay < 0) {
-                a = 1;
-                b = 1;
-                frame = 0;
+                resetIncrements();
             }
 
             if (frame >= incrementTick && b > 0) {
@@ -326,8 +335,8 @@ public class Interpolation {
         public void reset() {
             scoreToDisplay = 0;
             targetScore = 0;
-            increase = 0;
-            frame = 0;
+
+            resetIncrements();
         }
 
         /**
@@ -369,9 +378,14 @@ public class Interpolation {
             }
 
             if (scoreToDisplay >= targetScore || scoreToDisplay < 0) {
-                frame = 0;
-                increase = 0;
+                resetIncrements();
             }
+        }
+
+        @Override
+        public void resetIncrements() {
+            frame = 0;
+            increase = 0;
         }
     }
 }
