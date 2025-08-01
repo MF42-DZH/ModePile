@@ -578,12 +578,16 @@ public class GradeMania4 extends DummyMode implements HasCustomFieldDrawing {
 
                     if (getGameRuleset().gameFlavour() == GameFlavour.ORIGINAL_TASTE) {
                         mixer.setHueAngle(210).setSaturation(0.95).setLightness(lMult);
+
+                        if (getExtraState()) {
+                            mixer.setHueAngle(0).setSaturation(1).setLightness(lMult);
+                        }
                     } else {
                         mixer.setHueAngle(225).setSaturation(0.90).setLightness(lMult);
-                    }
 
-                    if (getExtraState()) {
-                        mixer.setHueAngle(0).setSaturation(1).setLightness(lMult);
+                        if (getExtraState()) {
+                            mixer.setHueAngle(15).setSaturation(1).setLightness(lMult);
+                        }
                     }
 
                     return mixer.getRGB24();
