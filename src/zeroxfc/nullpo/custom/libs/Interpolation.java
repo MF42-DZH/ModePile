@@ -162,6 +162,8 @@ public class Interpolation {
         return smoothStep(v0, v1, 6, interpVal);
     }
 
+    private static final double HALF_PI = Math.PI / 2d;
+
     /**
      * Sine interpolation of two <code>double</code> values.
      *
@@ -171,10 +173,25 @@ public class Interpolation {
      * @return Interpolated value as <code>double</code>
      */
     public static double sineStep(double v0, double v1, double interpVal) {
-        final double OFFSET = Math.PI / 2d;
-        final double t = (Math.sin((-1d * OFFSET) + (interpVal * OFFSET * 2)) + 1d) / 2d;
+        final double t = (Math.sin((-HALF_PI) + (interpVal * HALF_PI * 2)) + 1d) / 2d;
 
         return (1.0 - t) * v0 + v1 * t;
+    }
+
+    /**
+     * Tangent interpolation of two <code>double</code> values.
+     *
+     * @param v0        Start point
+     * @param v1        End point
+     * @param interpVal Proportion of point travelled (0 = start, 1 = end)
+     * @return Interpolated value as <code>double</code>
+     */
+    public static double tanStep(double v0, double v1, double interpVal) {
+        final double normIV = interpVal <= 0.5 ? interpVal : (1 - interpVal);
+        final double t = Math.tan(normIV * HALF_PI);
+        final double fitted = (t * t) / 2.0;
+
+        return interpVal <= 0.5 ? Interpolation.lerp(v0, v1, fitted) : Interpolation.lerp(v0, v1, 1.0 - fitted);
     }
 
     /**
@@ -207,7 +224,7 @@ public class Interpolation {
         private int b;
         private int frame;
 
-        private final int incrementTick;
+        private int incrementTick;
         private final double easeOutFactor;
 
         public FibonacciInterpolator() {
@@ -222,6 +239,15 @@ public class Interpolation {
             this.easeOutFactor = easeOutFactor;
 
             reset();
+        }
+
+        public int getIncrementTick() {
+            return incrementTick;
+        }
+
+        public void setIncrementTick(int newIncrementTick) {
+            incrementTick = newIncrementTick;
+            frame = 0;
         }
 
         @Override

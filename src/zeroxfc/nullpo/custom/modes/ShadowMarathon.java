@@ -2219,7 +2219,7 @@ public class ShadowMarathon extends MarathonModeBase {
             if ((lastscore == 0) || (lerpTime >= 120)) {
                 strScore = String.valueOf(engine.statistics.score);
             } else {
-                strScore = (int) Interpolation.sineStep(lastScore, engine.statistics.score, (double) lerpTime / 120d) + "(+" + lastscore + ")";
+                strScore = (int) Interpolation.tanStep(lastScore, engine.statistics.score, (double) lerpTime / 120d) + "(+" + lastscore + ")";
             }
             receiver.drawScoreFont(engine, playerID, 0, 4, strScore);
 

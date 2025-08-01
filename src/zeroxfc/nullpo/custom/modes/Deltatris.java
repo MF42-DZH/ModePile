@@ -107,6 +107,8 @@ public class Deltatris extends MarathonModeBase {
     private LandingParticles landingParticles;
     private boolean hardDropEffect;
 
+    private final Interpolation.FibonacciInterpolator interpolator = new Interpolation.FibonacciInterpolator(6, 1d / 6d);
+
     /**
      * Deltatris - How fast can you go in this ΔMAX-inspired gamemode?
      *
@@ -165,6 +167,8 @@ public class Deltatris extends MarathonModeBase {
 
         netPlayerInit(engine, playerID);
 
+        interpolator.reset();
+
         if (!owner.replayMode) {
             loadSetting(owner.modeConfig);
             loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
@@ -203,6 +207,7 @@ public class Deltatris extends MarathonModeBase {
             grav *= GRAVITY_MULTIPLIERS[difficulty];
             grav = Math.min(grav, GRAVITY_DENOMINATOR * 20);
         }
+
         engine.speed.gravity = (int) grav;
         engine.speed.are = (int) Math.ceil(Interpolation.lerp((double) START_ARE, END_ARE[difficulty], percentage));
         engine.speed.areLine = (int) Math.ceil(Interpolation.lerp((double) START_LINE_ARE, END_LINE_ARE[difficulty], percentage));
@@ -505,9 +510,7 @@ public class Deltatris extends MarathonModeBase {
                 }
             }
 
-            int s = engine.statistics.score;
-            if (scgettime < 120)
-                s = (int) Interpolation.sineStep(scorebefore, engine.statistics.score, (double) scgettime / 120);
+            final int s = interpolator.getScoreToDisplay(); // (int) Interpolation.tanStep(scorebefore, engine.statistics.score, (double) scgettime / 120);
 
             receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", EventReceiver.COLOR_BLUE);
             String strScore;
@@ -643,6 +646,17 @@ public class Deltatris extends MarathonModeBase {
     public void onLast(GameEngine engine, int playerID) {
         scgettime++;
         mScale = Math.max(1, mScale * 0.98f);
+
+        if (engine.gameActive && interpolator.getScoreToDisplay() >= engine.statistics.score) {
+            final int nextTick = (int) Math.ceil(Interpolation.lerp(6.0, 2.0, multiplier / MULTIPLIER_MAXIMUM));
+            if (nextTick < interpolator.getIncrementTick()) {
+                interpolator.setIncrementTick(nextTick);
+            }
+        } else if (!engine.gameStarted) {
+            interpolator.setIncrementTick(6);
+        }
+
+        interpolator.update();
 
         // Meter
         engine.meterValue = (int) ((multiplier / 20d) * receiver.getMeterMax(engine));
@@ -827,6 +841,9 @@ public class Deltatris extends MarathonModeBase {
             if (lines >= 1) engine.statistics.scoreFromLineClear += pts;
             else engine.statistics.scoreFromOtherBonus += pts;
             engine.statistics.score += pts;
+
+            interpolator.setTargetScore(engine.statistics.score);
+            interpolator.resetIncrements();
         }
 
         // BGM fade-out effects and BGM changes
@@ -892,6 +909,8 @@ public class Deltatris extends MarathonModeBase {
     public void afterSoftDropFall(GameEngine engine, int playerID, int fall) {
         engine.statistics.scoreFromSoftDrop += fall * multiplier;
         engine.statistics.score += fall * multiplier;
+
+        interpolator.setTargetScore(engine.statistics.score);
     }
 
     /*
@@ -902,8 +921,8 @@ public class Deltatris extends MarathonModeBase {
         engine.statistics.scoreFromHardDrop += fall * 2 * multiplier;
         engine.statistics.score += fall * 2 * multiplier;
 
-        int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
-        int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+        interpolator.setTargetScore(engine.statistics.score);
+
         cPiece = new Piece(engine.nowPieceObject);
         for (int i = 1; i <= fall; i++) {
             pCoordList.add(
