@@ -687,6 +687,8 @@ public class GradeMania4 extends DummyMode implements HasCustomFieldDrawing {
             playerName = owner.replayProp.getProperty("grademania4.playerName", "");
         }
 
+        updateBGPulseFrames(engine, 60, 180, 1f);
+
         lastBackground = startLevel;
         currentBackground = startLevel;
         fadeProgress = 300;
