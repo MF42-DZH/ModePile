@@ -1,40 +1,31 @@
 package zeroxfc.nullpo.custom.modes.objects.seasons;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 
 // Badges for level bonuses and other stuff.
-// Parameter is for a type that extends custom badges.
-public class Badges<T extends Badges.Custom> {
+public class Badges {
     // Badges use 1dp internally, but are represented as ints to preserve precision.
-    // Custom badges also use 1dp-rep integers.
-    // Except AC. AC uses whole numbers.
-    private int ac;    // AC -- 2
-    private int fours; // 4X -- 10
-    private int spins; // SP -- 10
-    private final List<T> customBadges;
+    private int ac;     // AC -- 2
+    private int fours;  // 4X -- 10
+    private int spins;  // SP -- 10
+    private int season; // SE -- 25
 
-    public Badges(T... customBadges) {
+    public Badges() {
         ac = 0;
         fours = 0;
         spins = 0;
-
-        this.customBadges = new ArrayList<>(Arrays.asList(customBadges));
+        season = 0;
     }
 
-    // Call in mode calcScore.
-    public void updateBadges(GameEngine engine, int playerID, int lines, Consumer<? super T> customBadgeUpdater) {
+    // Call in mode calcScore. Every 10 season badges is an effective 1 badge.
+    public void updateBadges(GameEngine engine, int playerID, int lines, int seasonBadges) {
         // AC badge.
         if ((lines >= 1) && (engine.field.isEmpty())) {
-            ++ac;
+            ac += 10;
         }
 
         // Fours badge. We give partial credit here.
@@ -59,95 +50,56 @@ public class Badges<T extends Badges.Custom> {
             }
         }
 
-        // Update custom badges.
-        for (final T badge : customBadges) {
-            customBadgeUpdater.accept(badge);
-        }
+        // Season badges.
+        season += seasonBadges;
     }
 
-    public Map<String, Integer> getAllBadges() {
-        final Map<String, Integer> map = new LinkedHashMap<>(3 + customBadges.size());
+    public Map<String, Integer> getBadgesAsLevelBonuses() {
+        final Map<String, Integer> map = new LinkedHashMap<>(4);
 
-        map.put("AC", ac);
-        map.put("4X", fours);
-        map.put("SP", spins);
-
-        for (final T badge : customBadges) {
-            map.put(badge.display, badge.count);
-        }
+        map.put("AC", ac / 20);
+        map.put("4X", fours / 100);
+        map.put("SP", spins / 100);
+        map.put("SE", season / 250);
 
         return map;
     }
 
     public int getLevelBonus() {
         int bonus = 0;
-        bonus += ac / 2;
+
+        bonus += ac / 20;
         bonus += fours / 100;
         bonus += spins / 100;
-        return bonus + customBadges.stream().mapToInt(Custom::getLevelBonus).sum();
+        bonus += season / 250;
+
+        return bonus;
     }
 
-    public GameTextUtilities.TextBlock getBadgeDisplay() {
-        final GameTextUtilities.TextBlockElement acText = GameTextUtilities.texts(
-            GameTextUtilities.Text.custom("AC", EventReceiver.COLOR_GREEN, 1f),
-            GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, 1f),
-            GameTextUtilities.Text.custom(String.valueOf(ac), EventReceiver.COLOR_WHITE, 1f),
-            GameTextUtilities.Text.custom("/2", EventReceiver.COLOR_WHITE, 0.5f)
-        );
-
-        final GameTextUtilities.TextBlockElement foursText = GameTextUtilities.texts(
-            GameTextUtilities.Text.custom("4X", EventReceiver.COLOR_YELLOW, 1f),
-            GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, 1f),
-            GameTextUtilities.Text.custom(String.format("%3d.%d", fours / 10, fours % 10), EventReceiver.COLOR_WHITE, 1f),
-            GameTextUtilities.Text.custom("/10", EventReceiver.COLOR_WHITE, 0.5f)
-        );
-
-        final GameTextUtilities.TextBlockElement spinsText = GameTextUtilities.texts(
-            GameTextUtilities.Text.custom("SP", EventReceiver.COLOR_PURPLE, 1f),
-            GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, 1f),
-            GameTextUtilities.Text.custom(String.format("%3d.%d", spins / 10, spins % 10), EventReceiver.COLOR_WHITE, 1f),
-            GameTextUtilities.Text.custom("/10", EventReceiver.COLOR_WHITE, 0.5f)
-        );
-
-        final List<GameTextUtilities.Text> elements = new LinkedList<>();
-
-        for (final T badge : customBadges) {
-            elements.add(GameTextUtilities.Text.custom(badge.display, EventReceiver.COLOR_PURPLE, 1f));
-            elements.add(GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, 1f));
-            elements.add(GameTextUtilities.Text.custom(String.format("%3d.%d", badge.count / 10, badge.count % 10), EventReceiver.COLOR_WHITE, 1f));
-            elements.add(GameTextUtilities.Text.custom("/" + (badge.threshold / 10), EventReceiver.COLOR_WHITE, 0.5f));
-            elements.add(GameTextUtilities.Text.newLine());
-        }
+    public GameTextUtilities.TextBlock getBadgeDisplay(boolean small) {
+        final float baseScale = small ? 0.5f : 1f;
 
         return GameTextUtilities.TextBlock.of(
             GameTextUtilities.TextJustification.LEFT,
-            acText, GameTextUtilities.Text.newLine(),
-            foursText, GameTextUtilities.Text.newLine(),
-            spinsText, GameTextUtilities.Text.newLine(),
-            () -> elements
+            GameTextUtilities.Text.custom("[AC]", EventReceiver.COLOR_GREEN, baseScale),
+            GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom(String.format("%3d.%d", ac / 10, ac % 10), EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom("/2", EventReceiver.COLOR_WHITE, 0.5f),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.custom("[4X]", EventReceiver.COLOR_YELLOW, baseScale),
+            GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom(String.format("%3d.%d", fours / 10, fours % 10), EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom("/10", EventReceiver.COLOR_WHITE, 0.5f),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.custom("[SP]", EventReceiver.COLOR_PURPLE, baseScale),
+            GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom(String.format("%3d.%d", spins / 10, spins % 10), EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom("/10", EventReceiver.COLOR_WHITE, 0.5f),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.custom("[SE]", EventReceiver.COLOR_CYAN, baseScale),
+            GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom(String.format("%3d.%d", season / 10, season % 10), EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom("/25", EventReceiver.COLOR_WHITE, 0.5f)
         );
-    }
-
-    public abstract static class Custom {
-        public final String display;        // Must be 2 characters.
-        public final int displayColour;
-        public final int threshold;         // Level bonus threshold.
-        public final boolean onceOnlyBonus; // Is bonus capped to 1?
-
-        public int count;
-
-        public Custom(String display, int displayColour, int threshold, boolean onceOnlyBonus) {
-            this.display = display;
-            this.displayColour = displayColour;
-            this.threshold = threshold;
-            this.onceOnlyBonus = onceOnlyBonus;
-
-            count = 0;
-        }
-
-        public int getLevelBonus() {
-            if (onceOnlyBonus) return (count > threshold) ? 1 : 0;
-            else return count / threshold;
-        }
     }
 }
