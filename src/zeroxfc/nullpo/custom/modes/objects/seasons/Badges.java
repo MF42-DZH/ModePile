@@ -22,7 +22,7 @@ public class Badges {
     }
 
     // Call in mode calcScore. Every 10 season badges is an effective 1 badge.
-    public void updateBadges(GameEngine engine, int playerID, int lines, int seasonBadges) {
+    public void updateBadges(GameEngine engine, int lines, int seasonBadges) {
         // AC badge.
         if ((lines >= 1) && (engine.field.isEmpty())) {
             ac += 10;
@@ -82,22 +82,22 @@ public class Badges {
         return GameTextUtilities.TextBlock.of(
             GameTextUtilities.TextJustification.LEFT,
             GameTextUtilities.Text.custom("[AC]", EventReceiver.COLOR_GREEN, baseScale),
-            GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom(String.format("%3d.%d", ac / 10, ac % 10), EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom("/2", EventReceiver.COLOR_WHITE, 0.5f),
             GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.custom("[4X]", EventReceiver.COLOR_YELLOW, baseScale),
-            GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom(String.format("%3d.%d", fours / 10, fours % 10), EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom("/10", EventReceiver.COLOR_WHITE, 0.5f),
             GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.custom("[SP]", EventReceiver.COLOR_PURPLE, baseScale),
-            GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom(String.format("%3d.%d", spins / 10, spins % 10), EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom("/10", EventReceiver.COLOR_WHITE, 0.5f),
             GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.custom("[SE]", EventReceiver.COLOR_CYAN, baseScale),
-            GameTextUtilities.Text.custom(": ", EventReceiver.COLOR_WHITE, baseScale),
+            GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom(String.format("%3d.%d", season / 10, season % 10), EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom("/25", EventReceiver.COLOR_WHITE, 0.5f)
         );

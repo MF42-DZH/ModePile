@@ -22,10 +22,14 @@ public class SeasonsSettings extends ModeSettings {
     private final String playerNameProp = propPath("playerName");
     private String playerName;
 
+    public final String hasCompletedGameProp = propPath("hasCompletedGame");
+    public boolean hasCompletedGame;
+
     public SeasonsSettings(int currentVersion, ProfileProperties playerProperties) {
         super(PROP_ROOT, playerProperties);
 
         this.currentVersion = currentVersion;
+        this.hasCompletedGame = false;
     }
 
     @Override
@@ -54,6 +58,7 @@ public class SeasonsSettings extends ModeSettings {
 
         perk = SeasonPerk.values()[prop.getProperty(perkProp, SeasonPerk.SPRING_PASSIVE.ordinal())];
         fullGhost = prop.getProperty(fullGhostProp, false);
+        hasCompletedGame = prop.getProperty(hasCompletedGameProp, false);
     }
 
     @Override
@@ -62,6 +67,7 @@ public class SeasonsSettings extends ModeSettings {
 
         prop.setProperty(perkProp, perk.ordinal());
         prop.setProperty(fullGhostProp, fullGhost);
+        prop.setProperty(hasCompletedGameProp, hasCompletedGame);
     }
 
     @Override

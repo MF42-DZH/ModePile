@@ -60,7 +60,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("SPRING GIFTS YOU A BOON", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("TO AID IN THE GROWTH OF", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("A STRONG FOUNDATION LATER.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(+1 LV/CLEAR, +0.1 BADGE/GAIN)", EventReceiver.COLOR_WHITE, baseScale * 0.75f)
+                GameTextUtilities.Text.custom("(+1 LV/CLEAR, +0.1 BADGE/GAIN)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             springActive = GameTextUtilities.TextBlock.of(
@@ -70,7 +70,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("SPRING EMPOWERS YOU WITH", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("A TEMPORARY SURGE OF", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("FERTILIZING POWER.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(2X LV/CLEAR, 2X BADGE/GAIN WHEN ACTIVE)", EventReceiver.COLOR_WHITE, baseScale * 0.75f)
+                GameTextUtilities.Text.custom("(2X LV/CLEAR, 2X BADGE/GAIN WHEN ACTIVE)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             summerPassive = GameTextUtilities.TextBlock.of(
@@ -80,7 +80,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("SUMMER GIFTS YOU A BOON", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("TO AID IN THE PREDICTION", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("OF ALL YOUR OUTCOMES.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(+3 NEXTS, GET EXTRA I-PIECE REGULARLY)", EventReceiver.COLOR_WHITE, baseScale * 0.75f)
+                GameTextUtilities.Text.custom("(+3 NEXTS, GET EXTRA I-PIECE REGULARLY)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             summerActive = GameTextUtilities.TextBlock.of(
@@ -90,7 +90,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("SUMMER GIVES YOU THE ABILITY", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("TO END VIOLENT DROUGHTS", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("WHENEVER YOU DESIRE.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(GET 2 I-PIECES WHEN ACTIVATED)", EventReceiver.COLOR_WHITE, baseScale * 0.75f)
+                GameTextUtilities.Text.custom("(GET 2 I-PIECES WHEN ACTIVATED)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             autumnPassive = GameTextUtilities.TextBlock.of(
@@ -100,7 +100,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("AUTUMN GIFTS YOU A BOON", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("TO LET YOUR HARVEST", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("BE DOUBLY RETURNING.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(BADGE EFFECTS 2X UPON GIMMICKS)", EventReceiver.COLOR_WHITE, baseScale * 0.75f)
+                GameTextUtilities.Text.custom("(BADGE EFFECTS 2X UPON GIMMICKS)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             autumnActive = GameTextUtilities.TextBlock.of(
@@ -110,7 +110,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("AUTUMN BLESSES YOU WITH", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("THE STRENGTH TO CAVE IN", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("ANY CREVICES IN YOUR ATTACK.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(FREEFALL STACK WHEN ACTIVATED)", EventReceiver.COLOR_WHITE, baseScale * 0.75f)
+                GameTextUtilities.Text.custom("(FREEFALL STACK WHEN ACTIVATED)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             winterPassive = GameTextUtilities.TextBlock.of(
@@ -120,7 +120,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("WINTER GIFTS YOU A BOON", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("TO LET YOU FOCUS EVEN", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("IN THE TOUGHEST TIMES.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(+6F LOCK DELAY)", EventReceiver.COLOR_WHITE, baseScale * 0.75f)
+                GameTextUtilities.Text.custom("(+6F LOCK DELAY)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             winterActive = GameTextUtilities.TextBlock.of(
@@ -130,7 +130,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("WINTER GIVES YOU THE", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("ENCOURAGEMENT TO LET YOU", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("STEP BACK AND ASSESS.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(0G, 180F LOCK DELAY WHILE ACTIVE)", EventReceiver.COLOR_WHITE, baseScale * 0.75f)
+                GameTextUtilities.Text.custom("(0G, 180F LOCK DELAY WHILE ACTIVE)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
         }
     }
@@ -150,6 +150,32 @@ public enum SeasonPerk {
 
     public boolean isActive() {
         return energyStore > 0;
+    }
+
+    public String getName() {
+        switch (this) {
+            case PERKLESS:
+                return "PERKLESS";
+            case SPRING_PASSIVE:
+                return "SEED OF GROWTH";
+            case SPRING_ACTIVE:
+                return "UNBOUDED NATURE";
+            case SUMMER_PASSIVE:
+                return "BRIGHT FORESIGHT";
+            case SUMMER_ACTIVE:
+                return "DROUGHT QUENCHER";
+            case AUTUMN_PASSIVE:
+                return "BOUNTIFUL HARVEST";
+            case AUTUMN_ACTIVE:
+                return "INTENSE GRAVITAS";
+            case WINTER_PASSIVE:
+                return "STOIC'S WILL";
+            case WINTER_ACTIVE:
+                return "CHILL OUT";
+            default:
+                // XXX: Shouldn't happen, but Java's not smart enough to figure this out.
+                return "";
+        }
     }
 
     public GameTextUtilities.TextBlock getDescription(float baseScale) {
