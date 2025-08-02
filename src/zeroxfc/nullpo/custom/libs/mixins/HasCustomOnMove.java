@@ -264,11 +264,8 @@ public interface HasCustomOnMove {
                     engine.nowPieceObject.placeToField(engine.nowPieceX, engine.nowPieceY, engine.field);
                     engine.nowPieceObject = null;
 
-                    if (engine.statistics.level >= 2000) {
-                        engine.stat = GameEngine.STAT_EXCELLENT;
-                    } else {
-                        engine.stat = GameEngine.STAT_GAMEOVER;
-                    }
+                    engine.stat = GameEngine.STAT_GAMEOVER;
+
                     if ((engine.ending == 2) && (engine.staffrollNoDeath)) engine.stat = GameEngine.STAT_NOTHING;
                     engine.resetStatc();
                     return true;
