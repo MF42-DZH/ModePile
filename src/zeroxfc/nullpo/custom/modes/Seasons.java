@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Objects;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -204,6 +205,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private NavigableMap<Integer, NextAndFieldState> statesAtTimes;
     private boolean rollStarted;
 
+    private BlockVortex vortex;
+    private Random bvr;
+
     private enum CustomState { PROFILE, FREEFALL, REWIND, FINAL_REWIND }
     private CustomState customState;
 
@@ -264,6 +268,8 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         badges = new Badges();
         lockedPieces = 0;
         customState = CustomState.PROFILE;
+
+        vortex = new BlockVortex();
 
         if (ruleOptCopy == null) {
             ruleOptCopy = new RuleOptions(engine.ruleopt);
@@ -579,6 +585,8 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     @Override
     public boolean onReady(GameEngine engine, int playerID) {
         if (engine.statc[0] == 0) {
+            bvr = new Random(engine.randSeed);
+
             rollStarted = false;
 
             // Setup active ability stuff.
@@ -1126,6 +1134,15 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     }
 
     @Override
+    public void drawBackgroundElements(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
+        HasCustomFieldDrawing.super.drawBackgroundElements(rendererExtension, receiver, engine, playerID);
+
+        if (vortex != null) {
+            vortex.draw(rendererExtension, receiver);
+        }
+    }
+
+    @Override
     public void renderFirst(GameEngine engine, int playerID) {
         inRenderFirst(rendererExtension, receiver, engine, playerID);
     }
@@ -1164,6 +1181,19 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     public void onLast(GameEngine engine, int playerID) {
         if (!(engine.stat == GameEngine.STAT_CUSTOM && customState == CustomState.REWIND && fadeProgress == 150)) {
             updateFadeProgress();
+        }
+
+        if (!engine.lagStop) {
+            if (engine.stat == GameEngine.STAT_CUSTOM && engine.gameStarted && (fadeProgress < 240 || customState == CustomState.FINAL_REWIND)) {
+                vortex.add(bvr, bvr.nextInt(8) + 1, engine.owSkin >= 0 ? engine.owSkin : engine.ruleopt.skin);
+                vortex.add(bvr, bvr.nextInt(8) + 1, engine.owSkin >= 0 ? engine.owSkin : engine.ruleopt.skin);
+                vortex.add(bvr, bvr.nextInt(8) + 1, engine.owSkin >= 0 ? engine.owSkin : engine.ruleopt.skin);
+                vortex.add(bvr, bvr.nextInt(8) + 1, engine.owSkin >= 0 ? engine.owSkin : engine.ruleopt.skin);
+            }
+
+            if (vortex != null) {
+                vortex.update();
+            }
         }
 
         if (currentAbilityTimer > 0 && engine.stat == GameEngine.STAT_MOVE) {
