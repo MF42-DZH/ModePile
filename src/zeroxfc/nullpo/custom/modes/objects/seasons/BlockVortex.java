@@ -85,7 +85,7 @@ public class BlockVortex {
                 ObjectAlignment.MIDDLE_MIDDLE,
                 colour, blockSkin,
                 false,
-                MathHelper.clamp(Interpolation.lerp(0.25f, -0.5f, lerpVal), 0.0f, 0.5f),
+                MathHelper.clamp(Interpolation.lerp(0.75f, 0.25f, lerpVal), 0.0f, 0.5f),
                 1f,
                 Interpolation.lerp(1f, 4f, lerpVal),
                 Block.BLOCK_ATTRIBUTE_VISIBLE
