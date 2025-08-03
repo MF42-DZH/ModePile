@@ -2,6 +2,7 @@ package zeroxfc.nullpo.custom.modes.objects.seasons;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.IntUnaryOperator;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
@@ -22,36 +23,47 @@ public class Badges {
     }
 
     // Call in mode calcScore. Every 10 season badges is an effective 1 badge.
-    public void updateBadges(GameEngine engine, int lines, int seasonBadges) {
+    public void updateBadges(GameEngine engine, int lines, int seasonBadges, boolean minorBoost, boolean majorBoost) {
+        final IntUnaryOperator mjBoost = (x) -> majorBoost ? (x + x) : x;
+
         // AC badge.
         if ((lines >= 1) && (engine.field.isEmpty())) {
-            ac += 10;
+            ac += mjBoost.applyAsInt(10);
+            if (minorBoost) ++ac;
         }
 
         // Fours badge. We give partial credit here.
         if (lines >= 4) {
-            fours += 10;
+            fours += mjBoost.applyAsInt((int) (2.5 * lines));
+            if (minorBoost) ++fours;
         } else if (lines == 3) {
-            fours += 4;
+            fours += mjBoost.applyAsInt(4);
+            if (minorBoost) ++fours;
         } else if (lines >= 1) {
-            fours += lines;
+            fours += mjBoost.applyAsInt(lines);
+            if (minorBoost) ++fours;
         }
 
         // Spin badge.
         if (engine.tspin) {
             if (lines >= 4) {
-                spins += 30;
+                spins += mjBoost.applyAsInt((int) (7.5 * lines));
+                if (minorBoost) ++spins;
             } else if (lines == 3) {
-                spins += 20;
+                spins += mjBoost.applyAsInt(20);
+                if (minorBoost) ++spins;
             } else if (lines == 2) {
-                spins += 10;
+                spins += mjBoost.applyAsInt(10);
+                if (minorBoost) ++spins;
             } else if (lines == 1) {
-                spins += (engine.tspinmini || engine.tspinez) ? 1 : 2;
+                spins += mjBoost.applyAsInt((engine.tspinmini || engine.tspinez) ? 1 : 2);
+                if (minorBoost) ++spins;
             }
         }
 
         // Season badges.
-        season += seasonBadges;
+        season += mjBoost.applyAsInt(seasonBadges);
+        if (seasonBadges > 0 && minorBoost) ++season;
     }
 
     public Map<String, Integer> getBadgesAsLevelBonuses() {

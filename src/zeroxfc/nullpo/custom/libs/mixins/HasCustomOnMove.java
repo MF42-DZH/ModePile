@@ -21,6 +21,110 @@ public interface HasCustomOnMove {
         }
     }
 
+    static Piece initialisePiece(GameEngine engine, int id) {
+        final Piece piece = new Piece(id);
+        piece.direction = engine.ruleopt.pieceDefaultDirection[id];
+
+        if (piece.direction >= Piece.DIRECTION_COUNT) {
+            piece.direction = engine.random.nextInt(Piece.DIRECTION_COUNT);
+        }
+
+        piece.connectBlocks = engine.connectBlocks;
+        piece.setColor(engine.ruleopt.pieceColor[id]);
+        piece.setSkin(engine.getSkin());
+        piece.updateConnectData();
+        piece.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+        piece.setAttribute(Block.BLOCK_ATTRIBUTE_BONE, engine.bone);
+
+        if (engine.randomBlockColor) {
+            final int size = piece.getMaxBlock();
+            int[] colors = new int[size];
+            for (int j = 0; j < size; j++)
+                colors[j] = engine.blockColors[engine.random.nextInt(engine.numColors)];
+            piece.setColor(colors);
+            piece.updateConnectData();
+        }
+        
+        return piece;
+    }
+    
+    // For some reason NullpoMino only generates 1400 next pieces then loops over them, so if you
+    // are making a very long mode, or a mode that manipulates the next queue or next queue position a
+    // lot, you might need to extend the next queue to avoid oddities with the looping queue.
+    // The buffer parameter is for adding extra length to the id and piece arrays, in case you want to
+    // push extra next pieces into an array in a mode.
+    static void extendRandomizerArray(GameEngine engine, int buffer) {
+        final int oldSize = engine.nextPieceArraySize;
+        engine.nextPieceArraySize *= 2;
+
+        final int[] extendedIDs = new int[engine.nextPieceArraySize + buffer];
+        final Piece[] extendedPieces = new Piece[engine.nextPieceArraySize + buffer];
+
+        System.arraycopy(engine.nextPieceArrayID, 0, extendedIDs, 0, oldSize);
+        System.arraycopy(engine.nextPieceArrayObject, 0, extendedPieces, 0, oldSize);
+
+        if (engine.blockColors.length < engine.numColors || engine.numColors < 1) {
+            engine.numColors = engine.blockColors.length;
+        }
+
+        for (int i = oldSize; i < engine.nextPieceArraySize; ++i) {
+            final int nextPieceId = engine.randomizer.next();
+
+            extendedIDs[i] = nextPieceId;
+            extendedPieces[i] = initialisePiece(engine, nextPieceId);
+        }
+
+        engine.nextPieceArrayID = extendedIDs;
+        engine.nextPieceArrayObject = extendedPieces;
+    }
+
+    // Insert pieces into the next arrays at a position. Extends the queue with a buffer if necessary to reduce
+    // the cost of future calls to this method.
+    static void insertIntoNexts(GameEngine engine, int offset, int... pieceIDs) {
+        if (pieceIDs.length == 0) return;
+
+        // Extend queue if necessary and make room:
+        while (offset >= engine.nextPieceArrayID.length) {
+            extendRandomizerArray(engine, Math.max(70, pieceIDs.length * 2));
+        }
+
+        if (engine.nextPieceArrayID.length < (engine.nextPieceArraySize + pieceIDs.length)) {
+            extendRandomizerArray(engine, Math.max(70, pieceIDs.length * 2));
+        }
+
+        // Move the next pieces over by the number of pieces added.
+        System.arraycopy(engine.nextPieceArrayID, offset, engine.nextPieceArrayID, offset + pieceIDs.length, engine.nextPieceArraySize - offset);
+        System.arraycopy(engine.nextPieceArrayObject, offset, engine.nextPieceArrayObject, offset + pieceIDs.length, engine.nextPieceArraySize - offset);
+
+        for (int i = 0; i < pieceIDs.length; ++i) {
+            final int nextPieceId = pieceIDs[i];
+
+            engine.nextPieceArrayID[i + offset] = nextPieceId;
+            engine.nextPieceArrayObject[i + offset] = initialisePiece(engine, nextPieceId);
+        }
+
+        engine.nextPieceArraySize += pieceIDs.length;
+    }
+
+    // "Enhanced" versions of equivalent methods in GameEngine. Instead of looping over the next queue, they instead extend
+    // the next queue if the requested piece is outside the next array.
+    static int getNextId(GameEngine engine, int position) {
+        if (engine.nextPieceArrayID == null) return Piece.PIECE_NONE;
+        while (position >= engine.nextPieceArraySize) extendRandomizerArray(engine, 0);
+        return engine.nextPieceArrayID[position];
+    }
+
+    static Piece getNextObject(GameEngine engine, int position) {
+        if (engine.nextPieceArrayObject == null) return null;
+        while (position >= engine.nextPieceArraySize) extendRandomizerArray(engine, 0);
+        return engine.nextPieceArrayObject[position];
+    }
+
+    static Piece getNextObjectCopy(GameEngine engine, int position) {
+        final Piece p = getNextObject(engine, position);
+        return p == null ? null : new Piece(p);
+    }
+
     // Call this in an onMove override in a gamemode.
     default boolean inOnMove(GameEngine engine, int playerID) {
         // 横溜めInitialization
