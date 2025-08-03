@@ -20,7 +20,7 @@ public class SeasonsSettings extends ModeSettings {
     public SeasonPerk perk;
 
     private final String playerNameProp = propPath("playerName");
-    private String playerName;
+    public String playerName;
 
     public final String hasCompletedGameProp = propPath("hasCompletedGame");
     public boolean hasCompletedGame;

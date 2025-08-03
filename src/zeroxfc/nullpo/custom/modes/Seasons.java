@@ -323,6 +323,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                         }
                     }
                 }
+                    break;
                 case REWIND: {
                     engine.timerActive = false;
 
@@ -367,6 +368,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                         engine.resetStatc();
                     }
                 }
+                    break;
                 default:
                     break;
             }
@@ -409,15 +411,25 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     ObjectAlignment.MIDDLE_MIDDLE
                 );
             } else if (engine.gameStarted && customState == CustomState.REWIND) {
+                int alpha = 255;
+                if (engine.statc[0] >= 180) {
+                    alpha = Interpolation.lerp(255, 0, (engine.statc[0] - 180d) / 120d);
+                }
+
                 GameTextUtilities.drawAlignedTextBlock(
                     engine,
                     baseX, baseY,
                     false,
                     GameTextUtilities.TextBlock.of(
                         GameTextUtilities.TextJustification.LEFT,
-                        GameTextUtilities.Text.ofBig("TIME", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_ORANGE),
+                        GameTextUtilities.Text.of(" "),
+                        GameTextUtilities.Text.ofMixColorBig(
+                            "TIME", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_ORANGE, 255, 255, 255, alpha
+                        ),
                         GameTextUtilities.Text.newLine(),
-                        GameTextUtilities.Text.ofBig("WARP", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_ORANGE)
+                        GameTextUtilities.Text.ofMixColorBig(
+                            "WARP", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_ORANGE, 255, 255, 255, alpha
+                        )
                     ),
                     ObjectAlignment.MIDDLE_MIDDLE
                 );
@@ -1032,7 +1044,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             engine.framecolor = GameEngine.FRAME_COLOR_PURPLE;
         } else if (engine.gameActive && settings.perk.isActive() && currentAbilityTimer > 0) {
             engine.framecolor = GameEngine.FRAME_COLOR_PINK;
-        } else if (engine.gameActive) {
+        } else if (engine.gameStarted) {
             engine.framecolor = currentSeason.defaultFrameColour;
         } else {
             engine.framecolor = Season.defaultMenuFrameColour();
@@ -1089,25 +1101,34 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             receiver.drawScoreFont(engine, playerID, 0, 2, "RANK & TITLE", titlesColour);
             receiver.drawScoreFont(engine, playerID, 0, 3, "N/A");
 
-            receiver.drawScoreFont(engine, playerID, 0, 5, "SCORE", titlesColour);
-            receiver.drawScoreFont(engine, playerID, 0, 6, "N/A");
+            receiver.drawScoreFont(engine, playerID, 0, 5, "DATE", titlesColour);
+            receiver.drawScoreFont(engine, playerID, 0, 7, levelToString(engine.statistics.level));
 
-            receiver.drawScoreFont(engine, playerID, 0, 8, "DATE", titlesColour);
-            receiver.drawScoreFont(engine, playerID, 0, 9, levelToString(engine.statistics.level));
+            receiver.drawScoreFont(engine, playerID, 0, 9, "TIME", titlesColour);
+            receiver.drawScoreFont(engine, playerID, 0, 10, GeneralUtil.getTime(engine.statistics.time));
 
-            receiver.drawScoreFont(engine, playerID, 0, 11, "TIME", titlesColour);
-            receiver.drawScoreFont(engine, playerID, 0, 12, GeneralUtil.getTime(engine.statistics.time));
+            receiver.drawScoreFont(engine, playerID, 0, 12, "PERK", titlesColour);
+            receiver.drawScoreFont(engine, playerID, 0, 13, settings.perk.getName(), currentAbilityTimer > 0);
 
-            receiver.drawScoreFont(engine, playerID, 0, 14, "PERK", titlesColour);
-            receiver.drawScoreFont(engine, playerID, 0, 15, settings.perk.getName(), currentAbilityTimer > 0);
-
-            receiver.drawScoreFont(engine, playerID, 0, 17, "BADGES", titlesColour);
+            receiver.drawScoreFont(engine, playerID, 0, 15, "BADGES", titlesColour);
             GameTextUtilities.drawAlignedScoreTextBlock(
                 receiver, engine, playerID, false,
-                0, 18, false,
+                0, 16, false,
                 badges.getBadgeDisplay(false),
                 ObjectAlignment.TOP_LEFT
             );
+
+            if (playerProperties.isLoggedIn() || !settings.playerName.isEmpty()) {
+                final String name = playerProperties.isLoggedIn() ? playerProperties.getNameDisplay() : settings.playerName;
+
+                receiver.drawScoreFont(engine, playerID, 13, 15, "PLAYER", titlesColour);
+                GameTextUtilities.drawAlignedScoreText(
+                    receiver, engine, playerID, false,
+                    13, 16,
+                    GameTextUtilities.Text.ofBig(name),
+                    ObjectAlignment.TOP_LEFT
+                );
+            }
         }
     }
 
