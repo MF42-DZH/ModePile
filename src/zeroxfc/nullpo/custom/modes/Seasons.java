@@ -391,22 +391,37 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
     @Override
     public void renderCustom(GameEngine engine, int playerID) {
-        int baseX = (8 * engine.field.getWidth()) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
-        int baseY = (8 * engine.field.getHeight()) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+        if (engine.field != null) {
+            int baseX = (8 * engine.field.getWidth()) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+            int baseY = (8 * engine.field.getHeight()) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
 
-        if (engine.gameStarted && customState == CustomState.FREEFALL) {
-            GameTextUtilities.drawAlignedTextBlock(
-                engine,
-                baseX, baseY,
-                false,
-                GameTextUtilities.TextBlock.of(
-                    GameTextUtilities.TextJustification.LEFT,
-                    GameTextUtilities.Text.ofBig("FREE", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_WHITE : EventReceiver.COLOR_YELLOW),
-                    GameTextUtilities.Text.newLine(),
-                    GameTextUtilities.Text.ofBig("FALL", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_WHITE : EventReceiver.COLOR_YELLOW)
-                ),
-                ObjectAlignment.MIDDLE_MIDDLE
-            );
+            if (engine.gameStarted && customState == CustomState.FREEFALL) {
+                GameTextUtilities.drawAlignedTextBlock(
+                    engine,
+                    baseX, baseY,
+                    false,
+                    GameTextUtilities.TextBlock.of(
+                        GameTextUtilities.TextJustification.LEFT,
+                        GameTextUtilities.Text.ofBig("FREE", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_WHITE : EventReceiver.COLOR_YELLOW),
+                        GameTextUtilities.Text.newLine(),
+                        GameTextUtilities.Text.ofBig("FALL", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_WHITE : EventReceiver.COLOR_YELLOW)
+                    ),
+                    ObjectAlignment.MIDDLE_MIDDLE
+                );
+            } else if (engine.gameStarted && customState == CustomState.REWIND) {
+                GameTextUtilities.drawAlignedTextBlock(
+                    engine,
+                    baseX, baseY,
+                    false,
+                    GameTextUtilities.TextBlock.of(
+                        GameTextUtilities.TextJustification.LEFT,
+                        GameTextUtilities.Text.ofBig("TIME", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_ORANGE),
+                        GameTextUtilities.Text.newLine(),
+                        GameTextUtilities.Text.ofBig("WARP", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_ORANGE)
+                    ),
+                    ObjectAlignment.MIDDLE_MIDDLE
+                );
+            }
         }
     }
 
@@ -564,7 +579,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         // 出現時の処理
         if (engine.statc[0] == 0) {
             // Store current field state.
-            statesAtTimes.put(engine.statistics.time, new NextAndFieldState(engine));
+            if (engine.statc[1] == 0) {
+                statesAtTimes.put(engine.statistics.time, new NextAndFieldState(engine));
+            }
 
             if ((engine.statc[1] == 0) && (!engine.initialHoldFlag)) {
                 // 通常出現
@@ -902,7 +919,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
                 if (owner.bgmStatus.bgm <= BGM_TABLE.apply(engine.statistics.level)) {
                     owner.bgmStatus.fadesw = false;
-                    BGM_TABLE.apply(engine.statistics.level);
+                    owner.bgmStatus.bgm = BGM_TABLE.apply(engine.statistics.level);
 
                     if (NEXT_SECTION_LEVELS.apply(engine.statistics.level) > nextSectionLevel) {
                         nextSectionLevel = NEXT_SECTION_LEVELS.apply(engine.statistics.level);
