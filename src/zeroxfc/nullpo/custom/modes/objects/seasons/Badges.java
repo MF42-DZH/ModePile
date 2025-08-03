@@ -108,7 +108,10 @@ public class Badges {
             GameTextUtilities.Text.custom(String.format("%3d.%d", spins / 10, spins % 10), EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom("/10", EventReceiver.COLOR_WHITE, 0.5f),
             GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.custom("[SE]", EventReceiver.COLOR_CYAN, baseScale),
+            GameTextUtilities.Text.custom("[", EventReceiver.COLOR_GREEN, baseScale),
+            GameTextUtilities.Text.custom("S", EventReceiver.COLOR_YELLOW, baseScale),
+            GameTextUtilities.Text.custom("E", EventReceiver.COLOR_ORANGE, baseScale),
+            GameTextUtilities.Text.custom("]", EventReceiver.COLOR_CYAN, baseScale),
             GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom(String.format("%3d.%d", season / 10, season % 10), EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom("/25", EventReceiver.COLOR_WHITE, 0.5f)

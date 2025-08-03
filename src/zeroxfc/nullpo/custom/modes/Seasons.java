@@ -1,6 +1,12 @@
 package zeroxfc.nullpo.custom.modes;
 
+import java.util.List;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.Objects;
+import java.util.TreeMap;
 import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Controller;
@@ -18,16 +24,16 @@ import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.LevelTableBuilder;
+import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomOnMove;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
-import zeroxfc.nullpo.custom.modes.objects.seasons.Badges;
-import zeroxfc.nullpo.custom.modes.objects.seasons.SeasonPerk;
-import zeroxfc.nullpo.custom.modes.objects.seasons.SeasonsSettings;
+import zeroxfc.nullpo.custom.modes.objects.seasons.*;
 
 public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFieldDrawing {
     private static final Logger log = Logger.getLogger(Seasons.class);
@@ -37,9 +43,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     // TODO: This eventually will need to be changed.
     private static final IntFunction<SpeedParam> SPEED_TABLE = SpeedTableBuilder.createNew()
         .addTerminalGravity(4, 256)
-        .addTerminalARE(25)
-        .addTerminalLineARE(25)
-        .addTerminalDAS(15)
+        .addTerminalARE(14)
+        .addTerminalLineARE(23)
+        .addTerminalDAS(11)
         .addTerminalLockDelay(30)
         .addTerminalLineDelay(40)
         .buildSpeedTable();
@@ -155,9 +161,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         .buildLevelTable();
 
     private static final IntFunction<Integer> BGM_FADE_LEVEL_TABLE = LevelTableBuilder.<Integer>createNew()
-        .addValue(LEVELS_MAY - 72, LEVELS_APR)
-        .addValue(LEVELS_AUG - 72, LEVELS_JUN)
-        .addValue(LEVELS_NOV - 72, LEVELS_OCT)
+        .addValue(LEVELS_APR - 72, LEVELS_APR)
+        .addValue(LEVELS_JUN - 72, LEVELS_JUN)
+        .addValue(LEVELS_OCT - 72, LEVELS_OCT)
         .addTerminalValue(-1)
         .buildLevelTable();
 
@@ -192,6 +198,13 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private boolean queuedFreefall; // Freefall only works between pieces so it doesn't screw you over.
     private boolean hasLandedBefore;
     private int lockedPieces;
+    private NavigableMap<Integer, NextAndFieldState> statesAtTimes;
+
+    private enum CustomState { PROFILE, FREEFALL, REWIND, FINAL_REWIND }
+    private CustomState customState;
+
+    private static final int REWIND_TIME = 60 * 5;
+    private static final int FINAL_REWIND_TIME = 60 * 30;
 
     @Override
     public FrameDrawingParameters getFrameDrawingParameters(GameEngine engine, int playerID) {
@@ -237,6 +250,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
         customGraphics = new CustomResourceHolder();
         rendererExtension = new RendererExtension(customGraphics);
+        statesAtTimes = new TreeMap<>();
 
         setupBackgrounds(engine);
 
@@ -245,6 +259,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         nextSectionLevel = 0;
         badges = new Badges();
         lockedPieces = 0;
+        customState = CustomState.PROFILE;
 
         if (ruleOptCopy == null) {
             ruleOptCopy = new RuleOptions(engine.ruleopt);
@@ -279,31 +294,81 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     @Override
     public boolean onCustom(GameEngine engine, int playerID) {
         if (engine.gameStarted) {
-            // Arrived here from ARE, this is where the freefall happens.
-            if (engine.statc[0] > 0 && engine.statc[0] % 3 == 0) {
-                final Field oldField = new Field(engine.field);
-                final boolean landed = FieldManipulation.freeFallStep(engine.field);
+            switch (customState) {
+                case FREEFALL: {
+                    // Arrived here from ARE, this is where the freefall happens.
+                    if (engine.statc[0] > 0 && engine.statc[0] % 3 == 0) {
+                        final Field oldField = new Field(engine.field);
+                        final boolean landed = FieldManipulation.freeFallStep(engine.field);
 
-                if (!FieldManipulation.fieldEquals(engine.field, oldField)) {
-                    hasLandedBefore = landed;
-                    if (hasLandedBefore) engine.playSE("linefall");
-                } else {
-                    engine.lineClearing = engine.field.checkLineNoFlag();
+                        if (!FieldManipulation.fieldEquals(engine.field, oldField)) {
+                            hasLandedBefore = landed;
+                            if (hasLandedBefore) engine.playSE("linefall");
+                        } else {
+                            engine.lineClearing = engine.field.checkLineNoFlag();
 
-                    if (engine.lineClearing == 0) {
-                        engine.stat = GameEngine.STAT_ARE;
-                        engine.resetStatc();
-                    } else {
-                        engine.stat = GameEngine.STAT_LINECLEAR;
-                        engine.resetStatc();
+                            if (engine.lineClearing == 0) {
+                                engine.stat = GameEngine.STAT_ARE;
+                                engine.resetStatc();
+                            } else {
+                                engine.stat = GameEngine.STAT_LINECLEAR;
+                                engine.resetStatc();
 
-                        engine.tspin = false;
-                        engine.tspinmini = false;
-                        engine.tspinez = false;
+                                engine.tspin = false;
+                                engine.tspinmini = false;
+                                engine.tspinez = false;
 
-                        engine.statLineClear();
+                                engine.statLineClear();
+                            }
+                        }
                     }
                 }
+                case REWIND: {
+                    engine.timerActive = false;
+
+                    if (engine.statc[0] >= 30) {
+                        final NavigableSet<Integer> keys = statesAtTimes.navigableKeySet();
+                        final int maxTime = keys.last();
+                        final int minTime = Objects.requireNonNull(keys.ceiling(engine.statistics.time - (30 * 60)));
+
+                        final List<Integer> validKeys = keys
+                            .stream()
+                            .filter(t -> t >= minTime && t <= maxTime)
+                            .collect(Collectors.toList());
+
+                        final int interpTime = (int) Math.ceil(Interpolation.tanStep(
+                            validKeys.size() - 1d, 0d,
+                            MathHelper.clamp(
+                                (engine.statc[0] - 30d) / (REWIND_TIME - 30d),
+                                0.0, 1.0
+                            )
+                        ));
+
+                        final NextAndFieldState state = statesAtTimes.get(validKeys.get(interpTime));
+
+                        if (!FieldManipulation.fieldEquals(engine.field, state.field)
+                            || engine.nextPieceCount != state.nextPosition) {
+                            engine.playSE("step");
+
+                            engine.field = new Field(state.field);
+                            engine.nextPieceCount = state.nextPosition;
+
+                            if (state.holdPiece != null) {
+                                engine.holdPieceObject = new Piece(state.holdPiece);
+                            } else {
+                                engine.holdPieceObject = null;
+                            }
+                        }
+                    }
+
+                    if (engine.statc[0] >= REWIND_TIME) {
+                        engine.timerActive = true;
+                        engine.stat = GameEngine.STAT_LINECLEAR;
+                        engine.resetStatc();
+                    }
+                }
+                default:
+                    break;
             }
 
             engine.statc[0]++;
@@ -326,10 +391,10 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
     @Override
     public void renderCustom(GameEngine engine, int playerID) {
-        if (engine.gameStarted) {
-            int baseX = (8 * engine.field.getWidth()) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
-            int baseY = (8 * engine.field.getHeight()) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+        int baseX = (8 * engine.field.getWidth()) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+        int baseY = (8 * engine.field.getHeight()) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
 
+        if (engine.gameStarted && customState == CustomState.FREEFALL) {
             GameTextUtilities.drawAlignedTextBlock(
                 engine,
                 baseX, baseY,
@@ -498,6 +563,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     public void inPieceSpawn(GameEngine engine, int playerID) {
         // 出現時の処理
         if (engine.statc[0] == 0) {
+            // Store current field state.
+            statesAtTimes.put(engine.statistics.time, new NextAndFieldState(engine));
+
             if ((engine.statc[1] == 0) && (!engine.initialHoldFlag)) {
                 // 通常出現
                 engine.nowPieceObject = HasCustomOnMove.getNextObjectCopy(engine, engine.nextPieceCount);
@@ -562,6 +630,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                 engine.initialHoldFlag = false;
                 engine.holdDisable = true;
             }
+
             engine.playSE("piece" + HasCustomOnMove.getNextObject(engine, engine.nextPieceCount).id);
 
             if (!engine.nowPieceObject.offsetApplied)
@@ -736,6 +805,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         if (engine.statc[0] == 0 && queuedFreefall && engine.gameStarted) {
             queuedFreefall = false;
 
+            customState = CustomState.FREEFALL;
             engine.stat = GameEngine.STAT_CUSTOM;
             engine.resetStatc();
 
@@ -838,6 +908,10 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                         nextSectionLevel = NEXT_SECTION_LEVELS.apply(engine.statistics.level);
                     }
                 }
+
+                customState = CustomState.REWIND;
+                engine.stat = GameEngine.STAT_CUSTOM;
+                engine.resetStatc();
             } else if (engine.statistics.level == nextSectionLevel - 1) {
                 engine.playSE("levelstop");
             }
@@ -904,7 +978,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
     @Override
     public void onLast(GameEngine engine, int playerID) {
-        updateFadeProgress();
+        if (!(engine.stat == GameEngine.STAT_CUSTOM && customState == CustomState.REWIND && fadeProgress == 150)) {
+            updateFadeProgress();
+        }
 
         if (currentAbilityTimer > 0 && engine.stat == GameEngine.STAT_MOVE) {
             final int prevTimer = currentAbilityTimer--;
@@ -935,7 +1011,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             else if (proportion >= 0.25) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
         }
 
-        if (engine.gameActive && settings.perk.isActive() && currentAbilityTimer > 0) {
+        if (engine.gameActive && engine.stat == GameEngine.STAT_CUSTOM && customState == CustomState.REWIND) {
+            engine.framecolor = GameEngine.FRAME_COLOR_PURPLE;
+        } else if (engine.gameActive && settings.perk.isActive() && currentAbilityTimer > 0) {
             engine.framecolor = GameEngine.FRAME_COLOR_PINK;
         } else if (engine.gameActive) {
             engine.framecolor = currentSeason.defaultFrameColour;
