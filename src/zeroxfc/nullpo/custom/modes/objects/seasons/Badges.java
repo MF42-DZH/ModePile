@@ -23,7 +23,7 @@ public class Badges {
     }
 
     // Call in mode calcScore. Every 10 season badges is an effective 1 badge.
-    public void updateBadges(GameEngine engine, int lines, int seasonBadges, boolean minorBoost, boolean majorBoost) {
+    public void updateBadges(GameEngine engine, int lines, boolean minorBoost, boolean majorBoost) {
         final IntUnaryOperator mjBoost = (x) -> majorBoost ? (x + x) : x;
 
         // AC badge.
@@ -60,6 +60,10 @@ public class Badges {
                 if (minorBoost) ++spins;
             }
         }
+    }
+
+    public void addSeasonBadges(int seasonBadges, boolean minorBoost, boolean majorBoost) {
+        final IntUnaryOperator mjBoost = (x) -> majorBoost ? (x + x) : x;
 
         // Season badges.
         season += mjBoost.applyAsInt(seasonBadges);
@@ -72,9 +76,15 @@ public class Badges {
         map.put("AC", ac / 20);
         map.put("4X", fours / 100);
         map.put("SP", spins / 100);
-        map.put("SE", season / 250);
+        map.
+            put("SE", season / 250);
 
         return map;
+    }
+
+    // Divide by 10 to get whole count!
+    public int getBadges() {
+        return ac + fours + spins + season;
     }
 
     public int getLevelBonus() {

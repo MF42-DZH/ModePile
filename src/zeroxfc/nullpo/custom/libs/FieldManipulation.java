@@ -2,6 +2,7 @@ package zeroxfc.nullpo.custom.libs;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.function.Consumer;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Field;
 import mu.nu.nullpo.game.event.EventReceiver;
@@ -849,25 +850,25 @@ public class FieldManipulation {
                 Block otherBlock = field.getBlock(x, y - 1);
                 block.setAttribute(
                     Block.BLOCK_ATTRIBUTE_CONNECT_UP,
-                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE)
+                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE) && block.pieceNum == otherBlock.pieceNum
                 );
 
                 otherBlock = field.getBlock(x, y + 1);
                 block.setAttribute(
                     Block.BLOCK_ATTRIBUTE_CONNECT_DOWN,
-                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE)
+                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE) && block.pieceNum == otherBlock.pieceNum
                 );
 
                 otherBlock = field.getBlock(x - 1, y);
                 block.setAttribute(
                     Block.BLOCK_ATTRIBUTE_CONNECT_LEFT,
-                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE)
+                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE) && block.pieceNum == otherBlock.pieceNum
                 );
 
                 otherBlock = field.getBlock(x + 1, y);
                 block.setAttribute(
                     Block.BLOCK_ATTRIBUTE_CONNECT_RIGHT,
-                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE)
+                    otherBlock != null && otherBlock.color == block.color && compareBlockAttribute(block, otherBlock, Block.BLOCK_ATTRIBUTE_BONE) && block.pieceNum == otherBlock.pieceNum
                 );
             }
         }
@@ -904,5 +905,34 @@ public class FieldManipulation {
         }
 
         return landed;
+    }
+
+    /**
+     * Clears a field of negative and positive attributes.
+     *
+     * @param field Field to "purify"
+     * @param extra Extra clear operations on the block
+     */
+    public static void clearFieldEffects(Field field, Consumer<Block> extra) {
+        for (int x = 0; x < field.getWidth(); x++) {
+            for (int y = (-1 * field.getHiddenHeight()); y < field.getHeight(); y++) {
+                final Block blk = field.getBlock(x, y);
+
+                if (blk != null && blk.color > Block.BLOCK_COLOR_NONE) {
+                    blk.alpha = 1f;
+                    blk.darkness = 0f;
+                    blk.hard = 0;
+
+                    // Unused in 7.5.0, but sure, why not clear this too.
+                    blk.item = 0;
+
+                    blk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
+                    blk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                    blk.setAttribute(Block.BLOCK_ATTRIBUTE_BONE, false);
+
+                    extra.accept(blk);
+                }
+            }
+        }
     }
 }
