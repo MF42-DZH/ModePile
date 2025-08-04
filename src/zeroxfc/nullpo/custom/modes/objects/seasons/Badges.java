@@ -24,7 +24,7 @@ public class Badges {
 
     // Call in mode calcScore. Every 10 season badges is an effective 1 badge.
     public void updateBadges(GameEngine engine, int lines, boolean minorBoost, boolean majorBoost) {
-        final IntUnaryOperator mjBoost = (x) -> majorBoost ? (x + x) : x;
+        final IntUnaryOperator mjBoost = (x) -> majorBoost ? (x * 4) : x;
 
         // AC badge.
         if ((lines >= 1) && (engine.field.isEmpty())) {
@@ -63,7 +63,7 @@ public class Badges {
     }
 
     public void addSeasonBadges(int seasonBadges, boolean minorBoost, boolean majorBoost) {
-        final IntUnaryOperator mjBoost = (x) -> majorBoost ? (x + x) : x;
+        final IntUnaryOperator mjBoost = (x) -> majorBoost ? (x * 4) : x;
 
         // Season badges.
         season += mjBoost.applyAsInt(seasonBadges);

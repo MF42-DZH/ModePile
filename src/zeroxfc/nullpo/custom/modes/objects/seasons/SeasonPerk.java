@@ -8,7 +8,7 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 public enum SeasonPerk {
     PERKLESS(0), // Only selectable if the player has beaten the mode in their current player profile.
     SPRING_PASSIVE(1), // +1 levels to level bonus, and gain +0.1 badges per badge gain, always.
-    SPRING_ACTIVE(1, 600, 600, 5, 10, 20, 50), // 2x levels from line clears, and 2x badge gain while active.
+    SPRING_ACTIVE(1, 600, 600, 5, 10, 20, 50), // 4x levels from line clears, and 4x badge gain while active.
     SUMMER_PASSIVE(1), // +3 to visible next queue length. Guarantees an I-piece every 50 pieces (pushes back the next queue).
     SUMMER_ACTIVE(1, 250, 0, 2, 5, 10, 25), // Get two I-pieces instantly, pushing the next queue back.
     AUTUMN_PASSIVE(1), // Season badge benefits against gimmicks work 2x better.
@@ -70,7 +70,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("SPRING EMPOWERS YOU WITH", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("A TEMPORARY SURGE OF", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("FERTILIZING POWER.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(2X LV/CLEAR, 2X BADGE/GAIN WHEN ACTIVE)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
+                GameTextUtilities.Text.custom("(4X LV/CLEAR, 4X BADGE/GAIN WHEN ACTIVE)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             summerPassive = GameTextUtilities.TextBlock.of(

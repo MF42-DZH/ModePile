@@ -86,7 +86,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private static final int LEVELS_JAN = LEVELS_DEC + (31 * HOURS_IN_DAY); // Also the max level.
 
     // TODO: SET THIS TO LEVELS_JAN WHEN READY!!!
-    private static final int MAX_LEVEL = LEVELS_APR;
+    private static final int MAX_LEVEL = LEVELS_JAN;
 
     private static final IntFunction<Integer> NEXT_SECTION_LEVELS = LevelTableBuilder.<Integer>createNew()
         .addValue(LEVELS_FEB, LEVELS_FEB)
@@ -170,21 +170,21 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
     private static final IntFunction<Season> SEASON_TABLE = LevelTableBuilder.<Season>createNew()
         .addValue(Season.SPRING, LEVELS_APR)
-        .addValue(Season.SUMMER, LEVELS_JUN)
+        .addValue(Season.SUMMER, LEVELS_JUL)
         .addValue(Season.AUTUMN, LEVELS_OCT)
         .addTerminalValue(Season.WINTER)
         .buildLevelTable();
 
     private static final IntFunction<Integer> BGM_TABLE = LevelTableBuilder.<Integer>createNew()
         .addValue(BGMStatus.BGM_NORMAL1, LEVELS_APR)
-        .addValue(BGMStatus.BGM_NORMAL2, LEVELS_JUN)
+        .addValue(BGMStatus.BGM_NORMAL2, LEVELS_JUL)
         .addValue(BGMStatus.BGM_NORMAL3, LEVELS_OCT)
         .addTerminalValue(BGMStatus.BGM_NORMAL4)
         .buildLevelTable();
 
     private static final IntFunction<Integer> BGM_FADE_LEVEL_TABLE = LevelTableBuilder.<Integer>createNew()
         .addValue(LEVELS_APR - 72, LEVELS_APR)
-        .addValue(LEVELS_JUN - 72, LEVELS_JUN)
+        .addValue(LEVELS_JUN - 72, LEVELS_JUL)
         .addValue(LEVELS_OCT - 72, LEVELS_OCT)
         .addTerminalValue(-1)
         .buildLevelTable();
@@ -283,6 +283,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
     // Current Gimmicks
     private Gimmicks.Sproutlings gimmickSprMo2;
+    private Gimmicks.FlourishingBlooms gimmickSprMo3;
     // TODO: ADD THE REST OF THEM
 
     private static class DescriptionDraw {
@@ -396,6 +397,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
         // Clear all gimmicks.
         gimmickSprMo2 = null;
+        gimmickSprMo3 = null;
 
         vortex = new BlockVortex();
 
@@ -1097,8 +1099,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
     @Override
     public boolean onMove(GameEngine engine, int playerID) {
-        if (engine.statc[0] == 0 && !engine.holdDisable && gimmickSprMo2 != null) {
-            gimmickSprMo2.update(engine);
+        if (engine.statc[0] == 0 && !engine.holdDisable) {
+            if (gimmickSprMo2 != null) gimmickSprMo2.update(engine);
+            if (gimmickSprMo3 != null) gimmickSprMo3.attemptPlacement(engine);
         }
 
         if ((engine.statc[0] == 0) && (!engine.holdDisable) && (!levelUpFlag)) {
@@ -1137,6 +1140,10 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             engine.resetStatc();
 
             return true;
+        }
+
+        if (engine.statc[0] == 0 && !engine.holdDisable && !levelUpFlag) {
+            if (gimmickSprMo3 != null) gimmickSprMo3.explode(engine);
         }
 
         if (((engine.statc[0] >= engine.statc[1] - 1) && (!levelUpFlag))) {
@@ -1178,8 +1185,14 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
             int levelIncrease = 0;
 
-            if (lines >= 4) {
-                levelIncrease += 3 * lines * naturalLevelIncrement;
+            if (lines > 4) {
+                levelIncrease += 4 * lines * naturalLevelIncrement;
+
+                if (settings.perk.isActive()) {
+                    currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + abilityCharge(engine, settings.perk.restoredForFour));
+                }
+            } else if (lines == 4) {
+                levelIncrease += 12 * naturalLevelIncrement;
 
                 if (settings.perk.isActive()) {
                     currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + abilityCharge(engine, settings.perk.restoredForFour));
@@ -1209,7 +1222,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             if (settings.perk == SeasonPerk.SPRING_PASSIVE) {
                 engine.statistics.level += levelIncrease + naturalLevelIncrement;
             } else if (settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0) {
-                engine.statistics.level += levelIncrease * 2;
+                engine.statistics.level += levelIncrease * 4;
             } else {
                 engine.statistics.level += levelIncrease;
             }
@@ -1246,12 +1259,14 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                 setNewBackground(BACKGROUND_TABLE.apply(engine.statistics.level));
 
                 if (engine.statistics.level >= LEVELS_FEB && engine.statistics.level < LEVELS_MAR) {
-                    gimmickSprMo2 = new Gimmicks.Sproutlings(new Random(engine.randSeed + 1), badges);
+                    gimmickSprMo2 = new Gimmicks.Sproutlings(badges);
                     descriptionToDraw = new DescriptionDraw(gimmickSprMo2);
                 } else if (engine.statistics.level >= LEVELS_MAR && engine.statistics.level < LEVELS_APR) {
-                    // TODO
+                    gimmickSprMo3 = new Gimmicks.FlourishingBlooms(new Random(engine.randSeed + 2), badges);
+                    descriptionToDraw = new DescriptionDraw(gimmickSprMo3);
                 } else if (engine.statistics.level >= LEVELS_APR && engine.statistics.level < LEVELS_MAY) {
                     gimmickSprMo2 = null;
+                    gimmickSprMo3 = null;
                     // TODO
                 } else if (engine.statistics.level >= LEVELS_MAY && engine.statistics.level < LEVELS_JUN) {
                     // TODO
@@ -1299,6 +1314,17 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     }
 
     @Override
+    public void blockBreak(GameEngine engine, int playerID, int x, int y, Block blk) {
+        if (gimmickSprMo3 != null && blk.color == Block.BLOCK_COLOR_GEM_ORANGE) {
+            badges.addSeasonBadges(
+                4,
+                settings.perk == SeasonPerk.SPRING_PASSIVE,
+                settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
+            );
+        }
+    }
+
+    @Override
     public void callCalcScore(GameEngine engine, int playerID, int li) {
         HasCustomLineClear.super.callCalcScore(engine, playerID, li);
 
@@ -1310,6 +1336,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                 settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
             );
         }
+
+        if (gimmickSprMo2 != null) gimmickSprMo2.setQuota(badges);
+        if (gimmickSprMo3 != null) gimmickSprMo3.setCountdown(badges);
     }
 
     @Override
@@ -1320,7 +1349,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             fieldPurifyQueued = false;
 
             // TODO: Might need to do some extra purification steps here.
-            FieldManipulation.clearFieldEffects(engine.field, blk -> { return; });
+            FieldManipulation.clearFieldEffects(engine.field, blk -> { blk.countdown = 0; });
         }
 
         return HasCustomLineClear.super.inOnLineClear(engine, playerID);
@@ -1529,7 +1558,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
         } else {
             receiver.drawScoreFont(engine, playerID, 0, 2, "DATE", titlesColour);
-            if (engine.stat == GameEngine.STAT_GAMEOVER) {
+            if (engine.stat == GameEngine.STAT_GAMEOVER && rollLevelReached >= 0) {
                 receiver.drawScoreFont(engine, playerID, 0, 3, levelToString(rollLevelReached));
             } else {
                 receiver.drawScoreFont(engine, playerID, 0, 3, levelToString(engine.statistics.level));
@@ -1561,12 +1590,26 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                 );
             }
 
+            if (engine.statistics.level >= LEVELS_FEB || rollStarted) {
+                receiver.drawScoreFont(engine, playerID, 0, 17, "EFFECTS", titlesColour);
+            }
+
             if (gimmickSprMo2 != null) {
                 GameTextUtilities.drawAlignedScoreTextBlock(
                     receiver, engine, playerID, false,
-                    0, 17,
+                    0, 18,
                     false,
                     gimmickSprMo2.getSummary(),
+                    ObjectAlignment.TOP_LEFT
+                );
+            }
+
+            if (gimmickSprMo3 != null) {
+                GameTextUtilities.drawAlignedScoreTextBlock(
+                    receiver, engine, playerID, false,
+                    0, 19,
+                    false,
+                    gimmickSprMo3.getSummary(),
                     ObjectAlignment.TOP_LEFT
                 );
             }
