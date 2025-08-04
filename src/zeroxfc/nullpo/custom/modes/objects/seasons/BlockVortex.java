@@ -19,10 +19,10 @@ public class BlockVortex {
     public void add(Random rand, int colour, int blockSkin) {
         final BlockInstance bi = new BlockInstance(colour, blockSkin);
         final DoubleVector origin = new DoubleVector(40, 2 * Math.PI * rand.nextDouble(), true);
-        final DoubleVector end = new DoubleVector(Math.sqrt(360d * 360d + 260d * 260d), origin.getDirection(), true);
+        final DoubleVector end = new DoubleVector(Math.sqrt(400d * 400d + 320d * 320d), origin.getDirection(), true);
         final DoubleVector control = new DoubleVector(
             80 + rand.nextDouble() * 240,
-            origin.getDirection() + (Math.PI * (rand.nextDouble() - 0.5)),
+            origin.getDirection() + (Math.PI * rand.nextDouble() * 0.5),
             true
         );
 
@@ -85,7 +85,7 @@ public class BlockVortex {
                 ObjectAlignment.MIDDLE_MIDDLE,
                 colour, blockSkin,
                 false,
-                MathHelper.clamp(Interpolation.lerp(0.75f, 0.25f, lerpVal), 0.0f, 0.5f),
+                MathHelper.clamp(Interpolation.lerp(0.625f, 0.125f, lerpVal), 0.0f, 0.5f),
                 1f,
                 Interpolation.lerp(1f, 4f, lerpVal),
                 Block.BLOCK_ATTRIBUTE_VISIBLE

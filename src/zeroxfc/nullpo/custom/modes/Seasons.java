@@ -134,6 +134,22 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         .addTerminalValue("INVALID")
         .buildLevelTable();
 
+    private static final IntFunction<Integer> MONTH_ORDINAL_TABLE = LevelTableBuilder.<Integer>createNew()
+        .addValue(2, LEVELS_FEB)
+        .addValue(3, LEVELS_MAR)
+        .addValue(4, LEVELS_APR)
+        .addValue(5, LEVELS_MAY)
+        .addValue(6, LEVELS_JUN)
+        .addValue(7, LEVELS_JUL)
+        .addValue(8, LEVELS_AUG)
+        .addValue(9, LEVELS_SEP)
+        .addValue(10, LEVELS_OCT)
+        .addValue(11, LEVELS_NOV)
+        .addValue(12, LEVELS_DEC)
+        .addValue(1, LEVELS_JAN)
+        .addTerminalValue(2)
+        .buildLevelTable();
+
     private static final IntFunction<Integer> BACKGROUND_TABLE = LevelTableBuilder.<Integer>createNew()
         .addValue(0, LEVELS_FEB)
         .addValue(1, LEVELS_MAR)
@@ -177,6 +193,61 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         return String.format("%02d:00 %02d %s YEAR %d", normLevel % 24, (normLevel / 24) + 1, month, level >= LEVELS_DEC ? 1 : 0);
     }
 
+    private static int getRankColour(int gameLevel, int rollLevel) {
+        int colour = gameLevel >= MAX_LEVEL ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE;
+        if (rollLevel >= gameLevel && gameLevel >= MAX_LEVEL) colour = EventReceiver.COLOR_ORANGE;
+
+        return colour;
+    }
+
+    private static GameTextUtilities.TextBlock levelToRankBlock(int gameLevel, int rollLevel) {
+        final int gameMonth = MONTH_ORDINAL_TABLE.apply(gameLevel);
+        final int rollMonth = MONTH_ORDINAL_TABLE.apply(rollLevel);
+
+        final int normGameLevel = gameLevel - LEVELS_SO_FAR.apply(gameLevel);
+        final int normRollLevel = rollLevel - LEVELS_SO_FAR.apply(rollLevel);
+
+        if (rollLevel >= 0) {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.ofSmall(
+                    String.format(
+                        "%02d:00 %02d/%02d/%02d",
+                        normGameLevel % 24,
+                        (normGameLevel % 24) + 1,
+                        gameMonth,
+                        gameLevel >= LEVELS_DEC ? 1 : 0
+                    )
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.ofSmall(
+                    String.format(
+                        "%02d:00 %02d/%02d/%02d",
+                        normRollLevel % 24,
+                        (normRollLevel % 24) + 1,
+                        rollMonth,
+                        rollLevel >= LEVELS_DEC ? 1 : 0
+                    )
+                )
+            );
+        } else {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.ofSmall(
+                    String.format(
+                        "%02d:00 %02d/%02d/%02d",
+                        normGameLevel % 24,
+                        (normGameLevel % 24) + 1,
+                        gameMonth,
+                        gameLevel >= LEVELS_DEC ? 1 : 0
+                    )
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.ofSmall("TBC", EventReceiver.COLOR_CYAN)
+            );
+        }
+    }
+
     // Game manager and current renderer.
     private GameManager owner;
     private EventReceiver receiver;
@@ -196,7 +267,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private Season currentSeason;
     private int lastBackground, currentBackground, fadeProgress;
     private Badges badges;
-    private int naturalLevelIncrement; // Is set to 6 during ending.
+    private int naturalLevelIncrement; // Is set to 4 during ending.
     private int currentEnergy;
     private int currentAbilityTimer;
     private boolean queuedFreefall; // Freefall only works between pieces so it doesn't screw you over.
@@ -204,6 +275,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private int lockedPieces;
     private NavigableMap<Integer, NextAndFieldState> statesAtTimes;
     private boolean rollStarted;
+    private int rollLevelReached;
 
     private BlockVortex vortex;
     private Random bvr;
@@ -268,6 +340,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         badges = new Badges();
         lockedPieces = 0;
         customState = CustomState.PROFILE;
+        rollLevelReached = -1;
 
         vortex = new BlockVortex();
 
@@ -426,6 +499,8 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
                     if (engine.statc[0] >= FINAL_REWIND_TIME) {
                         engine.ending = 2;
+                        naturalLevelIncrement = 4;
+                        levelUpFlag = false;
 
                         engine.stat = GameEngine.STAT_LINECLEAR;
                         engine.resetStatc();
@@ -493,15 +568,20 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             int baseY = (8 * engine.field.getHeight()) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
 
             if (engine.gameStarted && customState == CustomState.FREEFALL) {
+                int alpha = 255;
+                if (engine.statc[0] >= 15) {
+                    alpha = Interpolation.lerp(255, 0, (engine.statc[0] - 15d) / 30d);
+                }
+
                 GameTextUtilities.drawAlignedTextBlock(
                     engine,
                     baseX, baseY,
                     false,
                     GameTextUtilities.TextBlock.of(
                         GameTextUtilities.TextJustification.LEFT,
-                        GameTextUtilities.Text.ofBig("FREE", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_WHITE : EventReceiver.COLOR_YELLOW),
+                        GameTextUtilities.Text.ofMixColorBig("FREE", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_WHITE : EventReceiver.COLOR_YELLOW, 255, 255, 255, alpha),
                         GameTextUtilities.Text.newLine(),
-                        GameTextUtilities.Text.ofBig("FALL", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_WHITE : EventReceiver.COLOR_YELLOW)
+                        GameTextUtilities.Text.ofMixColorBig("FALL", (engine.statc[0] >>> 1) % 2 == 0 ? EventReceiver.COLOR_WHITE : EventReceiver.COLOR_YELLOW, 255, 255, 255, alpha)
                     ),
                     ObjectAlignment.MIDDLE_MIDDLE
                 );
@@ -559,7 +639,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
                 final int basisTime = FINAL_REWIND_TIME - (60 * 21);
 
-                int maxY = baseY - 32;
+                int maxY = baseY - 64;
                 if (engine.statc[0] >= basisTime) maxY += 12;
                 if (engine.statc[0] >= (basisTime + ((60 * 1) + 30))) maxY += 12;
                 if (engine.statc[0] >= (basisTime + ((60 * 4) + 48))) maxY += 12;
@@ -572,7 +652,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
                 GameTextUtilities.drawAlignedBoundedTextBlock(
                     engine,
-                    baseX, baseY - 32,
+                    baseX, baseY - 64,
                     0, 0, 640, maxY,
                     false,
                     ENDING_START_PASSAGE,
@@ -1013,6 +1093,17 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         return false;
     }
 
+    @Override
+    public boolean onGameOver(GameEngine engine, int playerID) {
+        // Set the level back to max level.
+        if (rollStarted && rollLevelReached < 0) {
+            rollLevelReached = engine.statistics.level;
+            engine.statistics.level = MAX_LEVEL;
+        }
+
+        return false;
+    }
+
     private static int abilityCharge(GameEngine engine, int baseCharge) {
         return engine.tspin ? 5 * baseCharge : baseCharge;
     }
@@ -1060,7 +1151,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
             if (settings.perk == SeasonPerk.SPRING_PASSIVE) {
                 engine.statistics.level += levelIncrease + naturalLevelIncrement;
-            } else if (settings.perk == SeasonPerk.SPRING_ACTIVE) {
+            } else if (settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0) {
                 engine.statistics.level += levelIncrease * 2;
             } else {
                 engine.statistics.level += levelIncrease;
@@ -1080,11 +1171,18 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             if (engine.statistics.level >= MAX_LEVEL && !rollStarted) {
                 engine.playSE("endingstart");
 
+                setNewBackground(0);
+
                 customState = CustomState.FINAL_REWIND;
                 engine.stat = GameEngine.STAT_CUSTOM;
                 engine.resetStatc();
             } else if (engine.statistics.level >= MAX_LEVEL) {
-                engine.gameEnded();
+                engine.stat = GameEngine.STAT_EXCELLENT;
+                engine.resetStatc();
+                engine.resetFieldVisible();
+
+                // TODO: If roll time < min roll time, wait until it is over.
+                engine.statExcellent();
             } else if (engine.statistics.level >= nextSectionLevel) {
                 engine.playSE("levelup");
 
@@ -1107,8 +1205,11 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             } else if (engine.statistics.level == nextSectionLevel - 1) {
                 engine.playSE("levelstop");
             }
-        }
 
+            if (engine.ending == 2) {
+                setNewBackground(BACKGROUND_TABLE.apply(engine.statistics.level));
+            }
+        }
     }
 
     private void levelUp(GameEngine engine) {
@@ -1179,7 +1280,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
     @Override
     public void onLast(GameEngine engine, int playerID) {
-        if (!(engine.stat == GameEngine.STAT_CUSTOM && customState == CustomState.REWIND && fadeProgress == 150)) {
+        if (!(engine.stat == GameEngine.STAT_CUSTOM
+            && (customState == CustomState.REWIND || customState == CustomState.FINAL_REWIND)
+            && fadeProgress == 150)) {
             updateFadeProgress();
         }
 
@@ -1260,6 +1363,10 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         }
     }
 
+    private void renderExtraBoardInfo(GameEngine engine, int playerID) {
+        // TODO: Fill this in when the gimmicks are added.
+    }
+
     @Override
     public void renderLast(GameEngine engine, int playerID) {
         final int titlesColour = settings.perk == SeasonPerk.PERKLESS ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_YELLOW;
@@ -1272,9 +1379,17 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             final boolean showRankings = !owner.replayMode && !settings.fullGhost;
 
             if (showRankings) {
-                receiver.drawScoreFont(engine, playerID, 3, topY - 1, "RN&TI DATE  TIME", titlesColour, scale);
+                receiver.drawScoreFont(engine, playerID, 3, topY - 1, "RN&TI       DATE", titlesColour, scale);
                 for (int i = 0; i < SeasonsSettings.RANKING_MAX; ++i) {
-                    receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d N/A   N/A   N/A", i + 1));
+                    receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d N/A", i + 1));
+                    GameTextUtilities.drawAlignedScoreTextBlock(
+                        receiver, engine, playerID,
+                        receiver.getNextDisplayType() == 2,
+                        15, topY + i,
+                        false,
+                        levelToRankBlock(0, -1), // TODO: RANKING
+                        ObjectAlignment.TOP_LEFT
+                    );
                 }
 
                 receiver.drawScoreFont(engine, playerID, 0, topY + 1 + SeasonsSettings.RANKING_MAX, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN, scale);
@@ -1293,7 +1408,11 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             receiver.drawScoreFont(engine, playerID, 0, 3, "N/A");
 
             receiver.drawScoreFont(engine, playerID, 0, 5, "DATE", titlesColour);
-            receiver.drawScoreFont(engine, playerID, 0, 6, levelToString(engine.statistics.level));
+            if (engine.stat == GameEngine.STAT_GAMEOVER) {
+                receiver.drawScoreFont(engine, playerID, 0, 6, levelToString(rollLevelReached));
+            } else {
+                receiver.drawScoreFont(engine, playerID, 0, 6, levelToString(engine.statistics.level));
+            }
 
             receiver.drawScoreFont(engine, playerID, 0, 8, "TIME", titlesColour);
             receiver.drawScoreFont(engine, playerID, 0, 9, GeneralUtil.getTime(engine.statistics.time));
@@ -1320,6 +1439,8 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     ObjectAlignment.TOP_LEFT
                 );
             }
+
+            renderExtraBoardInfo(engine, playerID);
         }
     }
 
