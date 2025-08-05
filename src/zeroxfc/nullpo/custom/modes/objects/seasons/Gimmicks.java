@@ -4,11 +4,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import mu.nu.nullpo.game.component.Block;
+import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
+import zeroxfc.nullpo.custom.libs.mixins.HasCustomOnMove;
 
 public class Gimmicks {
     // This class just holds other classes. We don't need to instantiate it.
@@ -47,7 +50,7 @@ public class Gimmicks {
     // There aer [sic] only 11 main game gimmicks because Spring 1st month (February) has no gimmick.
 
     // MAR - Sproutlings (Gem Garbage, can be delayed by badges)
-    // APR - Flourishing Blooms (Gems bombs occasionally populate the field, exploding into non-exploding gems, countdowns increased by badges)
+    // APR - Flourishing Blooms (Gems bombs occasionally populate the field, exploding into non-exploding gems, countdowns decreased by badges)
     // MAY - Dehydration (Bone blocks, you get less with more badges, but more as you approach the end of July)
     // JUN - Shortage (every nth I-piece is replaced with another piece, increase n with more badges)
     // JUL - Into The Fire (Fast Speed (~Death 200-500), lock delay increased with badges)
@@ -65,16 +68,16 @@ public class Gimmicks {
     // AUTUMN - Haunting (Outline Only + Bone Blocks)
     // WINTER - Absolute Zero (Zero Celsius but harder (blocks have infinite hardness once frozen, can only clear bottom row with Fours, slowed by badges))
 
-    // Spring has relatively relaxed gimmicks that shouldn't feel too unfamiliar.
+    // Spring has relatively relaxed gimmicks.
     public static class Sproutlings implements HasDescription {
         // Basically Speed Mania 2's rising garbage with a slight twist.
         // No delaying garbage by clearing lines, and sometimes doesn't copy the bottom.
 
         private int counter;
-        private int quota;
+        private int countdown;
 
         public Sproutlings(Badges badges) {
-            setQuota(badges);
+            setCountdown(badges);
         }
 
         @Override
@@ -88,7 +91,7 @@ public class Gimmicks {
                 GameTextUtilities.TextJustification.LEFT,
                 GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_GREEN),
                 GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
-                GameTextUtilities.Text.of(String.valueOf(quota), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(String.valueOf(countdown), EventReceiver.COLOR_YELLOW),
                 GameTextUtilities.Text.of("P)", EventReceiver.COLOR_RED)
             );
         }
@@ -117,12 +120,12 @@ public class Gimmicks {
             );
         }
 
-        public void setQuota(Badges badges) {
-            // Every 25 badges will increase the quota by 1.
-            // The default quota is 8
+        public void setCountdown(Badges badges) {
+            // Every 30 badges will decrease the countdown by 1.
+            // The default countdown is 12
 
             final int usedBadges = badges.getBadges() / 10;
-            quota = 8 + (usedBadges / 25);
+            countdown = Math.max(4, 12 - (usedBadges / 30));
         }
 
         private static final int ATTRS = Block.BLOCK_ATTRIBUTE_GARBAGE | Block.BLOCK_ATTRIBUTE_VISIBLE | Block.BLOCK_ATTRIBUTE_OUTLINE;
@@ -131,7 +134,7 @@ public class Gimmicks {
         public void update(GameEngine engine) {
             ++counter;
 
-            if (counter >= quota) {
+            if (counter >= countdown) {
                 counter = 0;
 
                 engine.field.addBottomCopyGarbage(
@@ -155,11 +158,15 @@ public class Gimmicks {
             setCountdown(badges);
         }
 
+        public int getCurrentCountdown() {
+            return currentCountdown;
+        }
+
         public void setCountdown(Badges badges) {
-            // Every 30 badges increases the countdown by 1.
+            // Every 40 badges decreases the countdown by 1.
 
             final int usedBadges = badges.getBadges() / 10;
-            currentCountdown = 5 + (usedBadges / 30);
+            currentCountdown = Math.max(4, 12 - (usedBadges / 40));
         }
 
         @Override
@@ -205,7 +212,6 @@ public class Gimmicks {
                     EventReceiver.COLOR_WHITE, 0.75f
                 )
             );
-
         }
 
         private static class BlockInfo {
@@ -222,12 +228,13 @@ public class Gimmicks {
 
         // Call at first move frame.
         public void attemptPlacement(GameEngine engine) {
-            if (random.nextDouble() > 0.025) return;
+            if (random.nextDouble() > (0.025 * (13 - currentCountdown) / 3d)) return;
 
             final List<BlockInfo> blocks = new LinkedList<>();
             for (int y = (-1 * engine.field.getHiddenHeight()); y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
                 for (int x = 0; x < engine.field.getWidth(); ++x) {
-                    if (!engine.field.getBlockEmpty(x, y)) {
+                    final Block blk = engine.field.getBlock(x, y);
+                    if (!blk.isEmpty() && blk.color != Block.BLOCK_COLOR_GEM_ORANGE) {
                         blocks.add(new BlockInfo(x, y, engine.field.getBlock(x, y)));
                     }
                 }
@@ -235,6 +242,7 @@ public class Gimmicks {
 
             final BlockInfo selected = blocks.get(random.nextInt(blocks.size()));
             selected.blk.attribute &= (~ Block.BLOCK_ATTRIBUTE_BONE);
+            selected.blk.secondaryColor = selected.blk.color;
             selected.blk.color = Block.BLOCK_COLOR_GEM_ORANGE;
 
             engine.playSE("square_s");
@@ -250,7 +258,7 @@ public class Gimmicks {
                 for (int x = 0; x < engine.field.getWidth(); ++x) {
                     final Block blk = engine.field.getBlock(x, y);
                     if (blk.color == Block.BLOCK_COLOR_GEM_ORANGE && (++blk.countdown >= currentCountdown)) {
-                        blocks.add(new BlockInfo(x, y, null));
+                        blocks.add(new BlockInfo(x, y, blk));
                     }
                 }
             }
@@ -260,21 +268,113 @@ public class Gimmicks {
             final Block outerGem = new Block(Block.BLOCK_COLOR_GEM_PURPLE, engine.getSkin(), ATTRS);
             final Block innerGem = new Block(Block.BLOCK_COLOR_GEM_YELLOW, engine.getSkin(), ATTRS);
 
+            outerGem.pieceNum = engine.statistics.time;
+            innerGem.pieceNum = engine.statistics.time;
+
+            final int size = 2;
+
             for (BlockInfo bi : blocks) {
-                for (int y = bi.y - 3; y <= bi.y + 3; ++y) {
-                    for (int x = bi.x - 3; x <= bi.x + 3; ++x) {
+                bi.blk.color = bi.blk.secondaryColor;
+                bi.blk.secondaryColor = 0;
+
+                for (int y = bi.y + size; y >= bi.y - size; --y) {
+                    for (int x = bi.x - size; x <= bi.x + size; ++x) {
                         if (x < 0 || x >= engine.field.getWidth() || y < (-1 * engine.field.getHiddenHeight()) || y >= engine.field.getHeightWithoutHurryupFloor()) continue;
 
                         final int dist = Math.abs(y - bi.y) + Math.abs(x - bi.x);
-                        if (dist > 3 || engine.field.getBlockEmpty(x, y)) continue;
+                        if (dist > size) continue;
+
+                        FieldManipulation.pushColumnUpFrom(engine.field, x, y);
+                    }
+                }
+
+                for (int y = bi.y - size; y <= bi.y + size; ++y) {
+                    for (int x = bi.x - size; x <= bi.x + size; ++x) {
+                        if (x < 0 || x >= engine.field.getWidth() || y < (-1 * engine.field.getHiddenHeight()) || y >= engine.field.getHeightWithoutHurryupFloor()) continue;
+
+                        final int dist = Math.abs(y - bi.y) + Math.abs(x - bi.x);
+                        if (dist > size) continue;
 
                         final Block selected = dist <= 1 ? innerGem : outerGem;
+
                         engine.field.setBlock(x, y, new Block(selected));
                     }
                 }
             }
 
             engine.playSE("square_g");
+        }
+    }
+
+    public static class Dehydration implements HasDescription {
+        private final Random random;
+        private final int seasonStartLv;
+        private final int seasonEndLv;
+
+        private double chance; // 0 - 1
+
+        // Set the badge chance manually!
+        public Dehydration(Random random, int seasonStartLv, int seasonEndLv) {
+            this.random = random;
+            this.seasonStartLv = seasonStartLv;
+            this.seasonEndLv = seasonEndLv;
+        }
+
+        public void updateChance(GameEngine engine, Badges badges) {
+            final double progress = (engine.statistics.level - seasonStartLv) / (double) (seasonEndLv - seasonStartLv);
+            final double baseChance = Interpolation.lerp(0.975, 1.0, progress);
+
+            chance = Math.pow(baseChance, Math.floor(badges.getBadges() / 20d));
+        }
+
+        @Override
+        public String getName() {
+            return "DEHYDRATION";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of(String.format("%.02f", chance * 100d) + "%", EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(")", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "A SWELTERING HEAT BEGINS TO PARCH",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "AND DRY OUT THE ENVIRONMENT AROUND",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "YOU. SALVAGE THOSE BONES!",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+        }
+
+        public void updateNext(GameEngine engine) {
+            if (random.nextDouble() > chance) return;
+
+            final Piece piece = HasCustomOnMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
+            if (piece == null) return;
+
+            piece.setAttribute(Block.BLOCK_ATTRIBUTE_BONE, true);
+            engine.playSE("movefail");
         }
     }
 }

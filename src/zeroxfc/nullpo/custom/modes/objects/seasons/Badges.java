@@ -11,9 +11,9 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 public class Badges {
     // Badges use 1dp internally, but are represented as ints to preserve precision.
     private int ac;     // AC -- 2
-    private int fours;  // 4X -- 10
-    private int spins;  // SP -- 10
-    private int season; // SE -- 25
+    private int fours;  // 4X -- 20
+    private int spins;  // SP -- 15
+    private int season; // SE -- 30
 
     public Badges() {
         ac = 0;
@@ -74,10 +74,9 @@ public class Badges {
         final Map<String, Integer> map = new LinkedHashMap<>(4);
 
         map.put("AC", ac / 20);
-        map.put("4X", fours / 100);
-        map.put("SP", spins / 100);
-        map.
-            put("SE", season / 250);
+        map.put("4X", fours / 200);
+        map.put("SP", spins / 150);
+        map.put("SE", season / 300);
 
         return map;
     }
@@ -91,9 +90,9 @@ public class Badges {
         int bonus = 0;
 
         bonus += ac / 20;
-        bonus += fours / 100;
-        bonus += spins / 100;
-        bonus += season / 250;
+        bonus += fours / 200;
+        bonus += spins / 150;
+        bonus += season / 300;
 
         return bonus;
     }
@@ -111,12 +110,12 @@ public class Badges {
             GameTextUtilities.Text.custom("[4X]", EventReceiver.COLOR_YELLOW, baseScale),
             GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom(String.format("%3d.%d", fours / 10, fours % 10), EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom("/10", EventReceiver.COLOR_WHITE, 0.5f),
+            GameTextUtilities.Text.custom("/20", EventReceiver.COLOR_WHITE, 0.5f),
             GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.custom("[SP]", EventReceiver.COLOR_PURPLE, baseScale),
             GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom(String.format("%3d.%d", spins / 10, spins % 10), EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom("/10", EventReceiver.COLOR_WHITE, 0.5f),
+            GameTextUtilities.Text.custom("/15", EventReceiver.COLOR_WHITE, 0.5f),
             GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.custom("[", EventReceiver.COLOR_GREEN, baseScale),
             GameTextUtilities.Text.custom("S", EventReceiver.COLOR_YELLOW, baseScale),
@@ -124,7 +123,7 @@ public class Badges {
             GameTextUtilities.Text.custom("]", EventReceiver.COLOR_CYAN, baseScale),
             GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
             GameTextUtilities.Text.custom(String.format("%3d.%d", season / 10, season % 10), EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom("/25", EventReceiver.COLOR_WHITE, 0.5f)
+            GameTextUtilities.Text.custom("/30", EventReceiver.COLOR_WHITE, 0.5f)
         );
     }
 }

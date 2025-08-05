@@ -783,9 +783,7 @@ public interface HasCustomOnMove {
                     }
                 }
 
-                if (engine.owner.mode != null)
-                    engine.owner.mode.calcScore(engine, playerID, engine.lineClearing);
-                engine.owner.receiver.calcScore(engine, playerID, engine.lineClearing);
+                callZeroLineCalcScore(engine, playerID);
             }
 
             if (engine.owner.mode != null) engine.owner.mode.pieceLocked(engine, playerID, engine.lineClearing);
@@ -837,6 +835,16 @@ public interface HasCustomOnMove {
             return true;
         }
         return false;
+    }
+
+    // A bit jank, but sure. Both bodies are usually the same.
+    default void callZeroLineCalcScore(GameEngine engine, int playerID) {
+        if (this instanceof HasCustomLineClear) {
+            ((HasCustomLineClear) this).callCalcScore(engine, playerID, engine.lineClearing);
+        } else {
+            if (engine.owner.mode != null) engine.owner.mode.calcScore(engine, playerID, engine.lineClearing);
+            engine.owner.receiver.calcScore(engine, playerID, engine.lineClearing);
+        }
     }
 
     // Runs at the end of move processing.

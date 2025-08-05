@@ -1030,12 +1030,11 @@ public class RendererExtension {
     static {
         if (CustomResourceHolder.getCurrentNullpominoRuntime() == CustomResourceHolder.Runtime.SLICK) {
             fieldBrightAccessor = Mirror.getFieldAccessor(RendererSlick.class, "fieldbgbright");
-            showBgAccessor = Mirror.getFieldAccessor(RendererSlick.class, "showbg");
         } else {
             fieldBrightAccessor = null;
-            showBgAccessor = null;
         }
 
+        showBgAccessor = Mirror.getFieldAccessor(EventReceiver.class, "showbg");
         showMeterAccessor = Mirror.getFieldAccessor(EventReceiver.class, "showmeter");
     }
 

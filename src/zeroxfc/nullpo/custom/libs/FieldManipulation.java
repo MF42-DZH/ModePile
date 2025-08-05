@@ -928,11 +928,33 @@ public class FieldManipulation {
 
                     blk.setAttribute(Block.BLOCK_ATTRIBUTE_VISIBLE, true);
                     blk.setAttribute(Block.BLOCK_ATTRIBUTE_OUTLINE, true);
+                    blk.setAttribute(Block.BLOCK_ATTRIBUTE_GARBAGE, false);
                     blk.setAttribute(Block.BLOCK_ATTRIBUTE_BONE, false);
 
                     extra.accept(blk);
                 }
             }
         }
+    }
+
+    /**
+     * Pushes a column upwards, inserting an empty space at {@code (x, fromY)}.
+     *
+     * @param field Field to insert into
+     * @param x     Column number
+     * @param fromY From this y-coordinate
+     *              column up, also moving gaps upwards.
+     */
+    public static void pushColumnUpFrom(Field field, int x, int fromY) {
+        if (x < 0 || x >= field.getWidth() || fromY >= field.getHeightWithoutHurryupFloor()) return;
+
+        final Block empty = new Block();
+        empty.color = Block.BLOCK_COLOR_NONE;
+
+        for (int y = (-1 * field.getHiddenHeight()); y < fromY; ++y) {
+            field.setBlock(x, y, new Block(field.getBlock(x, y + 1)));
+        }
+
+        field.setBlock(x, fromY, empty);
     }
 }
