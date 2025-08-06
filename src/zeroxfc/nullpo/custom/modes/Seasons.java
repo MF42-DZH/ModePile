@@ -23,6 +23,7 @@ import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
+import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
@@ -35,6 +36,8 @@ import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomLineClear;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomOnMove;
+import zeroxfc.nullpo.custom.libs.particles.TextEmitter;
+import zeroxfc.nullpo.custom.libs.types.ColourMixer;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.modes.objects.seasons.*;
 
@@ -270,6 +273,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private Season currentSeason;
     private int lastBackground, currentBackground, fadeProgress;
     private Badges badges;
+    private TextEmitter textEmitter = new TextEmitter();
 
     private static final int INCREMENT_IN_ROLL = 4;
     private int naturalLevelIncrement; // Is set to 4 during ending.
@@ -285,11 +289,13 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private boolean fieldPurifyQueued;
     private int brokenBoneBlocks;
     private int brokenSproutlings;
+    private int brokenFlorets;
 
     // Current Gimmicks
     private Gimmicks.Sproutlings gimmickSprMo2;
     private Gimmicks.FlourishingBlooms gimmickSprMo3;
     private Gimmicks.Dehydration gimmickSumMo1;
+    private Gimmicks.Mirage gimmickSumMo2;
     // TODO: ADD THE REST OF THEM
 
     private static class DescriptionDraw {
@@ -388,6 +394,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         rendererExtension = new RendererExtension(customGraphics);
         drawing = new PrimitiveDrawingHook(customGraphics);
         statesAtTimes = new TreeMap<>();
+        textEmitter.clear();
 
         setupBackgrounds(engine);
 
@@ -405,6 +412,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         gimmickSprMo2 = null;
         gimmickSprMo3 = null;
         gimmickSumMo1 = null;
+        gimmickSumMo2 = null;
 
         vortex = new BlockVortex();
 
@@ -501,8 +509,12 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                             engine.field = new Field(state.field);
                             engine.nextPieceCount = state.nextPosition;
 
+                            engine.nextPieceArrayObject[state.nextPosition] =
+                                HasCustomOnMove.initialisePiece(engine, engine.nextPieceArrayID[state.nextPosition]);
+
                             if (state.holdPiece != null) {
                                 engine.holdPieceObject = new Piece(state.holdPiece);
+                                engine.holdPieceObject.setAttribute(Block.BLOCK_ATTRIBUTE_BONE, false);
                             } else {
                                 engine.holdPieceObject = null;
                             }
@@ -545,8 +557,12 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                             engine.field = new Field(state.field);
                             engine.nextPieceCount = state.nextPosition;
 
+                            engine.nextPieceArrayObject[state.nextPosition] =
+                                HasCustomOnMove.initialisePiece(engine, engine.nextPieceArrayID[state.nextPosition]);
+
                             if (state.holdPiece != null) {
                                 engine.holdPieceObject = new Piece(state.holdPiece);
+                                engine.holdPieceObject.setAttribute(Block.BLOCK_ATTRIBUTE_BONE, false);
                             } else {
                                 engine.holdPieceObject = null;
                             }
@@ -757,7 +773,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     public boolean onSetting(GameEngine engine, int playerID) {
         if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 1);
+            int change = updateCursor(engine, 2);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -778,6 +794,13 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                         break;
                     case 1:
                         settings.fullGhost = !settings.fullGhost;
+                        break;
+                    case 2:
+                        settings.spinType += change;
+                        if (settings.spinType < GameEngine.SPINTYPE_4POINT) settings.spinType = 2;
+                        else if (settings.spinType > 2) settings.spinType = GameEngine.SPINTYPE_4POINT;
+                        break;
+                    default:
                         break;
                 }
             }
@@ -833,11 +856,18 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             perkString = String.format("%s (%s)", split[0], split[1].charAt(0));
         }
 
+        String spinString = "DISABLED";
+        if (settings.spinType == GameEngine.SPINTYPE_4POINT) spinString = "4-POINT";
+        if (settings.spinType == GameEngine.SPINTYPE_IMMOBILE) spinString = "IMMOBILE";
+
         drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_YELLOW, 0,
             "PERK", perkString
         );
         drawMenu(engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE, 1,
             "FULL GHOST", GeneralUtil.getONorOFF(settings.fullGhost)
+        );
+        drawMenu(engine, playerID, receiver, 4, EventReceiver.COLOR_GREEN, 2,
+            "SPIN TYPE", spinString
         );
     }
 
@@ -863,10 +893,11 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         engine.bigmove = true;
         engine.bighalf = true;
 
-        engine.tspinEnable = true;
+        engine.tspinEnable = settings.spinType != 2;
         engine.useAllSpinBonus = true;
         engine.tspinAllowKick = true;
-        engine.spinCheckType = GameEngine.SPINTYPE_4POINT;
+        engine.tspinEnableEZ = true;
+        engine.spinCheckType = settings.spinType == 2 ? 0 : settings.spinType;
         engine.tspinminiType = GameEngine.TSPINMINI_TYPE_ROTATECHECK;
 
         engine.b2bEnable = true;
@@ -885,6 +916,8 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         if (engine.statc[0] == 0) {
             // Store current field state.
             if (engine.statc[1] == 0 && engine.ending == 0) {
+                if (gimmickSumMo2 != null) gimmickSumMo2.replaceQueue(engine);
+
                 statesAtTimes.put(engine.statistics.time, new NextAndFieldState(engine));
                 statesAtTimes.keySet().removeIf(k -> k < engine.statistics.time - (60 * 300));
             }
@@ -1184,12 +1217,179 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         return false;
     }
 
+    private void addEventText(GameEngine engine, int playerID, int lines) {
+        final int baseX = (16 * engine.nowPieceX) + receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+        final int baseY = (16 * engine.nowPieceY) + receiver.getFieldDisplayPositionX(engine, playerID) + 52;
+
+        int pieceXs = 0;
+        int pieceYs = 0;
+
+        for (int i = 0; i < engine.nowPieceObject.getMaxBlock(); ++i) {
+            pieceXs += baseX + (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] * 16) + 8;
+            pieceYs += baseY + (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] * 16) + 8;
+        }
+
+        pieceXs /= engine.nowPieceObject.getMaxBlock();
+        pieceYs /= engine.nowPieceObject.getMaxBlock();
+
+        final String pieceName = Piece.getPieceName(engine.nowPieceObject.id);
+        final DoubleVector basePosition = new DoubleVector(pieceXs, pieceYs, false);
+        final DoubleVector baseVelocity = new DoubleVector(0.0, -6.4, false);
+        final DoubleVector baseAcceleration = new DoubleVector(0.0, 9.80665 / 15.0, false);
+        final float startScale = 1f;
+        final float endScale = 2f;
+        final int maxLife = 60;
+        final int lifeOffset = 2;
+        final int colour = 0x00FFFFFF;
+        final boolean reverse = pieceXs < (receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (8 * engine.field.getWidth()));
+
+        final StringBuilder sb = new StringBuilder();
+
+        if (engine.field.isEmpty()) {
+            textEmitter.addString(
+                "BRAVO!",
+                new DoubleVector(
+                    receiver.getFieldDisplayPositionX(engine, playerID) + 4d + (8 * engine.field.getWidth()),
+                    receiver.getFieldDisplayPositionY(engine, playerID) + 52d + 32d,
+                    false
+                ), baseVelocity, baseAcceleration,
+                ObjectAlignment.MIDDLE_MIDDLE,
+                0, lifeOffset, maxLife,
+                EventReceiver.COLOR_YELLOW,
+                startScale, endScale * 1.5f,
+                colour, 255,
+                colour, 64,
+                reverse
+            );
+        }
+
+        if (lines == 0) {
+            if (engine.tspinez) {
+                sb.append("EZ-").append(pieceName);
+                textEmitter.addString(
+                    sb.toString(),
+                    basePosition, baseVelocity, baseAcceleration,
+                    ObjectAlignment.MIDDLE_MIDDLE,
+                    0, lifeOffset, maxLife,
+                    EventReceiver.COLOR_GREEN,
+                    startScale, endScale,
+                    colour, 255,
+                    colour, 64,
+                    reverse
+                );
+            } else if (engine.tspinmini) {
+                sb.append(pieceName).append("-MINI");
+                textEmitter.addString(
+                    sb.toString(),
+                    basePosition, baseVelocity, baseAcceleration,
+                    ObjectAlignment.MIDDLE_MIDDLE,
+                    0, lifeOffset, maxLife,
+                    EventReceiver.COLOR_GREEN,
+                    startScale, endScale,
+                    colour, 255,
+                    colour, 64,
+                    reverse
+                );
+            } else if (engine.tspin) {
+                sb.append(pieceName).append("-SPIN");
+                textEmitter.addString(
+                    sb.toString(),
+                    basePosition, baseVelocity, baseAcceleration,
+                    ObjectAlignment.MIDDLE_MIDDLE,
+                    0, lifeOffset, maxLife,
+                    EventReceiver.COLOR_PURPLE,
+                    startScale, endScale,
+                    colour, 255,
+                    colour, 64,
+                    reverse
+                );
+            }
+        } else {
+            String lineName = "SINGLE";
+            if (lines == 2) lineName = "DOUBLE";
+            else if (lines == 3) lineName = "TRIPLE";
+            else if (lines >= 4) lineName = "FOUR";
+
+            if (engine.tspinez) {
+                sb.append("EZ-").append(pieceName).append("-").append(lineName);
+                textEmitter.addString(
+                    sb.toString(),
+                    basePosition, baseVelocity, baseAcceleration,
+                    ObjectAlignment.MIDDLE_MIDDLE,
+                    0, lifeOffset, maxLife,
+                    EventReceiver.COLOR_ORANGE,
+                    startScale, endScale,
+                    colour, 255,
+                    colour, 64,
+                    reverse
+                );
+            } else if (engine.tspinmini) {
+                sb.append(pieceName).append("-").append(lineName).append("-M");
+                textEmitter.addString(
+                    sb.toString(),
+                    basePosition, baseVelocity, baseAcceleration,
+                    ObjectAlignment.MIDDLE_MIDDLE,
+                    0, lifeOffset, maxLife,
+                    EventReceiver.COLOR_ORANGE,
+                    startScale, endScale,
+                    colour, 255,
+                    colour, 64,
+                    reverse
+                );
+            } else if (engine.tspin) {
+                sb.append(pieceName).append("-").append(lineName);
+                textEmitter.addString(
+                    sb.toString(),
+                    basePosition, baseVelocity, baseAcceleration,
+                    ObjectAlignment.MIDDLE_MIDDLE,
+                    0, lifeOffset, maxLife,
+                    EventReceiver.COLOR_PINK,
+                    startScale, endScale,
+                    colour, 255,
+                    colour, 64,
+                    reverse
+                );
+            } else {
+                sb.append(lineName);
+                textEmitter.addString(
+                    lineName,
+                    basePosition, baseVelocity, baseAcceleration,
+                    ObjectAlignment.MIDDLE_MIDDLE,
+                    0, lifeOffset, maxLife,
+                    lines >= 4 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE,
+                    startScale, endScale,
+                    colour, 255,
+                    colour, 64,
+                    reverse
+                );
+            }
+        }
+
+        if (engine.b2b && engine.b2bcount > 1 && lines > 0) {
+            textEmitter.addString(
+                "B2B",
+                DoubleVector.sub(basePosition, new DoubleVector(0, 24, false)),
+                baseVelocity,
+                baseAcceleration,
+                ObjectAlignment.MIDDLE_MIDDLE,
+                -1 * ((lifeOffset * (sb.length() - 3)) / 2), lifeOffset, maxLife,
+                EventReceiver.COLOR_RED,
+                startScale, endScale,
+                colour, 255,
+                colour, 64,
+                reverse
+            );
+        }
+    }
+
     private static int abilityCharge(GameEngine engine, int baseCharge) {
         return engine.tspin ? 5 * baseCharge : baseCharge;
     }
 
     @Override
     public void calcScore(GameEngine engine, int playerID, int lines) {
+        addEventText(engine, playerID, lines);
+
         if (lines >= 1) {
             if (engine.field.isEmpty()) {
                 engine.playSE("bravo");
@@ -1201,7 +1401,10 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                 levelIncrease += 4 * lines * naturalLevelIncrement;
 
                 if (settings.perk.isActive()) {
-                    currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + abilityCharge(engine, settings.perk.restoredForFour));
+                    currentEnergy = Math.min(
+                        settings.perk.energyStore,
+                        currentEnergy + (int) (abilityCharge(engine, settings.perk.restoredForFour) * (lines / 4d))
+                    );
                 }
             } else if (lines == 4) {
                 levelIncrease += 12 * naturalLevelIncrement;
@@ -1283,11 +1486,13 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     gimmickSumMo1 = new Gimmicks.Dehydration(new Random(engine.randSeed + 3), LEVELS_APR, LEVELS_JUL);
                     descriptionToDraw = new DescriptionDraw(gimmickSumMo1);
                 } else if (engine.statistics.level >= LEVELS_MAY && engine.statistics.level < LEVELS_JUN) {
-                    // TODO
+                    gimmickSumMo2 = new Gimmicks.Mirage(badges);
+                    descriptionToDraw = new DescriptionDraw(gimmickSumMo2);
                 } else if (engine.statistics.level >= LEVELS_JUN && engine.statistics.level < LEVELS_JUL) {
                     // TODO
                 } else if (engine.statistics.level >= LEVELS_JUL && engine.statistics.level < LEVELS_AUG) {
                     gimmickSumMo1 = null;
+                    gimmickSumMo2 = null;
                     // TODO
                 } else if (engine.statistics.level >= LEVELS_AUG && engine.statistics.level < LEVELS_SEP) {
                     // TODO
@@ -1335,12 +1540,16 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             ++brokenSproutlings;
         }
 
-        if (gimmickSprMo3 != null && blk.color == Block.BLOCK_COLOR_GEM_ORANGE) {
-            badges.addSeasonBadges(
-                1,
-                settings.perk == SeasonPerk.SPRING_PASSIVE,
-                settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
-            );
+        if (gimmickSprMo3 != null) {
+            if (blk.color == Block.BLOCK_COLOR_GEM_ORANGE) {
+                badges.addSeasonBadges(
+                    1,
+                    settings.perk == SeasonPerk.SPRING_PASSIVE,
+                    settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
+                );
+            } else if (blk.color == Block.BLOCK_COLOR_GEM_PURPLE || blk.color == Block.BLOCK_COLOR_GEM_YELLOW) {
+                ++brokenFlorets;
+            }
         }
 
         if (gimmickSumMo1 != null && blk.getAttribute(Block.BLOCK_ATTRIBUTE_BONE)) {
@@ -1358,12 +1567,14 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             gimmickSumMo1.updateChance(engine, badges);
             gimmickSumMo1.updateNext(engine);
         }
+        if (gimmickSumMo2 != null) gimmickSumMo2.setAllowance(badges);
     }
 
     @Override
     public void callAndDrawBrokenBlocks(GameEngine engine, int playerID) {
         brokenSproutlings = 0;
         brokenBoneBlocks = 0;
+        brokenFlorets = 0;
 
         HasCustomLineClear.super.callAndDrawBrokenBlocks(engine, playerID);
 
@@ -1371,6 +1582,14 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         if (brokenSproutlings > 0) {
             badges.addSeasonBadges(
                 brokenSproutlings + brokenSproutlings / 9,
+                settings.perk == SeasonPerk.SPRING_PASSIVE,
+                settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
+            );
+        }
+
+        if (brokenFlorets > 0) {
+            badges.addSeasonBadges(
+                brokenFlorets,
                 settings.perk == SeasonPerk.SPRING_PASSIVE,
                 settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
             );
@@ -1530,6 +1749,8 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         }
 
         if (!engine.lagStop) {
+            textEmitter.updateAll();
+
             if (engine.stat == GameEngine.STAT_CUSTOM && engine.gameStarted && (fadeProgress < 240 || customState == CustomState.FINAL_REWIND)) {
                 vortex.add(bvr, bvr.nextInt(8) + 1, engine.getSkin());
                 vortex.add(bvr, bvr.nextInt(8) + 1, engine.getSkin());
@@ -1609,7 +1830,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     }
 
     private void renderExtraBoardInfo(GameEngine engine, int playerID) {
-        // TODO: Fill this in when the gimmicks are added.
+        textEmitter.drawAll(engine);
     }
 
     @Override
@@ -1712,6 +1933,16 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     0, 18,
                     false,
                     gimmickSumMo1.getSummary(),
+                    ObjectAlignment.TOP_LEFT
+                );
+            }
+
+            if (gimmickSumMo2 != null) {
+                GameTextUtilities.drawAlignedScoreTextBlock(
+                    receiver, engine, playerID, false,
+                    0, 19,
+                    false,
+                    gimmickSumMo2.getSummary(),
                     ObjectAlignment.TOP_LEFT
                 );
             }

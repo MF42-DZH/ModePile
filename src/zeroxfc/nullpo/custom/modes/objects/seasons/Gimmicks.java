@@ -49,16 +49,18 @@ public class Gimmicks {
 
     // There aer [sic] only 11 main game gimmicks because Spring 1st month (February) has no gimmick.
 
-    // MAR - Sproutlings (Gem Garbage, can be delayed by badges)
+    // MAR - Sproutlings (Gem Garbage, sped up by badges for more badge gain)
     // APR - Flourishing Blooms (Gems bombs occasionally populate the field, exploding into non-exploding gems, countdowns decreased by badges)
     // MAY - Dehydration (Bone blocks, you get less with more badges, but more as you approach the end of July)
-    // JUN - Shortage (every nth I-piece is replaced with another piece, increase n with more badges)
+    // JUN - Mirage (every nth I-piece is skipped, increase n with more badges)
     // JUL - Into The Fire (Fast Speed (~Death 200-500), lock delay increased with badges)
     // AUG - Fall's Call (Kiwamemichi Gravity (5G once it kicks in) + VERY low ARE, 0G -> 5G can be delayed with badges)
     // SEP - Flowing Winds (a player-affectable version of a certain other gimmick spinning people around)
     // OCT - Ghouls Afoot (Stack Outline Only + Flashlight around piece and a scrolling light around the stack (more badges = bigger light))
-    // NOV - Packed Ice (Lines only clear every 2 instances of complete lines being formed, clearing > 4 lines grants massive bonuses)
-    // DEC - Whiteout (Pieces all turn white, and a haze obscures the screen)
+    // NOV - Whiteout (Pieces all turn white, and a haze obscures the screen)
+
+    // TODO: Change December's gimmick, this is far too annoying.
+    // DEC - Packed Ice (Lines only clear every 2 instances of complete lines being formed, clearing > 4 lines grants massive bonuses)
     // JAN - Zero Celsius (1G, an easier version of a certain gimmick ABSOLUTEly terrorising people, interval can be delayed with badges)
 
     // There will also be 4 gimmicks across the credits roll as you pass through the months.
@@ -71,7 +73,6 @@ public class Gimmicks {
     // Spring has relatively relaxed gimmicks.
     public static class Sproutlings implements HasDescription {
         // Basically Speed Mania 2's rising garbage with a slight twist.
-        // No delaying garbage by clearing lines, and sometimes doesn't copy the bottom.
 
         private int counter;
         private int countdown;
@@ -143,6 +144,10 @@ public class Gimmicks {
                     ATTRS,
                     1
                 );
+
+                for (int x = 0; x < engine.field.getWidth(); ++x) {
+                    engine.field.getBlock(x, engine.field.getHeightWithoutHurryupFloor() - 1).pieceNum = engine.statistics.time;
+                }
 
                 engine.playSE("garbage");
             }
@@ -234,7 +239,7 @@ public class Gimmicks {
             for (int y = (-1 * engine.field.getHiddenHeight()); y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
                 for (int x = 0; x < engine.field.getWidth(); ++x) {
                     final Block blk = engine.field.getBlock(x, y);
-                    if (!blk.isEmpty() && blk.color != Block.BLOCK_COLOR_GEM_ORANGE) {
+                    if (!blk.isEmpty() && blk.color != Block.BLOCK_COLOR_GEM_ORANGE && blk.color != Block.BLOCK_COLOR_GEM_GREEN) {
                         blocks.add(new BlockInfo(x, y, engine.field.getBlock(x, y)));
                     }
                 }
@@ -306,6 +311,8 @@ public class Gimmicks {
         }
     }
 
+    // Summer's gimmicks come hot and fast.
+    // N.B. the speed of the mode is also pretty fast in summer
     public static class Dehydration implements HasDescription {
         private final Random random;
         private final int seasonStartLv;
@@ -324,7 +331,7 @@ public class Gimmicks {
             final double progress = (engine.statistics.level - seasonStartLv) / (double) (seasonEndLv - seasonStartLv);
             final double baseChance = Interpolation.lerp(0.975, 1.0, progress);
 
-            chance = Math.pow(baseChance, Math.floor(badges.getBadges() / 20d));
+            chance = Math.pow(baseChance, badges.getBadges() / 20d);
         }
 
         @Override
@@ -375,6 +382,89 @@ public class Gimmicks {
 
             piece.setAttribute(Block.BLOCK_ATTRIBUTE_BONE, true);
             engine.playSE("movefail");
+        }
+    }
+
+    public static class Mirage implements HasDescription {
+        private int counter = 0;
+        private int currentAllowance;
+
+        public Mirage(Badges badges) {
+            setAllowance(badges);
+        }
+
+        public void setAllowance(Badges badges) {
+            // Start at 2, +1 for every 75 badges.
+
+            final int usedBadges = badges.getBadges() / 10;
+            currentAllowance = 2 + (usedBadges / 75);
+        }
+
+        // Call this right before a piece is spawned (but only if the piece did not come out of hold).
+        public boolean replaceQueue(GameEngine engine) {
+            // Only counts I-pieces if they're in the last position of the visible queue.
+            if (HasCustomOnMove.getNextId(engine, engine.nextPieceCount) == Piece.PIECE_I) {
+                ++counter;
+            }
+
+            if (counter > currentAllowance) {
+                // Reset counter.
+                counter = 0;
+
+                // Skip I-piece.
+                engine.nextPieceCount++;
+
+                engine.playSE("movefail");
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public String getName() {
+            return "MIRAGE";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of(String.valueOf(currentAllowance), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" REAL)", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "THE INTERTWINING OF THE HOT, ARID SURFACE AIR",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "AND THE COOL, MILD AIR ABOVE CREATES DECEPTIVE",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "ILLUSIONS. KEEP ON YOUR TOES AND DO NOT GET",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "TOO COMPLACENT. MIND YOUR WELLS.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+
         }
     }
 }

@@ -1,5 +1,6 @@
 package zeroxfc.nullpo.custom.modes.objects.seasons;
 
+import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.util.CustomProperties;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.types.ModeSettings;
@@ -19,9 +20,13 @@ public class SeasonsSettings extends ModeSettings {
     private final String perkProp = propPath("perk");
     public SeasonPerk perk;
 
+    private final String spinTypeProp = propPath("spinType");
+    public int spinType;
+
     private final String playerNameProp = propPath("playerName");
     public String playerName;
 
+    // Only available for logged-in players.
     public final String hasCompletedGameProp = propPath("hasCompletedGame");
     public boolean hasCompletedGame;
 
@@ -36,6 +41,7 @@ public class SeasonsSettings extends ModeSettings {
     public void loadSetting(CustomProperties prop, boolean isReplay) {
         perk = SeasonPerk.values()[prop.getProperty(perkProp, SeasonPerk.SPRING_PASSIVE.ordinal())];
         fullGhost = prop.getProperty(fullGhostProp, false);
+        spinType = prop.getProperty(spinTypeProp, GameEngine.SPINTYPE_4POINT);
 
         // Version props are not saved on the player.
         version = isReplay ? prop.getProperty(versionProp, 0) : currentVersion;
@@ -46,6 +52,7 @@ public class SeasonsSettings extends ModeSettings {
     public void saveSetting(CustomProperties prop, boolean forReplay) {
         prop.setProperty(perkProp, perk.ordinal());
         prop.setProperty(fullGhostProp, fullGhost);
+        prop.getProperty(spinTypeProp, spinType);
 
         // Version props are not saved on the player.
         prop.setProperty(versionProp, currentVersion);
@@ -58,6 +65,8 @@ public class SeasonsSettings extends ModeSettings {
 
         perk = SeasonPerk.values()[prop.getProperty(perkProp, SeasonPerk.SPRING_PASSIVE.ordinal())];
         fullGhost = prop.getProperty(fullGhostProp, false);
+        spinType = prop.getProperty(spinTypeProp, GameEngine.SPINTYPE_4POINT);
+
         hasCompletedGame = prop.getProperty(hasCompletedGameProp, false);
     }
 
@@ -67,6 +76,8 @@ public class SeasonsSettings extends ModeSettings {
 
         prop.setProperty(perkProp, perk.ordinal());
         prop.setProperty(fullGhostProp, fullGhost);
+        prop.getProperty(spinTypeProp, spinType);
+
         prop.setProperty(hasCompletedGameProp, hasCompletedGame);
     }
 
