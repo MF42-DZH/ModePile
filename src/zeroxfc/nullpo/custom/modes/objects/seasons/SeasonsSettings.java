@@ -30,6 +30,9 @@ public class SeasonsSettings extends ModeSettings {
     public final String hasCompletedGameProp = propPath("hasCompletedGame");
     public boolean hasCompletedGame;
 
+    // TODO: add a separate system for storing if players have seen the roll, to give them the ability to skip
+    // TODO: achievements?
+
     public SeasonsSettings(int currentVersion, ProfileProperties playerProperties) {
         super(PROP_ROOT, playerProperties);
 
@@ -52,7 +55,7 @@ public class SeasonsSettings extends ModeSettings {
     public void saveSetting(CustomProperties prop, boolean forReplay) {
         prop.setProperty(perkProp, perk.ordinal());
         prop.setProperty(fullGhostProp, fullGhost);
-        prop.getProperty(spinTypeProp, spinType);
+        prop.setProperty(spinTypeProp, spinType);
 
         // Version props are not saved on the player.
         prop.setProperty(versionProp, currentVersion);

@@ -3,14 +3,17 @@ package zeroxfc.nullpo.custom.modes.objects.seasons;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.IntFunction;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Piece;
+import mu.nu.nullpo.game.component.SpeedParam;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
+import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomOnMove;
 
 public class Gimmicks {
@@ -77,8 +80,8 @@ public class Gimmicks {
         private int counter;
         private int countdown;
 
-        public Sproutlings(Badges badges) {
-            setCountdown(badges);
+        public Sproutlings(Badges badges, boolean perkBoost) {
+            setCountdown(badges, perkBoost);
         }
 
         @Override
@@ -121,12 +124,14 @@ public class Gimmicks {
             );
         }
 
-        public void setCountdown(Badges badges) {
+        public void setCountdown(Badges badges, boolean perkBoost) {
             // Every 30 badges will decrease the countdown by 1.
             // The default countdown is 12
 
             final int usedBadges = badges.getBadges() / 10;
-            countdown = Math.max(4, 12 - (usedBadges / 30));
+            final int denominator = perkBoost ? 15 : 30;
+
+            countdown = Math.max(4, 12 - (usedBadges / denominator));
         }
 
         private static final int ATTRS = Block.BLOCK_ATTRIBUTE_GARBAGE | Block.BLOCK_ATTRIBUTE_VISIBLE | Block.BLOCK_ATTRIBUTE_OUTLINE;
@@ -158,20 +163,22 @@ public class Gimmicks {
         private final Random random;
         private int currentCountdown;
 
-        public FlourishingBlooms(Random random, Badges badges) {
+        public FlourishingBlooms(Random random, Badges badges, boolean perkBoost) {
             this.random = random;
-            setCountdown(badges);
+            setCountdown(badges, perkBoost);
         }
 
         public int getCurrentCountdown() {
             return currentCountdown;
         }
 
-        public void setCountdown(Badges badges) {
+        public void setCountdown(Badges badges, boolean perkBoost) {
             // Every 40 badges decreases the countdown by 1.
 
             final int usedBadges = badges.getBadges() / 10;
-            currentCountdown = Math.max(4, 12 - (usedBadges / 40));
+            final int denominator = perkBoost ? 20 : 40;
+
+            currentCountdown = Math.max(4, 12 - (usedBadges / denominator));
         }
 
         @Override
@@ -258,6 +265,7 @@ public class Gimmicks {
         // Call in first frame of ARE.
         public void explode(GameEngine engine) {
             final List<BlockInfo> blocks = new LinkedList<>();
+            final List<BlockInfo> toFill = new LinkedList<>();
 
             for (int y = (-1 * engine.field.getHiddenHeight()); y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
                 for (int x = 0; x < engine.field.getWidth(); ++x) {
@@ -279,6 +287,8 @@ public class Gimmicks {
             final int size = 2;
 
             for (BlockInfo bi : blocks) {
+                toFill.clear();
+
                 bi.blk.color = bi.blk.secondaryColor;
                 bi.blk.secondaryColor = 0;
 
@@ -287,23 +297,17 @@ public class Gimmicks {
                         if (x < 0 || x >= engine.field.getWidth() || y < (-1 * engine.field.getHiddenHeight()) || y >= engine.field.getHeightWithoutHurryupFloor()) continue;
 
                         final int dist = Math.abs(y - bi.y) + Math.abs(x - bi.x);
-                        if (dist > size) continue;
+                        if (dist > size || engine.field.getBlockEmpty(x, y)) continue;
 
                         FieldManipulation.pushColumnUpFrom(engine.field, x, y);
+
+                        final Block selected = dist <= 1 ? innerGem : outerGem;
+                        toFill.add(new BlockInfo(x, y, new Block(selected)));
                     }
                 }
 
-                for (int y = bi.y - size; y <= bi.y + size; ++y) {
-                    for (int x = bi.x - size; x <= bi.x + size; ++x) {
-                        if (x < 0 || x >= engine.field.getWidth() || y < (-1 * engine.field.getHiddenHeight()) || y >= engine.field.getHeightWithoutHurryupFloor()) continue;
-
-                        final int dist = Math.abs(y - bi.y) + Math.abs(x - bi.x);
-                        if (dist > size) continue;
-
-                        final Block selected = dist <= 1 ? innerGem : outerGem;
-
-                        engine.field.setBlock(x, y, new Block(selected));
-                    }
+                for (BlockInfo fillBi : toFill) {
+                    engine.field.setBlock(fillBi.x, fillBi.y, fillBi.blk);
                 }
             }
 
@@ -327,11 +331,12 @@ public class Gimmicks {
             this.seasonEndLv = seasonEndLv;
         }
 
-        public void updateChance(GameEngine engine, Badges badges) {
+        public void updateChance(GameEngine engine, Badges badges, boolean perkBoost) {
             final double progress = (engine.statistics.level - seasonStartLv) / (double) (seasonEndLv - seasonStartLv);
             final double baseChance = Interpolation.lerp(0.975, 1.0, progress);
 
-            chance = Math.pow(baseChance, badges.getBadges() / 20d);
+            final int denominator = perkBoost ? 10 : 20;
+            chance = Math.pow(baseChance, badges.getBadges() / (double) denominator);
         }
 
         @Override
@@ -389,15 +394,17 @@ public class Gimmicks {
         private int counter = 0;
         private int currentAllowance;
 
-        public Mirage(Badges badges) {
-            setAllowance(badges);
+        public Mirage(Badges badges, boolean perkBoost) {
+            setAllowance(badges, perkBoost);
         }
 
-        public void setAllowance(Badges badges) {
-            // Start at 2, +1 for every 75 badges.
+        public void setAllowance(Badges badges, boolean perkBoost) {
+            // Start at 2, +1 for every 80 badges.
 
             final int usedBadges = badges.getBadges() / 10;
-            currentAllowance = 2 + (usedBadges / 75);
+            final int denominator = perkBoost ? 40 : 80;
+
+            currentAllowance = 2 + (usedBadges / denominator);
         }
 
         // Call this right before a piece is spawned (but only if the piece did not come out of hold).
@@ -464,7 +471,242 @@ public class Gimmicks {
                     EventReceiver.COLOR_WHITE, 0.75f
                 )
             );
+        }
+    }
 
+    public static class IntoTheFire implements HasDescription {
+        private static final IntFunction<SpeedParam> SPEED_TABLE = SpeedTableBuilder.createNew()
+            .addTerminalGravity(-1, 256)
+            .addARE(14, 2500)
+            .addARE(8, 5000)
+            .addARE(7, 7500)
+            .addTerminalARE(6)
+            .addLineARE(8, 5000)
+            .addLineARE(7, 7500)
+            .addTerminalLineARE(6)
+            .addDAS(11, 2500)
+            .addDAS(10, 5000)
+            .addTerminalDAS(8)
+            .addLockDelay(22, 2500)
+            .addLockDelay(18, 5000)
+            .addTerminalLockDelay(15)
+            .addLineDelay(6, 5000)
+            .addLineDelay(5, 7500)
+            .addTerminalLineDelay(4)
+            .buildSpeedTable();
+
+        private final int startLv;
+        private final int endLv;
+        private int currentLdBoost;
+
+        public IntoTheFire(int startLv, int endLv) {
+            this.startLv = startLv;
+            this.endLv = endLv;
+        }
+
+        private int getLockDelayBoost(Badges badges, boolean perkBoost) {
+            // Every 50 badges, increase lock delay by 1f.
+            final int usedBadges = badges.getBadges() / 10;
+            final int denominator = perkBoost ? 25 : 50;
+
+            currentLdBoost = usedBadges / denominator;
+            return currentLdBoost;
+        }
+
+        public SpeedParam getSpeed(GameEngine engine, Badges badges, boolean perkBoost) {
+            final double usedProp = (engine.statistics.level - startLv) / (double) (endLv - startLv);
+            final int usedLv = (int) Math.floor(usedProp * 10000d);
+
+            final SpeedParam baseParam = SPEED_TABLE.apply(usedLv);
+            baseParam.lockDelay += getLockDelayBoost(badges, perkBoost);
+
+            return baseParam;
+        }
+
+        @Override
+        public String getName() {
+            return "INTO THE FIRE";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of("+" + currentLdBoost + "F", EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(")", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "WILDFIRES IGNITE AND BURN AROUND YOU.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "DON'T GET CAUGHT IN THE HEAT OF THE MOMENT.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "FIND YOUR STRENGTH TO ESCAPE THIS INFERNO!",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+        }
+    }
+
+    // Autumn's gimmicks range from movement, to spooks.
+    public static class FallsCall implements HasDescription {
+        private int currentDelay;
+
+        public int getFallDelay(Badges badges, boolean perkBoost) {
+            // Default delay is 10.
+            // Increase every 25 badges.
+
+            final int usedBadges = badges.getBadges();
+            final int denominator = perkBoost ? 125 : 250;
+
+            currentDelay = 10 + (usedBadges / denominator);
+            return currentDelay;
+        }
+
+        @Override
+        public String getName() {
+            return "FALL'S CALL";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_ORANGE),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of(currentDelay + "F", EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" DELAY)", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_ORANGE),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "WITHIN THE DIFFICULT ROADS, THE CALL OF THE",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "AUTUMN SEASON RESONATES HAUNTINGLY. GRAVITY",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "TWISTS AND TURNS IN UNEXPECTED WAYS.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+        }
+    }
+
+    public static class FlowingWinds implements HasDescription {
+        private final Random random;
+        private final int seasonStartLv;
+        private final int seasonEndLv;
+
+        private double chance; // 0 - 1
+
+        // Set the badge chance manually!
+        public FlowingWinds(Random random, int seasonStartLv, int seasonEndLv) {
+            this.random = random;
+            this.seasonStartLv = seasonStartLv;
+            this.seasonEndLv = seasonEndLv;
+        }
+
+        public void updateChance(GameEngine engine, Badges badges, boolean perkBoost) {
+            final double progress = (engine.statistics.level - seasonStartLv) / (double) (seasonEndLv - seasonStartLv);
+            final double baseChance = Interpolation.lerp(0.9925, 1.0, progress);
+
+            final int denominator = perkBoost ? 10 : 20;
+
+            // We don't want the max chance to be 1. That's too annoying.
+            chance = Math.pow(baseChance, badges.getBadges() / (double) denominator) * 0.75;
+        }
+
+        @Override
+        public String getName() {
+            return "FLOWING WINDS";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_ORANGE),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of(String.format("%.02f", chance * 100d) + "%", EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(")", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_ORANGE),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "THE WINDS BEGIN TO PICK UP, THE LEAVES ON THE",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "TREES YIELDING TO ITS STRONG, YET FLOWING NATURE.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "BE CAREFUL, AS YOU WILL ALSO NEED TO ADJUST",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "WHEN THE WINDS BLOW IN UNFAVOURABLE DIRECTIONS.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+        }
+
+        public void updateNext(GameEngine engine) {
+            if (random.nextDouble() > chance) return;
+
+            final Piece piece = HasCustomOnMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
+            if (piece == null) return;
+
+            int newRotation = engine.ruleopt.pieceDefaultDirection[piece.id];
+            while (newRotation == engine.ruleopt.pieceDefaultDirection[piece.id]) newRotation = random.nextInt(Piece.DIRECTION_COUNT);
+
+            piece.direction = newRotation;
+            piece.setColor(new int[] {
+                Block.BLOCK_COLOR_RAINBOW,
+                engine.ruleopt.pieceColor[piece.id],
+                engine.ruleopt.pieceColor[piece.id],
+                engine.ruleopt.pieceColor[piece.id]
+            });
+
+            engine.playSE("rotate");
         }
     }
 }

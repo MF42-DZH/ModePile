@@ -22,7 +22,7 @@ public class BlockVortex {
         final DoubleVector end = new DoubleVector(Math.sqrt(400d * 400d + 320d * 320d), origin.getDirection(), true);
         final DoubleVector control = new DoubleVector(
             80 + rand.nextDouble() * 240,
-            origin.getDirection() + (Math.PI * rand.nextDouble() * 0.5),
+            origin.getDirection() + (Math.PI * rand.nextDouble() * 0.875),
             true
         );
 
@@ -41,7 +41,7 @@ public class BlockVortex {
     }
 
     public void update() {
-        instances.removeIf(bi -> (bi.progress++) > MAX_PROGRESS);
+        instances.removeIf(bi -> (bi.progress++) > bi.maxProgress);
     }
 
     public void draw(RendererExtension rendererExtension, EventReceiver receiver) {
@@ -51,6 +51,8 @@ public class BlockVortex {
     }
 
     private static class BlockInstance {
+        private final Block blockForDraw;
+
         public final int colour;
         public final int blockSkin;
 
@@ -64,6 +66,7 @@ public class BlockVortex {
         public BlockInstance(int colour, int blockSkin) {
             this.colour = colour;
             this.blockSkin = blockSkin;
+            this.blockForDraw = new Block(colour, blockSkin);
 
             progress = 0;
         }
@@ -73,17 +76,17 @@ public class BlockVortex {
 
             final int x1 = Interpolation.lerp(startX, controlX, lerpVal);
             final int x2 = Interpolation.lerp(controlX, endX, lerpVal);
-            final int anchorX = (int) Interpolation.sineStep(x1, x2, lerpVal);
+            final int anchorX = Interpolation.lerp(x1, x2, lerpVal);
 
             final int y1 = Interpolation.lerp(startY, controlY, lerpVal);
             final int y2 = Interpolation.lerp(controlY, endY, lerpVal);
-            final int anchorY = (int) Interpolation.sineStep(y1, y2, lerpVal);
+            final int anchorY = Interpolation.lerp(y1, y2, lerpVal);
 
             ext.drawAlignedScaledBlock(
                 receiver,
                 anchorX, anchorY,
                 ObjectAlignment.MIDDLE_MIDDLE,
-                colour, blockSkin,
+                blockForDraw.getDrawColor(), blockSkin,
                 false,
                 MathHelper.clamp(Interpolation.lerp(0.625f, 0.125f, lerpVal), 0.0f, 0.5f),
                 1f,

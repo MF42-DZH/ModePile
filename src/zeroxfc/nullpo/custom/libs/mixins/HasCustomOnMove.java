@@ -142,7 +142,7 @@ public interface HasCustomOnMove {
         // Up下同時押し flag
         boolean updown = engine.ctrl.isPress(engine.getUp()) && engine.ctrl.isPress(engine.getDown());
 
-        if (inInstantMoveAndRotation(engine, playerID)) return true;
+        if (inInstantMoveHoldAndRotation(engine, playerID)) return true;
 
         boolean sidemoveflag = false;    // この frame に横移動したらtrue
 
@@ -299,7 +299,7 @@ public interface HasCustomOnMove {
     }
 
     // Runs when processing IHS, IRS, and general rotations.
-    default boolean inInstantMoveAndRotation(GameEngine engine, int playerID) {
+    default boolean inInstantMoveHoldAndRotation(GameEngine engine, int playerID) {
         if (!engine.dasInstant) {
             // ホールド
             if (engine.ctrl.isPush(Controller.BUTTON_D) || engine.initialHoldFlag) {

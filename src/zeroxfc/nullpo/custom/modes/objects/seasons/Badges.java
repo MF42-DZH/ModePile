@@ -82,8 +82,9 @@ public class Badges {
     }
 
     // Divide by 10 to get whole count!
+    // AC Badges count as 5 for gimmicks and titles.
     public int getBadges() {
-        return ac + fours + spins + season;
+        return (ac * 5) + fours + spins + season;
     }
 
     public int getLevelBonus() {
