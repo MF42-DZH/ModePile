@@ -21,8 +21,8 @@ public class BlockVortex {
         final DoubleVector origin = new DoubleVector(40, 2 * Math.PI * rand.nextDouble(), true);
         final DoubleVector end = new DoubleVector(Math.sqrt(400d * 400d + 320d * 320d), origin.getDirection(), true);
         final DoubleVector control = new DoubleVector(
-            80 + rand.nextDouble() * 240,
-            origin.getDirection() + (Math.PI * rand.nextDouble() * 0.875),
+            120 + rand.nextDouble() * 240,
+            origin.getDirection() + (Math.PI * rand.nextDouble() * 0.75),
             true
         );
 

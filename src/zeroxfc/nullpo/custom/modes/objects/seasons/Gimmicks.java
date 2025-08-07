@@ -96,7 +96,7 @@ public class Gimmicks {
                 GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_GREEN),
                 GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
                 GameTextUtilities.Text.of(String.valueOf(countdown), EventReceiver.COLOR_YELLOW),
-                GameTextUtilities.Text.of("P)", EventReceiver.COLOR_RED)
+                GameTextUtilities.Text.of(" PIECES)", EventReceiver.COLOR_RED)
             );
         }
 
@@ -272,6 +272,7 @@ public class Gimmicks {
                     final Block blk = engine.field.getBlock(x, y);
                     if (blk.color == Block.BLOCK_COLOR_GEM_ORANGE && (++blk.countdown >= currentCountdown)) {
                         blocks.add(new BlockInfo(x, y, blk));
+                        blk.countdown = 0;
                     }
                 }
             }
@@ -410,7 +411,9 @@ public class Gimmicks {
         // Call this right before a piece is spawned (but only if the piece did not come out of hold).
         public boolean replaceQueue(GameEngine engine) {
             // Only counts I-pieces if they're in the last position of the visible queue.
-            if (HasCustomOnMove.getNextId(engine, engine.nextPieceCount) == Piece.PIECE_I) {
+            final Piece current = HasCustomOnMove.getNextObject(engine, engine.nextPieceCount);
+
+            if (current.id == Piece.PIECE_I && current.block[0].item >= 0) {
                 ++counter;
             }
 
@@ -569,13 +572,13 @@ public class Gimmicks {
         private int currentDelay;
 
         public int getFallDelay(Badges badges, boolean perkBoost) {
-            // Default delay is 10.
+            // Default delay is 6.
             // Increase every 25 badges.
 
             final int usedBadges = badges.getBadges();
             final int denominator = perkBoost ? 125 : 250;
 
-            currentDelay = 10 + (usedBadges / denominator);
+            currentDelay = 6 + (usedBadges / denominator);
             return currentDelay;
         }
 
@@ -641,7 +644,7 @@ public class Gimmicks {
             final int denominator = perkBoost ? 10 : 20;
 
             // We don't want the max chance to be 1. That's too annoying.
-            chance = Math.pow(baseChance, badges.getBadges() / (double) denominator) * 0.75;
+            chance = Math.pow(baseChance, badges.getBadges() / (double) denominator) * 0.8;
         }
 
         @Override
@@ -698,9 +701,12 @@ public class Gimmicks {
             int newRotation = engine.ruleopt.pieceDefaultDirection[piece.id];
             while (newRotation == engine.ruleopt.pieceDefaultDirection[piece.id]) newRotation = random.nextInt(Piece.DIRECTION_COUNT);
 
+            // This uniquely identifies that this piece has been rotated.
+            for (Block blk : piece.block) blk.bonusValue = (newRotation << 1) + 1;
+
             piece.direction = newRotation;
             piece.setColor(new int[] {
-                Block.BLOCK_COLOR_RAINBOW,
+                Block.BLOCK_COLOR_GEM_RAINBOW,
                 engine.ruleopt.pieceColor[piece.id],
                 engine.ruleopt.pieceColor[piece.id],
                 engine.ruleopt.pieceColor[piece.id]

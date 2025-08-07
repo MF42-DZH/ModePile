@@ -85,11 +85,11 @@ public interface HasCustomOnMove {
 
         // Extend queue if necessary and make room:
         while (offset >= engine.nextPieceArrayID.length) {
-            extendRandomizerArray(engine, Math.max(70, pieceIDs.length * 2));
+            extendRandomizerArray(engine, Math.max(16, pieceIDs.length * 2));
         }
 
         if (engine.nextPieceArrayID.length < (engine.nextPieceArraySize + pieceIDs.length)) {
-            extendRandomizerArray(engine, Math.max(70, pieceIDs.length * 2));
+            extendRandomizerArray(engine, Math.max(16, pieceIDs.length * 2));
         }
 
         // Move the next pieces over by the number of pieces added.
@@ -104,6 +104,29 @@ public interface HasCustomOnMove {
         }
 
         engine.nextPieceArraySize += pieceIDs.length;
+    }
+
+    // Removes a piece from the next queue entirely.
+    static void removeFromNext(GameEngine engine, int indexToRemove) {
+        if (indexToRemove < 0 || indexToRemove >= engine.nextPieceArraySize) return;
+
+        System.arraycopy(
+            engine.nextPieceArrayID,
+            indexToRemove + 1,
+            engine.nextPieceArrayID,
+            indexToRemove,
+            engine.nextPieceArraySize - indexToRemove - 1
+        );
+
+        System.arraycopy(
+            engine.nextPieceArrayObject,
+            indexToRemove + 1,
+            engine.nextPieceArrayObject,
+            indexToRemove,
+            engine.nextPieceArraySize - indexToRemove - 1
+        );
+
+        --engine.nextPieceArraySize;
     }
 
     // "Enhanced" versions of equivalent methods in GameEngine. Instead of looping over the next queue, they instead extend
