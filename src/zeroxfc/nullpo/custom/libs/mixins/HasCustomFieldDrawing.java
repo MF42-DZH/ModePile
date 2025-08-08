@@ -5,7 +5,6 @@ import java.util.function.IntSupplier;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
-import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 
 // Mix this into gamemode classes to add flexible custom field drawing.
 // Make sure to set engine.isVisible to false, and set the current background to -1.
@@ -14,14 +13,21 @@ import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
 public interface HasCustomFieldDrawing {
     class FrameDrawingParameters {
         // Both of these are expected to return RGB24 in the lower 24 bits.
-        private final IntBinaryOperator frameColouringFunction;
-        private final IntSupplier meterColouringFunction;
+        public final IntBinaryOperator outerFrameColouringFunction;
+        public final IntBinaryOperator innerFrameColouringFunction;
+        public final IntSupplier meterColouringFunction;
 
-        public FrameDrawingParameters(IntBinaryOperator frameColouringFunction, IntSupplier meterColouringFunction) {
-            // Only the frame colouring function needs to be not null when this is instantiated.
-            assert (frameColouringFunction != null);
+        public FrameDrawingParameters(
+            IntBinaryOperator outerFrameColouringFunction,
+            IntBinaryOperator innerFrameColouringFunction,
+            IntSupplier meterColouringFunction
+        ) {
+            // Only the frame colouring functions needs to be not null when this is instantiated.
+            assert (outerFrameColouringFunction != null);
+            assert (innerFrameColouringFunction != null);
 
-            this.frameColouringFunction = frameColouringFunction;
+            this.outerFrameColouringFunction = outerFrameColouringFunction;
+            this.innerFrameColouringFunction = innerFrameColouringFunction;
             this.meterColouringFunction = meterColouringFunction;
         }
     }
@@ -70,31 +76,13 @@ public interface HasCustomFieldDrawing {
             if (params == null) {
                 rendererExtension.drawFrame(receiver, engine, offsetX, offsetY + 48, engine.displaysize);
             } else {
-                if (params.meterColouringFunction == null) {
-                    rendererExtension.drawCustomFrame(receiver, engine, offsetX, offsetY + 48, engine.displaysize, params.frameColouringFunction);
-                } else {
-                    final int meterColourRaw = params.meterColouringFunction.getAsInt();
-                    final int red = (meterColourRaw >>> 16) & 0xFF;
-                    final int green = (meterColourRaw >>> 8) & 0xFF;
-                    final int blue = meterColourRaw & 0xFF;
-
-                    rendererExtension.drawCustomFrame(receiver, engine, offsetX, offsetY + 48, engine.displaysize, params.frameColouringFunction, red, green, blue);
-                }
+                rendererExtension.drawCustomFrame(receiver, engine, offsetX, offsetY + 48, engine.displaysize, params);
             }
         } else {
             if (params == null) {
                 rendererExtension.drawFrame(receiver, engine, offsetX, offsetY, -1);
             } else {
-                if (params.meterColouringFunction == null) {
-                    rendererExtension.drawCustomFrame(receiver, engine, offsetX, offsetY, -1, params.frameColouringFunction);
-                } else {
-                    final int meterColourRaw = params.meterColouringFunction.getAsInt();
-                    final int red = (meterColourRaw >>> 16) & 0xFF;
-                    final int green = (meterColourRaw >>> 8) & 0xFF;
-                    final int blue = meterColourRaw & 0xFF;
-
-                    rendererExtension.drawCustomFrame(receiver, engine, offsetX, offsetY, -1, params.frameColouringFunction, red, green, blue);
-                }
+                rendererExtension.drawCustomFrame(receiver, engine, offsetX, offsetY, -1, params);
             }
         }
 

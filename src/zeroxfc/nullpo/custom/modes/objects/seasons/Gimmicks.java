@@ -61,9 +61,7 @@ public class Gimmicks {
     // SEP - Flowing Winds (a player-affectable version of a certain other gimmick spinning people around)
     // OCT - Ghouls Afoot (Stack Outline Only + Flashlight around piece and a scrolling light around the stack (more badges = bigger light))
     // NOV - Whiteout (Pieces all turn white, and a haze obscures the screen)
-
-    // TODO: Change December's gimmick, this is far too annoying.
-    // DEC - Packed Ice (Lines only clear every 2 instances of complete lines being formed, clearing > 4 lines grants massive bonuses)
+    // DEC - Snow Mounds (HEBO HIDDEN, slowed with badges)
     // JAN - Zero Celsius (1G, an easier version of a certain gimmick ABSOLUTEly terrorising people, interval can be delayed with badges)
 
     // There will also be 4 gimmicks across the credits roll as you pass through the months.
@@ -713,6 +711,83 @@ public class Gimmicks {
             });
 
             engine.playSE("rotate");
+        }
+    }
+
+    public static class GhoulsAfoot implements HasDescription {
+        private int bonusGap;
+
+        public GhoulsAfoot(Badges badges, boolean perkBoost) {
+            updateBonusGap(badges, perkBoost);
+        }
+
+        public void updateBonusGap(Badges badges, boolean perkBoost) {
+            final int usedBadges = badges.getBadges();
+            final int denominator = perkBoost ? 80 : 160;
+
+            bonusGap = usedBadges / denominator;
+        }
+
+        public void renderFlashlight(EventReceiver receiver, GameEngine engine, int playerID, PrimitiveDrawingHook drawing) {
+            final int minX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+            final int maxX = minX + (engine.field.getWidth() * 16);
+            final int minY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+            final int maxY = minY + (engine.field.getHeight() * 16);
+
+            if (engine.stat != GameEngine.STAT_MOVE) {
+                drawing.drawRectangle(receiver, minX, minY, maxX - minX, maxY - minY, 0, 0, 0, 255, true);
+            } else if (engine.nowPieceObject != null) {
+                final int drawLeftX = minX + ((engine.nowPieceX + engine.nowPieceObject.getMinimumBlockX()) * 16) - bonusGap;
+                final int drawRightX = minX + ((engine.nowPieceX + engine.nowPieceObject.getMaximumBlockX()) * 16) + 16 + bonusGap;
+
+                if (drawLeftX > minX) drawing.drawRectangle(receiver, minX, minY, drawLeftX - minX, maxY - minY, 0, 0, 0, 255, true);
+                if (drawRightX < maxX) drawing.drawRectangle(receiver, drawRightX, minY, maxX - drawRightX, maxY - minY, 0, 0, 0, 255, true);
+            }
+        }
+
+        @Override
+        public String getName() {
+            return "GHOULS AFOOT";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_ORANGE),
+                GameTextUtilities.Text.of(" (+", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of(String.valueOf(bonusGap), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" WIDTH)", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_ORANGE),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "ON THE MONTH WHERE THE BOUNDARY BETWEEN",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "THE LIVING AND THE DEAD BEGINS TO BLUR,",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "THE DARKNESS ENCROACHES EVER CLOSER.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "PRAY YOU'VE BROUGHT A FLASHLIGHT.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
         }
     }
 }

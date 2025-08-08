@@ -25,6 +25,10 @@ public class ColourMixer {
     private double lightness;
     private double value;
 
+    public static ColourMixer rgb24(int colour) {
+        return rgb((colour >>> 16) & 0xFF, (colour >>> 8) & 0xFF, colour & 0xFF);
+    }
+
     public static ColourMixer rgb(double red, double green, double blue) {
         final ColourMixer mixer = new ColourMixer();
 
@@ -164,7 +168,9 @@ public class ColourMixer {
         final double cMax = Math.max(red, Math.max(green, blue));
         final double delta = cMax - cMin;
 
-        if (cMax == red) {
+        if (delta == 0) {
+            hue = 0;
+        } else if (cMax == red) {
             hue = 60d * (((green - blue) / delta) % 6.0);
         } else if (cMax == green) {
             hue = 60d * (((blue - red) / delta) + 2.0);
@@ -190,6 +196,16 @@ public class ColourMixer {
         if (hue < 0) hue += 1.0;
 
         return hue;
+    }
+
+    public ColourMixer setRGB24(int colour) {
+        red = ((colour >>> 16) & 0xFF) / (double) INT_COMPONENT;
+        green = ((colour >>> 8) & 0xFF) / (double) INT_COMPONENT;
+        blue = (colour & 0xFF) / (double) INT_COMPONENT;
+
+        recalculateHSLV();
+
+        return this;
     }
 
     public int getRGB24() {

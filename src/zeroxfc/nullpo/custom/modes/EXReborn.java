@@ -181,78 +181,93 @@ public class EXReborn extends DummyMode implements HasCustomFieldDrawing {
 
         interpolator.reset();
 
+        final ColourMixer usedMixer = ColourMixer.rgb24(0);
+        final IntBinaryOperator outerFunc = new IntBinaryOperator() {
+            private final ColourMixer mixer = ColourMixer.hsv(0, 0, 0.5);
+
+            private void pieceLightnessBoost(int y) {
+                if (engine.nowPieceObject == null || engine.stat != GameEngine.STAT_MOVE) return;
+
+                double pieceTopY = (double) (engine.nowPieceObject.getMinimumBlockY() + engine.nowPieceY);
+                double pieceBotY = (double) (engine.nowPieceObject.getMaximumBlockY() + engine.nowPieceY);
+
+                pieceTopY = (pieceTopY * 4) + 1;
+                pieceBotY = (pieceBotY * 4) + (engine.nowPieceObject.big ? 9 : 5);
+
+                final double avgY = (pieceTopY + pieceBotY) / 2d;
+                final double gapY = Math.abs(avgY - pieceTopY);
+
+                double distance = Math.abs(y - avgY);
+                if (y > avgY) distance += 1;
+
+                mixer.setLightness(
+                    mixer.getLightness() * Interpolation.lerp(
+                        (5d / 3d), 1.0,
+                        MathHelper.clamp((distance - gapY) / gapY, 0d, 1d)
+                    )
+                );
+            }
+
+            @Override
+            public int applyAsInt(int x, int y) {
+                final int height = engine.field != null ? engine.field.getHeight() : 20;
+                final int heightTimer = height * 3;
+
+                final double vMult = Interpolation.lerp(
+                    1.0, 0.5,
+                    MathHelper.clamp(
+                        (Math.max(x, y) - 1d) / (height * 4),
+                        0d, 1d
+                    )
+                );
+
+                if (engine.statistics.level < 1000) {
+                    mixer.setHueAngle(0).setSaturation(0).setValue(0.5 * vMult);
+                } else if (engine.statistics.level < 1004 && engine.stat == GameEngine.STAT_CUSTOM) {
+                    final double mixValue = MathHelper.clamp(
+                        (engine.statc[0] - heightTimer - 120) / 60d,
+                        0d, 1d
+                    );
+
+                    mixer
+                        .setHueAngle(0)
+                        .setSaturation(mixValue * 0.95)
+                        .setValue((0.5 + (mixValue / 2)) * vMult);
+                } else if (engine.statistics.level < 2000) {
+                    mixer.setHueAngle(0).setSaturation(0.95).setValue(vMult);
+                } else if (engine.statistics.level < 2004 && engine.stat == GameEngine.STAT_CUSTOM) {
+                    final double mixValue = MathHelper.clamp(
+                        (engine.statc[0] - heightTimer - 120) / 60d,
+                        0d, 1d
+                    );
+
+                    mixer
+                        .setHueAngle(Interpolation.lerp(360d, 210d, mixValue))
+                        .setSaturation(1 - (mixValue * 0.05))
+                        .setValue(vMult);
+                } else {
+                    mixer.setHueAngle(210).setSaturation(0.95).setValue(vMult);
+                }
+
+                pieceLightnessBoost(y);
+
+                return mixer.getRGB24();
+            }
+        };
+
         frameDrawingParameters = new FrameDrawingParameters(
-            new IntBinaryOperator() {
-                private final ColourMixer mixer = ColourMixer.hsv(0, 0, 0.5);
+            outerFunc,
+            (x, y) -> {
+                usedMixer.setRGB24(outerFunc.applyAsInt(x, y));
 
-                private void pieceLightnessBoost(int y) {
-                    if (engine.nowPieceObject == null || engine.stat != GameEngine.STAT_MOVE) return;
+                usedMixer.setValue(Math.max(usedMixer.getValue(), 0.8));
+                usedMixer.setSaturation(usedMixer.getSaturation() * 0.1);
 
-                    double pieceTopY = (double) (engine.nowPieceObject.getMinimumBlockY() + engine.nowPieceY);
-                    double pieceBotY = (double) (engine.nowPieceObject.getMaximumBlockY() + engine.nowPieceY);
-
-                    pieceTopY = (pieceTopY * 4) + 1;
-                    pieceBotY = (pieceBotY * 4) + (engine.nowPieceObject.big ? 9 : 5);
-
-                    final double avgY = (pieceTopY + pieceBotY) / 2d;
-                    final double gapY = Math.abs(avgY - pieceTopY);
-
-                    double distance = Math.abs(y - avgY);
-                    if (y > avgY) distance += 1;
-
-                    mixer.setLightness(
-                        mixer.getLightness() * Interpolation.lerp(
-                            (5d / 3d), 1.0,
-                            MathHelper.clamp((distance - gapY) / gapY, 0d, 1d)
-                        )
-                    );
+                if (engine.framecolor == GameEngine.FRAME_COLOR_GRAY) {
+                    usedMixer.setSaturation(0);
                 }
 
-                @Override
-                public int applyAsInt(int x, int y) {
-                    final int height = engine.field != null ? engine.field.getHeight() : 20;
-                    final int heightTimer = height * 3;
-
-                    final double vMult = Interpolation.lerp(
-                        1.0, 0.5,
-                        MathHelper.clamp(
-                            (Math.max(x, y) - 1d) / (height * 4),
-                            0d, 1d
-                        )
-                    );
-
-                    if (engine.statistics.level < 1000) {
-                        mixer.setHueAngle(0).setSaturation(0).setValue(0.5 * vMult);
-                    } else if (engine.statistics.level < 1004 && engine.stat == GameEngine.STAT_CUSTOM) {
-                        final double mixValue = MathHelper.clamp(
-                            (engine.statc[0] - heightTimer - 120) / 60d,
-                            0d, 1d
-                        );
-
-                        mixer
-                            .setHueAngle(0)
-                            .setSaturation(mixValue * 0.95)
-                            .setValue((0.5 + (mixValue / 2)) * vMult);
-                    } else if (engine.statistics.level < 2000) {
-                        mixer.setHueAngle(0).setSaturation(0.95).setValue(vMult);
-                    } else if (engine.statistics.level < 2004 && engine.stat == GameEngine.STAT_CUSTOM) {
-                        final double mixValue = MathHelper.clamp(
-                            (engine.statc[0] - heightTimer - 120) / 60d,
-                            0d, 1d
-                        );
-
-                        mixer
-                            .setHueAngle(Interpolation.lerp(360d, 210d, mixValue))
-                            .setSaturation(1 - (mixValue * 0.05))
-                            .setValue(vMult);
-                    } else {
-                        mixer.setHueAngle(210).setSaturation(0.95).setValue(vMult);
-                    }
-
-                    pieceLightnessBoost(y);
-
-                    return mixer.getRGB24();
-                }
+                return usedMixer.getRGB24();
             },
             new IntSupplier() {
                 private final ColourMixer mixer = ColourMixer.hsv(0, 1, 1);

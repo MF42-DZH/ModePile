@@ -21,6 +21,7 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
+import zeroxfc.nullpo.custom.libs.types.ColourMixer;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
@@ -192,7 +193,9 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
 
     private RuleOptions oldRuleOpt;
 
-    private IntBinaryOperator frameColF;
+    private IntBinaryOperator outerFrameColF;
+    private IntBinaryOperator innerFrameColF;
+
     private FrameDrawingParameters frameDrawingParameters;
 
     @Override
@@ -217,7 +220,8 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
 
         selectedNext = WhichQueue.LEFT;
 
-        frameColF = (x, y) -> {
+        final ColourMixer usedMixer = ColourMixer.rgb24(0);
+        outerFrameColF = (x, y) -> {
             final int width = engine.field != null ? engine.field.getWidth() : 10;
             final int height = engine.field != null ? engine.field.getHeight() : 20;
 
@@ -235,7 +239,15 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
             return (255 << 16) | (gComponent << 8);
         };
 
-        frameDrawingParameters = new FrameDrawingParameters(frameColF, null);
+        innerFrameColF = (x, y) -> {
+            usedMixer.setRGB24(outerFrameColF.applyAsInt(x, y));
+            usedMixer.setValue(Math.max(usedMixer.getValue(), 0.8));
+            usedMixer.setSaturation(usedMixer.getSaturation() * 0.5);
+
+            return usedMixer.getRGB24();
+        };
+
+        frameDrawingParameters = new FrameDrawingParameters(outerFrameColF, innerFrameColF, null);
 
         lastscore = 0;
         scgettime = 0;

@@ -554,44 +554,54 @@ public class GradeMania4 extends DummyMode implements HasCustomFieldDrawing {
 
         SoundLoader.loadSoundset(SoundLoader.SoundSet.FIREWORKS);
 
-        frameDrawingParameters = new FrameDrawingParameters(
-            new IntBinaryOperator() {
-                private final ColourMixer mixer = ColourMixer.hslViaAngle(210, 0, 0.5);
+        final ColourMixer usedMixer = ColourMixer.rgb24(0);
+        final IntBinaryOperator outerFunc = new IntBinaryOperator() {
+            private final ColourMixer mixer = ColourMixer.hslViaAngle(210, 0, 0.5);
 
-                @Override
-                public int applyAsInt(int x, int y) {
-                    final int width = engine.field != null ? engine.field.getWidth() : 10;
-                    final int height = engine.field != null ? engine.field.getHeight() : 20;
-                    final int maxX = RendererExtension.getShowMeter(receiver) ? width * 4 + 4 : width * 4 + 2;
-                    final int maxY = height * 4 + 2;
+            @Override
+            public int applyAsInt(int x, int y) {
+                final int width = engine.field != null ? engine.field.getWidth() : 10;
+                final int height = engine.field != null ? engine.field.getHeight() : 20;
+                final int maxX = RendererExtension.getShowMeter(receiver) ? width * 4 + 4 : width * 4 + 2;
+                final int maxY = height * 4 + 2;
 
-                    final double distance =
-                        Math.abs((maxY * x) - (maxX * y)) / Math.sqrt((double) (maxY * maxY) + (maxX * maxX));
+                final double distance =
+                    Math.abs((maxY * x) - (maxX * y)) / Math.sqrt((double) (maxY * maxY) + (maxX * maxX));
 
-                    final double lMult = Interpolation.sineStep(
-                        0.85, 0.5,
-                        MathHelper.clamp(
-                            distance / (maxX / 2d),
-                            0d, 1d
-                        )
-                    );
+                final double lMult = Interpolation.sineStep(
+                    0.85, 0.5,
+                    MathHelper.clamp(
+                        distance / (maxX / 2d),
+                        0d, 1d
+                    )
+                );
 
-                    if (getGameRuleset().gameFlavour() == GameFlavour.ORIGINAL_TASTE) {
-                        mixer.setHueAngle(210).setSaturation(0.95).setLightness(lMult);
+                if (getGameRuleset().gameFlavour() == GameFlavour.ORIGINAL_TASTE) {
+                    mixer.setHueAngle(210).setSaturation(0.95).setLightness(lMult);
 
-                        if (getExtraState()) {
-                            mixer.setHueAngle(0).setSaturation(1).setLightness(lMult);
-                        }
-                    } else {
-                        mixer.setHueAngle(225).setSaturation(0.90).setLightness(lMult);
-
-                        if (getExtraState()) {
-                            mixer.setHueAngle(15).setSaturation(1).setLightness(lMult);
-                        }
+                    if (getExtraState()) {
+                        mixer.setHueAngle(0).setSaturation(1).setLightness(lMult);
                     }
+                } else {
+                    mixer.setHueAngle(225).setSaturation(0.90).setLightness(lMult);
 
-                    return mixer.getRGB24();
+                    if (getExtraState()) {
+                        mixer.setHueAngle(15).setSaturation(1).setLightness(lMult);
+                    }
                 }
+
+                return mixer.getRGB24();
+            }
+        };
+
+        frameDrawingParameters = new FrameDrawingParameters(
+            outerFunc,
+            (x, y) -> {
+                usedMixer.setRGB24(outerFunc.applyAsInt(x, y));
+                usedMixer.setValue(Math.max(usedMixer.getValue(), 0.8));
+                usedMixer.setSaturation(usedMixer.getSaturation() * 0.5);
+
+                return usedMixer.getRGB24();
             },
             null
         );

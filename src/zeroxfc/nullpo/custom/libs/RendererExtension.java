@@ -3,8 +3,10 @@ package zeroxfc.nullpo.custom.libs;
 import java.awt.*;
 import java.lang.reflect.*;
 import java.util.ArrayList;
+import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.IntBinaryOperator;
+import java.util.function.IntSupplier;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.event.EventReceiver;
@@ -16,6 +18,7 @@ import mu.nu.nullpo.gui.sdl.ResourceHolderSDL;
 import mu.nu.nullpo.gui.slick.NullpoMinoSlick;
 import mu.nu.nullpo.gui.slick.RendererSlick;
 import mu.nu.nullpo.gui.slick.ResourceHolder;
+import mu.nu.nullpo.gui.swing.NullpoMinoSwing;
 import mu.nu.nullpo.gui.swing.RendererSwing;
 import mu.nu.nullpo.gui.swing.ResourceHolderSwing;
 import org.apache.log4j.Logger;
@@ -26,6 +29,7 @@ import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
 import sdljava.video.SDLVideo;
 import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
+import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
 import zeroxfc.nullpo.custom.libs.types.ImageChunk;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.types.RuntimeImage;
@@ -68,7 +72,8 @@ public class RendererExtension {
     private final CustomResourceHolder customGraphics;
     private final PrimitiveDrawingHook drawing;
 
-    private static final String WHITE_FRAME_NAME = "frame_white";
+    private static final String WHITE_OUTER_FRAME_NAME = "frame_outer_white";
+    private static final String WHITE_INNER_FRAME_NAME = "frame_inner_white";
 
     private enum FrameChunk {
         // There is no MIDDLE_MIDDLE as that is filled by the field background.
@@ -125,25 +130,38 @@ public class RendererExtension {
 
         // Load the white frame image, to eliminate possible stutter from lazy-loading it.
         final String customSkinDirProp = "custom.skin.directory";
-        final String whiteFrame = "/graphics/" + WHITE_FRAME_NAME + ".png";
+        final String whiteOuterFrame = "/graphics/" + WHITE_OUTER_FRAME_NAME + ".png";
+        final String whiteInnerFrame = "/graphics/" + WHITE_INNER_FRAME_NAME + ".png";
 
         switch (CustomResourceHolder.getCurrentNullpominoRuntime()) {
             case SLICK:
                 customGraphics.loadImage(
-                    mu.nu.nullpo.gui.slick.NullpoMinoSlick.propConfig.getProperty(customSkinDirProp, "res") + whiteFrame,
-                    WHITE_FRAME_NAME
+                    NullpoMinoSlick.propConfig.getProperty(customSkinDirProp, "res") + whiteOuterFrame,
+                    WHITE_OUTER_FRAME_NAME
+                );
+                customGraphics.loadImage(
+                    NullpoMinoSlick.propConfig.getProperty(customSkinDirProp, "res") + whiteInnerFrame,
+                    WHITE_INNER_FRAME_NAME
                 );
                 break;
             case SWING:
                 customGraphics.loadImage(
-                    mu.nu.nullpo.gui.swing.NullpoMinoSwing.propConfig.getProperty(customSkinDirProp, "res") + whiteFrame,
-                    WHITE_FRAME_NAME
+                    NullpoMinoSwing.propConfig.getProperty(customSkinDirProp, "res") + whiteOuterFrame,
+                    WHITE_OUTER_FRAME_NAME
+                );
+                customGraphics.loadImage(
+                    NullpoMinoSwing.propConfig.getProperty(customSkinDirProp, "res") + whiteInnerFrame,
+                    WHITE_INNER_FRAME_NAME
                 );
                 break;
             case SDL:
                 customGraphics.loadImage(
-                    mu.nu.nullpo.gui.sdl.NullpoMinoSDL.propConfig.getProperty(customSkinDirProp, "res") + whiteFrame,
-                    WHITE_FRAME_NAME
+                    NullpoMinoSDL.propConfig.getProperty(customSkinDirProp, "res") + whiteOuterFrame,
+                    WHITE_OUTER_FRAME_NAME
+                );
+                customGraphics.loadImage(
+                    NullpoMinoSDL.propConfig.getProperty(customSkinDirProp, "res") + whiteInnerFrame,
+                    WHITE_INNER_FRAME_NAME
                 );
                 break;
             default:
@@ -1067,26 +1085,35 @@ public class RendererExtension {
         }
     }
 
+    @FunctionalInterface
+    private static interface FrameDraw {
+        void drawAt(int chunkX, int chunkY, FrameChunk chunk, int atX, int atY);
+    }
+
     /**
      * Draw a custom playfield frame. Does not work in the SDL renderer. The speed meter's colour will use the default
      * colours as specified by the current game engine.
      * <p>
-     * The frame colouring function is expected to return an RGB24 colour as a single int in the lower 24 bits, and its two parameters will
+     * The colouring functions are expected to return an RGB24 colour as a single int in the lower 24 bits, and its two parameters will
      * be fed the current chunk of the field frame's relative coordinates to the field. {@code x} (first param) ranges from 0 until
-     * {@code field width * 4 + 2} (and {@code + 2} again if the meter is drawn too), and {@code y} (second param) ranges from 0 until
-     * {@code field height * 4 + 2}.
+     * {@code field width * 4 + 2} (and {@code + 2} again to the maximum if the meter is drawn too), and {@code y} (second param) ranges
+     * from 0 until {@code field height * 4 + 2}.
      *
-     * @param receiver        Current renderer
-     * @param engine          Current game engine
-     * @param x               Top left X-coordinate
-     * @param y               Top left Y-coodinate
-     * @param displaySize     Display size
-     * @param frameColourFunc Frame colouring function
+     * @param receiver    Current renderer
+     * @param engine      Current game engine
+     * @param x           Top left X-coordinate
+     * @param y           Top left Y-coodinate
+     * @param displaySize Display size
+     * @param frameParams Frame and meter colouring parameters
      */
-    public void drawCustomFrame(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize, IntBinaryOperator frameColourFunc) {
+    public void drawCustomFrame(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize, HasCustomFieldDrawing.FrameDrawingParameters frameParams) {
         final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
 
-        if (renderer == CustomResourceHolder.Runtime.SLICK) {
+        final IntBinaryOperator outer = frameParams.outerFrameColouringFunction;
+        final IntBinaryOperator inner = frameParams.innerFrameColouringFunction;
+        IntSupplier meter = frameParams.meterColouringFunction;
+
+        if (renderer == CustomResourceHolder.Runtime.SLICK && meter == null) {
             org.newdawn.slick.Color color;
             switch (engine.meterColor) {
                 case GameEngine.METER_COLOR_GREEN:
@@ -1106,8 +1133,8 @@ public class RendererExtension {
                     break;
             }
 
-            drawCustomFrame(receiver, engine, x, y, displaySize, frameColourFunc, color.getRedByte(), color.getGreenByte(), color.getBlueByte());
-        } else if (renderer == CustomResourceHolder.Runtime.SWING) {
+            meter = () -> (color.getRedByte() << 16) | (color.getGreenByte() << 8) | color.getBlueByte();
+        } else if (renderer == CustomResourceHolder.Runtime.SWING && meter == null) {
             java.awt.Color color;
             switch (engine.meterColor) {
                 case GameEngine.METER_COLOR_GREEN:
@@ -1127,33 +1154,16 @@ public class RendererExtension {
                     break;
             }
 
-            drawCustomFrame(receiver, engine, x, y, displaySize, frameColourFunc, color.getRed(), color.getGreen(), color.getBlue());
+            meter = color::getRGB;
         } else if (renderer == CustomResourceHolder.Runtime.SDL) {
             // Yeah, this isn't happening due to how the SDL renderer uses an image sprite for the meter (?????).
-            // Tinting images also seems to be particularly difficult.
-            drawFrame(receiver, engine, x, y, displaySize);
-        }
-    }
+            // Tinting images also seems to be particularly difficult, there doesn't seem to be an exposed API
+            // for tint-by-multiply on SDLJava.
 
-    /**
-     * Draw a custom playfield frame. Does not work in the SDL renderer.
-     * <p>
-     * The frame colouring function is expected to return an RGB24 colour as a single int in the lower 24 bits, and its two parameters will
-     * be fed the current chunk of the field frame's relative coordinates to the field. {@code x} (first param) ranges from 0 until
-     * {@code field width * 4 + 2} (and {@code + 2} again if the meter is drawn too), and {@code y} (second param) ranges from 0 until
-     * {@code field height * 4 + 2}.
-     *
-     * @param receiver        Current renderer
-     * @param engine          Current game engine
-     * @param x               Top left X-coordinate
-     * @param y               Top left Y-coodinate
-     * @param displaySize     Display size
-     * @param frameColourFunc Frame colouring function
-     * @param meterRed        Speed meter red component
-     * @param meterGreen      Speed meter green component
-     * @param meterBlue       Speed meter blue component
-     */
-    public void drawCustomFrame(EventReceiver receiver, GameEngine engine, int x, int y, int displaySize, IntBinaryOperator frameColourFunc, int meterRed, int meterGreen, int meterBlue) {
+            drawFrame(receiver, engine, x, y, displaySize);
+            return;
+        }
+
         // Make sure we do have the field images.
         findFieldImages();
         if (fieldBgNormal == null) return;
@@ -1212,13 +1222,25 @@ public class RendererExtension {
 
         int fullHeight = (height * 4) + 2;
 
+        final FrameDraw drawFrameChunk = (cX, cY, chunk, atX, atY) -> {
+            final int outerColour = frameParams.outerFrameColouringFunction.applyAsInt(cX, cY);
+            final int innerColour = frameParams.innerFrameColouringFunction.applyAsInt(cX, cY);
+
+            customGraphics.drawOffsetImage(
+                engine, WHITE_OUTER_FRAME_NAME,
+                chunk.atLocation(atX, atY, displaySize),
+                (outerColour >>> 16) & 0xFF, (outerColour >>> 8) & 0xFF, outerColour & 0xFF, 255
+            );
+
+            customGraphics.drawOffsetImage(
+                engine, WHITE_INNER_FRAME_NAME,
+                chunk.atLocation(atX, atY, displaySize),
+                (innerColour >>> 16) & 0xFF, (innerColour >>> 8) & 0xFF, innerColour & 0xFF, 255
+            );
+        };
+
         for (int bY = 0; bY < fullHeight; ++bY) {
             for (int bX = 0; bX < fullWidth; ++bX) {
-                final int rawColour = frameColourFunc.applyAsInt(bX, bY);
-                final int red = (rawColour >>> 16) & 0xFF;
-                final int green = (rawColour >>> 8) & 0xFF;
-                final int blue = rawColour & 0xFF;
-
                 int dX = x + (baseSize * bX);
                 int dY = y + (baseSize * bY);
 
@@ -1226,91 +1248,47 @@ public class RendererExtension {
                     // Top Row
                     if (bX == 0) {
                         // Top Left
-                        customGraphics.drawOffsetImage(
-                            engine, WHITE_FRAME_NAME,
-                            FrameChunk.TOP_LEFT.atLocation(dX, dY, displaySize),
-                            red, green, blue, 255
-                        );
+                        drawFrameChunk.drawAt(bX, bY, FrameChunk.TOP_LEFT, dX, dY);
                     } else if (bX == fullWidth - 1) {
                         // Top Right
-                        customGraphics.drawOffsetImage(
-                            engine, WHITE_FRAME_NAME,
-                            FrameChunk.TOP_RIGHT.atLocation(dX, dY, displaySize),
-                            red, green, blue, 255
-                        );
+                        drawFrameChunk.drawAt(bX, bY, FrameChunk.TOP_RIGHT, dX, dY);
                     } else if (showMeter && bX == fullWidth - 3) {
                         // Meter Top
-                        customGraphics.drawOffsetImage(
-                            engine, WHITE_FRAME_NAME,
-                            FrameChunk.METER_SEP_TOP.atLocation(dX, dY, displaySize),
-                            red, green, blue, 255
-                        );
+                        drawFrameChunk.drawAt(bX, bY, FrameChunk.METER_SEP_TOP, dX, dY);
                     } else {
                         // Top Middle
-                        customGraphics.drawOffsetImage(
-                            engine, WHITE_FRAME_NAME,
-                            FrameChunk.TOP_MIDDLE.atLocation(dX, dY, displaySize),
-                            red, green, blue, 255
-                        );
+                        drawFrameChunk.drawAt(bX, bY, FrameChunk.TOP_MIDDLE, dX, dY);
                     }
                 } else if (bY == fullHeight - 1) {
                     // Bottom Row
                     if (bX == 0) {
                         // Bottom Left
-                        customGraphics.drawOffsetImage(
-                            engine, WHITE_FRAME_NAME,
-                            FrameChunk.BOTTOM_LEFT.atLocation(dX, dY, displaySize),
-                            red, green, blue, 255
-                        );
+                        drawFrameChunk.drawAt(bX, bY, FrameChunk.BOTTOM_LEFT, dX, dY);
                     } else if (bX == fullWidth - 1) {
                         // Bottom Right
-                        customGraphics.drawOffsetImage(
-                            engine, WHITE_FRAME_NAME,
-                            FrameChunk.BOTTOM_RIGHT.atLocation(dX, dY, displaySize),
-                            red, green, blue, 255
-                        );
+                        drawFrameChunk.drawAt(bX, bY, FrameChunk.BOTTOM_RIGHT, dX, dY);
                     } else if (showMeter && bX == fullWidth - 3) {
                         // Meter Bottom
-                        customGraphics.drawOffsetImage(
-                            engine, WHITE_FRAME_NAME,
-                            FrameChunk.METER_SEP_BOTTOM.atLocation(dX, dY, displaySize),
-                            red, green, blue, 255
-                        );
+                        drawFrameChunk.drawAt(bX, bY, FrameChunk.METER_SEP_BOTTOM, dX, dY);
                     } else {
                         // Bottom Middle
-                        customGraphics.drawOffsetImage(
-                            engine, WHITE_FRAME_NAME,
-                            FrameChunk.BOTTOM_MIDDLE.atLocation(dX, dY, displaySize),
-                            red, green, blue, 255
-                        );
+                        drawFrameChunk.drawAt(bX, bY, FrameChunk.BOTTOM_MIDDLE, dX, dY);
                     }
                 } else {
                     // All Other Rows
                     // Bottom Row
                     if (bX == 0) {
                         // Middle Left
-                        customGraphics.drawOffsetImage(
-                            engine, WHITE_FRAME_NAME,
-                            FrameChunk.MIDDLE_LEFT.atLocation(dX, dY, displaySize),
-                            red, green, blue, 255
-                        );
+                        drawFrameChunk.drawAt(bX, bY, FrameChunk.MIDDLE_LEFT, dX, dY);
 
                         // Skip the middle columns.
                         bX += width * 4;
                     } else if (bX == fullWidth - 1) {
                         // Middle Right
-                        customGraphics.drawOffsetImage(
-                            engine, WHITE_FRAME_NAME,
-                            FrameChunk.MIDDLE_RIGHT.atLocation(dX, dY, displaySize),
-                            red, green, blue, 255
-                        );
+                        drawFrameChunk.drawAt(bX, bY, FrameChunk.MIDDLE_RIGHT, dX, dY);
                     } else if (showMeter && bX == fullWidth - 3) {
                         // Meter Middle
-                        customGraphics.drawOffsetImage(
-                            engine, WHITE_FRAME_NAME,
-                            FrameChunk.METER_SEP_MIDDLE.atLocation(dX, dY, displaySize),
-                            red, green, blue, 255
-                        );
+                        drawFrameChunk.drawAt(bX, bY, FrameChunk.METER_SEP_MIDDLE, dX, dY);
                     }
                 }
             }
@@ -1334,11 +1312,13 @@ public class RendererExtension {
             if (engine != null && engine.meterValue > 0) {
                 final int value = Math.min(height * baseSize * 4, engine.meterValue);
                 if (value > 0) {
+                    final int meterColour = meter.getAsInt();
+
                     drawing.drawRectangle(
                         receiver,
                         x + (width * baseSize * 4) + 8, y + (height * baseSize * 4) + 3 - (value - 1),
                         4, value,
-                        meterRed, meterGreen, meterBlue, 255,
+                        (meterColour >>> 16) & 0xFF, (meterColour >>> 8) & 0xFF, meterColour & 0xFF, 255,
                         true
                     );
                 }
