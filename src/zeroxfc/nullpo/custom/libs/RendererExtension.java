@@ -1534,4 +1534,71 @@ public class RendererExtension {
             true
         );
     }
+
+    /**
+     * Draws a fading background. Only works on the Slick renderer. Will draw non-fading backgrounds if the user has this disabled.
+     * This version does not have the black-screen tween-fade, and will crossfade between the two backgrounds instead.
+     *
+     * @param receiver   Current renderer
+     * @param engine     Current game engine
+     * @param bgFadeFrom Fade from this background
+     * @param bgFadeTo   Fade into this background
+     * @param progress   Fade progress
+     */
+    public void drawCrossfadingBackground(EventReceiver receiver, GameEngine engine, int bgFadeFrom, int bgFadeTo, float progress) {
+        final CustomResourceHolder.Runtime renderer = CustomResourceHolder.getCurrentNullpominoRuntime();
+        if (bgFadeFrom < 0 || bgFadeFrom > 19 || bgFadeTo < 0 || bgFadeTo > 19) return;
+
+        if (progress < 0f) progress = 0f;
+        else if (progress > 1f) progress = 1f;
+
+        if (heavyEffectAccessor == null || !heavyEffectAccessor.get(receiver)) {
+            drawDefaultBackground(engine, progress > 0f ? bgFadeTo : bgFadeFrom);
+            return;
+        }
+
+        RuntimeImage<?> fadeFrom = null, fadeTo = null;
+        switch (renderer) {
+            case SLICK:
+                fadeFrom = new RuntimeImage.Slick(ResourceHolder.imgPlayBG[bgFadeFrom]);
+                fadeTo = new RuntimeImage.Slick(ResourceHolder.imgPlayBG[bgFadeTo]);
+                break;
+            case SWING:
+                fadeFrom = new RuntimeImage.Swing(ResourceHolderSwing.imgPlayBG[bgFadeFrom]);
+                fadeTo = new RuntimeImage.Swing(ResourceHolderSwing.imgPlayBG[bgFadeTo]);
+                break;
+            case SDL:
+                fadeFrom = new RuntimeImage.SDL(ResourceHolderSDL.imgPlayBG[bgFadeFrom]);
+                fadeTo = new RuntimeImage.SDL(ResourceHolderSDL.imgPlayBG[bgFadeTo]);
+                break;
+            default:
+                break;
+        }
+
+        if (fadeFrom == null || fadeTo == null) return;
+
+        if (progress < 1f) {
+            customGraphics.drawImage(
+                engine,
+                "bgF" + bgFadeFrom,
+                fadeFrom,
+                0, 0, 640, 480,
+                0, 0, 640, 480,
+                255, 255, 255, Interpolation.lerp(255, 0, progress),
+                true
+            );
+        }
+
+        if (progress > 0f) {
+            customGraphics.drawImage(
+                engine,
+                "bgT" + bgFadeTo,
+                fadeTo,
+                0, 0, 640, 480,
+                0, 0, 640, 480,
+                255, 255, 255, Interpolation.lerp(0, 255, progress),
+                true
+            );
+        }
+    }
 }

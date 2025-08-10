@@ -506,9 +506,9 @@ public class Gimmicks {
         }
 
         private int getLockDelayBoost(Badges badges, boolean perkBoost) {
-            // Every 50 badges, increase lock delay by 1f.
+            // Every 60 badges, increase lock delay by 1f.
             final int usedBadges = badges.getBadges() / 10;
-            final int denominator = perkBoost ? 25 : 50;
+            final int denominator = perkBoost ? 30 : 60;
 
             currentLdBoost = usedBadges / denominator;
             return currentLdBoost;
@@ -571,10 +571,10 @@ public class Gimmicks {
 
         public int getFallDelay(Badges badges, boolean perkBoost) {
             // Default delay is 6.
-            // Increase every 25 badges.
+            // Increase every 30 badges.
 
             final int usedBadges = badges.getBadges();
-            final int denominator = perkBoost ? 125 : 250;
+            final int denominator = perkBoost ? 150 : 300;
 
             currentDelay = 6 + (usedBadges / denominator);
             return currentDelay;
@@ -637,12 +637,12 @@ public class Gimmicks {
 
         public void updateChance(GameEngine engine, Badges badges, boolean perkBoost) {
             final double progress = (engine.statistics.level - seasonStartLv) / (double) (seasonEndLv - seasonStartLv);
-            final double baseChance = Interpolation.lerp(0.9925, 1.0, progress);
+            final double baseChance = Interpolation.lerp(0.99333, 1.0, progress);
 
             final int denominator = perkBoost ? 10 : 20;
 
             // We don't want the max chance to be 1. That's too annoying.
-            chance = Math.pow(baseChance, badges.getBadges() / (double) denominator) * 0.8;
+            chance = Math.pow(baseChance, badges.getBadges() / (double) denominator) * 0.9;
         }
 
         @Override
@@ -716,16 +716,24 @@ public class Gimmicks {
 
     public static class GhoulsAfoot implements HasDescription {
         private int bonusGap;
+        private int currentBonusGap;
 
         public GhoulsAfoot(Badges badges, boolean perkBoost) {
+            currentBonusGap = 0;
             updateBonusGap(badges, perkBoost);
         }
 
         public void updateBonusGap(Badges badges, boolean perkBoost) {
             final int usedBadges = badges.getBadges();
-            final int denominator = perkBoost ? 80 : 160;
+            final int denominator = perkBoost ? 100 : 200;
 
             bonusGap = usedBadges / denominator;
+        }
+
+        // Call in onLast.
+        public void updateCurrentBonusGap(GameEngine engine) {
+            if (engine.stat != GameEngine.STAT_MOVE || engine.statc[0] == 0) currentBonusGap = 0;
+            else currentBonusGap = Math.min(bonusGap, currentBonusGap + 4);
         }
 
         public void renderFlashlight(EventReceiver receiver, GameEngine engine, int playerID, PrimitiveDrawingHook drawing) {
@@ -734,11 +742,11 @@ public class Gimmicks {
             final int minY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
             final int maxY = minY + (engine.field.getHeight() * 16);
 
-            if (engine.stat != GameEngine.STAT_MOVE) {
+            if (engine.stat != GameEngine.STAT_MOVE || engine.statc[0] == 0 || engine.nowPieceObject == null) {
                 drawing.drawRectangle(receiver, minX, minY, maxX - minX, maxY - minY, 0, 0, 0, 255, true);
-            } else if (engine.nowPieceObject != null) {
-                final int drawLeftX = minX + ((engine.nowPieceX + engine.nowPieceObject.getMinimumBlockX()) * 16) - bonusGap;
-                final int drawRightX = minX + ((engine.nowPieceX + engine.nowPieceObject.getMaximumBlockX()) * 16) + 16 + bonusGap;
+            } else if (engine.statc[0] > 0) {
+                final int drawLeftX = minX + ((engine.nowPieceX + engine.nowPieceObject.getMinimumBlockX()) * 16) - currentBonusGap;
+                final int drawRightX = minX + ((engine.nowPieceX + engine.nowPieceObject.getMaximumBlockX()) * 16) + 16 + currentBonusGap;
 
                 if (drawLeftX > minX) drawing.drawRectangle(receiver, minX, minY, drawLeftX - minX, maxY - minY, 0, 0, 0, 255, true);
                 if (drawRightX < maxX) drawing.drawRectangle(receiver, drawRightX, minY, maxX - drawRightX, maxY - minY, 0, 0, 0, 255, true);
@@ -755,8 +763,8 @@ public class Gimmicks {
             return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
                 GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_ORANGE),
-                GameTextUtilities.Text.of(" (+", EventReceiver.COLOR_RED),
-                GameTextUtilities.Text.of(String.valueOf(bonusGap), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of("+" + bonusGap, EventReceiver.COLOR_YELLOW),
                 GameTextUtilities.Text.of(" WIDTH)", EventReceiver.COLOR_RED)
             );
         }
@@ -785,6 +793,135 @@ public class Gimmicks {
                 GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom(
                     "PRAY YOU'VE BROUGHT A FLASHLIGHT.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+        }
+    }
+
+    public static class Whiteout implements HasDescription {
+        public static int SNOW_IDENTIFIER = 0xABCDEF12;
+
+        private static final double BASE_PROPORTION = 0.9995;
+        private double proportion;
+
+        public Whiteout(Badges badges, boolean perkBoost) {
+            updateProportion(badges, perkBoost);
+        }
+
+        public void updateProportion(Badges badges, boolean perkBoost) {
+            final int usedBadges = (perkBoost ? badges.getBadges() * 2 : badges.getBadges()) / 10;
+            proportion = Math.pow(BASE_PROPORTION, usedBadges);
+        }
+
+        public void updateNext(GameEngine engine) {
+            final Piece piece = HasCustomOnMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
+            if (piece == null) return;
+
+            piece.setColor(Block.BLOCK_COLOR_GRAY);
+            for (Block blk : piece.block) blk.secondaryColor = SNOW_IDENTIFIER;
+        }
+
+        public void drawInnerFog(EventReceiver receiver, GameEngine engine, int playerID, PrimitiveDrawingHook drawing) {
+            if (engine.field == null) return;
+
+            final int minX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+            final int minY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+            final int maxX = minX + (16 * engine.field.getWidth());
+            final int maxY = minY + (16 * engine.field.getHeight());
+
+            final int baseSizeX = maxX - minX;
+
+            for (int i = 0; i < 4; ++i) {
+                final double loopProp = Math.pow(2d / 3d, i);
+
+                // Field fog.
+                final int fSizeX = (int) (baseSizeX * proportion * loopProp * 0.5);
+
+                drawing.drawRectangle(
+                    receiver,
+                    minX, minY,
+                    fSizeX, maxY - minY,
+                    255, 255, 255, 60,
+                    true
+                );
+
+                drawing.drawRectangle(
+                    receiver,
+                    maxX - fSizeX, minY,
+                    fSizeX, maxY - minY,
+                    255, 255, 255, 60,
+                    true
+                );
+            }
+        }
+
+        public void drawOuterFog(EventReceiver receiver, PrimitiveDrawingHook drawing) {
+            for (int i = 0; i < 4; ++i) {
+                final double loopProp = Math.pow(2d / 3d, i);
+
+                // Background fog.
+                final int outSizeX = (int) (320 * proportion * loopProp);
+
+                drawing.drawRectangle(
+                    receiver,
+                    0, 0,
+                    outSizeX, 480,
+                    255, 255, 255, 60,
+                    true
+                );
+
+                drawing.drawRectangle(
+                    receiver,
+                    640 - outSizeX, 0,
+                    outSizeX, 480,
+                    255, 255, 255, 60,
+                    true
+                );
+            }
+        }
+
+        @Override
+        public String getName() {
+            return "WHITEOUT";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_CYAN),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of(String.format("%.02f", (1.0 - proportion) * 100d) + "%", EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" VIS.)", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_CYAN),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "THE DARK CLOUDS COVER THE SKY, AND SNOW BEGINS",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "TO FALL. IT INTENSIFIES QUICKLY, FASTER THAN",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "SENSE WOULD EXPECT. YOUR VISIBILITY IS SEVERELY",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "REDUCED. WATCH YOUR STEP.",
                     EventReceiver.COLOR_WHITE, 0.75f
                 )
             );

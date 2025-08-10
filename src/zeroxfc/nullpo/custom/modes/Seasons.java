@@ -1,6 +1,8 @@
 package zeroxfc.nullpo.custom.modes;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
@@ -278,7 +280,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private Season currentSeason;
     private int lastBackground, currentBackground, fadeProgress;
     private Badges badges;
-    private TextEmitter textEmitter = new TextEmitter();
+    private final TextEmitter textEmitter = new TextEmitter();
+    private final Collection<RewindBlock> rewindBlocks = new LinkedList<>();
+    private Random rewindBlockRandom;
 
     private static final int INCREMENT_IN_ROLL = 1; // TODO: Change only if roll is too slow.
     private int naturalLevelIncrement;
@@ -296,6 +300,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private int brokenSproutlings;
     private int brokenFlorets;
     private int brokenRainbowBlocks;
+    private int brokenSnowBlocks;
 
     // Current Gimmicks
     private Gimmicks.Sproutlings gimmickSprMo2;
@@ -306,6 +311,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private Gimmicks.FallsCall gimmickAutMo1;
     private Gimmicks.FlowingWinds gimmickAutMo2;
     private Gimmicks.GhoulsAfoot gimmickAutMo3;
+    private Gimmicks.Whiteout gimmickWinMo1;
     // TODO: ADD THE REST OF THEM
 
     private static class DescriptionDraw {
@@ -405,6 +411,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         drawing = new PrimitiveDrawingHook(customGraphics);
         statesAtTimes = new TreeMap<>();
         textEmitter.clear();
+        rewindBlocks.clear();
 
         setupBackgrounds(engine);
 
@@ -426,6 +433,8 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         gimmickSumMo3 = null;
         gimmickAutMo1 = null;
         gimmickAutMo2 = null;
+        gimmickAutMo3 = null;
+        gimmickWinMo1 = null;
 
         vortex = new BlockVortex();
 
@@ -457,6 +466,45 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         lastBackground = 0;
         currentBackground = 0;
         fadeProgress = 300;
+    }
+
+    // 0 1 2 3 4 (4.5) 5 6 7 8 9
+    // 0 1 2 3 (4) 5 6 7 8
+    private void addRewindBlockFromField(GameEngine engine, int playerID, int x, int y) {
+        final int baseX = 4 + receiver.getFieldDisplayPositionX(engine, playerID);
+        final int baseY = 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+
+        final Block blk = engine.field.getBlock(x, y);
+        if (blk == null) return;
+
+        final double midpoint = ((engine.field.getWidth()) / 2.0) - 0.5;
+        final double difference = x - midpoint;
+
+        final double yvr = (rewindBlockRandom.nextDouble() - 0.5) * 2 * 0.125;
+
+        rewindBlocks.add(
+            new RewindBlock(
+                60, 0,
+                new DoubleVector(baseX + (x * 16) + 8, baseY + (y * 16) + 8, false),
+                new DoubleVector((difference * 4.0) / 30.0, -8.0 - ((engine.field.getHeightWithoutHurryupFloor() - y) * 0.25) + yvr, false),
+                new DoubleVector((difference * -4.0) / (30.0 * 120.0), 9.80665 / 15.0, false),
+                blk
+            )
+        );
+    }
+
+    private void addRewindBlocks(GameEngine engine, int playerID, Field olderField) {
+        if (engine.field == null) return;
+
+        if (FieldManipulation.getNumberOfBlocks(engine.field) > FieldManipulation.getNumberOfBlocks(olderField)) {
+            for (int y = 0; y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
+                for (int x = 0; x < engine.field.getWidth(); ++x) {
+                    if (engine.field.getBlockColor(x, y) != olderField.getBlockColor(x, y)) {
+                        addRewindBlockFromField(engine, playerID, x, y);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -498,7 +546,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     if (engine.statc[0] >= 30) {
                         final NavigableSet<Integer> keys = statesAtTimes.navigableKeySet();
                         final int maxTime = keys.last();
-                        final int minTime = Objects.requireNonNull(keys.ceiling(engine.statistics.time - (30 * 60)));
+                        final int minTime = Objects.requireNonNull(keys.ceiling(engine.statistics.time - (60 * 60)));
 
                         final List<Integer> validKeys = keys
                             .stream()
@@ -519,6 +567,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                             || engine.nextPieceCount != state.nextPosition) {
                             engine.playSE("step");
 
+                            addRewindBlocks(engine, playerID, state.field);
                             engine.field = new Field(state.field);
 
                             for (int i = state.nextPosition; i < engine.nextPieceCount + engine.ruleopt.nextDisplay; ++i) {
@@ -577,6 +626,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                             || engine.nextPieceCount != state.nextPosition) {
                             engine.playSE("step");
 
+                            addRewindBlocks(engine, playerID, state.field);
                             engine.field = new Field(state.field);
 
                             for (int i = state.nextPosition; i < engine.nextPieceCount + engine.ruleopt.nextDisplay; ++i) {
@@ -604,7 +654,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     // TODO: Add Ready, GO! after the final rewind before the game starts again.
 
                     if (engine.statc[0] >= FINAL_REWIND_TIME) {
-                        engine.speed.lineDelay = 60;
+                        engine.speed.lineDelay = 90;
                         clearAddedSummerIPieces(engine);
 
                         engine.ending = 2;
@@ -788,6 +838,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     public boolean onReady(GameEngine engine, int playerID) {
         if (engine.statc[0] == 0) {
             bvr = new Random(engine.randSeed);
+            rewindBlockRandom = new Random(engine.randSeed);
 
             rollStarted = false;
 
@@ -1486,7 +1537,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             int levelIncrease = 0;
 
             if (lines > 4) {
-                levelIncrease += 4 * lines * naturalLevelIncrement;
+                levelIncrease += (lines * 2) * naturalLevelIncrement;
 
                 if (settings.perk.isActive()) {
                     currentEnergy = Math.min(
@@ -1495,19 +1546,19 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     );
                 }
             } else if (lines == 4) {
-                levelIncrease += 12 * naturalLevelIncrement;
+                levelIncrease += 8 * naturalLevelIncrement;
 
                 if (settings.perk.isActive()) {
                     currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + abilityCharge(engine, settings.perk.restoredForFour));
                 }
             } else if (lines == 3) {
-                levelIncrease += 6 * naturalLevelIncrement;
+                levelIncrease += 5 * naturalLevelIncrement;
 
                 if (settings.perk.isActive()) {
                     currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + abilityCharge(engine, settings.perk.restoredForTriple));
                 }
             } else if (lines == 2) {
-                levelIncrease += 3 * naturalLevelIncrement;
+                levelIncrease += 2 * naturalLevelIncrement;
 
                 if (settings.perk.isActive()) {
                     currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + abilityCharge(engine, settings.perk.restoredForDouble));
@@ -1547,6 +1598,8 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
                 setNewBackground(0);
                 fieldPurifyQueued = true;
+
+                // TODO: Clear winter gimmicks.
 
                 customState = CustomState.FINAL_REWIND;
                 engine.stat = GameEngine.STAT_CUSTOM;
@@ -1607,7 +1660,8 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     gimmickAutMo1 = null;
                     gimmickAutMo2 = null;
                     gimmickAutMo3 = null;
-                    // TODO
+
+                    gimmickWinMo1 = new Gimmicks.Whiteout(badges, getGimmickPerkBoost());
                 } else if (engine.statistics.level >= LEVELS_NOV && engine.statistics.level < LEVELS_DEC) {
                     // TODO
                 } else if (engine.statistics.level >= LEVELS_DEC && engine.statistics.level < LEVELS_JAN) {
@@ -1663,20 +1717,18 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         if (gimmickAutMo2 != null && blk.color == Block.BLOCK_COLOR_GEM_RAINBOW) {
             ++brokenRainbowBlocks;
         }
+
+        if (gimmickWinMo1 != null && blk.secondaryColor == Gimmicks.Whiteout.SNOW_IDENTIFIER) {
+            ++brokenSnowBlocks;
+        }
     }
 
     @Override
     public void callCalcScore(GameEngine engine, int playerID, int li) {
         HasCustomLineClear.super.callCalcScore(engine, playerID, li);
 
-        if (gimmickSprMo2 != null) gimmickSprMo2.setCountdown(badges, getGimmickPerkBoost());
-        if (gimmickSprMo3 != null) gimmickSprMo3.setCountdown(badges, getGimmickPerkBoost());
-        if (gimmickSumMo1 != null) {
-            gimmickSumMo1.updateChance(engine, badges, getGimmickPerkBoost());
-            gimmickSumMo1.updateNext(engine);
-        }
+        // Update season badges based on lines.
         if (gimmickSumMo2 != null) {
-            gimmickSumMo2.setAllowance(badges, getGimmickPerkBoost());
             if (engine.nowPieceObject != null && engine.nowPieceObject.id == Piece.PIECE_I && li > 0) {
                 badges.addSeasonBadges(
                     li > 2 ? (li + (li >>> 1)) : li,
@@ -1686,7 +1738,6 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             }
         }
         if (gimmickSumMo3 != null) {
-            gimmickSumMo3.getSpeed(engine, badges, getGimmickPerkBoost());
             if (li > 0) {
                 badges.addSeasonBadges(
                     li > 2 ? (li + (li >>> 1)) : li,
@@ -1696,7 +1747,6 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             }
         }
         if (gimmickAutMo1 != null) {
-            gimmickAutMo1.getFallDelay(badges, getGimmickPerkBoost());
             if (li > 0) {
                 final int bonus = engine.speed.gravity == 0 ? (li * 2) : (li > 2 ? (li + (li >>> 1)) : li);
                 badges.addSeasonBadges(
@@ -1706,12 +1756,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                 );
             }
         }
-        if (gimmickAutMo2 != null) {
-            gimmickAutMo2.updateChance(engine, badges, getGimmickPerkBoost());
-            gimmickAutMo2.updateNext(engine);
-        }
         if (gimmickAutMo3 != null) {
-            gimmickAutMo3.updateBonusGap(badges, getGimmickPerkBoost());
             if (li > 0) {
                 badges.addSeasonBadges(
                     li > 2 ? (li + (li >>> 1)) : li,
@@ -1719,6 +1764,38 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
                 );
             }
+        }
+
+        // Update gimmicks, and perform next queue modification here.
+        if (gimmickSprMo2 != null) {
+            gimmickSprMo2.setCountdown(badges, getGimmickPerkBoost());
+        }
+        if (gimmickSprMo3 != null) {
+            gimmickSprMo3.setCountdown(badges, getGimmickPerkBoost());
+        }
+        if (gimmickSumMo1 != null) {
+            gimmickSumMo1.updateChance(engine, badges, getGimmickPerkBoost());
+            gimmickSumMo1.updateNext(engine);
+        }
+        if (gimmickSumMo2 != null) {
+            gimmickSumMo2.setAllowance(badges, getGimmickPerkBoost());
+        }
+        if (gimmickSumMo3 != null) {
+            gimmickSumMo3.getSpeed(engine, badges, getGimmickPerkBoost());
+        }
+        if (gimmickAutMo1 != null) {
+            gimmickAutMo1.getFallDelay(badges, getGimmickPerkBoost());
+        }
+        if (gimmickAutMo2 != null) {
+            gimmickAutMo2.updateChance(engine, badges, getGimmickPerkBoost());
+            gimmickAutMo2.updateNext(engine);
+        }
+        if (gimmickAutMo3 != null) {
+            gimmickAutMo3.updateBonusGap(badges, getGimmickPerkBoost());
+        }
+        if (gimmickWinMo1 != null) {
+            gimmickWinMo1.updateProportion(badges, getGimmickPerkBoost());
+            gimmickWinMo1.updateNext(engine);
         }
     }
 
@@ -1728,10 +1805,11 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         brokenBoneBlocks = 0;
         brokenFlorets = 0;
         brokenRainbowBlocks = 0;
+        brokenSnowBlocks = 0;
 
         HasCustomLineClear.super.callAndDrawBrokenBlocks(engine, playerID);
 
-        // Janky... lmao
+        // Janky... lmao. Update season badges based on single blocks.
         if (brokenSproutlings > 0) {
             badges.addSeasonBadges(
                 brokenSproutlings + brokenSproutlings / 9,
@@ -1748,9 +1826,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             );
         }
 
-        if (brokenBoneBlocks >= 4) {
+        if (brokenBoneBlocks >= 2) {
             badges.addSeasonBadges(
-                brokenBoneBlocks / 4,
+                brokenBoneBlocks / 2,
                 settings.perk == SeasonPerk.SPRING_PASSIVE,
                 settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
             );
@@ -1763,6 +1841,46 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                 settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
             );
         }
+
+        if (brokenSnowBlocks >= 4) {
+            int bonus = brokenSnowBlocks / 4;
+            if (bonus > 5) bonus += (bonus >>> 1);
+
+            badges.addSeasonBadges(
+                bonus,
+                settings.perk == SeasonPerk.SPRING_PASSIVE,
+                settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
+            );
+        }
+
+        // Update the season gimmicks, but do not process other things.
+        if (gimmickSprMo2 != null) {
+            gimmickSprMo2.setCountdown(badges, getGimmickPerkBoost());
+        }
+        if (gimmickSprMo3 != null) {
+            gimmickSprMo3.setCountdown(badges, getGimmickPerkBoost());
+        }
+        if (gimmickSumMo1 != null) {
+            gimmickSumMo1.updateChance(engine, badges, getGimmickPerkBoost());
+        }
+        if (gimmickSumMo2 != null) {
+            gimmickSumMo2.setAllowance(badges, getGimmickPerkBoost());
+        }
+        if (gimmickSumMo3 != null) {
+            gimmickSumMo3.getSpeed(engine, badges, getGimmickPerkBoost());
+        }
+        if (gimmickAutMo1 != null) {
+            gimmickAutMo1.getFallDelay(badges, getGimmickPerkBoost());
+        }
+        if (gimmickAutMo2 != null) {
+            gimmickAutMo2.updateChance(engine, badges, getGimmickPerkBoost());
+        }
+        if (gimmickAutMo3 != null) {
+            gimmickAutMo3.updateBonusGap(badges, getGimmickPerkBoost());
+        }
+        if (gimmickWinMo1 != null) {
+            gimmickWinMo1.updateProportion(badges, getGimmickPerkBoost());
+        }
     }
 
     private void purifyFieldAndNexts(GameEngine engine) {
@@ -1771,6 +1889,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             blk.countdown = 0;
             blk.color = Block.gemToNormalColor(blk.color);
             blk.bonusValue = 0;
+            blk.secondaryColor = 0;
         });
 
         FieldManipulation.updateAllBlockConnections(engine.field);
@@ -1822,6 +1941,10 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     public void drawBackgroundElements(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
         HasCustomFieldDrawing.super.drawBackgroundElements(rendererExtension, receiver, engine, playerID);
 
+        if (gimmickWinMo1 != null) {
+            gimmickWinMo1.drawOuterFog(receiver, drawing);
+        }
+
         if (vortex != null) {
             vortex.draw(rendererExtension, receiver);
         }
@@ -1865,6 +1988,11 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             gimmickAutMo3.renderFlashlight(receiver, engine, playerID, drawing);
         }
 
+        if (gimmickWinMo1 != null && engine.stat != GameEngine.STAT_MOVE) {
+            gimmickWinMo1.drawInnerFog(receiver, engine, playerID, drawing);
+        }
+
+        rewindBlocks.forEach(rb -> rb.draw(rendererExtension, receiver));
         textEmitter.drawAll(engine);
     }
 
@@ -1877,6 +2005,10 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     @Override
     public void renderMove(GameEngine engine, int playerID) {
         inRenderMove(rendererExtension, receiver, engine, playerID);
+
+        if (gimmickWinMo1 != null) {
+            gimmickWinMo1.drawInnerFog(receiver, engine, playerID, drawing);
+        }
     }
 
     @Override
@@ -1905,7 +2037,11 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     }
 
     private void processGimmicks(GameEngine engine, int playerID) {
-        // TODO: Add gimmicks!
+        if (gimmickAutMo3 == null) {
+            engine.blockShowOutlineOnly = false;
+        } else {
+            gimmickAutMo3.updateCurrentBonusGap(engine);
+        }
     }
 
     @Override
@@ -1920,12 +2056,13 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             descriptionToDraw = null;
         }
 
+        if (badges != null) {
+            badges.updateDrawTimers();
+        }
+
         if (!engine.lagStop) {
             textEmitter.updateAll();
-
-            if (gimmickAutMo3 == null) {
-                engine.blockShowOutlineOnly = false;
-            }
+            rewindBlocks.removeIf(RewindBlock::update);
 
             if (engine.stat == GameEngine.STAT_CUSTOM && engine.gameStarted && fadeProgress < 240) {
                 vortex.add(bvr, bvr.nextInt(7) + 2, engine.getSkin());
@@ -2022,7 +2159,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             final boolean showRankings = !owner.replayMode && !settings.fullGhost;
 
             if (showRankings) {
-                receiver.drawScoreFont(engine, playerID, 3, topY - 1, "RN&TI       DATE", titlesColour, scale);
+                receiver.drawScoreFont(engine, playerID, 3, topY - 1, "RANK/TITLE  DATE", titlesColour, scale);
                 for (int i = 0; i < SeasonsSettings.RANKING_MAX; ++i) {
                     receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d N/A", i + 1));
                     GameTextUtilities.drawAlignedScoreTextBlock(
@@ -2160,6 +2297,16 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     0, 20,
                     false,
                     gimmickAutMo3.getSummary(),
+                    ObjectAlignment.TOP_LEFT
+                );
+            }
+
+            if (gimmickWinMo1 != null) {
+                GameTextUtilities.drawAlignedScoreTextBlock(
+                    receiver, engine, playerID, false,
+                    0, 18,
+                    false,
+                    gimmickWinMo1.getSummary(),
                     ObjectAlignment.TOP_LEFT
                 );
             }

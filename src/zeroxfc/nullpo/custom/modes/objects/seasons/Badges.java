@@ -15,11 +15,21 @@ public class Badges {
     private int spins;  // SP -- 15
     private int season; // SE -- 30
 
+    private int acGreen;
+    private int foursGreen;
+    private int spinsGreen;
+    private int seasonGreen;
+
     public Badges() {
         ac = 0;
         fours = 0;
         spins = 0;
         season = 0;
+
+        acGreen = 0;
+        foursGreen = 0;
+        spinsGreen = 0;
+        seasonGreen = 0;
     }
 
     // Call in mode calcScore. Every 10 season badges is an effective 1 badge.
@@ -28,46 +38,64 @@ public class Badges {
 
         // AC badge.
         if ((lines >= 1) && (engine.field.isEmpty())) {
-            ac += mjBoost.applyAsInt(10);
-            if (minorBoost) ++ac;
+            int gain = mjBoost.applyAsInt(10);
+            if (minorBoost) ++gain;
+
+            ac += gain;
+            acGreen += gain * 5;
         }
 
         // Fours badge. We give partial credit here.
+        int foursGain = 0;
+
         if (lines >= 4) {
-            fours += mjBoost.applyAsInt((int) (2.5 * lines));
-            if (minorBoost) ++fours;
+            foursGain += mjBoost.applyAsInt((int) (2.5 * lines));
+            if (minorBoost) ++foursGain;
         } else if (lines == 3) {
-            fours += mjBoost.applyAsInt(4);
-            if (minorBoost) ++fours;
+            foursGain += mjBoost.applyAsInt(4);
+            if (minorBoost) ++foursGain;
         } else if (lines >= 1) {
-            fours += mjBoost.applyAsInt(lines);
-            if (minorBoost) ++fours;
+            foursGain += mjBoost.applyAsInt(lines);
+            if (minorBoost) ++foursGain;
         }
 
+        fours += foursGain;
+        foursGreen += foursGain;
+
         // Spin badge.
+        int spinsGain = 0;
+
         if (engine.tspin) {
             if (lines >= 4) {
-                spins += mjBoost.applyAsInt((int) (7.5 * lines));
-                if (minorBoost) ++spins;
+                spinsGain += mjBoost.applyAsInt((int) (7.5 * lines));
+                if (minorBoost) ++spinsGain;
             } else if (lines == 3) {
-                spins += mjBoost.applyAsInt(20);
-                if (minorBoost) ++spins;
+                spinsGain += mjBoost.applyAsInt(20);
+                if (minorBoost) ++spinsGain;
             } else if (lines == 2) {
-                spins += mjBoost.applyAsInt(10);
-                if (minorBoost) ++spins;
+                spinsGain += mjBoost.applyAsInt(10);
+                if (minorBoost) ++spinsGain;
             } else if (lines == 1) {
-                spins += mjBoost.applyAsInt((engine.tspinmini || engine.tspinez) ? 1 : 2);
-                if (minorBoost) ++spins;
+                spinsGain += mjBoost.applyAsInt((engine.tspinmini || engine.tspinez) ? 1 : 2);
+                if (minorBoost) ++spinsGain;
             }
         }
+
+        spins += spinsGain;
+        spinsGreen += spinsGain;
     }
 
     public void addSeasonBadges(int seasonBadges, boolean minorBoost, boolean majorBoost) {
         final IntUnaryOperator mjBoost = (x) -> majorBoost ? (x * 4) : x;
 
         // Season badges.
-        season += mjBoost.applyAsInt(seasonBadges);
-        if (seasonBadges > 0 && minorBoost) ++season;
+        int gain = 0;
+
+        gain += mjBoost.applyAsInt(seasonBadges);
+        if (seasonBadges > 0 && minorBoost) ++gain;
+
+        season += gain;
+        seasonGreen += gain;
     }
 
     public Map<String, Integer> getBadgesAsLevelBonuses() {
@@ -98,33 +126,45 @@ public class Badges {
         return bonus;
     }
 
+    public void updateDrawTimers() {
+        if (acGreen > 0) acGreen--;
+        if (foursGreen > 0) foursGreen--;
+        if (spinsGreen > 0) spinsGreen--;
+        if (seasonGreen > 0) seasonGreen--;
+    }
+
     public GameTextUtilities.TextBlock getBadgeDisplay(boolean small) {
         final float baseScale = small ? 0.5f : 1f;
+
+        final int abc = acGreen > 0 ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE;
+        final int fbc = foursGreen > 0 ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE;
+        final int sbc = spinsGreen > 0 ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE;
+        final int sec = seasonGreen > 0 ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE;
 
         return GameTextUtilities.TextBlock.of(
             GameTextUtilities.TextJustification.LEFT,
             GameTextUtilities.Text.custom("[AC]", EventReceiver.COLOR_GREEN, baseScale),
             GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom(String.format("%3d.%d", ac / 10, ac % 10), EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom("/2", EventReceiver.COLOR_WHITE, 0.5f),
+            GameTextUtilities.Text.custom(String.format("%3d.%d", ac / 10, ac % 10), abc, baseScale),
+            GameTextUtilities.Text.custom("/2", abc, 0.5f),
             GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.custom("[4X]", EventReceiver.COLOR_YELLOW, baseScale),
             GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom(String.format("%3d.%d", fours / 10, fours % 10), EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom("/20", EventReceiver.COLOR_WHITE, 0.5f),
+            GameTextUtilities.Text.custom(String.format("%3d.%d", fours / 10, fours % 10), fbc, baseScale),
+            GameTextUtilities.Text.custom("/20", fbc, 0.5f),
             GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.custom("[SP]", EventReceiver.COLOR_PURPLE, baseScale),
             GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom(String.format("%3d.%d", spins / 10, spins % 10), EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom("/15", EventReceiver.COLOR_WHITE, 0.5f),
+            GameTextUtilities.Text.custom(String.format("%3d.%d", spins / 10, spins % 10), sbc, baseScale),
+            GameTextUtilities.Text.custom("/15", sbc, 0.5f),
             GameTextUtilities.Text.newLine(),
             GameTextUtilities.Text.custom("[", EventReceiver.COLOR_GREEN, baseScale),
             GameTextUtilities.Text.custom("S", EventReceiver.COLOR_YELLOW, baseScale),
             GameTextUtilities.Text.custom("E", EventReceiver.COLOR_ORANGE, baseScale),
             GameTextUtilities.Text.custom("]", EventReceiver.COLOR_CYAN, baseScale),
             GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom(String.format("%3d.%d", season / 10, season % 10), EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom("/30", EventReceiver.COLOR_WHITE, 0.5f)
+            GameTextUtilities.Text.custom(String.format("%3d.%d", season / 10, season % 10), sec, baseScale),
+            GameTextUtilities.Text.custom("/30", sec, 0.5f)
         );
     }
 }
