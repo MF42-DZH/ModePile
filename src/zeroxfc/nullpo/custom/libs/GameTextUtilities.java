@@ -1,6 +1,5 @@
 package zeroxfc.nullpo.custom.libs;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -8,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-import java.util.WeakHashMap;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
@@ -75,9 +73,6 @@ public class GameTextUtilities {
      * Do not use newlines directly, use the special newline constructor.
      */
     public static class Text implements TextBlockElement {
-        // Cached instances of texts.
-        private static final WeakHashMap<Text, WeakReference<Text>> INSTANCES = new WeakHashMap<>();
-
         public static final int BASE_UNIT = 16;
 
         public final String string;
@@ -97,17 +92,7 @@ public class GameTextUtilities {
         }
 
         private static Text getInstance(String string, int colour, float scale, int red, int green, int blue, int alpha) {
-            final Text text = new Text(string, colour, scale, red, green, blue, alpha);
-
-            final WeakReference<Text> ref = INSTANCES.get(text);
-
-            if (ref != null) {
-                final Text instance = ref.get();
-                if (instance != null) return instance;
-            }
-
-            INSTANCES.put(text, new WeakReference<>(text));
-            return text;
+            return new Text(string, colour, scale, red, green, blue, alpha);
         }
 
         @Override
@@ -246,8 +231,6 @@ public class GameTextUtilities {
 
     /** Representation of a block of lines to draw. */
     public static class TextBlock implements TextBlockElement {
-        private static final WeakHashMap<TextBlock, WeakReference<TextBlock>> INSTANCES = new WeakHashMap<>();
-
         private final Text[] texts;
         private final TextJustification justification;
 
@@ -286,17 +269,7 @@ public class GameTextUtilities {
         }
 
         public static TextBlock of(TextJustification justification, Text... texts) {
-            final TextBlock block = new TextBlock(justification, texts);
-
-            final WeakReference<TextBlock> ref = INSTANCES.get(block);
-
-            if (ref != null) {
-                final TextBlock instance = ref.get();
-                if (instance != null) return instance;
-            }
-
-            INSTANCES.put(block, new WeakReference<>(block));
-            return block;
+            return new TextBlock(justification, texts);
         }
 
         public static TextBlock of(TextJustification justification, Collection<Text> texts) {

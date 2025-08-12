@@ -135,7 +135,7 @@ public class FieldManipulation {
             int difference = field.getHurryupFloorLines() - sum;
 
             localField.set(field, sum);  // Put new number in
-            field.cutLine(field.getHeight() - 1, difference);  // Push down the field to simulate the removal
+            pushDown(field, difference); // Push down the field to simulate the removal
         } catch (Exception e) {
             // Do nothing.
         }
@@ -956,5 +956,64 @@ public class FieldManipulation {
         }
 
         field.setBlock(x, fromY, empty);
+    }
+
+    /**
+     * Fixed version of {@code Field.pushDown} that preserves line flags properly.
+     *
+     * @param field Field to push down
+     * @param lines How many lines to push down
+     */
+    public static void pushDown(Field field, int lines) {
+        cutLine(field, field.getHeightWithoutHurryupFloor() - 1, lines);
+    }
+
+    /**
+     * Fixed version of {@code Field.pushDown} that preserves line flags properly.
+     * Always pushes down 1 line.
+     *
+     * @param field Field to push down
+     */
+    public static void pushDown(Field field) {
+        pushDown(field, 1);
+    }
+
+    /**
+     * Fixed version of {@code Field.cutLine} that preserves line clear flags properly.
+     *
+     * @param field  Field to push down
+     * @param cutAtY Cut lines at this Y
+     * @param lines  How many lines to cut
+     */
+    public static void cutLine(Field field, int cutAtY, int lines) {
+        for (int i = 0; i < lines; ++i) {
+            for (int y = cutAtY; y > (-field.getHiddenHeight()); --y) {
+                for (int x = 0; x < field.getWidth(); ++x) {
+                    Block blk = field.getBlock(x, y - 1);
+
+                    if (blk == null) blk = new Block();
+                    field.setBlock(x, y, blk);
+                }
+
+                field.setLineFlag(y, field.getLineFlag(y - 1));
+            }
+
+            for (int x = 0; x < field.getWidth(); ++x) {
+                field.setBlock(x, -field.getHiddenHeight(), new Block());
+            }
+
+            field.setLineFlag(-field.getHiddenHeight(), false);
+        }
+    }
+
+    /**
+     * Fixed version of {@code Field.cutLine} that preserves line clear flags properly.
+     * Always cuts 1 line.
+     *
+     * @param field  Field to push down
+     * @param cutAtY Cut lines at this Y
+     */
+    public static void cutLine(Field field, int cutAtY) {
+        cutLine(field, cutAtY, 1);
     }
 }

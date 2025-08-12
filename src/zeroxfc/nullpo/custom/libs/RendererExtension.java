@@ -3,7 +3,6 @@ package zeroxfc.nullpo.custom.libs;
 import java.awt.*;
 import java.lang.reflect.*;
 import java.util.ArrayList;
-import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntSupplier;
@@ -33,6 +32,8 @@ import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
 import zeroxfc.nullpo.custom.libs.types.ImageChunk;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.types.RuntimeImage;
+import zeroxfc.nullpo.custom.libs.types.tuples.FloatPair;
+import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 
 public class RendererExtension {
     /** Type of break effect. */
@@ -77,26 +78,26 @@ public class RendererExtension {
 
     private enum FrameChunk {
         // There is no MIDDLE_MIDDLE as that is filled by the field background.
-        TOP_LEFT(new int[] { 0, 0 }),
-        TOP_MIDDLE(new int[] { 4, 0 }),
-        TOP_RIGHT(new int[] { 8, 0 }),
-        MIDDLE_LEFT(new int[] { 0, 4 }),
-        MIDDLE_RIGHT(new int[] { 8, 4 }),
-        BOTTOM_LEFT(new int[] { 0, 8 }),
-        BOTTOM_MIDDLE(new int[] { 4, 8 }),
-        BOTTOM_RIGHT(new int[] { 8, 8 }),
-        METER_SEP_TOP(new int[] { 12, 0 }),
-        METER_SEP_MIDDLE(new int[] { 12, 4 }),
-        METER_SEP_BOTTOM(new int[] { 12, 8 });
+        TOP_LEFT(0, 0),
+        TOP_MIDDLE(4, 0),
+        TOP_RIGHT(8, 0),
+        MIDDLE_LEFT(0, 4),
+        MIDDLE_RIGHT(8, 4),
+        BOTTOM_LEFT(0, 8),
+        BOTTOM_MIDDLE(4, 8),
+        BOTTOM_RIGHT(8, 8),
+        METER_SEP_TOP(12, 0),
+        METER_SEP_MIDDLE(12, 4),
+        METER_SEP_BOTTOM(12, 8);
 
-        private final int[] sourceLocation;
-        private static final int[] DIMS = { 4, 4 };
-        private static final float[] SIZE_S = { 0.5f, 0.5f };
-        private static final float[] SIZE_N = { 1f, 1f };
-        private static final float[] SIZE_L = { 2f, 2f };
+        private final IntPair sourceLocation;
+        private static final IntPair DIMS = IntPair.of(4, 4);
+        private static final FloatPair SIZE_S = FloatPair.of(0.5f, 0.5f);
+        private static final FloatPair SIZE_N = FloatPair.of(1f, 1f);
+        private static final FloatPair SIZE_L = FloatPair.of(2f, 2f);
 
-        FrameChunk(int[] sourceLocation) {
-            this.sourceLocation = sourceLocation;
+        FrameChunk(int sx, int sy) {
+            this.sourceLocation = IntPair.of(sx, sy);
         }
 
         /**
@@ -111,7 +112,7 @@ public class RendererExtension {
         public ImageChunk atLocation(int x, int y, int displaySize) {
             return new ImageChunk(
                 ObjectAlignment.TOP_LEFT,
-                new int[] { x, y },
+                IntPair.of(x, y),
                 sourceLocation,
                 DIMS,
                 displaySize == 0 ? SIZE_N : (displaySize == -1 ? SIZE_S : SIZE_L)
@@ -864,6 +865,39 @@ public class RendererExtension {
     }
 
     /**
+     * Improved "Hebo Hidden" curtain effect with support for more than just skin 0. Recommended for use with
+     * {@code HasCustomFieldDrawing}'s field drawing overrides.
+     *
+     * @param receiver Current renderer
+     * @param engine   Current game engine
+     * @param playerID Current player ID
+     * @param height   Hebo Hidden curtain height
+     * @param template Block to use as template for drawing
+     */
+    public void drawImprovedHeboHidden(EventReceiver receiver, GameEngine engine, int playerID, int height, Block template) {
+        if (engine.field == null) return;
+
+        final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+        final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+        for (int y = engine.field.getHeight() - 1; y > engine.field.getHeight() - height - 1; --y) {
+            for (int x = 0; x < engine.field.getWidth(); ++x) {
+                drawScaledBlock(
+                    receiver,
+                    baseX + (16 * x), baseY + (16 * y),
+                    template.color,
+                    template.skin,
+                    template.getAttribute(Block.BLOCK_ATTRIBUTE_BONE),
+                    template.darkness,
+                    template.alpha,
+                    1f,
+                    template.attribute
+                );
+            }
+        }
+    }
+
+    /**
      * Draws a Heboris-style post-hold outline.
      *
      * @param receiver  Current renderer
@@ -875,8 +909,8 @@ public class RendererExtension {
 
         if (engine.gameActive && engine.stat == GameEngine.STAT_MOVE && engine.holdDisable && engine.ruleopt.holdEnable && (engine.statc[0] > 1 || engine.ruleopt.moveFirstFrame)) {
             final int select = (engine.statc[0] / 5) % 3;
-            final int[] outline =  select == 0 ? YELLOW_OUTLINE : (select == 1 ? WHITE_OUTLINE : DARK_GREY_OUTLINE);
-            drawPieceOutline(receiver, engine, playerID, engine.nowPieceObject.big ? 4 :  2, outline);
+            final int[] outline = select == 0 ? YELLOW_OUTLINE : (select == 1 ? WHITE_OUTLINE : DARK_GREY_OUTLINE);
+            drawPieceOutline(receiver, engine, playerID, engine.nowPieceObject.big ? 4 : 2, outline);
         }
     }
 

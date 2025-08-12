@@ -1,20 +1,26 @@
 package zeroxfc.nullpo.custom.libs.types;
 
+import zeroxfc.nullpo.custom.libs.types.tuples.FloatPair;
+import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
+
 /** Represents a chunk of an image to draw. */
 public class ImageChunk {
-    private final int[] sourceLocation;
     private ObjectAlignment alignment;
-    private int[] anchorLocation;
-    private int[] drawLocation;
-    private int[] sourceDimensions;
-    private float[] scale;
+
+    private IntPair anchorLocation;
+    private IntPair sourceLocation;
+    private IntPair sourceDimensions;
+    private FloatPair scale;
+
+    private IntPair drawLocation;
 
     public ImageChunk() {
-        this(ObjectAlignment.TOP_LEFT, new int[] { 0, 0 }, new int[] { 0, 0 }, new int[] { 1, 1 }, new float[] { 1, 1 });
+        this(ObjectAlignment.TOP_LEFT, IntPair.of(0, 0), IntPair.of(0, 0), IntPair.of(1, 1), FloatPair.of(1f, 1f));
     }
 
-    public ImageChunk(ObjectAlignment alignment, int[] anchorLocation, int[] sourceLocation, int[] sourceDimensions, float[] scale) {
+    public ImageChunk(ObjectAlignment alignment, IntPair anchorLocation, IntPair sourceLocation, IntPair sourceDimensions, FloatPair scale) {
         this.alignment = alignment;
+
         this.anchorLocation = anchorLocation;
         this.sourceLocation = sourceLocation;
         this.sourceDimensions = sourceDimensions;
@@ -24,35 +30,35 @@ public class ImageChunk {
     }
 
     private void calibrateDrawLocation() {
-        int[] ddim = getDrawDimensions();
+        IntPair ddim = getDrawDimensions();
 
         switch (alignment) {
             case TOP_MIDDLE:
-                drawLocation = new int[] { anchorLocation[0] - (ddim[0] / 2), anchorLocation[1] };
+                drawLocation = IntPair.of(anchorLocation.valL - (ddim.valL / 2), anchorLocation.valR);
                 break;
             case TOP_RIGHT:
-                drawLocation = new int[] { anchorLocation[0] - ddim[0], anchorLocation[1] };
+                drawLocation = IntPair.of(anchorLocation.valL - ddim.valL, anchorLocation.valR);
                 break;
             case MIDDLE_LEFT:
-                drawLocation = new int[] { anchorLocation[0], anchorLocation[1] - (ddim[1] / 2) };
+                drawLocation = IntPair.of(anchorLocation.valL, anchorLocation.valR - (ddim.valR / 2));
                 break;
             case MIDDLE_MIDDLE:
-                drawLocation = new int[] { anchorLocation[0] - (ddim[0] / 2), anchorLocation[1] - (ddim[1] / 2) };
+                drawLocation = IntPair.of(anchorLocation.valL - (ddim.valL / 2), anchorLocation.valR - (ddim.valR / 2));
                 break;
             case MIDDLE_RIGHT:
-                drawLocation = new int[] { anchorLocation[0] - ddim[0], anchorLocation[1] - (ddim[1] / 2) };
+                drawLocation = IntPair.of(anchorLocation.valL - ddim.valL, anchorLocation.valR - (ddim.valR / 2));
                 break;
             case BOTTOM_LEFT:
-                drawLocation = new int[] { anchorLocation[0], anchorLocation[1] - ddim[1] };
+                drawLocation = IntPair.of(anchorLocation.valL, anchorLocation.valR - ddim.valR);
                 break;
             case BOTTOM_MIDDLE:
-                drawLocation = new int[] { anchorLocation[0] - (ddim[0] / 2), anchorLocation[1] - ddim[1] };
+                drawLocation = IntPair.of(anchorLocation.valL - (ddim.valL / 2), anchorLocation.valR - ddim.valR);
                 break;
             case BOTTOM_RIGHT:
-                drawLocation = new int[] { anchorLocation[0] - ddim[0], anchorLocation[1] - ddim[1] };
+                drawLocation = IntPair.of(anchorLocation.valL - ddim.valL, anchorLocation.valR - ddim.valR);
                 break;
             default:
-                drawLocation = new int[] { anchorLocation[0], anchorLocation[1] };
+                drawLocation = IntPair.of(anchorLocation.valL, anchorLocation.valR);
                 break;
         }
     }
@@ -66,42 +72,46 @@ public class ImageChunk {
         calibrateDrawLocation();
     }
 
-    public int[] getAnchorLocation() {
+    public IntPair getAnchorLocation() {
         return anchorLocation;
     }
 
-    public void setAnchorLocation(int[] anchorLocation) {
+    public void setAnchorLocation(IntPair anchorLocation) {
         this.anchorLocation = anchorLocation;
         calibrateDrawLocation();
     }
 
-    public float[] getScale() {
+    public FloatPair getScale() {
         return scale;
     }
 
-    public void setScale(float[] scale) {
+    public void setScale(FloatPair scale) {
         this.scale = scale;
         calibrateDrawLocation();
     }
 
-    public int[] getSourceLocation() {
+    public IntPair getSourceLocation() {
         return sourceLocation;
     }
 
-    public int[] getSourceDimensions() {
+    private void setSourceLocation(IntPair sourceLocation) {
+        this.sourceLocation = sourceLocation;
+    }
+
+    public IntPair getSourceDimensions() {
         return sourceDimensions;
     }
 
-    public void setSourceDimensions(int[] sourceDimensions) {
+    public void setSourceDimensions(IntPair sourceDimensions) {
         this.sourceDimensions = sourceDimensions;
         calibrateDrawLocation();
     }
 
-    public int[] getDrawDimensions() {
-        return new int[] { (int) (sourceDimensions[0] * scale[0]), (int) (sourceDimensions[1] * scale[1]) };
+    public IntPair getDrawDimensions() {
+        return IntPair.of((int) (sourceDimensions.valL * scale.valL), (int) (sourceDimensions.valR * scale.valR));
     }
 
-    public int[] getDrawLocation() {
+    public IntPair getDrawLocation() {
         return drawLocation;
     }
 }

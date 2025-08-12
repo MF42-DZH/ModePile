@@ -4,6 +4,8 @@ import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.types.ImageChunk;
+import zeroxfc.nullpo.custom.libs.types.tuples.FloatPair;
+import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 
 public class BackgroundInterlaceHorizontal extends AnimatedBackgroundHook {
     private static final int SCREEN_WIDTH = 640;
@@ -62,9 +64,9 @@ public class BackgroundInterlaceHorizontal extends AnimatedBackgroundHook {
         for (int i = 0; i < chunks.length; i++) {
             final boolean left = leftOdd && (i % 2 == 1);
             final ObjectAlignment anchorType = left ? ObjectAlignment.TOP_RIGHT : ObjectAlignment.TOP_LEFT;
-            final int[] anchorLocation = new int[] { left ? SCREEN_WIDTH : 0, i * rowHeight };
-            final int[] srcLocation = new int[] { 0, i * rowHeight };
-            chunks[i] = new ImageChunk(anchorType, anchorLocation, srcLocation, new int[] { 640, rowHeight }, new float[] { baseScale, 1f });
+            final IntPair anchorLocation = IntPair.of(left ? SCREEN_WIDTH : 0, i * rowHeight);
+            final IntPair srcLocation = IntPair.of(0, i * rowHeight);
+            chunks[i] = new ImageChunk(anchorType, anchorLocation, srcLocation, IntPair.of(640, rowHeight), FloatPair.of(baseScale, 1f));
         }
     }
 
@@ -86,7 +88,7 @@ public class BackgroundInterlaceHorizontal extends AnimatedBackgroundHook {
             double s = Math.sin(Math.PI * ((double) ppu / pulseTimerMax));
             double scale = baseScale + (scaleVariance * s);
             if (scale < 1d) scale = 1d;
-            chunks[j].setScale(new float[] { (float) scale, 1f });
+            chunks[j].setScale(FloatPair.of((float) scale, 1f));
         }
     }
 

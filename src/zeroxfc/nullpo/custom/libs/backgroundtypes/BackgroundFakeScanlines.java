@@ -5,6 +5,8 @@ import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.types.ImageChunk;
+import zeroxfc.nullpo.custom.libs.types.tuples.FloatPair;
+import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 
 public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
     private static final int AMT = 480 / 2;
@@ -71,7 +73,13 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
         // Generate chunks
         chunks = new ImageChunk[AMT];
         for (int i = 0; i < chunks.length; i++) {
-            chunks[i] = new ImageChunk(ObjectAlignment.TOP_LEFT, new int[] { 0, ((480 / AMT) * i) + ((480 / AMT) / 2) }, new int[] { 0, (480 / AMT) * i }, new int[] { 640, (480 / AMT) }, new float[] { 1f, 1f });
+            chunks[i] = new ImageChunk(
+                ObjectAlignment.TOP_LEFT,
+                IntPair.of(0, ((480 / AMT) * i) + ((480 / AMT) / 2)),
+                IntPair.of(0, (480 / AMT) * i),
+                IntPair.of(640, (480 / AMT)),
+                FloatPair.of(1f, 1f)
+            );
         }
 
         phase = 0;
@@ -87,7 +95,7 @@ public class BackgroundFakeScanlines extends AnimatedBackgroundHook {
         if (colourRandom == null) return;
         for (ImageChunk chunk : chunks) {
             float newScale = (float) (0.01f * colourRandom.nextDouble()) + 0.995f;
-            chunk.setScale(new float[] { newScale, 1f });
+            chunk.setScale(FloatPair.of(newScale, 1f));
         }
 
         phase = (phase + 1) % PERIOD;

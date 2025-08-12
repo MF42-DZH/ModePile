@@ -6,6 +6,8 @@ import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.types.ImageChunk;
+import zeroxfc.nullpo.custom.libs.types.tuples.FloatPair;
+import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 
 public class BackgroundVerticalBars extends AnimatedBackgroundHook {
     private static final int AMT = 640 / 4;
@@ -73,7 +75,13 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
         if (pulseBaseScale == null || pulseScaleVariance == null || sliceSize == null) {
             chunks = new ImageChunk[AMT];
             for (int i = 0; i < chunks.length; i++) {
-                chunks[i] = new ImageChunk(ObjectAlignment.TOP_MIDDLE, new int[] { ((640 / AMT) * i) + ((640 / AMT) / 2), 0 }, new int[] { (640 / AMT) * i, 0 }, new int[] { (640 / AMT), 480 }, new float[] { BASE_SCALE, 1f });
+                chunks[i] = new ImageChunk(
+                    ObjectAlignment.TOP_MIDDLE,
+                    IntPair.of(((640 / AMT) * i) + ((640 / AMT) / 2), 0),
+                    IntPair.of((640 / AMT) * i, 0),
+                    IntPair.of((640 / AMT), 480),
+                    FloatPair.of(BASE_SCALE, 1f)
+                );
             }
 
             this.reverse = reverse;
@@ -85,7 +93,13 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
 
             chunks = new ImageChunk[sliceSize];
             for (int i = 0; i < chunks.length; i++) {
-                chunks[i] = new ImageChunk(ObjectAlignment.TOP_MIDDLE, new int[] { ((640 / sliceSize) * i) + ((640 / sliceSize) / 2), 0 }, new int[] { (640 / sliceSize) * i, 0 }, new int[] { (640 / sliceSize), 480 }, new float[] { pulseBaseScale, 1f });
+                chunks[i] = new ImageChunk(
+                    ObjectAlignment.TOP_MIDDLE,
+                    IntPair.of(((640 / sliceSize) * i) + ((640 / sliceSize) / 2), 0),
+                    IntPair.of((640 / sliceSize) * i, 0),
+                    IntPair.of((640 / sliceSize), 480),
+                    FloatPair.of(pulseBaseScale, 1f)
+                );
             }
 
             this.reverse = reverse;
@@ -125,7 +139,7 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
             double newScale = baseScale + (Math.sin(TWO_PI * ((double) ppu / pulsePhaseMax)) * scaleVariance);
             if (newScale < 1d) newScale = 1d;
 
-            chunks[j].setScale(new float[] { (float) newScale, 1f });
+            chunks[j].setScale(FloatPair.of((float) newScale, 1f));
         }
     }
 
@@ -139,12 +153,12 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
     public void draw(GameEngine engine, int playerID) {
         ArrayList<ImageChunk> priorityList = new ArrayList<>();
         Collections.addAll(priorityList, chunks);
-        priorityList.sort((c1, c2) -> Float.compare(c1.getScale()[0], c2.getScale()[0]));
+        priorityList.sort((c1, c2) -> Float.compare(c1.getScale().valL, c2.getScale().valL));
 
         float baseScale = (pulseBaseScale == null) ? BASE_SCALE : pulseBaseScale;
         if (almostEqual(baseScale, 1, 0.005)) {
             customHolder.drawImage(engine, imageName, 0, 0);
-            priorityList.removeIf(imageChunk -> almostEqual(imageChunk.getScale()[0], 1, 0.005));
+            priorityList.removeIf(imageChunk -> almostEqual(imageChunk.getScale().valL, 1, 0.005));
         }
         for (ImageChunk chunk : priorityList) {
             customHolder.drawOffsetImage(engine, imageName, chunk, 255, 255, 255, 255);

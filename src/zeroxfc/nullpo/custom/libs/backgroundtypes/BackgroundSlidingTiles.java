@@ -5,6 +5,8 @@ import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.types.ImageChunk;
+import zeroxfc.nullpo.custom.libs.types.tuples.FloatPair;
+import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 
 public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
     private static final int DIRECTION_UP = 0;
@@ -103,7 +105,13 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 
             for (int y = 0; y < gridChunks.length; y++) {
                 for (int x = 0; x < gridChunks[y].length; x++) {
-                    gridChunks[y][x] = new ImageChunk(ObjectAlignment.TOP_LEFT, new int[] { (x - 1) * dim[0], (y - 1) * dim[1] }, new int[] { 0, 0 }, new int[] { dim[0], dim[1] }, new float[] { 1f, 1f });
+                    gridChunks[y][x] = new ImageChunk(
+                        ObjectAlignment.TOP_LEFT,
+                        IntPair.of((x - 1) * dim[0], (y - 1) * dim[1]),
+                        IntPair.of(0, 0),
+                        IntPair.of(dim[0], dim[1]),
+                        FloatPair.of(1f, 1f)
+                    );
                 }
             }
         } else {
@@ -119,7 +127,13 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
 
             for (int y = 0; y < gridChunks.length; y++) {
                 for (int x = 0; x < gridChunks[y].length; x++) {
-                    gridChunks[y][x] = new ImageChunk(ObjectAlignment.TOP_LEFT, new int[] { (x - 1) * s, (y - 1) * s }, new int[] { 0, 0 }, new int[] { s, s }, new float[] { 1f, 1f });
+                    gridChunks[y][x] = new ImageChunk(
+                        ObjectAlignment.TOP_LEFT,
+                        IntPair.of((x - 1) * s, (y - 1) * s),
+                        IntPair.of(0, 0),
+                        IntPair.of(s, s),
+                        FloatPair.of(1f, 1f)
+                    );
 
                     if (colour != null) {
                         colours[y][x] = colour;
@@ -139,20 +153,20 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
             if (horizontal) {
                 for (int y = 0; y < gridChunks.length; y++) {
                     for (int x = 0; x < gridChunks[y].length; x++) {
-                        int[] locOld = gridChunks[y][x].getAnchorLocation();
-                        int yMod = Math.abs(locOld[1] / width);
+                        final IntPair locOld = gridChunks[y][x].getAnchorLocation();
+                        int yMod = Math.abs(locOld.valR / width);
                         int dir = (direction + yMod) % DIRECTIONS;
                         int xNew;
                         switch (dir) {
                             case DIRECTION_LEFT:
-                                xNew = locOld[0] - 1;
+                                xNew = locOld.valL - 1;
                                 if (xNew <= (width * -2)) xNew = (gridChunks[0].length - 2) * width;
-                                gridChunks[y][x].setAnchorLocation(new int[] { xNew, locOld[1] });
+                                gridChunks[y][x].setAnchorLocation(IntPair.of(xNew, locOld.valR));
                                 break;
                             case DIRECTION_RIGHT:
-                                xNew = locOld[0] + 1;
+                                xNew = locOld.valL + 1;
                                 if (xNew >= (gridChunks[0].length - 1) * width) xNew = width * -1;
-                                gridChunks[y][x].setAnchorLocation(new int[] { xNew, locOld[1] });
+                                gridChunks[y][x].setAnchorLocation(IntPair.of(xNew, locOld.valR));
                                 break;
                             default:
                                 break;
@@ -164,20 +178,20 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
             } else {
                 for (int x = 0; x < gridChunks[0].length; x++) {
                     for (int y = 0; y < gridChunks.length; y++) {
-                        int[] locOld = gridChunks[y][x].getAnchorLocation();
-                        int xMod = Math.abs(locOld[0] / width);
+                        final IntPair locOld = gridChunks[y][x].getAnchorLocation();
+                        int xMod = Math.abs(locOld.valL / width);
                         int dir2 = (direction + xMod) % DIRECTIONS;
                         int yNew;
                         switch (dir2) {
                             case DIRECTION_UP:
-                                yNew = locOld[1] - 1;
+                                yNew = locOld.valR - 1;
                                 if (yNew <= (height * -2)) yNew = (gridChunks.length - 2) * height;
-                                gridChunks[y][x].setAnchorLocation(new int[] { locOld[0], yNew });
+                                gridChunks[y][x].setAnchorLocation(IntPair.of(locOld.valL, yNew));
                                 break;
                             case DIRECTION_DOWN:
-                                yNew = locOld[1] + 1;
+                                yNew = locOld.valR + 1;
                                 if (yNew >= (gridChunks.length - 1) * height) yNew = height * -1;
-                                gridChunks[y][x].setAnchorLocation(new int[] { locOld[0], yNew });
+                                gridChunks[y][x].setAnchorLocation(IntPair.of(locOld.valL, yNew));
                                 break;
                             default:
                                 break;
@@ -226,7 +240,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
         for (int y = 0; y < gridChunks.length; y++) {
             for (int x = 0; x < gridChunks[y].length; x++) {
                 final ImageChunk chunk = gridChunks[y][x];
-                final int[] pos = chunk.getDrawLocation();
+                final IntPair pos = chunk.getDrawLocation();
 
                 if (custom) {
                     customHolder.drawOffsetImage(engine, imageName, chunk, 255, 255, 255, 255);
@@ -234,7 +248,7 @@ public class BackgroundSlidingTiles extends AnimatedBackgroundHook {
                     float s = 1f;
                     if (size < 0) s = 0.5f;
                     if (size > 0) s = 2f;
-                    engine.owner.receiver.drawSingleBlock(engine, playerID, pos[0], pos[1], colours[y][x], skin, false, darkness, 1f, s);
+                    engine.owner.receiver.drawSingleBlock(engine, playerID, pos.valL, pos.valR, colours[y][x], skin, false, darkness, 1f, s);
                 }
             }
         }

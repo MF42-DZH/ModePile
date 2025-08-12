@@ -30,6 +30,9 @@ public class SeasonsSettings extends ModeSettings {
     public final String hasCompletedGameProp = propPath("hasCompletedGame");
     public boolean hasCompletedGame;
 
+    public final String hasSeenRollIntroProp = propPath("hasSeenRollIntro");
+    public boolean hasSeenRollIntro;
+
     // TODO: add a separate system for storing if players have seen the roll, to give them the ability to skip
     // TODO: achievements?
 
@@ -71,6 +74,7 @@ public class SeasonsSettings extends ModeSettings {
         spinType = prop.getProperty(spinTypeProp, GameEngine.SPINTYPE_4POINT);
 
         hasCompletedGame = prop.getProperty(hasCompletedGameProp, false);
+        hasSeenRollIntro = prop.getProperty(hasSeenRollIntroProp, false);
     }
 
     @Override
@@ -82,6 +86,7 @@ public class SeasonsSettings extends ModeSettings {
         prop.getProperty(spinTypeProp, spinType);
 
         prop.setProperty(hasCompletedGameProp, hasCompletedGame);
+        prop.setProperty(hasSeenRollIntroProp, hasSeenRollIntro);
     }
 
     @Override

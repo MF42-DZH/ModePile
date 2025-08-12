@@ -48,9 +48,9 @@ public interface HasCustomLineClear {
 
             callCalcScore(engine, playerID, li);
 
-            callAndDrawBrokenBlocks(engine, playerID);
+            callAndDrawBrokenBlocks(engine, playerID, li);
 
-            eraseFlaggedBlocks(engine);
+            eraseFlaggedBlocks(engine, li);
         }
     }
 
@@ -151,7 +151,7 @@ public interface HasCustomLineClear {
         engine.owner.receiver.calcScore(engine, playerID, li);
     }
 
-    default void callAndDrawBrokenBlocks(GameEngine engine, int playerID) {
+    default void callAndDrawBrokenBlocks(GameEngine engine, int playerID, int li) {
         // Blockを消す演出を出す (まだ実際には消えていない）
         if (engine.clearMode == GameEngine.CLEAR_LINE) {
             for(int i = 0; i < engine.field.getHeight(); i++) {
@@ -188,7 +188,7 @@ public interface HasCustomLineClear {
             }
     }
 
-    default void eraseFlaggedBlocks(GameEngine engine) {
+    default void eraseFlaggedBlocks(GameEngine engine, int li) {
         // Blockを消す
         if (engine.clearMode == GameEngine.CLEAR_LINE)
             engine.field.clearLine();

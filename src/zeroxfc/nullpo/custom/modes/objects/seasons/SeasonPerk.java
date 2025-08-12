@@ -17,8 +17,6 @@ public enum SeasonPerk {
     WINTER_ACTIVE(1, 1000, 600, 5, 10, 20, 50); // Freezes gravity and gives increased lock delay (= 180) while active.
 
     private static class Descriptions {
-        private static final WeakHashMap<Descriptions, WeakReference<Descriptions>> INSTANCES = new WeakHashMap<>(2);
-
         public final GameTextUtilities.TextBlock perkless;
         public final GameTextUtilities.TextBlock springPassive;
         public final GameTextUtilities.TextBlock springActive;
@@ -30,16 +28,7 @@ public enum SeasonPerk {
         public final GameTextUtilities.TextBlock winterActive;
 
         public static Descriptions get(float baseScale) {
-            final Descriptions descriptions = new Descriptions(baseScale);
-            final WeakReference<Descriptions> ref = INSTANCES.get(descriptions);
-
-            if (ref != null) {
-                final Descriptions instance = ref.get();
-                if (instance != null) return instance;
-            }
-
-            INSTANCES.put(descriptions, new WeakReference<>(descriptions));
-            return descriptions;
+            return new Descriptions(baseScale);
         }
 
         private Descriptions(float baseScale) {

@@ -31,6 +31,7 @@ import sdljava.video.SDLSurface;
 import zeroxfc.nullpo.custom.libs.types.ImageChunk;
 import zeroxfc.nullpo.custom.libs.types.RuntimeImage;
 import zeroxfc.nullpo.custom.libs.types.RuntimeMusic;
+import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 
 // Create instances of this class during playerInit / methods called when a mode is started.
 // Do not create static instances or instances created only once during mode instance initialisation.
@@ -915,12 +916,12 @@ public class CustomResourceHolder {
      * @param alpha  Alpha component
      */
     public void drawOffsetImage(GameEngine engine, String name, ImageChunk chunk, int red, int green, int blue, int alpha) {
-        final int[] dpos = chunk.getDrawLocation();
-        final int[] ddim = chunk.getDrawDimensions();
-        final int[] sloc = chunk.getSourceLocation();
-        final int[] sdim = chunk.getSourceDimensions();
+        final IntPair dpos = chunk.getDrawLocation();
+        final IntPair ddim = chunk.getDrawDimensions();
+        final IntPair sloc = chunk.getSourceLocation();
+        final IntPair sdim = chunk.getSourceDimensions();
 
-        drawOffsetImage(engine, name, dpos[0], dpos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], red, green, blue, alpha);
+        drawOffsetImage(engine, name, dpos.valL, dpos.valR, ddim.valL, ddim.valR, sloc.valL, sloc.valR, sdim.valL, sdim.valR, red, green, blue, alpha);
     }
 
     /**
@@ -935,12 +936,12 @@ public class CustomResourceHolder {
      * @param alpha   Alpha component
      */
     public void drawOffsetImage(GameEngine engine, String logName, RuntimeImage<?> image, ImageChunk chunk, int red, int green, int blue, int alpha) {
-        final int[] dpos = chunk.getDrawLocation();
-        final int[] ddim = chunk.getDrawDimensions();
-        final int[] sloc = chunk.getSourceLocation();
-        final int[] sdim = chunk.getSourceDimensions();
+        final IntPair dpos = chunk.getDrawLocation();
+        final IntPair ddim = chunk.getDrawDimensions();
+        final IntPair sloc = chunk.getSourceLocation();
+        final IntPair sdim = chunk.getSourceDimensions();
 
-        drawOffsetImage(engine, logName, image, dpos[0], dpos[1], ddim[0], ddim[1], sloc[0], sloc[1], sdim[0], sdim[1], red, green, blue, alpha);
+        drawOffsetImage(engine, logName, image, dpos.valL, dpos.valR, ddim.valL, ddim.valR, sloc.valL, sloc.valR, sdim.valL, sdim.valR, red, green, blue, alpha);
     }
 
 

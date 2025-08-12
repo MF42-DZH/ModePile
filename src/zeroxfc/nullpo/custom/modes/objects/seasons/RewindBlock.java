@@ -45,7 +45,7 @@ public class RewindBlock {
             block.getDrawColor(),
             block.skin,
             block.getAttribute(Block.BLOCK_ATTRIBUTE_BONE),
-            block.darkness,
+            0f,
             block.alpha,
             1f,
             block.attribute

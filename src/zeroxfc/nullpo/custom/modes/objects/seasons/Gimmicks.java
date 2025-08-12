@@ -238,7 +238,7 @@ public class Gimmicks {
 
         // Call at first move frame.
         public void attemptPlacement(GameEngine engine) {
-            if (random.nextDouble() > (0.025 * (13 - currentCountdown) / 3d)) return;
+            if (random.nextDouble() > (0.04 * (13 - currentCountdown) / 3d)) return;
 
             final List<BlockInfo> blocks = new LinkedList<>();
             for (int y = (-1 * engine.field.getHiddenHeight()); y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
@@ -317,7 +317,9 @@ public class Gimmicks {
     // Summer's gimmicks come hot and fast.
     // N.B. the speed of the mode is also pretty fast in summer
     public static class Dehydration implements HasDescription {
-        private final Random random;
+        private final Random pieceRandom;
+        private final Random fieldRandom;
+
         private final int seasonStartLv;
         private final int seasonEndLv;
 
@@ -325,7 +327,9 @@ public class Gimmicks {
 
         // Set the badge chance manually!
         public Dehydration(Random random, int seasonStartLv, int seasonEndLv) {
-            this.random = random;
+            this.pieceRandom = random;
+            this.fieldRandom = new Random(pieceRandom.nextLong());
+
             this.seasonStartLv = seasonStartLv;
             this.seasonEndLv = seasonEndLv;
         }
@@ -379,13 +383,34 @@ public class Gimmicks {
         }
 
         public void updateNext(GameEngine engine) {
-            if (random.nextDouble() > chance) return;
+            if (pieceRandom.nextDouble() >= chance) return;
 
             final Piece piece = HasCustomOnMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
             if (piece == null) return;
 
             piece.setAttribute(Block.BLOCK_ATTRIBUTE_BONE, true);
             engine.playSE("movefail");
+        }
+
+        public void updateField(GameEngine engine) {
+            if (engine.field == null) return;
+
+            boolean playSound = false;
+
+            for (int y = engine.field.getHighestBlockY(); y < engine.field.getHeight(); ++y) {
+                for (int x = 0; x < engine.field.getWidth(); ++x) {
+                    if (!engine.field.getBlockEmpty(x, y)) {
+                        final Block blk = engine.field.getBlock(x, y);
+                        if (!blk.getAttribute(Block.BLOCK_ATTRIBUTE_BONE) && fieldRandom.nextDouble() < (chance / 10d)) {
+                            blk.setAttribute(Block.BLOCK_ATTRIBUTE_BONE, true);
+                            playSound = true;
+                        }
+                    }
+                }
+            }
+
+            // TODO: I really need a sound for things evaporating.
+            //       Deal with that once I finish the core of the mode.
         }
     }
 
@@ -637,12 +662,11 @@ public class Gimmicks {
 
         public void updateChance(GameEngine engine, Badges badges, boolean perkBoost) {
             final double progress = (engine.statistics.level - seasonStartLv) / (double) (seasonEndLv - seasonStartLv);
-            final double baseChance = Interpolation.lerp(0.99333, 1.0, progress);
+            final double baseChance = Interpolation.lerp(0.9935, 1.0, progress);
 
             final int denominator = perkBoost ? 10 : 20;
 
-            // We don't want the max chance to be 1. That's too annoying.
-            chance = Math.pow(baseChance, badges.getBadges() / (double) denominator) * 0.9;
+            chance = Math.pow(baseChance, badges.getBadges() / (double) denominator);
         }
 
         @Override
@@ -732,7 +756,7 @@ public class Gimmicks {
 
         // Call in onLast.
         public void updateCurrentBonusGap(GameEngine engine) {
-            if (engine.stat != GameEngine.STAT_MOVE || engine.statc[0] == 0) currentBonusGap = 0;
+            if (engine.stat != GameEngine.STAT_MOVE || engine.statc[0] <= 1) currentBonusGap = 0;
             else currentBonusGap = Math.min(bonusGap, currentBonusGap + 4);
         }
 
@@ -742,9 +766,9 @@ public class Gimmicks {
             final int minY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
             final int maxY = minY + (engine.field.getHeight() * 16);
 
-            if (engine.stat != GameEngine.STAT_MOVE || engine.statc[0] == 0 || engine.nowPieceObject == null) {
+            if (engine.stat != GameEngine.STAT_MOVE || engine.statc[0] <= 1 || engine.nowPieceObject == null) {
                 drawing.drawRectangle(receiver, minX, minY, maxX - minX, maxY - minY, 0, 0, 0, 255, true);
-            } else if (engine.statc[0] > 0) {
+            } else {
                 final int drawLeftX = minX + ((engine.nowPieceX + engine.nowPieceObject.getMinimumBlockX()) * 16) - currentBonusGap;
                 final int drawRightX = minX + ((engine.nowPieceX + engine.nowPieceObject.getMaximumBlockX()) * 16) + 16 + currentBonusGap;
 
@@ -799,8 +823,10 @@ public class Gimmicks {
         }
     }
 
+    // Winter's gimmicks are all about those visuals.
     public static class Whiteout implements HasDescription {
-        public static int SNOW_IDENTIFIER = 0xABCDEF12;
+        public static int SNOW_IDENTIFIER = 0xABCD0000;
+        public static int SNOW_MASK = 0xFFFF0000;
 
         private static final double BASE_PROPORTION = 0.9995;
         private double proportion;
@@ -819,7 +845,7 @@ public class Gimmicks {
             if (piece == null) return;
 
             piece.setColor(Block.BLOCK_COLOR_GRAY);
-            for (Block blk : piece.block) blk.secondaryColor = SNOW_IDENTIFIER;
+            for (Block blk : piece.block) blk.bonusValue = SNOW_IDENTIFIER;
         }
 
         public void drawInnerFog(EventReceiver receiver, GameEngine engine, int playerID, PrimitiveDrawingHook drawing) {
@@ -833,17 +859,17 @@ public class Gimmicks {
 
             final int baseSizeX = maxX - minX;
 
-            for (int i = 0; i < 4; ++i) {
-                final double loopProp = Math.pow(2d / 3d, i);
+            for (int i = 0; i < 8; ++i) {
+                final double loopProp = Math.min(1.0, 2 * proportion * Math.pow(3d / 4d, i));
 
                 // Field fog.
-                final int fSizeX = (int) (baseSizeX * proportion * loopProp * 0.5);
+                final int fSizeX = (int) (baseSizeX * loopProp * 0.5);
 
                 drawing.drawRectangle(
                     receiver,
                     minX, minY,
                     fSizeX, maxY - minY,
-                    255, 255, 255, 60,
+                    255, 255, 255, 48,
                     true
                 );
 
@@ -851,24 +877,24 @@ public class Gimmicks {
                     receiver,
                     maxX - fSizeX, minY,
                     fSizeX, maxY - minY,
-                    255, 255, 255, 60,
+                    255, 255, 255, 48,
                     true
                 );
             }
         }
 
         public void drawOuterFog(EventReceiver receiver, PrimitiveDrawingHook drawing) {
-            for (int i = 0; i < 4; ++i) {
-                final double loopProp = Math.pow(2d / 3d, i);
+            for (int i = 0; i < 8; ++i) {
+                final double loopProp = Math.min(1.0, 2 * proportion * Math.pow(3d / 4d, i));
 
                 // Background fog.
-                final int outSizeX = (int) (320 * proportion * loopProp);
+                final int outSizeX = (int) (320 * loopProp);
 
                 drawing.drawRectangle(
                     receiver,
                     0, 0,
                     outSizeX, 480,
-                    255, 255, 255, 60,
+                    255, 255, 255, 48,
                     true
                 );
 
@@ -876,7 +902,7 @@ public class Gimmicks {
                     receiver,
                     640 - outSizeX, 0,
                     outSizeX, 480,
-                    255, 255, 255, 60,
+                    255, 255, 255, 48,
                     true
                 );
             }
@@ -922,6 +948,186 @@ public class Gimmicks {
                 GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom(
                     "REDUCED. WATCH YOUR STEP.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+        }
+    }
+
+    public static class SnowMounds implements HasDescription {
+        private int currentCounter;
+        private int currentTickTime;
+        private int height;
+
+        public SnowMounds(Badges badges, boolean perkBoost) {
+            height = 0;
+            currentCounter = 0;
+
+            setTickTime(badges, perkBoost);
+        }
+
+        public void setTickTime(Badges badges, boolean perkBoost) {
+            final int usedBadges = badges.getBadges() / 10;
+            currentTickTime = 48 + usedBadges / (perkBoost ? 5 : 10);
+        }
+
+        public boolean isYInSnow(GameEngine engine, int y) {
+            final int topY = engine.field.getHeightWithoutHurryupFloor() - height;
+            return y >= topY;
+        }
+
+        public void reduceHeight(int lines) {
+            if (lines > height) {
+                height = 0;
+                currentCounter = 0;
+            } else {
+                height = Math.max(0, height - lines);
+            }
+        }
+
+        public void update(GameEngine engine) {
+            if (++currentCounter > currentTickTime) {
+                currentCounter = 0;
+                height = Math.min(engine.field.getHeight(), height + 1);
+            }
+        }
+
+        public void draw(PrimitiveDrawingHook drawing, EventReceiver receiver, GameEngine engine, int playerID) {
+            final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+            final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+            final int maxAlpha = 225;
+
+            drawing.drawRectangle(
+                receiver,
+                baseX, baseY + (engine.field.getHeight() * 16) - (height * 16),
+                engine.field.getWidth() * 16, (height * 16),
+                255, 255, 255, maxAlpha,
+                true
+            );
+
+            final double proportion = currentCounter / (double) currentTickTime;
+            final int partialH = (int) Math.floor(16.0 * proportion);
+
+            drawing.drawRectangle(
+                receiver,
+                baseX, baseY + (engine.field.getHeight() * 16) - (height * 16) - partialH,
+                engine.field.getWidth() * 16, partialH,
+                255, 255, 255, Interpolation.lerp(0, maxAlpha, proportion),
+                true
+            );
+        }
+
+        @Override
+        public String getName() {
+            return "SNOW MOUNDS";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_CYAN),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of(currentTickTime + "F", EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" FILL)", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_CYAN),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "THE INTENSIFYING SNOWSTORM CREATES LARGE MOUNDS",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "OF FRESH SNOW. CLEAR THEM AWAY BEFORE YOU GET",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "SNOWED IN PERMANENTLY.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+        }
+    }
+
+    public static class ZeroCelsius implements HasDescription {
+        public static int ZERO_IDENTIFIER = 0x0000DCBA;
+        public static int ZERO_MASK = 0x0000FFFF;
+
+        private int countdownMax;
+
+        public ZeroCelsius(Badges badges, boolean perkBoost) {
+            setCountdownMax(badges, perkBoost);
+        }
+
+        public void setCountdownMax(Badges badges, boolean perkBoost) {
+            countdownMax = badges.getBadges() / (perkBoost ? 10 : 20);
+        }
+
+        public void updateField(GameEngine engine) {
+            if (engine.field == null) return;
+
+            for (int y = engine.field.getHighestBlockY(); y < engine.field.getHeight(); ++y) {
+                for (int x = 0; x < engine.field.getWidth(); ++x) {
+                    if (!engine.field.getBlockEmpty(x, y)) {
+                        final Block blk = engine.field.getBlock(x, y);
+                        if (((blk.bonusValue & ZERO_MASK) == ZERO_IDENTIFIER) && ++blk.countdown > countdownMax) {
+                            blk.countdown = 0;
+                            ++blk.hard;
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public String getName() {
+            return "ZERO CELSIUS";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of("ZERO C.", EventReceiver.COLOR_CYAN),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of(countdownMax + "F", EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" DELAY)", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_CYAN),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "THE AIR BECOMES FROSTBITTEN, AS ALL HEAT",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "SEEMS TO LEAVE YOUR SURROUNDINGS, PULLED AWAY",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "BY THIS WINTER'S UNRELENTING COLD. MOVE SWIFTLY,",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "AS THE FLASH FREEZE CAN HOLD YOU FOREVER.",
                     EventReceiver.COLOR_WHITE, 0.75f
                 )
             );

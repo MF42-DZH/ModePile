@@ -42,6 +42,8 @@ import zeroxfc.nullpo.custom.libs.mixins.HasCustomLineClear;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomOnMove;
 import zeroxfc.nullpo.custom.libs.particles.TextEmitter;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
+import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
+import zeroxfc.nullpo.custom.libs.types.tuples.Pair;
 import zeroxfc.nullpo.custom.modes.objects.seasons.*;
 
 public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFieldDrawing, HasCustomLineClear {
@@ -301,6 +303,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private int brokenFlorets;
     private int brokenRainbowBlocks;
     private int brokenSnowBlocks;
+    private int blocksUnderSnow;
+    private int hardBlocksSeen;
+    private boolean canPushdown;
 
     // Current Gimmicks
     private Gimmicks.Sproutlings gimmickSprMo2;
@@ -312,6 +317,13 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private Gimmicks.FlowingWinds gimmickAutMo2;
     private Gimmicks.GhoulsAfoot gimmickAutMo3;
     private Gimmicks.Whiteout gimmickWinMo1;
+    private Gimmicks.SnowMounds gimmickWinMo2;
+    private Gimmicks.ZeroCelsius gimmickWinMo3;
+
+    private Object gimmickRollSpr; // TODO
+    private Object gimmickRollSum; // TODO
+    private Object gimmickRollAut; // TODO
+    private Object gimmickRollWin; // TODO
     // TODO: ADD THE REST OF THEM
 
     private static class DescriptionDraw {
@@ -396,6 +408,20 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         fadeProgress = Math.min(300, fadeProgress + 15);
     }
 
+    private void clearBaseGameGimmicks() {
+        gimmickSprMo2 = null;
+        gimmickSprMo3 = null;
+        gimmickSumMo1 = null;
+        gimmickSumMo2 = null;
+        gimmickSumMo3 = null;
+        gimmickAutMo1 = null;
+        gimmickAutMo2 = null;
+        gimmickAutMo3 = null;
+        gimmickWinMo1 = null;
+        gimmickWinMo2 = null;
+        gimmickWinMo3 = null;
+    }
+
     @Override
     public String getName() {
         return "SEASONS";
@@ -413,6 +439,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         textEmitter.clear();
         rewindBlocks.clear();
 
+        // For Zero Celsius and Absolute Zero
+        customGraphics.loadImage("res/graphics/iceblock.png", "iceblock");
+
         setupBackgrounds(engine);
 
         levelUpFlag = false;
@@ -424,17 +453,10 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         rollLevelReached = -1;
         fieldPurifyQueued = false;
         descriptionToDraw = null;
+        canPushdown = true;
 
         // Clear all gimmicks.
-        gimmickSprMo2 = null;
-        gimmickSprMo3 = null;
-        gimmickSumMo1 = null;
-        gimmickSumMo2 = null;
-        gimmickSumMo3 = null;
-        gimmickAutMo1 = null;
-        gimmickAutMo2 = null;
-        gimmickAutMo3 = null;
-        gimmickWinMo1 = null;
+        clearBaseGameGimmicks();
 
         vortex = new BlockVortex();
 
@@ -499,9 +521,52 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         if (FieldManipulation.getNumberOfBlocks(engine.field) > FieldManipulation.getNumberOfBlocks(olderField)) {
             for (int y = 0; y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
                 for (int x = 0; x < engine.field.getWidth(); ++x) {
-                    if (engine.field.getBlockColor(x, y) != olderField.getBlockColor(x, y)) {
+                    if (engine.field.getBlockColor(x, y) != olderField.getBlockColor(x, y) && !engine.field.getBlockEmpty(x, y)) {
                         addRewindBlockFromField(engine, playerID, x, y);
                     }
+                }
+            }
+        }
+    }
+
+    private void performRewindSteps(GameEngine engine, int playerID, int rewindTime, int rewindStartDelay, int oldestStateSeconds) {
+        if (engine.statc[0] >= rewindStartDelay) {
+            final NavigableSet<Integer> keys = statesAtTimes.navigableKeySet();
+            final int maxTime = keys.last();
+            final int minTime = Objects.requireNonNull(keys.ceiling(engine.statistics.time - (oldestStateSeconds * 60)));
+
+            final List<Integer> validKeys = keys
+                .stream()
+                .filter(t -> t >= minTime && t <= maxTime)
+                .collect(Collectors.toList());
+
+            final int interpTime = (int) Math.ceil(Interpolation.tanStep(
+                validKeys.size() - 1d, 0d,
+                MathHelper.clamp(
+                    (engine.statc[0] - (double) rewindStartDelay) / (rewindTime - (double) rewindStartDelay),
+                    0.0, 1.0
+                )
+            ));
+
+            final NextAndFieldState state = statesAtTimes.get(validKeys.get(interpTime));
+
+            if (!FieldManipulation.fieldEquals(engine.field, state.field)
+                || engine.nextPieceCount != state.nextPosition) {
+                engine.playSE("step");
+
+                addRewindBlocks(engine, playerID, state.field);
+                engine.field = new Field(state.field);
+
+                for (int i = state.nextPosition; i < engine.nextPieceCount + engine.ruleopt.nextDisplay; ++i) {
+                    engine.nextPieceArrayObject[i] = HasCustomOnMove.initialisePiece(engine, engine.nextPieceArrayID[i]);
+                }
+
+                engine.nextPieceCount = state.nextPosition;
+
+                if (state.holdPiece != null) {
+                    engine.holdPieceObject = HasCustomOnMove.initialisePiece(engine, state.holdPiece.id);
+                } else {
+                    engine.holdPieceObject = null;
                 }
             }
         }
@@ -543,52 +608,35 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                 case REWIND: {
                     engine.timerActive = false;
 
-                    if (engine.statc[0] >= 30) {
-                        final NavigableSet<Integer> keys = statesAtTimes.navigableKeySet();
-                        final int maxTime = keys.last();
-                        final int minTime = Objects.requireNonNull(keys.ceiling(engine.statistics.time - (60 * 60)));
-
-                        final List<Integer> validKeys = keys
-                            .stream()
-                            .filter(t -> t >= minTime && t <= maxTime)
-                            .collect(Collectors.toList());
-
-                        final int interpTime = (int) Math.ceil(Interpolation.tanStep(
-                            validKeys.size() - 1d, 0d,
-                            MathHelper.clamp(
-                                (engine.statc[0] - 30d) / (REWIND_TIME - 30d),
-                                0.0, 1.0
-                            )
-                        ));
-
-                        final NextAndFieldState state = statesAtTimes.get(validKeys.get(interpTime));
-
-                        if (!FieldManipulation.fieldEquals(engine.field, state.field)
-                            || engine.nextPieceCount != state.nextPosition) {
-                            engine.playSE("step");
-
-                            addRewindBlocks(engine, playerID, state.field);
-                            engine.field = new Field(state.field);
-
-                            for (int i = state.nextPosition; i < engine.nextPieceCount + engine.ruleopt.nextDisplay; ++i) {
-                                engine.nextPieceArrayObject[i] = HasCustomOnMove.initialisePiece(engine, engine.nextPieceArrayID[i]);
-                            }
-
-                            engine.nextPieceCount = state.nextPosition;
-
-                            if (state.holdPiece != null) {
-                                engine.holdPieceObject = HasCustomOnMove.initialisePiece(engine, state.holdPiece.id);
-                            } else {
-                                engine.holdPieceObject = null;
-                            }
-                        }
+                    if (engine.statc[0] == 0) {
+                        // Not guaranteed to run the GC, but it's nice to run it here when there's no player input expected.
+                        statesAtTimes.keySet().removeIf(k -> k < engine.statistics.time - (60 * 600));
+                        System.gc();
                     }
+
+                    performRewindSteps(engine, playerID, REWIND_TIME, 30, 60);
 
                     if (engine.statc[0] >= REWIND_TIME) {
                         engine.speed.lineDelay = 60;
 
                         if (gimmickAutMo3 != null) {
                             engine.blockShowOutlineOnly = true;
+                        }
+
+                        if (gimmickWinMo1 != null && engine.statistics.level >= LEVELS_NOV) {
+                            for (int i = engine.nextPieceCount; i <= engine.nextPieceCount + engine.ruleopt.nextDisplay; ++i) {
+                                for (Block blk : engine.nextPieceArrayObject[i].block) {
+                                    blk.color = Block.BLOCK_COLOR_GRAY;
+                                    blk.bonusValue |= Gimmicks.Whiteout.SNOW_IDENTIFIER;
+                                }
+                            }
+
+                            if (engine.holdPieceObject != null) {
+                                for (Block blk : engine.holdPieceObject.block) {
+                                    blk.color = Block.BLOCK_COLOR_GRAY;
+                                    blk.bonusValue |= Gimmicks.Whiteout.SNOW_IDENTIFIER;
+                                }
+                            }
                         }
 
                         clearAddedSummerIPieces(engine);
@@ -602,46 +650,15 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     // TODO: Add a system to skip the final rewind if the player has seen it whole before.
                     engine.timerActive = false;
 
+                    if (engine.statc[0] == 0) {
+                        // Not guaranteed to run the GC, but it's nice to run it here when there's no player input expected.
+                        statesAtTimes.keySet().removeIf(k -> k < engine.statistics.time - (60 * 600));
+                        System.gc();
+                    }
+
+                    performRewindSteps(engine, playerID, FINAL_REWIND_TIME, 180, 600);
+
                     if (engine.statc[0] >= 180) {
-                        final NavigableSet<Integer> keys = statesAtTimes.navigableKeySet();
-                        final int maxTime = keys.last();
-                        final int minTime = Objects.requireNonNull(keys.ceiling(engine.statistics.time - (600 * 60)));
-
-                        final List<Integer> validKeys = keys
-                            .stream()
-                            .filter(t -> t >= minTime && t <= maxTime)
-                            .collect(Collectors.toList());
-
-                        final int interpTime = (int) Math.ceil(Interpolation.tanStep(
-                            validKeys.size() - 1d, 0d,
-                            MathHelper.clamp(
-                                (engine.statc[0] - 180d) / (FINAL_REWIND_TIME - 180d),
-                                0.0, 1.0
-                            )
-                        ));
-
-                        final NextAndFieldState state = statesAtTimes.get(validKeys.get(interpTime));
-
-                        if (!FieldManipulation.fieldEquals(engine.field, state.field)
-                            || engine.nextPieceCount != state.nextPosition) {
-                            engine.playSE("step");
-
-                            addRewindBlocks(engine, playerID, state.field);
-                            engine.field = new Field(state.field);
-
-                            for (int i = state.nextPosition; i < engine.nextPieceCount + engine.ruleopt.nextDisplay; ++i) {
-                                engine.nextPieceArrayObject[i] = HasCustomOnMove.initialisePiece(engine, engine.nextPieceArrayID[i]);
-                            }
-
-                            engine.nextPieceCount = state.nextPosition;
-
-                            if (state.holdPiece != null) {
-                                engine.holdPieceObject = HasCustomOnMove.initialisePiece(engine, state.holdPiece.id);
-                            } else {
-                                engine.holdPieceObject = null;
-                            }
-                        }
-
                         engine.statistics.level = (int) Math.ceil(Interpolation.tanStep(
                             MAX_LEVEL, 0d,
                             MathHelper.clamp(
@@ -651,10 +668,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                         ));
                     }
 
-                    // TODO: Add Ready, GO! after the final rewind before the game starts again.
-
                     if (engine.statc[0] >= FINAL_REWIND_TIME) {
-                        engine.speed.lineDelay = 90;
                         clearAddedSummerIPieces(engine);
 
                         engine.ending = 2;
@@ -662,13 +676,29 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                         levelUpFlag = false;
                         currentSeason = Season.SPRING;
 
-                        engine.stat = GameEngine.STAT_LINECLEAR;
+                        customState = CustomState.FINAL_REWIND_RECOVERY;
                         engine.resetStatc();
                     }
                 }
                     break;
                 case FINAL_REWIND_RECOVERY: {
                     // Do another READY..GO! here.
+                    if (engine.statc[0] == engine.readyStart) {
+                        engine.playSE("ready");
+                        purifyFieldAndNexts(engine);
+                    }
+
+                    if (engine.statc[0] == engine.goStart) {
+                        engine.playSE("go");
+                    }
+
+                    if (engine.statc[0] >= engine.goEnd) {
+                        engine.speed.lineDelay = 0;
+                        engine.speed.areLine = 0;
+
+                        engine.stat = GameEngine.STAT_LINECLEAR;
+                        engine.resetStatc();
+                    }
                 }
                     break;
                 default:
@@ -740,6 +770,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             int baseY = (8 * engine.field.getHeight()) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
 
             if (engine.gameStarted && customState == CustomState.FREEFALL) {
+                // region Freefall
                 int alpha = 255;
                 if (engine.statc[0] >= 15) {
                     alpha = Interpolation.lerp(255, 0, (engine.statc[0] - 15d) / 30d);
@@ -757,7 +788,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     ),
                     ObjectAlignment.MIDDLE_MIDDLE
                 );
+                // endregion Freefall
             } else if (engine.gameStarted && customState == CustomState.REWIND) {
+                // region Rewind
                 int alpha = 255;
                 if (engine.statc[0] >= 180) {
                     alpha = Interpolation.lerp(255, 0, (engine.statc[0] - 180d) / 120d);
@@ -780,7 +813,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     ),
                     ObjectAlignment.MIDDLE_MIDDLE
                 );
+                // endregion Rewind
             } else if (engine.gameStarted && customState == CustomState.FINAL_REWIND) {
+                // region Final Rewind
                 if (engine.statc[0] < 600) {
                     int alpha = 255;
                     if (engine.statc[0] >= 180) {
@@ -830,6 +865,9 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     ENDING_START_PASSAGE,
                     ObjectAlignment.TOP_MIDDLE
                 );
+                // endregion Final Rewind
+            } else if (engine.gameStarted && customState == CustomState.FINAL_REWIND_RECOVERY) {
+                receiver.renderReady(engine, playerID);
             }
         }
     }
@@ -1029,7 +1067,6 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                 if (gimmickSumMo2 != null) gimmickSumMo2.replaceQueue(engine);
 
                 statesAtTimes.put(engine.statistics.time, new NextAndFieldState(engine));
-                statesAtTimes.keySet().removeIf(k -> k < engine.statistics.time - (60 * 600));
             }
 
             if ((engine.statc[1] == 0) && (!engine.initialHoldFlag)) {
@@ -1084,13 +1121,13 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
                 // Directionを戻す
                 if (engine.ruleopt.holdResetDirection && (engine.ruleopt.pieceDefaultDirection[engine.holdPieceObject.id] < Piece.DIRECTION_COUNT)) {
-                    final Optional<Block> blk = Arrays.stream(engine.holdPieceObject.block).filter(b -> b.bonusValue > 0).findAny();
+                    final Optional<Block> blk = Arrays.stream(engine.holdPieceObject.block).filter(b -> b.bonusValue > 0 && b.bonusValue < 16).findAny();
                     engine.holdPieceObject.direction = blk.map(b -> b.bonusValue >>> 1)
                         .orElseGet(() -> engine.ruleopt.pieceDefaultDirection[engine.holdPieceObject.id]);
 
                     engine.holdPieceObject.updateConnectData();
                 } else if (engine.ruleopt.holdResetDirection) {
-                    final Optional<Block> blk = Arrays.stream(engine.holdPieceObject.block).filter(b -> b.bonusValue > 0).findAny();
+                    final Optional<Block> blk = Arrays.stream(engine.holdPieceObject.block).filter(b -> b.bonusValue > 0 && b.bonusValue < 16).findAny();
                     blk.ifPresent(b -> engine.holdPieceObject.direction = b.bonusValue >>> 1);
                 }
 
@@ -1158,6 +1195,10 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             // Don't clear bone blocks from queue if the summer gimmick is active.
             if (gimmickSumMo1 == null) {
                 engine.getNextObject(engine.nextPieceCount + engine.ruleopt.nextDisplay - 1).setAttribute(Block.BLOCK_ATTRIBUTE_BONE, engine.bone);
+            }
+
+            if (gimmickWinMo3 != null) {
+                for (Block blk : engine.nowPieceObject.block) blk.bonusValue |= Gimmicks.ZeroCelsius.ZERO_IDENTIFIER;
             }
 
             if (engine.ending == 0) engine.timerActive = true;
@@ -1536,6 +1577,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
 
             int levelIncrease = 0;
 
+            // region Lines
             if (lines > 4) {
                 levelIncrease += (lines * 2) * naturalLevelIncrement;
 
@@ -1570,6 +1612,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + abilityCharge(engine, settings.perk.restoredForSingle));
                 }
             }
+            // endregion Lines
 
             levelIncrease += badges.getLevelBonus() * naturalLevelIncrement;
 
@@ -1599,7 +1642,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                 setNewBackground(0);
                 fieldPurifyQueued = true;
 
-                // TODO: Clear winter gimmicks.
+                clearBaseGameGimmicks();
 
                 customState = CustomState.FINAL_REWIND;
                 engine.stat = GameEngine.STAT_CUSTOM;
@@ -1662,10 +1705,13 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                     gimmickAutMo3 = null;
 
                     gimmickWinMo1 = new Gimmicks.Whiteout(badges, getGimmickPerkBoost());
+                    descriptionToDraw = new DescriptionDraw(gimmickWinMo1);
                 } else if (engine.statistics.level >= LEVELS_NOV && engine.statistics.level < LEVELS_DEC) {
-                    // TODO
+                    gimmickWinMo2 = new Gimmicks.SnowMounds(badges, getGimmickPerkBoost());
+                    descriptionToDraw = new DescriptionDraw(gimmickWinMo2);
                 } else if (engine.statistics.level >= LEVELS_DEC && engine.statistics.level < LEVELS_JAN) {
-                    // TODO
+                    gimmickWinMo3 = new Gimmicks.ZeroCelsius(badges, getGimmickPerkBoost());
+                    descriptionToDraw = new DescriptionDraw(gimmickWinMo3);
                 }
 
                 final Season oldSeason = currentSeason;
@@ -1718,8 +1764,16 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             ++brokenRainbowBlocks;
         }
 
-        if (gimmickWinMo1 != null && blk.secondaryColor == Gimmicks.Whiteout.SNOW_IDENTIFIER) {
+        if (gimmickWinMo1 != null && (blk.bonusValue & Gimmicks.Whiteout.SNOW_MASK) == Gimmicks.Whiteout.SNOW_IDENTIFIER) {
             ++brokenSnowBlocks;
+        }
+
+        if (gimmickWinMo2 != null && gimmickWinMo2.isYInSnow(engine, y)) {
+            ++blocksUnderSnow;
+        }
+
+        if (gimmickWinMo3 != null && blk.hard > 0) {
+            ++hardBlocksSeen;
         }
     }
 
@@ -1776,6 +1830,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         if (gimmickSumMo1 != null) {
             gimmickSumMo1.updateChance(engine, badges, getGimmickPerkBoost());
             gimmickSumMo1.updateNext(engine);
+            gimmickSumMo1.updateField(engine);
         }
         if (gimmickSumMo2 != null) {
             gimmickSumMo2.setAllowance(badges, getGimmickPerkBoost());
@@ -1797,17 +1852,34 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             gimmickWinMo1.updateProportion(badges, getGimmickPerkBoost());
             gimmickWinMo1.updateNext(engine);
         }
+        if (gimmickWinMo2 != null) {
+            gimmickWinMo2.setTickTime(badges, getGimmickPerkBoost());
+        }
+        if (gimmickWinMo3 != null) {
+            gimmickWinMo3.setCountdownMax(badges, getGimmickPerkBoost());
+        }
     }
 
     @Override
-    public void callAndDrawBrokenBlocks(GameEngine engine, int playerID) {
+    public void eraseFlaggedBlocks(GameEngine engine, int li) {
+        if (li >= 4 && gimmickWinMo3 != null) {
+            FieldManipulation.pushDown(engine.field);
+        }
+
+        HasCustomLineClear.super.eraseFlaggedBlocks(engine, li);
+    }
+
+    @Override
+    public void callAndDrawBrokenBlocks(GameEngine engine, int playerID, int li) {
         brokenSproutlings = 0;
         brokenBoneBlocks = 0;
         brokenFlorets = 0;
         brokenRainbowBlocks = 0;
         brokenSnowBlocks = 0;
+        blocksUnderSnow = 0;
+        hardBlocksSeen = 0;
 
-        HasCustomLineClear.super.callAndDrawBrokenBlocks(engine, playerID);
+        HasCustomLineClear.super.callAndDrawBrokenBlocks(engine, playerID, li);
 
         // Janky... lmao. Update season badges based on single blocks.
         if (brokenSproutlings > 0) {
@@ -1827,8 +1899,11 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         }
 
         if (brokenBoneBlocks >= 2) {
+            int bonus = brokenBoneBlocks / 2;
+            if (bonus > 10) bonus += (bonus >>> 1);
+
             badges.addSeasonBadges(
-                brokenBoneBlocks / 2,
+                bonus,
                 settings.perk == SeasonPerk.SPRING_PASSIVE,
                 settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
             );
@@ -1842,8 +1917,30 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             );
         }
 
-        if (brokenSnowBlocks >= 4) {
-            int bonus = brokenSnowBlocks / 4;
+        if (brokenSnowBlocks >= 10) {
+            int bonus = brokenSnowBlocks / 10;
+            if (bonus > 2) bonus += (bonus >>> 1);
+
+            badges.addSeasonBadges(
+                bonus,
+                settings.perk == SeasonPerk.SPRING_PASSIVE,
+                settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
+            );
+        }
+
+        if (blocksUnderSnow >= 5) {
+            int bonus = blocksUnderSnow / 5;
+            if (bonus > 4) bonus += (bonus >>> 1);
+
+            badges.addSeasonBadges(
+                bonus,
+                settings.perk == SeasonPerk.SPRING_PASSIVE,
+                settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
+            );
+        }
+
+        if (hardBlocksSeen >= 4) {
+            int bonus = hardBlocksSeen / 4;
             if (bonus > 5) bonus += (bonus >>> 1);
 
             badges.addSeasonBadges(
@@ -1880,6 +1977,13 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         }
         if (gimmickWinMo1 != null) {
             gimmickWinMo1.updateProportion(badges, getGimmickPerkBoost());
+        }
+        if (gimmickWinMo2 != null) {
+            gimmickWinMo2.setTickTime(badges, getGimmickPerkBoost());
+            gimmickWinMo2.reduceHeight(li);
+        }
+        if (gimmickWinMo3 != null) {
+            gimmickWinMo3.setCountdownMax(badges, getGimmickPerkBoost());
         }
     }
 
@@ -1954,7 +2058,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     private void drawBlockTextOverlays(GameEngine engine, int playerID) {
         if (engine.field == null) return;
 
-        // Draw countdowns for Flourishing Bloom, or Hard counter for Zero Celsius / Absolute Zero TODO
+        // Draw countdowns for Flourishing Bloom, or Hard counter for Zero Celsius
         final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
         final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
 
@@ -1977,6 +2081,32 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                         );
                     }
                 }
+
+                // Zero Celsius
+                if (gimmickWinMo3 != null) {
+                    final Block blk = engine.field.getBlock(x, y);
+
+                    if (blk != null && blk.hard > 0) {
+                        customGraphics.drawImage(
+                            engine, "iceblock",
+                            baseX + (16 * x), baseY + (16 * y),
+                            0, 0, 32, 32,
+                            200, 255, 255, 255,
+                            0.5f
+                        );
+
+                        GameTextUtilities.drawAlignedText(
+                            engine,
+                            baseX + (16 * x) + 8,
+                            baseY + (16 * y) + 8,
+                            GameTextUtilities.Text.ofSmall(
+                                String.valueOf(blk.hard),
+                                EventReceiver.COLOR_WHITE
+                            ),
+                            ObjectAlignment.MIDDLE_MIDDLE
+                        );
+                    }
+                }
             }
         }
     }
@@ -1988,7 +2118,11 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             gimmickAutMo3.renderFlashlight(receiver, engine, playerID, drawing);
         }
 
-        if (gimmickWinMo1 != null && engine.stat != GameEngine.STAT_MOVE) {
+        if (gimmickWinMo2 != null) {
+            gimmickWinMo2.draw(drawing, receiver, engine, playerID);
+        }
+
+        if (gimmickWinMo1 != null && engine.stat != GameEngine.STAT_MOVE && engine.stat != GameEngine.STAT_CUSTOM) {
             gimmickWinMo1.drawInnerFog(receiver, engine, playerID, drawing);
         }
 
@@ -2005,6 +2139,7 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
     @Override
     public void renderMove(GameEngine engine, int playerID) {
         inRenderMove(rendererExtension, receiver, engine, playerID);
+        rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
 
         if (gimmickWinMo1 != null) {
             gimmickWinMo1.drawInnerFog(receiver, engine, playerID, drawing);
@@ -2041,6 +2176,14 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
             engine.blockShowOutlineOnly = false;
         } else {
             gimmickAutMo3.updateCurrentBonusGap(engine);
+        }
+
+        if (gimmickWinMo2 != null && engine.timerActive) {
+            gimmickWinMo2.update(engine);
+        }
+
+        if (gimmickWinMo3 != null && engine.timerActive) {
+            gimmickWinMo3.updateField(engine);
         }
     }
 
@@ -2311,6 +2454,26 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
                 );
             }
 
+            if (gimmickWinMo2 != null) {
+                GameTextUtilities.drawAlignedScoreTextBlock(
+                    receiver, engine, playerID, false,
+                    0, 19,
+                    false,
+                    gimmickWinMo2.getSummary(),
+                    ObjectAlignment.TOP_LEFT
+                );
+            }
+
+            if (gimmickWinMo3 != null) {
+                GameTextUtilities.drawAlignedScoreTextBlock(
+                    receiver, engine, playerID, false,
+                    0, 20,
+                    false,
+                    gimmickWinMo3.getSummary(),
+                    ObjectAlignment.TOP_LEFT
+                );
+            }
+
             if (descriptionToDraw != null) {
                 descriptionToDraw.descObj.drawDescription(drawing, receiver, engine, descriptionToDraw.getDrawXOffset(), descriptionToDraw.getDrawY());
             }
@@ -2328,5 +2491,195 @@ public class Seasons extends DummyMode implements HasCustomOnMove, HasCustomFiel
         }
 
         // TODO: Rankings
+    }
+
+    private static class Grading {
+        public static final int MAX_GRADE_POINTS = 12000;
+
+        private static final int BASE_PERF_DECAY = 120;
+        private static final double PERF_DECAY_POW = 6d / 7d;
+
+        private int performance; // 0->2500
+        private int performanceDecay;
+        private int currentPerformanceDecayRate;
+
+        public Grading() {
+            performance = 00;
+            performanceDecay = 0;
+            currentPerformanceDecayRate = BASE_PERF_DECAY;
+        }
+
+        public void addPerformancePoints(int performancePoints) {
+            performance = Math.min(2500, performance + performancePoints);
+            currentPerformanceDecayRate = (int) Math.floor(BASE_PERF_DECAY * Math.pow(PERF_DECAY_POW, Math.floor(performance / 100d)));
+        }
+
+        public void updatePerformanceDecay() {
+            if (++performanceDecay >= currentPerformanceDecayRate) {
+                performance = Math.max(performance - 1, performance - (performance % 100));
+                performanceDecay = 0;
+            }
+        }
+
+        public int getPerformance() {
+            return Math.min(2500, performance);
+        }
+
+        // 0->4000
+        public static int getBadgePerformance(Badges badges) {
+            return Math.min(4000, badges.getBadges() / 2);
+        }
+
+        // 0->3000 (level + roll level each)
+        public static int getLevelPerformance(int level) {
+            return (int) Math.floor(3000d * level / (double) MAX_LEVEL);
+        }
+
+        public static final int ALL_CLEAR_BONUS = 400;
+
+        public static final int PERKLESS_BONUS = 600;
+
+        public TotalGrades freeze(int level, int rollLevel, Badges badges, SeasonPerk perk) {
+            return new TotalGrades(
+                getPerformance(),
+                getBadgePerformance(badges),
+                getLevelPerformance(level),
+                getLevelPerformance(rollLevel),
+                (rollLevel >= level) && (level >= MAX_LEVEL) ? ALL_CLEAR_BONUS : 0,
+                perk == SeasonPerk.PERKLESS ? PERKLESS_BONUS : 0
+            );
+        }
+    }
+
+    private static class TotalGrades {
+        public final int totalGradePoints;
+        public final int totalPerformancePoints;
+        public final int totalBadgePoints;
+        public final int totalLevelPoints;
+        public final int totalRollLevelPoints;
+        public final int allClearBonus;
+        public final int perklessBonus;
+
+        public TotalGrades(int totalPerformancePoints, int totalBadgePoints, int totalLevelPoints, int totalRollLevelPoints, int allClearBonus, int perklessBonus) {
+            this.totalPerformancePoints = totalPerformancePoints;
+            this.totalBadgePoints = totalBadgePoints;
+            this.totalLevelPoints = totalLevelPoints;
+            this.totalRollLevelPoints = totalRollLevelPoints;
+            this.allClearBonus = allClearBonus;
+            this.perklessBonus = perklessBonus;
+
+            this.totalGradePoints = Math.min(
+                Grading.MAX_GRADE_POINTS,
+                totalPerformancePoints + totalBadgePoints + totalLevelPoints + totalRollLevelPoints + allClearBonus + perklessBonus
+            );
+        }
+
+        private static void addRanks(LevelTableBuilder<Pair<GameTextUtilities.TextBlock, IntPair>>.ModifiableLevelTable table, String name, int basePoints, int count, int titleColour) {
+            for (int i = 1; i <= count; ++i) {
+                // this assumes count <= 20
+                final int rank = count - (i - 1);
+
+                String suffix = "TH";
+                if (rank == 3) suffix = "RD";
+                else if (rank == 2) suffix = "ND";
+                else if (rank == 1) suffix = "ST";
+
+                table.addValue(
+                    Pair.of(
+                        GameTextUtilities.TextBlock.of(
+                            GameTextUtilities.TextJustification.CENTRE,
+                            GameTextUtilities.Text.of(name, titleColour),
+                            GameTextUtilities.Text.newLine(),
+                            GameTextUtilities.Text.ofSmall(rank + suffix + " RANK")
+                        ),
+                        IntPair.of(
+                            basePoints + (i * 100),
+                            basePoints + (count * 100)
+                        )
+                    ),
+                    basePoints + (i * 100)
+                );
+            }
+        }
+
+        // (Name, (Next Rank at Points, Next Title at Points))
+        public static final IntFunction<Pair<GameTextUtilities.TextBlock, IntPair>> GRADE_NAMES;
+        static {
+            final LevelTableBuilder<Pair<GameTextUtilities.TextBlock, IntPair>>.ModifiableLevelTable table = LevelTableBuilder.createNew();
+
+            // Settler
+            table.addValue(
+                Pair.of(
+                    GameTextUtilities.TextBlock.of(GameTextUtilities.Text.of("SETTLER", EventReceiver.COLOR_WHITE)),
+                    IntPair.of(100, 100)
+                ),
+                100
+            );
+
+            // Traveller
+            addRanks(table, "TRAVELLER", 100, 7, EventReceiver.COLOR_GREEN);
+
+            // Wanderer
+            addRanks(table, "WANDERER", 800, 7, EventReceiver.COLOR_GREEN);
+
+            // Adept
+            addRanks(table, "PILGRIM", 1500, 7, EventReceiver.COLOR_GREEN);
+
+            // Nomad
+            addRanks(table, "NOMAD", 2200, 7, EventReceiver.COLOR_GREEN);
+
+            // Trainee
+            addRanks(table, "TRAINEE", 2900, 7, EventReceiver.COLOR_YELLOW);
+
+            // Warrior
+            addRanks(table, "WARRIOR", 3600, 7, EventReceiver.COLOR_YELLOW);
+
+            // Noble
+            addRanks(table, "NOBLE", 4300, 7, EventReceiver.COLOR_YELLOW);
+
+            // Hero
+            addRanks(table, "HERO", 5000, 7, EventReceiver.COLOR_YELLOW);
+
+            // Attuned
+            addRanks(table, "ATTUNED", 5700, 7, EventReceiver.COLOR_ORANGE);
+
+            // Symbiotic
+            addRanks(table, "SYMBIOTIC", 6400, 7, EventReceiver.COLOR_ORANGE);
+
+            // Elemental
+            addRanks(table, "ELEMENTAL", 7100, 7, EventReceiver.COLOR_ORANGE);
+
+            // Embodiment
+            addRanks(table, "EMBODIMENT", 7800, 7, EventReceiver.COLOR_ORANGE);
+
+            // Overseer
+            addRanks(table, "OVERSEER", 8500, 7, EventReceiver.COLOR_CYAN);
+
+            // Archon
+            addRanks(table, "ARCHON", 9200, 7, EventReceiver.COLOR_CYAN);
+
+            // High Ruler
+            addRanks(table, "HIGH RULER", 9900, 7, EventReceiver.COLOR_CYAN);
+
+            // Dominator
+            addRanks(table, "DOMINATOR", 10600, 7, EventReceiver.COLOR_CYAN);
+
+            // Master
+            addRanks(table, "MASTER", 11300, 7, EventReceiver.COLOR_YELLOW);
+
+            // SGM
+            GRADE_NAMES = table
+                .addTerminalValue(
+                    Pair.of(
+                        GameTextUtilities.TextBlock.of(
+                            GameTextUtilities.TextJustification.CENTRE,
+                            GameTextUtilities.Text.ofBig("SEASONS", EventReceiver.COLOR_GREEN),
+                            GameTextUtilities.Text.newLine(),
+                            GameTextUtilities.Text.of("GRAND MASTER", EventReceiver.COLOR_YELLOW)
+                        ),
+                        IntPair.of(Integer.MAX_VALUE, Integer.MAX_VALUE)
+                    )
+                ).buildLevelTable();
+        }
     }
 }
