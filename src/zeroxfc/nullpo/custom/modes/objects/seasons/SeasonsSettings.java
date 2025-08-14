@@ -27,10 +27,10 @@ public class SeasonsSettings extends ModeSettings {
     public String playerName;
 
     // Only available for logged-in players.
-    public final String hasCompletedGameProp = propPath("hasCompletedGame");
+    private final String hasCompletedGameProp = propPath("hasCompletedGame");
     public boolean hasCompletedGame;
 
-    public final String hasSeenRollIntroProp = propPath("hasSeenRollIntro");
+    private final String hasSeenRollIntroProp = propPath("hasSeenRollIntro");
     public boolean hasSeenRollIntro;
 
     // TODO: add a separate system for storing if players have seen the roll, to give them the ability to skip
@@ -49,6 +49,9 @@ public class SeasonsSettings extends ModeSettings {
         fullGhost = prop.getProperty(fullGhostProp, false);
         spinType = prop.getProperty(spinTypeProp, GameEngine.SPINTYPE_4POINT);
 
+        hasCompletedGame = prop.getProperty(hasCompletedGameProp, false);
+        hasSeenRollIntro = prop.getProperty(hasSeenRollIntroProp, false);
+
         // Version props are not saved on the player.
         version = isReplay ? prop.getProperty(versionProp, 0) : currentVersion;
         playerName = isReplay ? prop.getProperty(playerNameProp, "") : "";
@@ -59,6 +62,9 @@ public class SeasonsSettings extends ModeSettings {
         prop.setProperty(perkProp, perk.ordinal());
         prop.setProperty(fullGhostProp, fullGhost);
         prop.setProperty(spinTypeProp, spinType);
+
+        prop.setProperty(hasCompletedGameProp, hasCompletedGame);
+        prop.setProperty(hasSeenRollIntroProp, hasSeenRollIntro);
 
         // Version props are not saved on the player.
         prop.setProperty(versionProp, currentVersion);

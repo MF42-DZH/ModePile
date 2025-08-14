@@ -9,7 +9,7 @@ import mu.nu.nullpo.game.play.GameEngine;
 
 // Mix this into gamemode classes to add a flexible onMove override.
 // This allows a more fine-grained override of onMove.
-public interface HasCustomOnMove {
+public interface HasCustomMove {
     // Representation of movement results.
     class PlayerMoveResult {
         public final boolean softdropUsed;

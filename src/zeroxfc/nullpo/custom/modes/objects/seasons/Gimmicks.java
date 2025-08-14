@@ -14,7 +14,7 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
-import zeroxfc.nullpo.custom.libs.mixins.HasCustomOnMove;
+import zeroxfc.nullpo.custom.libs.mixins.HasCustomMove;
 
 public class Gimmicks {
     // This class just holds other classes. We don't need to instantiate it.
@@ -66,9 +66,9 @@ public class Gimmicks {
 
     // There will also be 4 gimmicks across the credits roll as you pass through the months.
 
-    // SPRING - Rising Earth (Faster full line copy Sproutlings with brown blocks (slowed by badges))
-    // SUMMER - Conflagration (VERY Fast Speed (~Shirase 3xx-8xx; lock delay increased by badges))
-    // AUTUMN - Haunting (Outline Only + Bone Blocks)
+    // SPRING - Rising Earth (Faster random hole garbage with brown blocks (slowed by badges))
+    // SUMMER - Conflagration (VERY Fast Speed (~Shirase 3xx-12xx; lock delay increased by badges))
+    // AUTUMN - Haunting (Outline Only + Bone Blocks + Black Overlay)
     // WINTER - Absolute Zero (Zero Celsius but harder (blocks have infinite hardness once frozen, can only clear bottom row with Fours, slowed by badges))
 
     // Spring has relatively relaxed gimmicks.
@@ -385,7 +385,7 @@ public class Gimmicks {
         public void updateNext(GameEngine engine) {
             if (pieceRandom.nextDouble() >= chance) return;
 
-            final Piece piece = HasCustomOnMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
+            final Piece piece = HasCustomMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
             if (piece == null) return;
 
             piece.setAttribute(Block.BLOCK_ATTRIBUTE_BONE, true);
@@ -434,7 +434,7 @@ public class Gimmicks {
         // Call this right before a piece is spawned (but only if the piece did not come out of hold).
         public boolean replaceQueue(GameEngine engine) {
             // Only counts I-pieces if they're in the last position of the visible queue.
-            final Piece current = HasCustomOnMove.getNextObject(engine, engine.nextPieceCount);
+            final Piece current = HasCustomMove.getNextObject(engine, engine.nextPieceCount);
 
             if (current.id == Piece.PIECE_I && current.block[0].item >= 0) {
                 ++counter;
@@ -717,7 +717,7 @@ public class Gimmicks {
         public void updateNext(GameEngine engine) {
             if (random.nextDouble() > chance) return;
 
-            final Piece piece = HasCustomOnMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
+            final Piece piece = HasCustomMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
             if (piece == null) return;
 
             int newRotation = engine.ruleopt.pieceDefaultDirection[piece.id];
@@ -841,7 +841,7 @@ public class Gimmicks {
         }
 
         public void updateNext(GameEngine engine) {
-            final Piece piece = HasCustomOnMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
+            final Piece piece = HasCustomMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
             if (piece == null) return;
 
             piece.setColor(Block.BLOCK_COLOR_GRAY);
@@ -860,7 +860,7 @@ public class Gimmicks {
             final int baseSizeX = maxX - minX;
 
             for (int i = 0; i < 8; ++i) {
-                final double loopProp = Math.min(1.0, 2 * proportion * Math.pow(3d / 4d, i));
+                final double loopProp = Math.min(1.0, 1.5 * proportion * Math.pow(3d / 4d, i));
 
                 // Field fog.
                 final int fSizeX = (int) (baseSizeX * loopProp * 0.5);
@@ -885,7 +885,7 @@ public class Gimmicks {
 
         public void drawOuterFog(EventReceiver receiver, PrimitiveDrawingHook drawing) {
             for (int i = 0; i < 8; ++i) {
-                final double loopProp = Math.min(1.0, 2 * proportion * Math.pow(3d / 4d, i));
+                final double loopProp = Math.min(1.0, 1.5 * proportion * Math.pow(3d / 4d, i));
 
                 // Background fog.
                 final int outSizeX = (int) (320 * loopProp);
@@ -995,7 +995,7 @@ public class Gimmicks {
         public void draw(PrimitiveDrawingHook drawing, EventReceiver receiver, GameEngine engine, int playerID) {
             final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            final int maxAlpha = 225;
+            final int maxAlpha = 210;
 
             drawing.drawRectangle(
                 receiver,
@@ -1069,7 +1069,7 @@ public class Gimmicks {
         }
 
         public void setCountdownMax(Badges badges, boolean perkBoost) {
-            countdownMax = badges.getBadges() / (perkBoost ? 10 : 20);
+            countdownMax = badges.getBadges() / (perkBoost ? 15 : 30);
         }
 
         public void updateField(GameEngine engine) {
@@ -1128,6 +1128,298 @@ public class Gimmicks {
                 GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom(
                     "AS THE FLASH FREEZE CAN HOLD YOU FOREVER.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+        }
+    }
+
+    // Spring's Roll Gimmick - Now Random
+    public static class RisingEarth implements HasDescription {
+        private final Random random;
+
+        private int counter;
+        private int countdown;
+
+        public RisingEarth(Random random, Badges badges, boolean perkBoost) {
+            setCountdown(badges, perkBoost);
+            this.random = random;
+        }
+
+        @Override
+        public String getName() {
+            return "RISING EARTH";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_GREEN),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of(String.valueOf(countdown), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" PIECES)", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_GREEN),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "A RUMBLING IS HEARD BENEATH YOUR",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "FEET. THE EARTH IS RISING, DON'T",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "LET IT BURY YOU ALIVE.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+        }
+
+        public void setCountdown(Badges badges, boolean perkBoost) {
+            // Every 50 badges will increase the countdown by 1.
+
+            final int usedBadges = badges.getBadges() / 10;
+            final int denominator = perkBoost ? 25 : 50;
+
+            countdown = usedBadges / denominator;
+        }
+
+        // Call on first frame of move.
+        public void update(GameEngine engine) {
+            ++counter;
+
+            if (counter >= countdown) {
+                counter = 0;
+
+                engine.field.addSingleHoleGarbage(
+                    random.nextInt(engine.field.getWidth()),
+                    Block.BLOCK_COLOR_GEM_ORANGE,
+                    engine.getSkin(),
+                    1
+                );
+
+                for (int x = 0; x < engine.field.getWidth(); ++x) {
+                    engine.field.getBlock(x, engine.field.getHeightWithoutHurryupFloor() - 1).pieceNum = engine.statistics.time;
+                }
+
+                engine.playSE("garbage");
+            }
+        }
+    }
+
+    // Summer's Roll Gimmick - Much Faster
+    public static class Conflagration implements HasDescription {
+        private static final IntFunction<SpeedParam> SPEED_TABLE = SpeedTableBuilder.createNew()
+            .addTerminalGravity(-1, 256)
+            .addTerminalARE(6)
+            .addLineARE(6, 2000)
+            .addTerminalLineARE(5)
+            .addDAS(8, 2000)
+            .addTerminalDAS(6)
+            .addLockDelay(15, 2000)
+            .addLockDelay(13, 4000)
+            .addLockDelay(12, 6000)
+            .addLockDelay(10, 8000)
+            .addTerminalLockDelay(8)
+            .addLineDelay(4, 2000)
+            .addTerminalLineDelay(3)
+            .buildSpeedTable();
+
+        private final int startLv;
+        private final int endLv;
+        private int currentLdBoost;
+
+        public Conflagration(int startLv, int endLv) {
+            this.startLv = startLv;
+            this.endLv = endLv;
+        }
+
+        private int getLockDelayBoost(Badges badges, boolean perkBoost) {
+            // Every 60 badges, increase lock delay by 1f.
+            final int usedBadges = badges.getBadges() / 10;
+            final int denominator = perkBoost ? 30 : 60;
+
+            currentLdBoost = usedBadges / denominator;
+            return currentLdBoost;
+        }
+
+        public SpeedParam getSpeed(GameEngine engine, Badges badges, boolean perkBoost) {
+            final double usedProp = (engine.statistics.level - startLv) / (double) (endLv - startLv);
+            final int usedLv = (int) Math.floor(usedProp * 10000d);
+
+            final SpeedParam baseParam = SPEED_TABLE.apply(usedLv);
+            baseParam.lockDelay += getLockDelayBoost(badges, perkBoost);
+
+            return baseParam;
+        }
+
+        @Override
+        public String getName() {
+            return "CONFLAGRATION";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of("+" + currentLdBoost + "F", EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(")", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "ANGRY FIRES ROAR TO LIFE AROUND",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "YOU. ESCAPE AS FAST AS YOU CAN",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "BEFORE IT CONSUMES YOUR VERY",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "BEING WHOLE.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+        }
+    }
+
+    // Autumn Roll Gimmick - Pure Visuals
+    public static class Haunting implements HasDescription {
+        // Just set the bone and outline only params lmao.
+
+        @Override
+        public String getName() {
+            return "HAUNTING";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_ORANGE)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_ORANGE),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "MALEVOLENT SPIRITS ENCIRCLE YOU,",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "TRAPPING YOU WITHIN. DISPEL",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "THEIR NEGATIVE ESSENCE BEFORE",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "THEY SEIZE YOUR SOUL.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                )
+            );
+        }
+    }
+
+    // Winter Roll Gimmick - Familiar
+    public static class AbsoluteZero implements HasDescription {
+        private int countdownMax;
+
+        public AbsoluteZero(Badges badges, boolean perkBoost) {
+            setCountdownMax(badges, perkBoost);
+        }
+
+        public void setCountdownMax(Badges badges, boolean perkBoost) {
+            countdownMax = badges.getBadges() / (perkBoost ? 20 : 40);
+        }
+
+        public void updateField(GameEngine engine) {
+            if (engine.field == null) return;
+
+            for (int y = engine.field.getHighestBlockY(); y < engine.field.getHeight(); ++y) {
+                for (int x = 0; x < engine.field.getWidth(); ++x) {
+                    if (!engine.field.getBlockEmpty(x, y)) {
+                        final Block blk = engine.field.getBlock(x, y);
+                        if (((blk.bonusValue & ZeroCelsius.ZERO_MASK) == ZeroCelsius.ZERO_IDENTIFIER) && ++blk.countdown > countdownMax) {
+                            blk.countdown = 0;
+                            blk.hard = Integer.MAX_VALUE;
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public String getName() {
+            return "ABSOLUTE ZERO";
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getSummary() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of("ABS. ZERO", EventReceiver.COLOR_CYAN),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of(countdownMax + "F", EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" DELAY)", EventReceiver.COLOR_RED)
+            );
+        }
+
+        @Override
+        public GameTextUtilities.TextBlock getDescription() {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_CYAN),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.blankLine(0.5f),
+                GameTextUtilities.Text.custom(
+                    "THE COLD RETURNS, STEALING ALL",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "ENERGY FROM YOUR SURROUNDINGS.",
+                    EventReceiver.COLOR_WHITE, 0.75f
+                ),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom(
+                    "DO NOT LET IT TRAP YOU HERE.",
                     EventReceiver.COLOR_WHITE, 0.75f
                 )
             );
