@@ -50,7 +50,7 @@ public class Minesweeper extends DummyMode {
 
     @Override
     public void playerInit(GameEngine engine, int playerID) {
-        SoundLoader.loadSoundset(SoundLoader.SoundSet.MINESWEEPER);
+        SoundLoader.Sounds.Minesweeper.loadAllSounds();
 
         owner = engine.owner;
         receiver = engine.owner.receiver;

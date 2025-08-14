@@ -18,15 +18,164 @@ import sdljava.mixer.MixChunk;
 
 public class SoundLoader {
     private static final String CUSTOM_SKIN_DIRECTORY = "custom.skin.directory";
+
+    // Add your own sound directories here when they are needed.
     private static final String SE_ZEROXFC = "/se/zeroxfc/";
 
-    /** Preset sound effect set identifier. */
-    public enum SoundSet {
-        FIREWORKS,
-        SCANNER,
-        MINESWEEPER,
-        COLLAPSE,
-        CONSTANTRIS
+    // Sound name enums for easier use. Use the static method of the enum classes to
+    // load all sounds for a sound set.
+    public static class Sounds {
+        public interface IsSounds {
+            String sfx();
+        }
+
+        public enum Fireworks implements IsSounds {
+            LAUNCH("fireworklaunch"),
+            EXPLODE("fireworkexplode");
+
+            // region Boilerplate
+            private final String soundName;
+
+            Fireworks(String soundName) {
+                this.soundName = soundName;
+            }
+
+            @Override
+            public String sfx() {
+                return soundName;
+            }
+
+            @Override
+            public String toString() {
+                return soundName;
+            }
+
+            public static void loadAllSounds() {
+                for (Fireworks sound : values()) importSound(sound.sfx());
+            }
+            // endregion Boilerplate
+        }
+
+        public enum Scanner implements IsSounds {
+            SCANNED("linescanned"),
+            MOVE("linescannermove");
+
+            private final String soundName;
+
+            // region Boilerplate
+            Scanner(String soundName) {
+                this.soundName = soundName;
+            }
+
+            @Override
+            public String sfx() {
+                return soundName;
+            }
+
+            @Override
+            public String toString() {
+                return soundName;
+            }
+
+            public static void loadAllSounds() {
+                for (Scanner sound : values()) importSound(sound.sfx());
+            }
+            // endregion Boilerplate
+        }
+
+        public enum Minesweeper implements IsSounds {
+            EXPLOSION1("explosion1"),
+            EXPLOSION2("explosion2"),
+            EXPLOSION3("explosion3"),
+            EXPLOSION4("explosion4");
+
+            private final String soundName;
+
+            // region Boilerplate
+            Minesweeper(String soundName) {
+                this.soundName = soundName;
+            }
+
+            @Override
+            public String sfx() {
+                return soundName;
+            }
+
+            @Override
+            public String toString() {
+                return soundName;
+            }
+
+            public static void loadAllSounds() {
+                for (Minesweeper sound : values()) importSound(sound.sfx());
+            }
+            // endregion Boilerplate
+        }
+
+        public enum Collapse implements IsSounds {
+            BOMB_EXPLODE("bombexplode"),
+            LANDING("landing"),
+            RISE("rise"),
+            BONUS("bonus"),
+            BIG_CLEAR("bigclear"),
+            NORMAL_CLEAR("normalclear"),
+            NO_LANDING("nolanding"),
+            NO_CLEAR("noclear"),
+            BONUS_POP("bonuspop");
+
+
+            private final String soundName;
+
+            // region Boilerplate
+            Collapse(String soundName) {
+                this.soundName = soundName;
+            }
+
+            @Override
+            public String sfx() {
+                return soundName;
+            }
+
+            @Override
+            public String toString() {
+                return soundName;
+            }
+
+            public static void loadAllSounds() {
+                for (Collapse sound : values()) importSound(sound.sfx());
+            }
+            // endregion Boilerplate
+        }
+
+        public enum Constantris implements IsSounds {
+            HORN("horn"),
+            TIME_INCREASE("timeincrease"),
+            TIME_REDUCE("timereduce");
+
+            private final String soundName;
+
+            // region Boilerplate
+            Constantris(String soundName) {
+                this.soundName = soundName;
+            }
+
+            @Override
+            public String sfx() {
+                return soundName;
+            }
+
+            @Override
+            public String toString() {
+                return soundName;
+            }
+
+            public static void loadAllSounds() {
+                for (Constantris sound : values()) importSound(sound.sfx());
+            }
+            // endregion Boilerplate
+        }
+
+        private Sounds() {}
     }
 
     /**
@@ -35,43 +184,6 @@ public class SoundLoader {
     private static final Logger log = Logger.getLogger(SoundLoader.class);
 
     private SoundLoader() {}
-
-    public static void loadSoundset(SoundSet loadType) {
-        switch (loadType) {
-            case FIREWORKS:
-                importSound("fireworklaunch");
-                importSound("fireworkexplode");
-                break;
-            case SCANNER:
-                importSound("linescanned");
-                importSound("linescannermove");
-                break;
-            case MINESWEEPER:
-                importSound("explosion1");
-                importSound("explosion2");
-                importSound("explosion3");
-                importSound("explosion4");
-                break;
-            case COLLAPSE:
-                importSound("bombexplode");
-                importSound("landing");
-                importSound("rise");
-                importSound("bonus");
-                importSound("bigclear");
-                importSound("normalclear");
-                importSound("nolanding");
-                importSound("noclear");
-                importSound("bonuspop");
-                break;
-            case CONSTANTRIS:
-                importSound("horn");
-                importSound("timeincrease");
-                importSound("timereduce");
-                break;
-            default:
-                break;
-        }
-    }
 
     private static boolean extended = false;
 

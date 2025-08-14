@@ -1187,10 +1187,10 @@ public class Gimmicks {
         }
 
         public void setCountdown(Badges badges, boolean perkBoost) {
-            // Every 50 badges will increase the countdown by 1.
+            // Every 75 badges will increase the countdown by 1.
 
-            final int usedBadges = badges.getBadges() / 10;
-            final int denominator = perkBoost ? 25 : 50;
+            final int usedBadges = badges.getBadges();
+            final int denominator = perkBoost ? 375 : 750;
 
             countdown = usedBadges / denominator;
         }
@@ -1246,9 +1246,9 @@ public class Gimmicks {
         }
 
         private int getLockDelayBoost(Badges badges, boolean perkBoost) {
-            // Every 60 badges, increase lock delay by 1f.
+            // Every 80 badges, increase lock delay by 1f.
             final int usedBadges = badges.getBadges() / 10;
-            final int denominator = perkBoost ? 30 : 60;
+            final int denominator = perkBoost ? 40 : 80;
 
             currentLdBoost = usedBadges / denominator;
             return currentLdBoost;

@@ -33,21 +33,24 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.LevelTableBuilder;
 import zeroxfc.nullpo.custom.libs.MathHelper;
+import zeroxfc.nullpo.custom.libs.ModePileCredits;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
+import zeroxfc.nullpo.custom.libs.mixins.HasCelebrationFireworks;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomGameOver;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomLineClear;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomMove;
+import zeroxfc.nullpo.custom.libs.particles.Fireworks;
 import zeroxfc.nullpo.custom.libs.particles.TextEmitter;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 import zeroxfc.nullpo.custom.libs.types.tuples.Pair;
 import zeroxfc.nullpo.custom.modes.objects.seasons.*;
 
-public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldDrawing, HasCustomLineClear, HasCustomGameOver {
+public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldDrawing, HasCustomLineClear, HasCustomGameOver, HasCelebrationFireworks {
     private static final Logger log = Logger.getLogger(Seasons.class);
 
     private static final int CURRENT_VERSION = 0;
@@ -55,8 +58,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private enum Season {
         SPRING(GameEngine.FRAME_COLOR_GREEN, 1),
         SUMMER(GameEngine.FRAME_COLOR_RED, 2),
-        AUTUMN(GameEngine.FRAME_COLOR_YELLOW, 3),
-        WINTER(GameEngine.FRAME_COLOR_CYAN, 4);
+        AUTUMN(GameEngine.FRAME_COLOR_YELLOW, 4),
+        WINTER(GameEngine.FRAME_COLOR_CYAN, 5);
 
         public final int defaultFrameColour;
         public final int performanceMultiplier;
@@ -139,7 +142,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         .addDAS(11, LEVELS_JUL)
         .addTerminalDAS(8)
         .addLockDelay(30, LEVELS_JUL)
-        .addLockDelay(15, LEVELS_OCT)
+        .addLockDelay(18, LEVELS_OCT)
         .addLockDelay(30, LEVELS_DEC)
         .addTerminalLockDelay(60)
         .addLineDelay(40, LEVELS_JUL)
@@ -180,7 +183,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         .addDAS(8, LEVELS_SEP)
         .addTerminalDAS(6)
         .addLockDelay(20, LEVELS_APR)
-        .addLockDelay(17, LEVELS_OCT)
+        .addLockDelay(18, LEVELS_OCT)
         .addTerminalLockDelay(60)
         .addTerminalLineDelay(4)
         .buildSpeedTable();
@@ -289,6 +292,39 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         .addTerminalValue(-1)
         .buildLevelTable();
 
+    private static final ModePileCredits CREDITS = new ModePileCredits(
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("SEASONS", EventReceiver.COLOR_GREEN, (7f / 10f)),
+            ModePileCredits.creditText("INSPIRED BY", EventReceiver.COLOR_WHITE, (10f / 12f)),
+            ModePileCredits.creditText("HEBORIS", EventReceiver.COLOR_BLUE, 1f),
+            ModePileCredits.creditText("AND", EventReceiver.COLOR_WHITE, 0.75f),
+            ModePileCredits.creditTextNoSp("AE-MASTER", EventReceiver.COLOR_RED, 1f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditTextNoSp("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
+            GameTextUtilities.Text.blankLine(1f),
+            ModePileCredits.creditText("AZULLIA", EventReceiver.COLOR_CYAN, 1.2f),
+            ModePileCredits.creditText("A.K.A.", EventReceiver.COLOR_WHITE, 0.5f),
+            ModePileCredits.creditTextNoSp("0XFC963F18DC21", EventReceiver.COLOR_WHITE, 0.6f),
+            GameTextUtilities.Text.blankLine(4f),
+            ModePileCredits.creditTextNoSp("WITH HELP FROM", EventReceiver.COLOR_YELLOW, 0.7f),
+            GameTextUtilities.Text.blankLine(1f),
+            ModePileCredits.creditText("NIGHTSHADE", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("MANDL27", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("AKARI", EventReceiver.COLOR_WHITE, 0.85f),
+            ModePileCredits.creditText("JAVA REFLECTION", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.creditText("CODE CRIMES", EventReceiver.COLOR_RED, 0.65f),
+            ModePileCredits.creditTextNoSp("A LOAD OF COFFEE", EventReceiver.COLOR_ORANGE, 0.625f)
+        ),
+        GameTextUtilities.textElems(
+            ModePileCredits.creditText("CONGRATULATIONS!", EventReceiver.COLOR_YELLOW, 0.625f),
+            ModePileCredits.creditText("NOW SURVIVE THE", EventReceiver.COLOR_YELLOW, 0.625f),
+            ModePileCredits.creditText("GAUNTLET AND", EventReceiver.COLOR_YELLOW, 0.625f),
+            ModePileCredits.creditTextNoSp("FINISH SEASONS!", EventReceiver.COLOR_YELLOW, 0.625f)
+        ),
+        0.775, 0.125, false
+    );
+
     private static String levelToString(int level) {
         final String month = MONTH_NAME_TABLE.apply(level);
         final int normLevel = level - LEVELS_SO_FAR.apply(level);
@@ -380,6 +416,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private Grading grading;
     private TotalGrades totalGrades;
     private int rollTime;
+    private int rollElapsed;
 
     private static final int INCREMENT_IN_ROLL = 2; // TODO: Change only if roll is too slow.
     private int naturalLevelIncrement;
@@ -400,6 +437,37 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int brokenSnowBlocks;
     private int blocksUnderSnow;
     private int hardBlocksSeen;
+
+    private static class FireworkContainer {
+        public static Fireworks fireworks;
+        public static Random fireworkColourRandomizer;
+        public static int fireworksLeft;
+    }
+
+    @Override
+    public Fireworks getFireworkEmitter() {
+        return FireworkContainer.fireworks;
+    }
+
+    @Override
+    public Random getFireworkColourRandomizer() {
+        return FireworkContainer.fireworkColourRandomizer;
+    }
+
+    @Override
+    public int getFireworksLeft() {
+        return FireworkContainer.fireworksLeft;
+    }
+
+    @Override
+    public void setFireworksLeft(int count) {
+        FireworkContainer.fireworksLeft = count;
+    }
+
+    @Override
+    public void decrementFireworksLeft() {
+        --FireworkContainer.fireworksLeft;
+    }
 
     // Current Gimmicks
     private Gimmicks.Sproutlings gimmickSprMo2;
@@ -539,6 +607,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         textEmitter.clear();
         rewindBlocks.clear();
 
+        FireworkContainer.fireworks = new Fireworks(customGraphics);
+        FireworkContainer.fireworkColourRandomizer = new Random(engine.randSeed ^ 0x07355608);
+
+        HasCelebrationFireworks.super.fireworksSetup();
+
         // For Zero Celsius and Absolute Zero
         customGraphics.loadImage("res/graphics/iceblock.png", "iceblock");
 
@@ -553,6 +626,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         rollLevelReached = -1;
         fieldPurifyQueued = false;
         descriptionToDraw = null;
+
+        rollTime = 0;
+        rollElapsed = 0;
 
         grading = new Grading();
         totalGrades = null;
@@ -948,6 +1024,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 final int basisTime = FINAL_REWIND_TIME - (60 * 21);
 
+                // This is for gradually showing the ending passage.
                 int maxY = baseY - 64;
                 if (engine.statc[0] >= basisTime) maxY += 12;
                 if (engine.statc[0] >= (basisTime + ((60 * 1) + 30))) maxY += 12;
@@ -1073,9 +1150,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             engine.statc[3]++;
             engine.statc[2] = -1;
 
-            if (engine.statc[3] >= 120) {
-                return false;
-            }
+            return engine.statc[3] < 120;
         }
 
         return true;
@@ -1315,87 +1390,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     }
 
     @Override
-    public boolean inLockDelayProcessing(GameEngine engine, int playerID, PlayerMoveResult result, boolean updown) {
-        // 接地と固定
-        if ((engine.nowPieceObject.checkCollision(engine.nowPieceX, engine.nowPieceY + 1, engine.field)) &&
-            ((engine.statc[0] > 0) || (engine.ruleopt.moveFirstFrame))) {
-            if ((engine.lockDelayNow == 0) && (engine.getLockDelay() > 0))
-                engine.playSE("step");
+    public boolean doInfiniteLockDelayAbove99() {
+        return false;
+    }
 
-            if (engine.lockDelayNow < engine.getLockDelay())
-                engine.lockDelayNow++;
-
-            // Prevents lock delay > 98f.
-//            if ((engine.getLockDelay() >= 99) && (engine.lockDelayNow > 98))
-//                engine.lockDelayNow = 98;
-
-            if (engine.lockDelayNow < engine.getLockDelay()) {
-                if (engine.lockDelayNow >= engine.getLockDelay() - 1)
-                    engine.nowPieceObject.setDarkness(0.5f);
-                else
-                    engine.nowPieceObject.setDarkness((engine.lockDelayNow * 7f / engine.getLockDelay()) * 0.05f);
-            }
-
-            if (engine.getLockDelay() != 0)
-                engine.gcount = engine.speed.gravity;
-
-            // trueになると即固定
-            boolean instantlock = false;
-
-            // Hard drop固定
-            if ((engine.ctrl.isPress(engine.getUp())) &&
-                (!engine.harddropContinuousUse) &&
-                (engine.ruleopt.harddropEnable) &&
-                ((engine.isDiagonalMoveEnabled()) || (!result.sidemoveflag)) &&
-                ((engine.ruleopt.moveUpAndDown) || (!updown)) &&
-                (engine.ruleopt.harddropLock)) {
-                engine.harddropContinuousUse = true;
-                engine.manualLock = true;
-                instantlock = true;
-            }
-
-            // Soft drop固定
-            if ((engine.ctrl.isPress(engine.getDown())) &&
-                (!engine.softdropContinuousUse) &&
-                (engine.ruleopt.softdropEnable) &&
-                ((engine.isDiagonalMoveEnabled()) || (!result.sidemoveflag)) &&
-                ((engine.ruleopt.moveUpAndDown) || (!updown)) &&
-                (engine.ruleopt.softdropLock)) {
-                engine.softdropContinuousUse = true;
-                engine.manualLock = true;
-                instantlock = true;
-            }
-
-            // 接地状態でソフドドロップ固定
-            if ((engine.ctrl.isPush(engine.getDown())) &&
-                (engine.ruleopt.softdropEnable) &&
-                ((engine.isDiagonalMoveEnabled()) || (!result.sidemoveflag)) &&
-                ((engine.ruleopt.moveUpAndDown) || (!updown)) &&
-                (engine.ruleopt.softdropSurfaceLock)) {
-                engine.softdropContinuousUse = true;
-                engine.manualLock = true;
-                instantlock = true;
-            }
-
-            if ((engine.manualLock) && (engine.ruleopt.shiftLockEnable)) {
-                // bit 1 and 2 are button_up and button_down currently
-                engine.shiftLock = engine.ctrl.getButtonBit() & 3;
-            }
-
-            // 移動＆rotationcount制限超過
-            if ((engine.ruleopt.lockresetLimitOver == RuleOptions.LOCKRESET_LIMIT_OVER_INSTANT) && (engine.isMoveCountExceed() || engine.isRotateCountExceed())) {
-                instantlock = true;
-            }
-
-            // 接地即固定
-            if ((engine.getLockDelay() == 0) && ((engine.gcount >= engine.speed.denominator) || (engine.speed.gravity < 0))) {
-                instantlock = true;
-            }
-
-            // Count a piece as locked.
-            if (instantlock) {
-                ++lockedPieces;
-            }
+    @Override
+    public boolean inPostLockProcessing(GameEngine engine, int playerID, boolean instantlock) {
+        if (((engine.lockDelayNow >= engine.getLockDelay()) && (engine.getLockDelay() > 0)) || (instantlock)) {
+            ++lockedPieces;
 
             // Add a new I-piece into the next queue if using summer passive perk.
             if (lockedPieces % 50 == 0 && settings.perk == SeasonPerk.SUMMER_PASSIVE) {
@@ -1405,9 +1407,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 }
             }
 
-            return inPostLockProcessing(engine, playerID, instantlock);
+            grading.resetDecayCounter();
         }
-        return false;
+
+        return HasCustomMove.super.inPostLockProcessing(engine, playerID, instantlock);
     }
 
     @Override
@@ -1509,7 +1512,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             engine.statc[9] = GRADE_TIME + 1;
         }
 
-        return engine.statc[9] > GRADE_TIME;
+        return engine.statc[9] > GRADE_TIME && !areFireworksWaiting();
     }
 
     @Override
@@ -1534,8 +1537,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         final Pair<GameTextUtilities.TextBlock, IntPair> rankDisplay = TotalGrades.GRADE_NAMES.apply(currentPoints);
 
         if (nextTitleLevel < rankDisplay.valR.valR) {
+            addFireworksLeft(28);
             engine.playSE("gradeup");
         } else if (nextRankLevel < rankDisplay.valR.valL) {
+            addFireworksLeft(4);
             engine.playSE("medal");
         }
 
@@ -1613,7 +1618,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 baseX + 2,
                 baseY + 60,
                 GameTextUtilities.Text.ofSmall(String.valueOf(currentPoints - currentPoints % 100), textColour),
-                ObjectAlignment.TOP_LEFT
+                ObjectAlignment.TOP_MIDDLE
             );
 
             GameTextUtilities.drawAlignedText(
@@ -1621,7 +1626,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 baseX + (engine.field.getWidth() * 16) - 2,
                 baseY + 60,
                 GameTextUtilities.Text.ofSmall(String.valueOf(Math.min(nextRankLevel, Grading.MAX_GRADE_POINTS)), textColour),
-                ObjectAlignment.TOP_RIGHT
+                ObjectAlignment.TOP_MIDDLE
             );
         }
 
@@ -1629,7 +1634,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             engine,
             baseX + (engine.field.getWidth() * 8),
             baseY + 60,
-            GameTextUtilities.Text.custom(String.valueOf(currentPoints), EventReceiver.COLOR_WHITE, Interpolation.lerp(0.5f, 1f, currentPoints / (double) Grading.MAX_GRADE_POINTS)),
+            GameTextUtilities.Text.custom(
+                String.valueOf(currentPoints),
+                currentPoints >= Grading.MAX_GRADE_POINTS ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE,
+                Interpolation.lerp(0.5f, 1.25f, currentPoints / (double) Grading.MAX_GRADE_POINTS)
+            ),
             ObjectAlignment.TOP_MIDDLE
         );
 
@@ -1829,7 +1838,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 EventReceiver.COLOR_YELLOW,
                 startScale, endScale * 1.5f,
                 colour, 255,
-                colour, 64,
+                colour, 255,
                 reverse
             );
         }
@@ -1845,7 +1854,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     EventReceiver.COLOR_GREEN,
                     startScale, endScale,
                     colour, 255,
-                    colour, 64,
+                    colour, 255,
                     reverse
                 );
             } else if (engine.tspinmini) {
@@ -1858,7 +1867,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     EventReceiver.COLOR_GREEN,
                     startScale, endScale,
                     colour, 255,
-                    colour, 64,
+                    colour, 255,
                     reverse
                 );
             } else if (engine.tspin) {
@@ -1871,7 +1880,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     EventReceiver.COLOR_PURPLE,
                     startScale, endScale,
                     colour, 255,
-                    colour, 64,
+                    colour, 255,
                     reverse
                 );
             }
@@ -1891,7 +1900,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     EventReceiver.COLOR_ORANGE,
                     startScale, endScale,
                     colour, 255,
-                    colour, 64,
+                    colour, 255,
                     reverse
                 );
             } else if (engine.tspinmini) {
@@ -1904,7 +1913,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     EventReceiver.COLOR_ORANGE,
                     startScale, endScale,
                     colour, 255,
-                    colour, 64,
+                    colour, 255,
                     reverse
                 );
             } else if (engine.tspin) {
@@ -1917,7 +1926,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     EventReceiver.COLOR_PINK,
                     startScale, endScale,
                     colour, 255,
-                    colour, 64,
+                    colour, 255,
                     reverse
                 );
             } else {
@@ -1930,7 +1939,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     lines >= 4 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE,
                     startScale, endScale,
                     colour, 255,
-                    colour, 64,
+                    colour, 255,
                     reverse
                 );
             }
@@ -1947,7 +1956,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 EventReceiver.COLOR_RED,
                 startScale, endScale,
                 colour, 255,
-                colour, 64,
+                colour, 255,
                 reverse
             );
         }
@@ -2540,6 +2549,13 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
     }
 
+    @Override
+    public void drawBetweenFrameAndField(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
+        if (rollElapsed <= 120 * 60 && rollStarted) {
+            CREDITS.drawNoStop(receiver, engine, playerID, rollElapsed / (120d * 60d));
+        }
+    }
+
     // Overlays for countdowns or hardness meters.
     private void drawBlockTextOverlays(GameEngine engine, int playerID) {
         if (engine.field == null) return;
@@ -2684,6 +2700,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         if (rollStarted && engine.gameActive) {
+            ++rollElapsed;
             if (--rollTime <= 0) {
                 engine.playSE("died");
 
@@ -2693,6 +2710,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             if (rollTime <= 600 && rollTime > 0 && rollTime % 60 == 0) engine.playSE("countdown");
         }
+
+        queueFireworkIf(engine, () -> engine.statc[0] % 9 == 0);
+        updateLaunchedFireworks(receiver, engine, playerID);
 
         if (descriptionToDraw != null && descriptionToDraw.update()) {
             descriptionToDraw = null;
@@ -3039,6 +3059,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 descriptionToDraw.descObj.drawDescription(drawing, receiver, engine, descriptionToDraw.getDrawXOffset(), descriptionToDraw.getDrawY());
             }
         }
+
+        drawFireworks(receiver);
     }
 
     @Override
@@ -3096,6 +3118,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             performance = Math.min(2500, performance + performancePoints);
             currentPerformanceDecayRate = (int) Math.ceil(BASE_PERF_DECAY * Math.pow(PERF_DECAY_POW, Math.floor(performance / 100d)));
+        }
+
+        public void resetDecayCounter() {
+            performanceDecay = 0;
         }
 
         public void updatePerformanceDecay() {

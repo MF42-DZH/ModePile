@@ -2,6 +2,8 @@ package zeroxfc.nullpo.custom.libs;
 
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
+import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
+import zeroxfc.nullpo.custom.modes.GradeMania4;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 
 /**
@@ -133,10 +135,11 @@ public class ModePileCredits {
 
     /**
      * Draw the current credits at a progress level. Use this within the {@code renderFirst} method of a gamemode, between
-     * drawing the frame and the field (see {@link zeroxfc.nullpo.custom.modes.GradeMania4} for an example).
+     * drawing the frame and the field (see {@link GradeMania4} for an example).
      * <p>
      * Do note that overriding the {@code renderMove} is also required for pieces to still work, as you will need to disable
-     * field visibility to get the credits in the right layer.
+     * field visibility to get the credits in the right layer. {@link HasCustomFieldDrawing} has helpers if you want to use
+     * that instead of the more verbose method below.
      * <p>
      * Suggested use:
      * <pre>
@@ -220,6 +223,44 @@ public class ModePileCredits {
                 engine,
                 baseX + (engine.field.getWidth() * 8),
                 (int) Math.floor(Interpolation.lerp(baseY + (engine.field.getHeight() * 16d) + (FINAL_BLOCK.getHeight() / 2d), baseY + (engine.field.getHeight() * 8d), Math.min(1d, (progress - finalBlockOffset) / finalBlockMoveProportion))),
+                baseX - 1, baseY, baseX + (engine.field.getWidth() * 16) + 1, baseY + (engine.field.getHeight() * 16),
+                false, FINAL_BLOCK, ObjectAlignment.MIDDLE_MIDDLE
+            );
+        }
+    }
+
+    /**
+     * Draw the credits, but don't pause the final logo, and just keep scrolling it.
+     * See {@link ModePileCredits#draw} for more information.
+     *
+     * @param receiver Current renderer
+     * @param engine   Current game engine
+     * @param playerID Current player ID
+     * @param progress Current credits progress
+     */
+    public void drawNoStop(EventReceiver receiver, GameEngine engine, int playerID, double progress) {
+        final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+        final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+        GameTextUtilities.drawAlignedBoundedTextBlock(
+            engine,
+            baseX + (engine.field.getWidth() * 8),
+            (int) Math.floor(Interpolation.lerp(baseY + (engine.field.getHeight() * 16d), baseY - (double) mainBlock.getHeight(), progress / 0.9)),
+            baseX - 1, baseY, baseX + (engine.field.getWidth() * 16) + 1, baseY + (engine.field.getHeight() * 16),
+            false, mainBlock, ObjectAlignment.TOP_MIDDLE
+        );
+
+        if (progress > finalBlockOffset) {
+            GameTextUtilities.drawAlignedBoundedTextBlock(
+                engine,
+                baseX + (engine.field.getWidth() * 8),
+                (int) Math.floor(
+                    Interpolation.lerp(
+                        baseY + (engine.field.getHeight() * 16d) + (FINAL_BLOCK.getHeight() / 2d),
+                        baseY - (FINAL_BLOCK.getHeight() / 2d),
+                        Math.min(1d, (progress - finalBlockOffset) / finalBlockMoveProportion)
+                    )
+                ),
                 baseX - 1, baseY, baseX + (engine.field.getWidth() * 16) + 1, baseY + (engine.field.getHeight() * 16),
                 false, FINAL_BLOCK, ObjectAlignment.MIDDLE_MIDDLE
             );

@@ -264,7 +264,7 @@ public class FireworkChallenge extends DummyMode {
     public void playerInit(GameEngine engine, int playerID) {
         presses = new boolean[] { false, false, false, false, false, false, false, false, false, false };
 
-        SoundLoader.loadSoundset(SoundLoader.SoundSet.FIREWORKS);
+        SoundLoader.Sounds.Fireworks.loadAllSounds();
 
         owner = engine.owner;
         receiver = engine.owner.receiver;

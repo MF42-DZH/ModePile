@@ -552,7 +552,7 @@ public class GradeMania4 extends DummyMode implements HasCustomFieldDrawing {
             bg.reset();
         }
 
-        SoundLoader.loadSoundset(SoundLoader.SoundSet.FIREWORKS);
+        SoundLoader.Sounds.Fireworks.loadAllSounds();
 
         final ColourMixer usedMixer = ColourMixer.rgb24(0);
         final IntBinaryOperator outerFunc = new IntBinaryOperator() {

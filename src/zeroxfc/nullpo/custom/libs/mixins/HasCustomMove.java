@@ -675,6 +675,12 @@ public interface HasCustomMove {
         }
     }
 
+    // Override this to false to disable NullpoMino's default behaviour of making lock delay infinite if the
+    // game's current lock delay is set to 99 or higher.
+    default boolean doInfiniteLockDelayAbove99() {
+        return true;
+    }
+
     // Runs while processing lock delay.
     default boolean inLockDelayProcessing(GameEngine engine, int playerID, PlayerMoveResult result, boolean updown) {
         // 接地と固定
@@ -686,7 +692,7 @@ public interface HasCustomMove {
             if (engine.lockDelayNow < engine.getLockDelay())
                 engine.lockDelayNow++;
 
-            if ((engine.getLockDelay() >= 99) && (engine.lockDelayNow > 98))
+            if ((engine.getLockDelay() >= 99) && (engine.lockDelayNow > 98) && doInfiniteLockDelayAbove99())
                 engine.lockDelayNow = 98;
 
             if (engine.lockDelayNow < engine.getLockDelay()) {

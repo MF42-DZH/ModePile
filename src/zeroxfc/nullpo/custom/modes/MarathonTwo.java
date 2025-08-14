@@ -333,11 +333,11 @@ public class MarathonTwo extends MarathonModeBase {
         currentTitle = "";
         currentSubtext = "";
 
-        SoundLoader.loadSoundset(SoundLoader.SoundSet.FIREWORKS);
-        SoundLoader.loadSoundset(SoundLoader.SoundSet.SCANNER);
-        SoundLoader.loadSoundset(SoundLoader.SoundSet.MINESWEEPER);
-        SoundLoader.loadSoundset(SoundLoader.SoundSet.COLLAPSE);
-        SoundLoader.loadSoundset(SoundLoader.SoundSet.CONSTANTRIS);
+        SoundLoader.Sounds.Fireworks.loadAllSounds();
+        SoundLoader.Sounds.Scanner.loadAllSounds();
+        SoundLoader.Sounds.Minesweeper.loadAllSounds();
+        SoundLoader.Sounds.Collapse.loadAllSounds();
+        SoundLoader.Sounds.Constantris.loadAllSounds();
 
         customGraphics = new CustomResourceHolder(1);
         rendererExtension = new RendererExtension(customGraphics);

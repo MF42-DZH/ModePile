@@ -308,7 +308,7 @@ public class Collapse extends DummyMode {
 
     @Override
     public void playerInit(GameEngine engine, int playerID) {
-        SoundLoader.loadSoundset(SoundLoader.SoundSet.COLLAPSE);
+        SoundLoader.Sounds.Collapse.loadAllSounds();
 
         owner = engine.owner;
         receiver = engine.owner.receiver;
