@@ -1,5 +1,5 @@
 #NullpoMino RuleData
-#Tue Jul 01 14:16:24 BST 2025
+#Fri Aug 15 21:38:08 BST 2025
 0.ruleopt.areCancelHold=false
 0.ruleopt.areCancelMove=false
 0.ruleopt.areCancelRotate=false
@@ -82,8 +82,8 @@
 0.ruleopt.pieceDefaultDirection.7=0
 0.ruleopt.pieceDefaultDirection.8=0
 0.ruleopt.pieceDefaultDirection.9=0
-0.ruleopt.pieceEnterAboveField=true
-0.ruleopt.pieceEnterMaxDistanceY=0
+0.ruleopt.pieceEnterAboveField=false
+0.ruleopt.pieceEnterMaxDistanceY=2
 0.ruleopt.pieceOffsetX.0.0=0
 0.ruleopt.pieceOffsetX.0.1=0
 0.ruleopt.pieceOffsetX.0.2=0

@@ -60,6 +60,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
      *   - [ ] Heat haze effect for Summer Months / Roll in background
      *   - [ ] Leaves in the wind in Autumn Months / Roll
      *   - [ ] Snowfall & Icicles in Winter Months / Roll
+     *   - [ ] Custom frames
+     *   - [ ] Shimmer effect on custom frames
+     *   - [ ] Fallback fade-ish effect for people who don't use bg fade
      */
 
     private static final int CURRENT_VERSION = 0;
