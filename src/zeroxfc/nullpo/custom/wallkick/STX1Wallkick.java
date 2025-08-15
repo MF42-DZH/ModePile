@@ -51,7 +51,7 @@ public class STX1Wallkick implements Wallkick {
             }
 
             if (!piece.checkCollision(x + tX, y + tY, rtNew, field)) {
-                return new WallkickResult(x + tX, y + tY, rtNew);
+                return new WallkickResult(tX, tY, rtNew);
             }
         }
 
