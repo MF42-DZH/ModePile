@@ -963,12 +963,14 @@ public class Gimmicks {
             height = 0;
             currentCounter = 0;
 
-            setTickTime(badges, perkBoost);
+            setTickTime(badges, perkBoost, false);
         }
 
-        public void setTickTime(Badges badges, boolean perkBoost) {
+        public void setTickTime(Badges badges, boolean perkBoost, boolean iceActive) {
             final int usedBadges = badges.getBadges() / 10;
+
             currentTickTime = 48 + usedBadges / (perkBoost ? 5 : 10);
+            if (iceActive) currentTickTime *= 2;
         }
 
         public boolean isYInSnow(GameEngine engine, int y) {

@@ -8,7 +8,7 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 public enum SeasonPerk {
     PERKLESS(0), // Only selectable if the player has beaten the mode in their current player profile.
     SPRING_PASSIVE(1), // +1 levels to level bonus, and gain +0.1 badges per badge gain, always.
-    SPRING_ACTIVE(1, 600, 300, 5, 10, 20, 50), // 2x levels from line clears, and 2.5x badge gain while active.
+    SPRING_ACTIVE(1, 600, 300, 5, 10, 25, 60), // 2x levels from line clears, and 2.5x badge gain while active.
     SUMMER_PASSIVE(1), // +3 to visible next queue length. Guarantees an I-piece every 50 pieces (pushes back the next queue).
     SUMMER_ACTIVE(1, 250, 0, 2, 5, 10, 25), // Get three I-pieces instantly, pushing the next queue back.
     AUTUMN_PASSIVE(1), // Badge benefits against gimmicks work 2x better.

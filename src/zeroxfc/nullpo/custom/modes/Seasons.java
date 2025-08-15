@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.function.BooleanSupplier;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import mu.nu.nullpo.game.component.BGMStatus;
@@ -53,7 +54,41 @@ import zeroxfc.nullpo.custom.modes.objects.seasons.*;
 public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldDrawing, HasCustomLineClear, HasCustomGameOver, HasCelebrationFireworks {
     private static final Logger log = Logger.getLogger(Seasons.class);
 
+    /* TODO:
+     *   - [ ] Growth effect for Spring Month 2-3
+     *   - [ ] Fire Effect for Summer Month 3 / Summer Roll
+     *   - [ ] Heat haze effect for Summer Months / Roll in background
+     *   - [ ] Leaves in the wind in Autumn Months / Roll
+     *   - [ ] Snowfall & Icicles in Winter Months / Roll
+     */
+
     private static final int CURRENT_VERSION = 0;
+
+    private enum FireworkLauncher implements BooleanSupplier {
+        ONE(13), TWO(23), THREE(31);
+
+        private static final Random RND = new Random();
+
+        private final int maxCooldown;
+
+        private int tick;
+        private int currentCooldown;
+
+        FireworkLauncher(int maxCooldown) {
+            this.maxCooldown = maxCooldown;
+            tick = 0;
+        }
+
+        @Override
+        public boolean getAsBoolean() {
+            if (++tick < currentCooldown) return false;
+
+            tick = 0;
+            currentCooldown = RND.nextInt(maxCooldown + 1);
+
+            return true;
+        }
+    }
 
     private enum Season {
         SPRING(GameEngine.FRAME_COLOR_GREEN, 1),
@@ -385,6 +420,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private SeasonsSettings settings;
     private ProfileProperties playerProperties;
     private boolean showPlayerStats;
+    private boolean showTime;
     private RuleOptions ruleOptCopy;
 
     private boolean getGimmickPerkBoost() {
@@ -407,7 +443,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int lastRank;
     private int lastRankPlayer;
 
-    private static final int INCREMENT_IN_ROLL = 2; // TODO: Change only if roll is too slow.
+    private static final int INCREMENT_IN_ROLL = 2;
     private int naturalLevelIncrement;
 
     private int currentEnergy;
@@ -645,6 +681,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             showPlayerStats = false;
         }
 
+        showTime = false;
+
         settings = new SeasonsSettings(CURRENT_VERSION, playerProperties);
 
         if (!owner.replayMode) {
@@ -821,7 +859,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 }
                     break;
                 case FINAL_REWIND: {
-                    // TODO: Add a system to skip the final rewind if the player has seen it whole before.
                     engine.timerActive = false;
 
                     if (engine.statc[0] == 0) {
@@ -1181,7 +1218,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     }
 
     private void setSpeed(GameEngine engine) {
-        // TODO: Populate this further later
         if (gimmickSumMo3 != null) {
             engine.speed = gimmickSumMo3.getSpeed(engine, badges, getGimmickPerkBoost());
         } else if (gimmickRollSum != null) {
@@ -1579,6 +1615,19 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             currentPoints = 0;
 
             totalGrades = grading.freeze(engine.statistics.level, rollLevelReached, badges, settings.perk);
+            log.info(
+                String.format(
+                    "--- GRADING INFO ---\nGrade: %d\nPerf.: %d\nBadge: %d\nLevel: %d\nR.Lv.: %d\nClear: %d\nP.Ls.: %d",
+                    totalGrades.totalGradePoints,
+                    totalGrades.totalPerformancePoints,
+                    totalGrades.totalBadgePoints,
+                    totalGrades.totalLevelPoints,
+                    totalGrades.totalRollLevelPoints,
+                    totalGrades.allClearBonus,
+                    totalGrades.perklessBonus
+                )
+            );
+
             selectedGradeBarTime = Interpolation.lerp(GRADE_BAR_TIME_MIN, GRADE_BAR_TIME_MAX, totalGrades.totalGradePoints / (double) Grading.MAX_GRADE_POINTS);
 
             final Pair<GameTextUtilities.TextBlock, IntPair> rankDisplay = TotalGrades.GRADE_NAMES.apply(0);
@@ -2345,7 +2394,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             gimmickWinMo1.updateNext(engine);
         }
         if (gimmickWinMo2 != null) {
-            gimmickWinMo2.setTickTime(badges, getGimmickPerkBoost());
+            gimmickWinMo2.setTickTime(badges, getGimmickPerkBoost(), gimmickWinMo3 != null);
         }
         if (gimmickWinMo3 != null) {
             gimmickWinMo3.setCountdownMax(badges, getGimmickPerkBoost());
@@ -2480,7 +2529,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             gimmickWinMo1.updateProportion(badges, getGimmickPerkBoost());
         }
         if (gimmickWinMo2 != null) {
-            gimmickWinMo2.setTickTime(badges, getGimmickPerkBoost());
+            gimmickWinMo2.setTickTime(badges, getGimmickPerkBoost(), gimmickWinMo3 != null);
             gimmickWinMo2.reduceHeight(li);
         }
         if (gimmickWinMo3 != null) {
@@ -2492,7 +2541,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     }
 
     private void purifyFieldAndNexts(GameEngine engine) {
-        // TODO: Might need to do some extra purification steps here.
         FieldManipulation.clearFieldEffects(engine.field, blk -> {
             blk.countdown = 0;
             blk.color = Block.gemToNormalColor(blk.color);
@@ -2742,8 +2790,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (rollTime <= 600 && rollTime > 0 && rollTime % 60 == 0) engine.playSE("countdown");
         }
 
-        queueFireworkIf(engine, () -> engine.statc[0] % 13 == 0, Stream.STREAM_1);
-        queueFireworkIf(engine, () -> (engine.statc[0] + 5) % 17 == 0, Stream.STREAM_2);
+        queueFireworkIf(engine, FireworkLauncher.ONE, Stream.STREAM_1);
+        queueFireworkIf(engine, FireworkLauncher.TWO, Stream.STREAM_2);
+        queueFireworkIf(engine, FireworkLauncher.THREE, Stream.STREAM_3);
 
         updateLaunchedFireworks(receiver, engine, playerID);
 
@@ -2839,6 +2888,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 showPlayerStats = !showPlayerStats;
                 engine.playSE("change");
             }
+
+            // Show time
+            if (engine.ctrl.isPush(Controller.BUTTON_F) && engine.stat != GameEngine.STAT_CUSTOM) {
+                showTime = !showTime;
+                engine.playSE("change");
+            }
         }
     }
 
@@ -2857,8 +2912,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 final int[][] rgp = showPlayerStats ? settings.rankingGradePointPlayer : settings.rankingGradePoint;
                 final int[][] rrd = showPlayerStats ? settings.rankingRollDatePlayer : settings.rankingRollDate;
                 final int[][] rd = showPlayerStats ? settings.rankingDatePlayer : settings.rankingDate;
+                final int[][] rt = showPlayerStats ? settings.rankingTimePlayer : settings.rankingTime;
 
-                receiver.drawScoreFont(engine, playerID, 3, topY - 1, "RANK/TITLE  DATE", titlesColour, scale);
+                receiver.drawScoreFont(engine, playerID, 3, topY - 1, "TI&RN   " + (showTime ? "TIME" : "DATE"), titlesColour, scale);
                 for (int i = 0; i < SeasonsSettings.RANKING_MAX; ++i) {
                     receiver.drawScoreFont(
                         engine, playerID,
@@ -2877,9 +2933,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     GameTextUtilities.drawAlignedScoreTextBlock(
                         receiver, engine, playerID,
                         receiver.getNextDisplayType() == 2,
-                        15, topY + i,
+                        11, topY + i,
                         false,
-                        levelToRankBlock(rd[settings.perk.leaderboard][i], rrd[settings.perk.leaderboard][i]),
+                        showTime
+                            ? GameTextUtilities.TextBlock.of(GameTextUtilities.Text.of(GeneralUtil.getTime(rt[settings.perk.leaderboard][i])))
+                            : levelToRankBlock(rd[settings.perk.leaderboard][i], rrd[settings.perk.leaderboard][i]),
                         ObjectAlignment.TOP_LEFT
                     );
                 }
@@ -2901,8 +2959,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         );
                     }
 
-                    receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 11, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+                    receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 11, "D:SWITCH LOC./PLY. RANK", EventReceiver.COLOR_GREEN);
                 }
+
+                receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 12, "F:SWITCH DATE/TIME", EventReceiver.COLOR_GREEN);
             }
 
             GameTextUtilities.drawAlignedScoreTextBlock(
@@ -3143,8 +3203,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         if (!owner.replayMode && !settings.fullGhost && engine.ai == null) {
-            lastRank = settings.updateRanking(totalGrades.totalGradePoints, rollLevelReached, engine.statistics.level);
-            lastRankPlayer = settings.updateRankingPlayer(playerProperties, totalGrades.totalGradePoints, rollLevelReached, engine.statistics.level);
+            lastRank = settings.updateRanking(totalGrades.totalGradePoints, rollLevelReached, engine.statistics.level, engine.statistics.time);
+            lastRankPlayer = settings.updateRankingPlayer(playerProperties, totalGrades.totalGradePoints, rollLevelReached, engine.statistics.level, engine.statistics.time);
 
             if (lastRank != -1) {
                 settings.saveRanking(owner, engine.ruleopt.strRuleName);
@@ -3214,7 +3274,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         // 0->4000
         public static int getBadgePerformance(Badges badges) {
-            return Math.min(MAX_BADGE_POINTS, badges.getBadges() / 2);
+            return Math.min(MAX_BADGE_POINTS, (int) Math.floor(badges.getBadges() * (4d / 3d)));
         }
 
         // 0->3000 (level + roll level each)
