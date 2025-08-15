@@ -58,7 +58,7 @@ public interface HasCelebrationFireworks {
 
     // In case you're waiting on fireworks to finish for something.
     default boolean areFireworksWaiting() {
-        return getFireworksLeft() > 0 || Arrays.stream(Stream.values()).noneMatch(Stream::hasQueuedFireworks);
+        return getFireworksLeft() > 0 || Arrays.stream(Stream.values()).anyMatch(Stream::hasQueuedFireworks);
     }
 
     // Parameters

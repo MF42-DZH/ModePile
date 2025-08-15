@@ -1,6 +1,7 @@
 package zeroxfc.nullpo.custom.modes.objects.seasons;
 
 import mu.nu.nullpo.game.play.GameEngine;
+import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.util.CustomProperties;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.types.ModeSettings;
@@ -32,6 +33,83 @@ public class SeasonsSettings extends ModeSettings {
 
     private final String hasSeenRollIntroProp = propPath("hasSeenRollIntro");
     public boolean hasSeenRollIntro;
+
+    private String rankingGradePointProp(String ruleName, int leaderboard, int position) {
+        return propPath("ranking", leaderboard, ruleName, "gradePoint", position);
+    }
+    public int[][] rankingGradePoint = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
+    public int[][] rankingGradePointPlayer = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
+
+    private String rankingDateProp(String ruleName, int leaderboard, int position) {
+        return propPath("ranking", leaderboard, ruleName, "date", position);
+    }
+    public int[][] rankingDate = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
+    public int[][] rankingDatePlayer = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
+
+    private String rankingRollDateProp(String ruleName, int leaderboard, int position) {
+        return propPath("ranking", leaderboard, ruleName, "rollDate", position);
+    }
+    public int[][] rankingRollDate = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
+    public int[][] rankingRollDatePlayer = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
+
+    private Order compareRanking(boolean forPlayer, int leaderboard, int position, int gradePoints, int rollLevel, int level) {
+        final int[][] gp = forPlayer ? rankingGradePointPlayer : rankingGradePoint;
+        final int[][] rd = forPlayer ? rankingRollDatePlayer : rankingRollDate;
+        final int[][] d = forPlayer ? rankingDatePlayer : rankingDate;
+
+        return Order.fromCompare(Integer.compare(gradePoints, gp[leaderboard][position]))
+            .fold(() -> Order.fromCompare(Integer.compare(rollLevel, rd[leaderboard][position])))
+            .fold(() -> Order.fromCompare(Integer.compare(level, d[leaderboard][position])));
+    }
+
+    private int getRanking(boolean forPlayer, int leaderboard, int gradePoints, int rollLevel, int level) {
+        for (int i = 0; i < RANKING_MAX; ++i) {
+            final Order order = compareRanking(forPlayer, leaderboard, i, gradePoints, rollLevel, level);
+            if (order == Order.GT || order == Order.EQ) return i;
+        }
+
+        return -1;
+    }
+
+    public int updateRanking(int gradePoints, int rollLevel, int level) {
+        final int leaderboard = perk.leaderboard;
+        final int ranking = getRanking(false, leaderboard, gradePoints, rollLevel, level);
+
+        if (ranking != -1) {
+            for (int i = RANKING_MAX - 1; i > ranking; --i) {
+                rankingGradePoint[leaderboard][i] = rankingGradePoint[leaderboard][i - 1];
+                rankingRollDate[leaderboard][i] = rankingRollDate[leaderboard][i - 1];
+                rankingDate[leaderboard][i] = rankingDate[leaderboard][i - 1];
+            }
+
+            rankingGradePoint[leaderboard][ranking] = gradePoints;
+            rankingRollDate[leaderboard][ranking] = rollLevel;
+            rankingDate[leaderboard][ranking] = level;
+        }
+
+        return ranking;
+    }
+
+    public int updateRankingPlayer(ProfileProperties prop, int gradePoints, int rollLevel, int level) {
+        if (!prop.isLoggedIn()) return -1;
+
+        final int leaderboard = perk.leaderboard;
+        final int ranking = getRanking(true, leaderboard, gradePoints, rollLevel, level);
+
+        if (ranking != -1) {
+            for (int i = RANKING_MAX - 1; i > ranking; --i) {
+                rankingGradePointPlayer[leaderboard][i] = rankingGradePointPlayer[leaderboard][i - 1];
+                rankingRollDate[leaderboard][i] = rankingRollDatePlayer[leaderboard][i - 1];
+                rankingDatePlayer[leaderboard][i] = rankingDatePlayer[leaderboard][i - 1];
+            }
+
+            rankingGradePointPlayer[leaderboard][ranking] = gradePoints;
+            rankingRollDatePlayer[leaderboard][ranking] = rollLevel;
+            rankingDatePlayer[leaderboard][ranking] = level;
+        }
+
+        return ranking;
+    }
 
     // TODO: add a separate system for storing if players have seen the roll, to give them the ability to skip
     // TODO: achievements?
@@ -96,22 +174,50 @@ public class SeasonsSettings extends ModeSettings {
     }
 
     @Override
-    public void loadRanking(CustomProperties prop, String ruleName) {
-
+    public void loadRanking(GameManager owner, String ruleName) {
+        for (int b = 0; b < SeasonPerk.LEADERBOARDS; ++b) {
+            for (int i = 0; i < RANKING_MAX; ++i) {
+                rankingGradePoint[b][i] = owner.modeConfig.getProperty(rankingGradePointProp(ruleName, b, i), 0);
+                rankingRollDate[b][i] = owner.modeConfig.getProperty(rankingRollDateProp(ruleName, b, i), -1);
+                rankingDate[b][i] = owner.modeConfig.getProperty(rankingDateProp(ruleName, b, i), 0);
+            }
+        }
     }
 
     @Override
-    public void saveRanking(CustomProperties prop, String ruleName) {
-
+    public void saveRanking(GameManager owner, String ruleName) {
+        for (int b = 0; b < SeasonPerk.LEADERBOARDS; ++b) {
+            for (int i = 0; i < RANKING_MAX; ++i) {
+                owner.modeConfig.setProperty(rankingGradePointProp(ruleName, b, i), rankingGradePoint[b][i]);
+                owner.modeConfig.setProperty(rankingDateProp(ruleName, b, i), rankingDate[b][i]);
+                owner.modeConfig.setProperty(rankingRollDateProp(ruleName, b, i), rankingRollDate[b][i]);
+            }
+        }
     }
 
     @Override
     public void loadRankingPlayer(ProfileProperties prop, String ruleName) {
         if (!prop.isLoggedIn()) return;
+
+        for (int b = 0; b < SeasonPerk.LEADERBOARDS; ++b) {
+            for (int i = 0; i < RANKING_MAX; ++i) {
+                rankingGradePointPlayer[b][i] = prop.getProperty(rankingGradePointProp(ruleName, b, i), 0);
+                rankingRollDatePlayer[b][i] = prop.getProperty(rankingRollDateProp(ruleName, b, i), -1);
+                rankingDatePlayer[b][i] = prop.getProperty(rankingDateProp(ruleName, b, i), 0);
+            }
+        }
     }
 
     @Override
     public void saveRankingPlayer(ProfileProperties prop, String ruleName) {
         if (!prop.isLoggedIn()) return;
+
+        for (int b = 0; b < SeasonPerk.LEADERBOARDS; ++b) {
+            for (int i = 0; i < RANKING_MAX; ++i) {
+                prop.setProperty(rankingGradePointProp(ruleName, b, i), rankingGradePointPlayer[b][i]);
+                prop.setProperty(rankingDateProp(ruleName, b, i), rankingDatePlayer[b][i]);
+                prop.setProperty(rankingRollDateProp(ruleName, b, i), rankingRollDatePlayer[b][i]);
+            }
+        }
     }
 }

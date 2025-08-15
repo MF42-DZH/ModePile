@@ -322,68 +322,55 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             ModePileCredits.creditText("GAUNTLET AND", EventReceiver.COLOR_YELLOW, 0.625f),
             ModePileCredits.creditTextNoSp("FINISH SEASONS!", EventReceiver.COLOR_YELLOW, 0.625f)
         ),
-        0.775, 0.125, false
+        0.9, 0.15, false
     );
 
-    private static String levelToString(int level) {
+    private String levelToString(int level) {
+        if (level >= MAX_LEVEL) {
+            return rollStarted ? "END" : "END?";
+        }
+
         final String month = MONTH_NAME_TABLE.apply(level);
         final int normLevel = level - LEVELS_SO_FAR.apply(level);
-        return String.format("%02d:00 %02d %s YEAR %d", normLevel % 24, (normLevel / 24) + 1, month, level >= LEVELS_DEC ? 1 : 0);
-    }
-
-    private static int getRankColour(int gameLevel, int rollLevel) {
-        int colour = gameLevel >= MAX_LEVEL ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE;
-        if (rollLevel >= gameLevel && gameLevel >= MAX_LEVEL) colour = EventReceiver.COLOR_ORANGE;
-
-        return colour;
+        return String.format("%02d:00 %02d/%s/X%d", normLevel % 24, (normLevel / 24) + 1, month, level >= LEVELS_DEC ? 1 : 0);
     }
 
     private static GameTextUtilities.TextBlock levelToRankBlock(int gameLevel, int rollLevel) {
-        final int gameMonth = MONTH_ORDINAL_TABLE.apply(gameLevel);
-        final int rollMonth = MONTH_ORDINAL_TABLE.apply(rollLevel);
-
-        final int normGameLevel = gameLevel - LEVELS_SO_FAR.apply(gameLevel);
-        final int normRollLevel = rollLevel - LEVELS_SO_FAR.apply(rollLevel);
-
         if (rollLevel >= 0) {
             return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
                 GameTextUtilities.Text.ofSmall(
-                    String.format(
-                        "%02d:00 %02d/%02d/%02d",
-                        normGameLevel % 24,
-                        (normGameLevel % 24) + 1,
-                        gameMonth,
-                        gameLevel >= LEVELS_DEC ? 1 : 0
-                    )
+                    levelToShortDate(gameLevel)
                 ),
                 GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.ofSmall(
-                    String.format(
-                        "%02d:00 %02d/%02d/%02d",
-                        normRollLevel % 24,
-                        (normRollLevel % 24) + 1,
-                        rollMonth,
-                        rollLevel >= LEVELS_DEC ? 1 : 0
-                    )
+                    levelToShortDate(rollLevel),
+                    rollLevel >= MAX_LEVEL ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_GREEN
                 )
             );
         } else {
             return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
                 GameTextUtilities.Text.ofSmall(
-                    String.format(
-                        "%02d:00 %02d/%02d/%02d",
-                        normGameLevel % 24,
-                        (normGameLevel % 24) + 1,
-                        gameMonth,
-                        gameLevel >= LEVELS_DEC ? 1 : 0
-                    )
+                    levelToShortDate(gameLevel)
                 ),
                 GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.ofSmall("TBC", EventReceiver.COLOR_CYAN)
+                GameTextUtilities.Text.ofSmall("UNFINISHED", EventReceiver.COLOR_WHITE)
             );
         }
+    }
+
+    private static String levelToShortDate(int level) {
+        final int month = MONTH_ORDINAL_TABLE.apply(level);
+        final int normLevel = level - LEVELS_SO_FAR.apply(level);
+
+        return String.format(
+            "%02d:00 %02d/%02d/X%d",
+            normLevel % 24,
+            (normLevel % 24) + 1,
+            month,
+            level >= LEVELS_DEC ? 1 : 0
+        );
     }
 
     // Game manager and current renderer.
@@ -417,6 +404,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private TotalGrades totalGrades;
     private int rollTime;
     private int rollElapsed;
+    private int lastRank;
+    private int lastRankPlayer;
 
     private static final int INCREMENT_IN_ROLL = 2; // TODO: Change only if roll is too slow.
     private int naturalLevelIncrement;
@@ -610,6 +599,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         FireworkContainer.fireworks = new Fireworks(customGraphics, engine.randSeed ^ 0x73556080);
         FireworkContainer.fireworks.enableSounds(engine);
         FireworkContainer.fireworkColourRandomizer = new Random(engine.randSeed ^ 0x07355608);
+        FireworkContainer.fireworksLeft = 0;
 
         HasCelebrationFireworks.super.fireworksSetup();
 
@@ -627,6 +617,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         rollLevelReached = -1;
         fieldPurifyQueued = false;
         descriptionToDraw = null;
+
+        lastRank = -1;
+        lastRankPlayer = -1;
 
         rollStarted = false;
         rollTime = 0;
@@ -656,7 +649,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (!owner.replayMode) {
             settings.loadSetting(owner.modeConfig, false);
-            settings.loadRanking(owner.modeConfig, engine.ruleopt.strRuleName);
+            settings.loadRanking(owner, engine.ruleopt.strRuleName);
 
             if (playerProperties.isLoggedIn()) {
                 settings.loadSettingPlayer(playerProperties);
@@ -1120,10 +1113,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (playerProperties.isLoggedIn()) {
                     settings.saveSettingPlayer(playerProperties);
-                    playerProperties.saveProfileConfig();
+                    settings.commitPlayerSettingAndRank(playerProperties);
                 } else {
                     settings.saveSetting(owner.modeConfig, false);
-                    receiver.saveModeConfig(owner.modeConfig);
+                    settings.commitSettingAndRank(receiver, owner);
                 }
 
                 return false;
@@ -1530,7 +1523,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             )
         );
 
-        if (currentPoints > previousPoints && engine.statc[9] % 2 == 0) {
+        if (currentPoints > previousPoints) {
             engine.playSE("change");
         }
 
@@ -1784,7 +1777,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             GameTextUtilities.drawAlignedText(
                 engine,
                 baseX + (engine.field.getWidth() * 8),
-                baseY + 64,
+                engine.statc[8] <= 150 ? baseY + 152 : baseY + (int) Interpolation.tanStep(152, 64, MathHelper.clamp((engine.statc[8] - 150) / 30d, 0d, 1d)),
                 GameTextUtilities.Text.of("GAME OVER"),
                 ObjectAlignment.TOP_MIDDLE
             );
@@ -2823,12 +2816,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         receiver.drawScoreFont(engine, playerID, 0, 0, getName(), titlesColour);
 
         // TODO: REMOVE THIS DEBUG PRINTOUT
-        if (grading != null && engine.gameActive) {
-            receiver.drawScoreFont(engine, playerID, 12, 0, String.valueOf(grading.performance));
-            receiver.drawScoreFont(engine, playerID, 18, 0, String.valueOf(grading.performanceGainDebt));
-            receiver.drawScoreFont(engine, playerID, 12, 1, String.valueOf(grading.currentPerformanceDecayRate));
-            receiver.drawScoreFont(engine, playerID, 12, 2, String.valueOf(grading.performanceDecay));
-        }
+//        if (grading != null && engine.gameActive) {
+//            receiver.drawScoreFont(engine, playerID, 12, 0, String.valueOf(grading.performance));
+//            receiver.drawScoreFont(engine, playerID, 18, 0, String.valueOf(grading.performanceGainDebt));
+//            receiver.drawScoreFont(engine, playerID, 12, 1, String.valueOf(grading.currentPerformanceDecayRate));
+//            receiver.drawScoreFont(engine, playerID, 12, 2, String.valueOf(grading.performanceDecay));
+//        }
 
         if (engine.stat == GameEngine.STAT_SETTING || (engine.stat == GameEngine.STAT_RESULT && !owner.replayMode)) {
             final float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
@@ -2836,25 +2829,60 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             final boolean showRankings = !owner.replayMode && !settings.fullGhost;
 
             if (showRankings) {
+                final int[][] rgp = showPlayerStats ? settings.rankingGradePointPlayer : settings.rankingGradePoint;
+                final int[][] rrd = showPlayerStats ? settings.rankingRollDatePlayer : settings.rankingRollDate;
+                final int[][] rd = showPlayerStats ? settings.rankingDatePlayer : settings.rankingDate;
+
                 receiver.drawScoreFont(engine, playerID, 3, topY - 1, "RANK/TITLE  DATE", titlesColour, scale);
                 for (int i = 0; i < SeasonsSettings.RANKING_MAX; ++i) {
-                    receiver.drawScoreFont(engine, playerID, 0, topY + i, String.format("%2d N/A", i + 1));
+                    receiver.drawScoreFont(
+                        engine, playerID,
+                        0, topY + i,
+                        String.format("%2d", i + 1),
+                        (lastRank == i) || (lastRankPlayer == i)
+                    );
+                    GameTextUtilities.drawAlignedScoreTextBlock(
+                        receiver, engine, playerID,
+                        receiver.getNextDisplayType() == 2,
+                        3, topY + i,
+                        false,
+                        TotalGrades.gradeForRank(rgp[settings.perk.leaderboard][i]),
+                        ObjectAlignment.TOP_LEFT
+                    );
                     GameTextUtilities.drawAlignedScoreTextBlock(
                         receiver, engine, playerID,
                         receiver.getNextDisplayType() == 2,
                         15, topY + i,
                         false,
-                        levelToRankBlock(0, -1), // TODO: RANKING
+                        levelToRankBlock(rd[settings.perk.leaderboard][i], rrd[settings.perk.leaderboard][i]),
                         ObjectAlignment.TOP_LEFT
                     );
                 }
 
-                receiver.drawScoreFont(engine, playerID, 0, topY + 1 + SeasonsSettings.RANKING_MAX, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN, scale);
+                if (!playerProperties.isLoggedIn() || !showPlayerStats) {
+                    receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 7, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+                } else {
+                    receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 7, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
+                }
+
+                if (!playerProperties.isLoggedIn()) {
+                    receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 8, "(NOT LOGGED IN)\n(E:LOG IN)");
+                } else {
+                    if (showPlayerStats) {
+                        GameTextUtilities.drawAlignedScoreText(
+                            receiver, engine, playerID, false,
+                            0, topY + SeasonsSettings.RANKING_MAX + 8,
+                            GameTextUtilities.Text.ofBig(owner.replayMode ? settings.playerName : playerProperties.getNameDisplay())
+                        );
+                    }
+
+                    receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 11, "D:SWITCH RANK SCREEN", EventReceiver.COLOR_GREEN);
+                }
             }
 
             GameTextUtilities.drawAlignedScoreTextBlock(
                 receiver, engine, playerID, receiver.getNextDisplayType() == 2,
-                0, topY + (showRankings ? 3 + SeasonsSettings.RANKING_MAX : (-1)), false,
+                0, topY + (showRankings ? 1 + SeasonsSettings.RANKING_MAX : (-1)), false,
                 settings.perk.getDescription(scale),
                 ObjectAlignment.TOP_LEFT
             );
@@ -2902,7 +2930,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 receiver.drawScoreFont(engine, playerID, 13, 12, "PLAYER", titlesColour);
                 GameTextUtilities.drawAlignedScoreText(
                     receiver, engine, playerID, false,
-                    13, 12,
+                    13, 13,
                     GameTextUtilities.Text.ofBig(name),
                     ObjectAlignment.TOP_LEFT
                 );
@@ -3089,7 +3117,20 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             settings.saveSettingPlayer(playerProperties);
         }
 
-        // TODO: Rankings
+        if (!owner.replayMode && !settings.fullGhost && engine.ai == null) {
+            lastRank = settings.updateRanking(totalGrades.totalGradePoints, rollLevelReached, engine.statistics.level);
+            lastRankPlayer = settings.updateRankingPlayer(playerProperties, totalGrades.totalGradePoints, rollLevelReached, engine.statistics.level);
+
+            if (lastRank != -1) {
+                settings.saveRanking(owner, engine.ruleopt.strRuleName);
+                settings.commitSettingAndRank(receiver, owner);
+            }
+
+            if (lastRankPlayer != -1) {
+                settings.saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+                settings.commitPlayerSettingAndRank(playerProperties);
+            }
+        }
     }
 
     private static class Grading {
@@ -3226,6 +3267,27 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
         }
 
+        public static GameTextUtilities.TextBlock gradeForRank(int gradePoints) {
+            if (gradePoints < 100) {
+                return GameTextUtilities.TextBlock.of(
+                    GameTextUtilities.Text.of("SETTLER")
+                );
+            } else if (gradePoints >= Grading.MAX_GRADE_POINTS) {
+                return GameTextUtilities.TextBlock.of(
+                    GameTextUtilities.Text.ofSmall("SEASONS", EventReceiver.COLOR_ORANGE),
+                    GameTextUtilities.Text.newLine(),
+                    GameTextUtilities.Text.ofSmall("GRAND MASTER", EventReceiver.COLOR_YELLOW)
+                );
+            }
+
+            final Pair<GameTextUtilities.TextBlock, IntPair> info = GRADE_NAMES.apply(gradePoints);
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.ofSmall(info.valL.get(0).getString(), info.valL.get(0).getColour()),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.ofSmall(info.valL.get(2).getString(), info.valL.get(2).getColour())
+            );
+        }
+
         // (Name, (Next Rank at Points, Next Title at Points))
         public static final IntFunction<Pair<GameTextUtilities.TextBlock, IntPair>> GRADE_NAMES;
         static {
@@ -3297,7 +3359,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     Pair.of(
                         GameTextUtilities.TextBlock.of(
                             GameTextUtilities.TextJustification.CENTRE,
-                            GameTextUtilities.Text.custom("SEASONS", EventReceiver.COLOR_GREEN, 1.5f),
+                            GameTextUtilities.Text.custom("SEASONS", EventReceiver.COLOR_ORANGE, 1.5f),
                             GameTextUtilities.Text.newLine(),
                             GameTextUtilities.Text.custom("GRAND MASTER", EventReceiver.COLOR_YELLOW, 0.75f)
                         ),

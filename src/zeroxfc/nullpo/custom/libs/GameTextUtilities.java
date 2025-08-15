@@ -80,10 +80,10 @@ public class GameTextUtilities {
         // Cached instances of texts.
         private static final WeakHashMap<Text, WeakReference<Text>> INSTANCES = new WeakHashMap<>();
 
-        public final String string;
-        public final int colour;
-        public final float scale;
-        public final int[] rgba;
+        private final String string;
+        private final int colour;
+        private final float scale;
+        private final int[] rgba;
 
         private Text(String string, int colour, float scale, int red, int green, int blue, int alpha) {
             this.string = string;
@@ -107,6 +107,22 @@ public class GameTextUtilities {
 
             INSTANCES.put(text, new WeakReference<>(text));
             return text;
+        }
+
+        public String getString() {
+            return string;
+        }
+
+        public int getColour() {
+            return colour;
+        }
+
+        public float getScale() {
+            return scale;
+        }
+
+        public int[] getRgba() {
+            return rgba.clone();
         }
 
         @Override
