@@ -126,7 +126,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         .addGravity(3, 1, addDays(LEVELS_MAY, 30))
         .addGravity(2, 1, LEVELS_NOV)
         .addGravity(1, 1, LEVELS_DEC)
-        .addTerminalGravity(32768, 65536)
+        .addTerminalGravity(16384, 65536)
         .addARE(14, LEVELS_APR)
         .addARE(12, LEVELS_MAY)
         .addARE(10, LEVELS_JUN)
@@ -165,7 +165,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         .addGravity(5, 1, LEVELS_SEP)
         .addGravity(6, 2, (LEVELS_SEP + LEVELS_OCT) / 2)
         .addGravity(6, 1, LEVELS_OCT)
-        .addTerminalGravity(3, 4)
+        .addTerminalGravity(1, 2)
         .addARE(12, LEVELS_FEB)
         .addARE(11, LEVELS_MAR)
         .addARE(10, LEVELS_APR)
@@ -367,7 +367,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         return String.format(
             "%02d:00 %02d/%02d/X%d",
             normLevel % 24,
-            (normLevel % 24) + 1,
+            (normLevel / 24) + 1,
             month,
             level >= LEVELS_DEC ? 1 : 0
         );
@@ -830,6 +830,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         System.gc();
                     }
 
+                    if (settings.hasSeenRollIntro && engine.ctrl.isPush(Controller.BUTTON_D) && engine.statc[0] < FINAL_REWIND_TIME) {
+                        engine.statc[0] = FINAL_REWIND_TIME;
+                    }
+
                     performRewindSteps(engine, playerID, FINAL_REWIND_TIME, 180, 600);
 
                     if (engine.statc[0] >= 180) {
@@ -989,6 +993,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 // endregion Rewind
             } else if (engine.gameStarted && customState == CustomState.FINAL_REWIND) {
                 // region Final Rewind
+                if (settings.hasSeenRollIntro) {
+                    receiver.drawMenuFont(engine, playerID, 0, 22, "D: SKIP b", engine.statc[0] % 2 == 0 ? EventReceiver.COLOR_PINK : EventReceiver.COLOR_WHITE);
+                }
+
                 if (engine.statc[0] < 600) {
                     int alpha = 255;
                     if (engine.statc[0] >= 180) {
@@ -1485,8 +1493,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         return false;
     }
 
-    private static final int GRADE_TIME = 1200;
-    private static final int GRADE_BAR_TIME = 900;
+    private static final int GRADE_TIME_OFFSET = 300;
+    private static final int GRADE_BAR_TIME_MIN = 120;
+    private static final int GRADE_BAR_TIME_MAX = 1200;
+    private int selectedGradeBarTime;
+
     private GameTextUtilities.TextBlock gradeName;
     private int nextRankLevel;
     private int nextTitleLevel;
@@ -1499,13 +1510,13 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     public boolean shouldAdvanceGameOver(GameEngine engine, int playerID) {
         if (engine.statc[8] <= 180) return false;
 
-        if (engine.ctrl.isPress(Controller.BUTTON_A) && engine.statc[9] < GRADE_BAR_TIME) {
-            engine.statc[9] = Math.min(GRADE_BAR_TIME, engine.statc[9] + 60);
-        } else if (engine.ctrl.isPush(Controller.BUTTON_A) && engine.statc[9] >= GRADE_BAR_TIME) {
-            engine.statc[9] = GRADE_TIME + 1;
+        if (engine.ctrl.isPress(Controller.BUTTON_A) && engine.statc[9] < selectedGradeBarTime) {
+            engine.statc[9] = Math.min(selectedGradeBarTime, engine.statc[9] + 60);
+        } else if (engine.ctrl.isPush(Controller.BUTTON_A) && engine.statc[9] >= selectedGradeBarTime) {
+            engine.statc[9] = selectedGradeBarTime + GRADE_TIME_OFFSET + 1;
         }
 
-        return engine.statc[9] > GRADE_TIME && !areFireworksWaiting();
+        return engine.statc[9] > (selectedGradeBarTime + GRADE_TIME_OFFSET) && !areFireworksWaiting();
     }
 
     @Override
@@ -1519,7 +1530,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         currentPoints = (int) Math.round(
             Interpolation.tanStep(
                 0, totalGrades.totalGradePoints,
-                MathHelper.clamp(engine.statc[9] / (double) GRADE_BAR_TIME, 0d, 1d)
+                MathHelper.clamp(engine.statc[9] / (double) selectedGradeBarTime, 0d, 1d)
             )
         );
 
@@ -1530,7 +1541,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         final Pair<GameTextUtilities.TextBlock, IntPair> rankDisplay = TotalGrades.GRADE_NAMES.apply(currentPoints);
 
         if (nextTitleLevel < rankDisplay.valR.valR) {
-            addFireworksLeft(14);
+            addFireworksLeft(5);
             engine.playSE("gradeup");
         } else if (nextRankLevel < rankDisplay.valR.valL) {
             addFireworksLeft(2);
@@ -1568,6 +1579,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             currentPoints = 0;
 
             totalGrades = grading.freeze(engine.statistics.level, rollLevelReached, badges, settings.perk);
+            selectedGradeBarTime = Interpolation.lerp(GRADE_BAR_TIME_MIN, GRADE_BAR_TIME_MAX, totalGrades.totalGradePoints / (double) Grading.MAX_GRADE_POINTS);
 
             final Pair<GameTextUtilities.TextBlock, IntPair> rankDisplay = TotalGrades.GRADE_NAMES.apply(0);
             gradeName = rankDisplay.valL;
@@ -1777,7 +1789,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             GameTextUtilities.drawAlignedText(
                 engine,
                 baseX + (engine.field.getWidth() * 8),
-                engine.statc[8] <= 150 ? baseY + 152 : baseY + (int) Interpolation.tanStep(152, 64, MathHelper.clamp((engine.statc[8] - 150) / 30d, 0d, 1d)),
+                engine.statc[8] <= 135 ? baseY + 152 : baseY + (int) Interpolation.tanStep(152, 64, MathHelper.clamp((engine.statc[8] - 135) / 45d, 0d, 1d)),
                 GameTextUtilities.Text.of("GAME OVER"),
                 ObjectAlignment.TOP_MIDDLE
             );
@@ -2639,6 +2651,28 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     }
 
     @Override
+    public void renderReady(GameEngine engine, int playerID) {
+        final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+        final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+        if (settings.perk.isActive()) {
+            GameTextUtilities.drawAlignedTextBlock(
+                engine,
+                baseX + 80, baseY + (13 * 16),
+                false,
+                GameTextUtilities.TextBlock.of(
+                    GameTextUtilities.TextJustification.CENTRE,
+                    GameTextUtilities.Text.custom("YOU HAVE SELECTED AN", EventReceiver.COLOR_WHITE, 0.625f), GameTextUtilities.Text.newLine(),
+                    GameTextUtilities.Text.custom("ACTIVE ABILITY. PRESS", EventReceiver.COLOR_WHITE, 0.625f), GameTextUtilities.Text.newLine(),
+                    GameTextUtilities.Text.custom("F", EventReceiver.COLOR_YELLOW, 0.625f), GameTextUtilities.Text.custom(" TO ACTIVATE IT WHEN", EventReceiver.COLOR_WHITE, 0.625f), GameTextUtilities.Text.newLine(),
+                    GameTextUtilities.Text.custom("ITS ENERGY IS FULL!", EventReceiver.COLOR_WHITE, 0.625f), GameTextUtilities.Text.newLine()
+                ),
+                ObjectAlignment.TOP_MIDDLE
+            );
+        }
+    }
+
+    @Override
     public void renderMove(GameEngine engine, int playerID) {
         inRenderMove(rendererExtension, receiver, engine, playerID);
         rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
@@ -2708,9 +2742,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (rollTime <= 600 && rollTime > 0 && rollTime % 60 == 0) engine.playSE("countdown");
         }
 
-        queueFireworkIf(engine, () -> engine.statc[0] % 9 == 0, Stream.STREAM_1);
-        queueFireworkIf(engine, () -> engine.statc[0] % 11 == 0, Stream.STREAM_2);
-        queueFireworkIf(engine, () -> engine.statc[0] % 17 == 0, Stream.STREAM_3);
+        queueFireworkIf(engine, () -> engine.statc[0] % 13 == 0, Stream.STREAM_1);
+        queueFireworkIf(engine, () -> (engine.statc[0] + 5) % 17 == 0, Stream.STREAM_2);
 
         updateLaunchedFireworks(receiver, engine, playerID);
 
@@ -2815,14 +2848,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         receiver.drawScoreFont(engine, playerID, 0, 0, getName(), titlesColour);
 
-        // TODO: REMOVE THIS DEBUG PRINTOUT
-//        if (grading != null && engine.gameActive) {
-//            receiver.drawScoreFont(engine, playerID, 12, 0, String.valueOf(grading.performance));
-//            receiver.drawScoreFont(engine, playerID, 18, 0, String.valueOf(grading.performanceGainDebt));
-//            receiver.drawScoreFont(engine, playerID, 12, 1, String.valueOf(grading.currentPerformanceDecayRate));
-//            receiver.drawScoreFont(engine, playerID, 12, 2, String.valueOf(grading.performanceDecay));
-//        }
-
         if (engine.stat == GameEngine.STAT_SETTING || (engine.stat == GameEngine.STAT_RESULT && !owner.replayMode)) {
             final float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
             final int topY = (receiver.getNextDisplayType() == 2) ? 5 : 3;
@@ -2839,7 +2864,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         engine, playerID,
                         0, topY + i,
                         String.format("%2d", i + 1),
-                        (lastRank == i) || (lastRankPlayer == i)
+                        (lastRank == i && !showPlayerStats) || (lastRankPlayer == i && showPlayerStats)
                     );
                     GameTextUtilities.drawAlignedScoreTextBlock(
                         receiver, engine, playerID,

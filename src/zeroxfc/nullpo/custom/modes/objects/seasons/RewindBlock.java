@@ -3,6 +3,7 @@ package zeroxfc.nullpo.custom.modes.objects.seasons;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.event.EventReceiver;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
+import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 
@@ -47,7 +48,7 @@ public class RewindBlock {
             block.getAttribute(Block.BLOCK_ATTRIBUTE_BONE),
             0f,
             block.alpha,
-            1f,
+            Interpolation.lerp(1f, 1.5f, life / (double) maxLife),
             block.attribute
         );
     }

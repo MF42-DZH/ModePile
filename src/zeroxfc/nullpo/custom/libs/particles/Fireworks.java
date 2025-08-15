@@ -30,7 +30,7 @@ public class Fireworks extends ParticleEmitterBase<Object[]> {
      */
     private final Random randomiser;
 
-    // Current Game Engine. Set this to non-null if you want sounds.
+    // Current Game Engine. Set this to non-null if you want panned sounds.
     private GameEngine engine;
 
     /**
@@ -66,6 +66,20 @@ public class Fireworks extends ParticleEmitterBase<Object[]> {
 
     public boolean areSoundsEnabled() {
         return engine != null;
+    }
+
+    @Override
+    public void update() {
+        super.update();
+
+        for (Particle particle : particles) {
+            if (particle.getSizeX() == 1 || particle.getSizeY() == 1) continue;
+
+            final double mult = Interpolation.lerp(1, 0.333, particle.getLifetimeProportion());
+
+            particle.setSizeX((int) Math.ceil(particle.getSizeX() * mult));
+            particle.setSizeY((int) Math.ceil(particle.getSizeY() * mult));
+        }
     }
 
     /**
@@ -132,7 +146,7 @@ public class Fireworks extends ParticleEmitterBase<Object[]> {
                         origin,
                         v,
                         new DoubleVector(0, GRAVITY, false),
-                        s, s,
+                        s + (s >>> 1), s + (s >>> 1),
                         ured, ugreen, ublue, ualpha,
                         (int) (ured / 1.5), (int) (ugreen / 1.5), (int) (ublue / 1.5), 64
                     );

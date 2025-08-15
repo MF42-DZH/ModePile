@@ -8,7 +8,7 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 public enum SeasonPerk {
     PERKLESS(0), // Only selectable if the player has beaten the mode in their current player profile.
     SPRING_PASSIVE(1), // +1 levels to level bonus, and gain +0.1 badges per badge gain, always.
-    SPRING_ACTIVE(1, 600, 300, 5, 10, 20, 50), // 2x levels from line clears, and 2x badge gain while active.
+    SPRING_ACTIVE(1, 600, 300, 5, 10, 20, 50), // 2x levels from line clears, and 2.5x badge gain while active.
     SUMMER_PASSIVE(1), // +3 to visible next queue length. Guarantees an I-piece every 50 pieces (pushes back the next queue).
     SUMMER_ACTIVE(1, 250, 0, 2, 5, 10, 25), // Get three I-pieces instantly, pushing the next queue back.
     AUTUMN_PASSIVE(1), // Badge benefits against gimmicks work 2x better.
@@ -54,12 +54,12 @@ public enum SeasonPerk {
 
             springActive = GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
-                GameTextUtilities.Text.custom("\"UNBOUNDED NATURE\"", EventReceiver.COLOR_GREEN, baseScale), GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("\"UNBOUNDED NATURE\" (b)", EventReceiver.COLOR_GREEN, baseScale), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.blankLine(1f),
                 GameTextUtilities.Text.custom("SPRING EMPOWERS YOU WITH", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("A TEMPORARY SURGE OF", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("FERTILIZING POWER.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(2X LV/CLEAR, 2X BADGE/GAIN WHEN ACTIVE)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
+                GameTextUtilities.Text.custom("(2X LV & 2.5X BADGES/CLEAR WHEN ACTIVE)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             summerPassive = GameTextUtilities.TextBlock.of(
@@ -74,7 +74,7 @@ public enum SeasonPerk {
 
             summerActive = GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
-                GameTextUtilities.Text.custom("\"DROUGHT QUENCHER\"", EventReceiver.COLOR_YELLOW, baseScale), GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("\"DROUGHT QUENCHER\" (b)", EventReceiver.COLOR_YELLOW, baseScale), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.blankLine(1f),
                 GameTextUtilities.Text.custom("SUMMER GIVES YOU THE ABILITY", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("TO END VIOLENT DROUGHTS", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
@@ -94,7 +94,7 @@ public enum SeasonPerk {
 
             autumnActive = GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
-                GameTextUtilities.Text.custom("\"INTENSE GRAVITAS\"", EventReceiver.COLOR_ORANGE, baseScale), GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("\"INTENSE GRAVITAS\" (b)", EventReceiver.COLOR_ORANGE, baseScale), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.blankLine(1f),
                 GameTextUtilities.Text.custom("AUTUMN BLESSES YOU WITH", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("THE STRENGTH TO CAVE IN", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
@@ -114,7 +114,7 @@ public enum SeasonPerk {
 
             winterActive = GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
-                GameTextUtilities.Text.custom("\"CHILL OUT\"", EventReceiver.COLOR_CYAN, baseScale), GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("\"CHILL OUT\" (b)", EventReceiver.COLOR_CYAN, baseScale), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.blankLine(1f),
                 GameTextUtilities.Text.custom("WINTER GIVES YOU THE", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("ENCOURAGEMENT TO LET YOU", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
