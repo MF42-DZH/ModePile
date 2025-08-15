@@ -970,7 +970,7 @@ public class Gimmicks {
             final int usedBadges = badges.getBadges() / 10;
 
             currentTickTime = 48 + usedBadges / (perkBoost ? 5 : 10);
-            if (iceActive) currentTickTime *= 2;
+            if (iceActive) currentTickTime += (currentTickTime >>> 1);
         }
 
         public boolean isYInSnow(GameEngine engine, int y) {

@@ -210,16 +210,15 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         .addARE(9, LEVELS_AUG)
         .addARE(8, LEVELS_SEP)
         .addARE(7, LEVELS_OCT)
-        .addTerminalARE(6)
+        .addTerminalARE(12)
         .addLineARE(8, LEVELS_FEB)
         .addLineARE(7, LEVELS_MAR)
         .addLineARE(6, LEVELS_APR)
         .addLineARE(5, LEVELS_AUG)
         .addLineARE(4, LEVELS_SEP)
         .addLineARE(3, LEVELS_OCT)
-        .addTerminalLineARE(2)
-        .addDAS(8, LEVELS_SEP)
-        .addTerminalDAS(6)
+        .addTerminalLineARE(6)
+        .addTerminalDAS(8)
         .addLockDelay(20, LEVELS_APR)
         .addLockDelay(18, LEVELS_OCT)
         .addTerminalLockDelay(60)
@@ -2049,7 +2048,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         currentEnergy + (int) (abilityCharge(engine, settings.perk.restoredForFour) * (lines / 4d))
                     );
 
-                    if (engine.b2bcount > 1) currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + ((currentAbilityTimer > 0) ? 0 : settings.perk.restoredForSingle));
+                    if (engine.b2bcount > 1 && !engine.tspin) currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + ((currentAbilityTimer > 0) ? 0 : settings.perk.restoredForSingle));
                 }
             } else if (lines == 4) {
                 levelIncrease += 8 * naturalLevelIncrement;
@@ -3283,7 +3282,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         // 0->4000
         public static int getBadgePerformance(Badges badges) {
-            return Math.min(MAX_BADGE_POINTS, (int) Math.floor(badges.getBadges() * (4d / 3d)));
+            return Math.min(MAX_BADGE_POINTS, (int) Math.floor(badges.getBadges() * (5d / 4d)));
         }
 
         // 0->3000 (level + roll level each)
