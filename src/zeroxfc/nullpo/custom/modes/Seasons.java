@@ -294,7 +294,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final ModePileCredits CREDITS = new ModePileCredits(
         GameTextUtilities.textElems(
-            ModePileCredits.creditText("SEASONS", EventReceiver.COLOR_GREEN, (7f / 10f)),
+            ModePileCredits.creditText("SEASONS", EventReceiver.COLOR_GREEN, (10f / 7f)),
             ModePileCredits.creditText("INSPIRED BY", EventReceiver.COLOR_WHITE, (10f / 12f)),
             ModePileCredits.creditText("HEBORIS", EventReceiver.COLOR_BLUE, 1f),
             ModePileCredits.creditText("AND", EventReceiver.COLOR_WHITE, 0.75f),
@@ -607,7 +607,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         textEmitter.clear();
         rewindBlocks.clear();
 
-        FireworkContainer.fireworks = new Fireworks(customGraphics);
+        FireworkContainer.fireworks = new Fireworks(customGraphics, engine.randSeed ^ 0x73556080);
+        FireworkContainer.fireworks.enableSounds(engine);
         FireworkContainer.fireworkColourRandomizer = new Random(engine.randSeed ^ 0x07355608);
 
         HasCelebrationFireworks.super.fireworksSetup();
@@ -627,6 +628,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         fieldPurifyQueued = false;
         descriptionToDraw = null;
 
+        rollStarted = false;
         rollTime = 0;
         rollElapsed = 0;
 
@@ -1056,8 +1058,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (engine.statc[0] == 0) {
             bvr = new Random(engine.randSeed);
             rewindBlockRandom = new Random(engine.randSeed);
-
-            rollStarted = false;
 
             // Setup active ability stuff.
             currentEnergy = 0;
@@ -1537,10 +1537,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         final Pair<GameTextUtilities.TextBlock, IntPair> rankDisplay = TotalGrades.GRADE_NAMES.apply(currentPoints);
 
         if (nextTitleLevel < rankDisplay.valR.valR) {
-            addFireworksLeft(28);
+            addFireworksLeft(14);
             engine.playSE("gradeup");
         } else if (nextRankLevel < rankDisplay.valR.valL) {
-            addFireworksLeft(4);
+            addFireworksLeft(2);
             engine.playSE("medal");
         }
 
@@ -1585,7 +1585,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         return inGameOver(engine, playerID);
     }
 
-    private void renderGrading(GameEngine engine, int playerID, int baseX, int baseY) {
+    private void renderGrading(GameEngine engine, int baseX, int baseY) {
         if (engine.statc[8] <= 180) return;
 
         final int textColour = engine.statc[9] % 2 == 0 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE;
@@ -1630,13 +1630,17 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             );
         }
 
+        int gradePointColour = EventReceiver.COLOR_WHITE;
+        if (currentPoints >= Grading.MAX_GRADE_POINTS) gradePointColour = EventReceiver.COLOR_YELLOW;
+        else if (currentPoints >= Grading.MAX_GRADE_POINTS - 100 && totalGrades.allClearBonus == 0) gradePointColour = EventReceiver.COLOR_RED;
+
         GameTextUtilities.drawAlignedText(
             engine,
             baseX + (engine.field.getWidth() * 8),
             baseY + 60,
             GameTextUtilities.Text.custom(
                 String.valueOf(currentPoints),
-                currentPoints >= Grading.MAX_GRADE_POINTS ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE,
+                gradePointColour,
                 Interpolation.lerp(0.5f, 1.25f, currentPoints / (double) Grading.MAX_GRADE_POINTS)
             ),
             ObjectAlignment.TOP_MIDDLE
@@ -1786,7 +1790,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             );
 
             // Render the grading system.
-            renderGrading(engine, playerID, baseX, baseY + 96);
+            renderGrading(engine, baseX, baseY + 96);
         }
     }
 
@@ -2551,7 +2555,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public void drawBetweenFrameAndField(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
-        if (rollElapsed <= 120 * 60 && rollStarted) {
+        if (rollElapsed <= 120 * 60 && rollStarted && rollTime > 0) {
             CREDITS.drawNoStop(receiver, engine, playerID, rollElapsed / (120d * 60d));
         }
     }
@@ -2597,7 +2601,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                             0.5f
                         );
 
-                        // Yeah I don't think Zero Celsius will get a 1000-hard block xd.
+                        // Yeah, I don't think Zero Celsius will get a 1000-hard block xd.
                         if (blk.hard < 1000) {
                             GameTextUtilities.drawAlignedText(
                                 engine,
@@ -2711,7 +2715,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (rollTime <= 600 && rollTime > 0 && rollTime % 60 == 0) engine.playSE("countdown");
         }
 
-        queueFireworkIf(engine, () -> engine.statc[0] % 9 == 0);
+        queueFireworkIf(engine, () -> engine.statc[0] % 9 == 0, Stream.STREAM_1);
+        queueFireworkIf(engine, () -> engine.statc[0] % 11 == 0, Stream.STREAM_2);
+        queueFireworkIf(engine, () -> engine.statc[0] % 17 == 0, Stream.STREAM_3);
+
         updateLaunchedFireworks(receiver, engine, playerID);
 
         if (descriptionToDraw != null && descriptionToDraw.update()) {

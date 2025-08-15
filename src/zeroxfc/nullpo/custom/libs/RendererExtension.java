@@ -110,12 +110,14 @@ public class RendererExtension {
          * @return Image chunk for drawing that part of the frame
          */
         public ImageChunk atLocation(int x, int y, int displaySize) {
+            final FloatPair size = displaySize == 0 ? SIZE_N : (displaySize == -1 ? SIZE_S : SIZE_L);
+
             return new ImageChunk(
                 ObjectAlignment.TOP_LEFT,
-                IntPair.of(x, y),
-                sourceLocation,
-                DIMS,
-                displaySize == 0 ? SIZE_N : (displaySize == -1 ? SIZE_S : SIZE_L)
+                x, y,
+                sourceLocation.valL, sourceLocation.valR,
+                DIMS.valL, DIMS.valR,
+                size.valL, size.valR
             );
         }
     }

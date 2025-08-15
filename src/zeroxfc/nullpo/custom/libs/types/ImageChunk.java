@@ -1,64 +1,82 @@
 package zeroxfc.nullpo.custom.libs.types;
 
-import zeroxfc.nullpo.custom.libs.types.tuples.FloatPair;
-import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
-
 /** Represents a chunk of an image to draw. */
 public class ImageChunk {
     private ObjectAlignment alignment;
 
-    private IntPair anchorLocation;
-    private IntPair sourceLocation;
-    private IntPair sourceDimensions;
-    private FloatPair scale;
+    // New Members
+    private int anchorX, anchorY;
+    private int sourceX, sourceY;
+    private int sourceDimensionsX, sourceDimensionsY;
+    private float scaleX, scaleY;
 
-    private IntPair drawLocation;
+    private int drawLocationX, drawLocationY;
 
     public ImageChunk() {
-        this(ObjectAlignment.TOP_LEFT, IntPair.of(0, 0), IntPair.of(0, 0), IntPair.of(1, 1), FloatPair.of(1f, 1f));
+        this(
+            ObjectAlignment.TOP_LEFT,
+            0, 0,
+            0, 0,
+            1, 1,
+            1f, 1f
+        );
     }
 
-    public ImageChunk(ObjectAlignment alignment, IntPair anchorLocation, IntPair sourceLocation, IntPair sourceDimensions, FloatPair scale) {
+    public ImageChunk(ObjectAlignment alignment, int anchorX, int anchorY, int sourceX, int sourceY, int sourceDimensionsX, int sourceDimensionsY, float scaleX, float scaleY) {
         this.alignment = alignment;
 
-        this.anchorLocation = anchorLocation;
-        this.sourceLocation = sourceLocation;
-        this.sourceDimensions = sourceDimensions;
-        this.scale = scale;
+        this.anchorX = anchorX;
+        this.anchorY = anchorY;
+        this.sourceX = sourceX;
+        this.sourceY = sourceY;
+        this.sourceDimensionsX = sourceDimensionsX;
+        this.sourceDimensionsY = sourceDimensionsY;
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
 
         calibrateDrawLocation();
     }
 
     private void calibrateDrawLocation() {
-        IntPair ddim = getDrawDimensions();
+        final int ddimX = getDrawDimensionsX();
+        final int ddimY = getDrawDimensionsY();
 
         switch (alignment) {
             case TOP_MIDDLE:
-                drawLocation = IntPair.of(anchorLocation.valL - (ddim.valL / 2), anchorLocation.valR);
+                drawLocationX = anchorX - (ddimX / 2);
+                drawLocationY = anchorY;
                 break;
             case TOP_RIGHT:
-                drawLocation = IntPair.of(anchorLocation.valL - ddim.valL, anchorLocation.valR);
+                drawLocationX = anchorX - ddimX;
+                drawLocationY = anchorY;
                 break;
             case MIDDLE_LEFT:
-                drawLocation = IntPair.of(anchorLocation.valL, anchorLocation.valR - (ddim.valR / 2));
+                drawLocationX = anchorX;
+                drawLocationY = anchorY - (ddimY / 2);
                 break;
             case MIDDLE_MIDDLE:
-                drawLocation = IntPair.of(anchorLocation.valL - (ddim.valL / 2), anchorLocation.valR - (ddim.valR / 2));
+                drawLocationX = anchorX - (ddimX / 2);
+                drawLocationY = anchorY - (ddimY / 2);
                 break;
             case MIDDLE_RIGHT:
-                drawLocation = IntPair.of(anchorLocation.valL - ddim.valL, anchorLocation.valR - (ddim.valR / 2));
+                drawLocationX = anchorX - ddimX;
+                drawLocationY = anchorY - (ddimY / 2);
                 break;
             case BOTTOM_LEFT:
-                drawLocation = IntPair.of(anchorLocation.valL, anchorLocation.valR - ddim.valR);
+                drawLocationX = anchorX;
+                drawLocationY = anchorY - ddimY;
                 break;
             case BOTTOM_MIDDLE:
-                drawLocation = IntPair.of(anchorLocation.valL - (ddim.valL / 2), anchorLocation.valR - ddim.valR);
+                drawLocationX = anchorX - (ddimX / 2);
+                drawLocationY = anchorY - ddimY;
                 break;
             case BOTTOM_RIGHT:
-                drawLocation = IntPair.of(anchorLocation.valL - ddim.valL, anchorLocation.valR - ddim.valR);
+                drawLocationX = anchorX - ddimX;
+                drawLocationY = anchorY - ddimY;
                 break;
             default:
-                drawLocation = IntPair.of(anchorLocation.valL, anchorLocation.valR);
+                drawLocationX = anchorX;
+                drawLocationY = anchorY;
                 break;
         }
     }
@@ -69,49 +87,81 @@ public class ImageChunk {
 
     public void setAlignment(ObjectAlignment alignment) {
         this.alignment = alignment;
+
         calibrateDrawLocation();
     }
 
-    public IntPair getAnchorLocation() {
-        return anchorLocation;
+    public int getAnchorX() {
+        return anchorX;
     }
 
-    public void setAnchorLocation(IntPair anchorLocation) {
-        this.anchorLocation = anchorLocation;
+    public int getAnchorY() {
+        return anchorY;
+    }
+
+    public void setAnchor(int x, int y) {
+        this.anchorX = x;
+        this.anchorY = y;
+
         calibrateDrawLocation();
     }
 
-    public FloatPair getScale() {
-        return scale;
+    public float getScaleX() {
+        return scaleX;
     }
 
-    public void setScale(FloatPair scale) {
-        this.scale = scale;
+    public float getScaleY() {
+        return scaleY;
+    }
+
+    public void setScale(float scaleX, float scaleY) {
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
+
         calibrateDrawLocation();
     }
 
-    public IntPair getSourceLocation() {
-        return sourceLocation;
+    public int getSourceX() {
+        return sourceX;
     }
 
-    private void setSourceLocation(IntPair sourceLocation) {
-        this.sourceLocation = sourceLocation;
+    public int getSourceY() {
+        return sourceY;
     }
 
-    public IntPair getSourceDimensions() {
-        return sourceDimensions;
+    private void setSourceLocation(int x, int y) {
+        this.sourceX = x;
+        this.sourceY = y;
     }
 
-    public void setSourceDimensions(IntPair sourceDimensions) {
-        this.sourceDimensions = sourceDimensions;
+    public int getSourceDimensionsX() {
+        return sourceDimensionsX;
+    }
+
+    public int getSourceDimensionsY() {
+        return sourceDimensionsY;
+    }
+
+    public void setSourceDimensions(int sizeX, int sizeY) {
+        this.sourceDimensionsX = sizeX;
+        this.sourceDimensionsY = sizeY;
+
         calibrateDrawLocation();
     }
 
-    public IntPair getDrawDimensions() {
-        return IntPair.of((int) (sourceDimensions.valL * scale.valL), (int) (sourceDimensions.valR * scale.valR));
+    public int getDrawDimensionsX() {
+        return (int) (sourceDimensionsX * scaleX);
     }
 
-    public IntPair getDrawLocation() {
-        return drawLocation;
+    public int getDrawDimensionsY() {
+        return (int) (sourceDimensionsY * scaleY);
+    }
+
+    public int getDrawLocationX() {
+        return drawLocationX;
+    }
+
+    public int getDrawLocationY() {
+        return drawLocationY;
     }
 }

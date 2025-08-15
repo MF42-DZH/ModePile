@@ -1,10 +1,12 @@
 package zeroxfc.nullpo.custom.libs.particles;
 
 import java.util.Random;
+import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.MathHelper;
+import zeroxfc.nullpo.custom.libs.SoundLoader;
 
 public class Fireworks extends ParticleEmitterBase<Object[]> {
     /**
@@ -27,6 +29,9 @@ public class Fireworks extends ParticleEmitterBase<Object[]> {
      * Randomiser
      */
     private final Random randomiser;
+
+    // Current Game Engine. Set this to non-null if you want sounds.
+    private GameEngine engine;
 
     /**
      * Parameterless constructor. Uses time as the random seed.
@@ -53,6 +58,14 @@ public class Fireworks extends ParticleEmitterBase<Object[]> {
     public Fireworks(CustomResourceHolder customGraphics, Random random) {
         super(customGraphics);
         randomiser = random;
+    }
+
+    public void enableSounds(GameEngine engine) {
+        this.engine = engine;
+    }
+
+    public boolean areSoundsEnabled() {
+        return engine != null;
     }
 
     /**
@@ -89,6 +102,15 @@ public class Fireworks extends ParticleEmitterBase<Object[]> {
 
             for (int i = 0; i < num; ++i) {
                 DoubleVector origin = new DoubleVector(Interpolation.lerp(minX, maxX, randomiser.nextDouble()), Interpolation.lerp(minY, maxY, randomiser.nextDouble()), false);
+
+                if (engine != null) {
+                    SoundLoader.playPannedSound(
+                        engine,
+                        SoundLoader.Sounds.Fireworks.EXPLODE.sfx(),
+                        (float) ((origin.getX() - ((minX + maxX) / 2.0)) / ((minX + maxX) / 2.0))
+                    );
+                }
+
                 for (int j = 0; j < randomiser.nextInt(121) + 120; ++j) {
                     int ured, ugreen, ublue, ualpha;
                     ured = red + (variance - randomiser.nextInt(2 * variance + 1));

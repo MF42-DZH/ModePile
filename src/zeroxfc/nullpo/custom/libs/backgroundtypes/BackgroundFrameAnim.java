@@ -53,10 +53,10 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
                 for (int i = 0; i < hAmount; i++) {
                     chunkSequence[i] = new ImageChunk(
                         ObjectAlignment.TOP_LEFT,
-                        IntPair.of(0, 0),
-                        IntPair.of(i * 640, 0),
-                        IntPair.of(640, 480),
-                        FloatPair.of(1f, 1f)
+                        0, 0,
+                        i * 640, 0,
+                        640, 480,
+                        1f, 1f
                     );
                 }
 
@@ -70,10 +70,10 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
                 for (int i = 0; i < vAmount; i++) {
                     chunkSequence[i] = new ImageChunk(
                         ObjectAlignment.TOP_LEFT,
-                        IntPair.of(0, 0),
-                        IntPair.of(0, i * 480),
-                        IntPair.of(640, 480),
-                        FloatPair.of(1f, 1f)
+                        0, 0,
+                        0, i * 480,
+                        640, 480,
+                        1f, 1f
                     );
                 }
 
@@ -90,10 +90,10 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
                         int chunk = (y * vCells1) + hCells1;
                         chunkSequence[chunk] = new ImageChunk(
                             ObjectAlignment.TOP_LEFT,
-                            IntPair.of(0, 0),
-                            IntPair.of(640 * x, 480 * x),
-                            IntPair.of(640, 480),
-                            FloatPair.of(1f, 1f)
+                            0, 0,
+                            640 * x, 480 * x,
+                            640, 480,
+                            1f, 1f
                         );
                     }
                 }
@@ -111,10 +111,10 @@ public class BackgroundFrameAnim extends AnimatedBackgroundHook {
                         int chunk = (y * hCells2) + vCells2;
                         chunkSequence[chunk] = new ImageChunk(
                             ObjectAlignment.TOP_LEFT,
-                            IntPair.of(0, 0),
-                            IntPair.of(640 * x, 480 * x),
-                            IntPair.of(640, 480),
-                            FloatPair.of(1f, 1f)
+                            0, 0,
+                            640 * x, 480 * x,
+                            640, 480,
+                            1f, 1f
                         );
                     }
                 }

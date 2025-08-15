@@ -76,10 +76,10 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
                 for (int x = 0; x < DEF_GRID_WIDTH; x++) {
                     chunkGrid[y][x] = new ImageChunk(
                         ObjectAlignment.MIDDLE_MIDDLE,
-                        IntPair.of((DEF_FIELD_DIM * x) + (DEF_FIELD_DIM / 2), (DEF_FIELD_DIM * y) + (DEF_FIELD_DIM / 2)),
-                        IntPair.of((DEF_FIELD_DIM * x), (DEF_FIELD_DIM * y)),
-                        IntPair.of(DEF_FIELD_DIM, DEF_FIELD_DIM),
-                        FloatPair.of(BASE_SCALE, BASE_SCALE)
+                        (DEF_FIELD_DIM * x) + (DEF_FIELD_DIM / 2), (DEF_FIELD_DIM * y) + (DEF_FIELD_DIM / 2),
+                        (DEF_FIELD_DIM * x), (DEF_FIELD_DIM * y),
+                        DEF_FIELD_DIM, DEF_FIELD_DIM,
+                        BASE_SCALE, BASE_SCALE
                     );
                 }
             }
@@ -100,10 +100,10 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
                 for (int x = 0; x < w; x++) {
                     chunkGrid[y][x] = new ImageChunk(
                         ObjectAlignment.MIDDLE_MIDDLE,
-                        IntPair.of((cellWidth * x) + (cellWidth / 2), (cellHeight * y) + (cellHeight / 2)),
-                        IntPair.of((cellWidth * x), (cellHeight * y)),
-                        IntPair.of(cellWidth, cellHeight),
-                        FloatPair.of(pulseBaseScale, pulseBaseScale)
+                        (cellWidth * x) + (cellWidth / 2), (cellHeight * y) + (cellHeight / 2),
+                        (cellWidth * x), (cellHeight * y),
+                        cellWidth, cellHeight,
+                        pulseBaseScale, pulseBaseScale
                     );
                 }
             }
@@ -134,7 +134,7 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
                 double newScale = baseScale + (Math.sin(TWO_PI * ((double) ppu / pulsePhaseMax)) * scaleVariance);
                 if (newScale < 1d) newScale = 1d;
 
-                chunkGrid[y][x].setScale(FloatPair.of((float) newScale, (float) newScale));
+                chunkGrid[y][x].setScale((float) newScale, (float) newScale);
             }
         }
     }
@@ -151,12 +151,12 @@ public class BackgroundDiagonalRipple extends AnimatedBackgroundHook {
         for (ImageChunk[] imageChunks : chunkGrid) {
             Collections.addAll(priorityList, imageChunks);
         }
-        priorityList.sort((c1, c2) -> Float.compare(c1.getScale().valL, c2.getScale().valL));
+        priorityList.sort((c1, c2) -> Float.compare(c1.getScaleX(), c2.getScaleX()));
 
         float baseScale = (pulseBaseScale == null) ? BASE_SCALE : pulseBaseScale;
         if (almostEqual(baseScale, 1, 0.005)) {
             customHolder.drawImage(engine, imageName, 0, 0);
-            priorityList.removeIf(imageChunk -> almostEqual(imageChunk.getScale().valL, 1, 0.005));
+            priorityList.removeIf(imageChunk -> almostEqual(imageChunk.getScaleX(), 1, 0.005));
         }
         for (ImageChunk chunk : priorityList) {
             customHolder.drawOffsetImage(engine, imageName, chunk, 255, 255, 255, 255);

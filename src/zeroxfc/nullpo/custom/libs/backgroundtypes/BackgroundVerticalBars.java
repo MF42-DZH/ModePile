@@ -77,10 +77,10 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
             for (int i = 0; i < chunks.length; i++) {
                 chunks[i] = new ImageChunk(
                     ObjectAlignment.TOP_MIDDLE,
-                    IntPair.of(((640 / AMT) * i) + ((640 / AMT) / 2), 0),
-                    IntPair.of((640 / AMT) * i, 0),
-                    IntPair.of((640 / AMT), 480),
-                    FloatPair.of(BASE_SCALE, 1f)
+                    ((640 / AMT) * i) + ((640 / AMT) / 2), 0,
+                    (640 / AMT) * i, 0,
+                    (640 / AMT), 480,
+                    BASE_SCALE, 1f
                 );
             }
 
@@ -95,10 +95,10 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
             for (int i = 0; i < chunks.length; i++) {
                 chunks[i] = new ImageChunk(
                     ObjectAlignment.TOP_MIDDLE,
-                    IntPair.of(((640 / sliceSize) * i) + ((640 / sliceSize) / 2), 0),
-                    IntPair.of((640 / sliceSize) * i, 0),
-                    IntPair.of((640 / sliceSize), 480),
-                    FloatPair.of(pulseBaseScale, 1f)
+                    ((640 / sliceSize) * i) + ((640 / sliceSize) / 2), 0,
+                    (640 / sliceSize) * i, 0,
+                    (640 / sliceSize), 480,
+                    pulseBaseScale, 1f
                 );
             }
 
@@ -139,7 +139,7 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
             double newScale = baseScale + (Math.sin(TWO_PI * ((double) ppu / pulsePhaseMax)) * scaleVariance);
             if (newScale < 1d) newScale = 1d;
 
-            chunks[j].setScale(FloatPair.of((float) newScale, 1f));
+            chunks[j].setScale((float) newScale, 1f);
         }
     }
 
@@ -153,12 +153,12 @@ public class BackgroundVerticalBars extends AnimatedBackgroundHook {
     public void draw(GameEngine engine, int playerID) {
         ArrayList<ImageChunk> priorityList = new ArrayList<>();
         Collections.addAll(priorityList, chunks);
-        priorityList.sort((c1, c2) -> Float.compare(c1.getScale().valL, c2.getScale().valL));
+        priorityList.sort((c1, c2) -> Float.compare(c1.getScaleX(), c2.getScaleX()));
 
         float baseScale = (pulseBaseScale == null) ? BASE_SCALE : pulseBaseScale;
         if (almostEqual(baseScale, 1, 0.005)) {
             customHolder.drawImage(engine, imageName, 0, 0);
-            priorityList.removeIf(imageChunk -> almostEqual(imageChunk.getScale().valL, 1, 0.005));
+            priorityList.removeIf(imageChunk -> almostEqual(imageChunk.getScaleX(), 1, 0.005));
         }
         for (ImageChunk chunk : priorityList) {
             customHolder.drawOffsetImage(engine, imageName, chunk, 255, 255, 255, 255);

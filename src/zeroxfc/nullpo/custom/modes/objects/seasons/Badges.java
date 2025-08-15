@@ -9,6 +9,8 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 
 // Badges for level bonuses and other stuff.
 public class Badges {
+    private static final int B2B_BONUS_MAX = 2;
+
     // Badges use 1dp internally, but are represented as ints to preserve precision.
     private int ac;     // AC -- 2
     private int fours;  // 4X -- 20
@@ -42,7 +44,7 @@ public class Badges {
             if (minorBoost) ++gain;
 
             ac += gain;
-            acGreen += gain * 5;
+            acGreen += gain * 6;
         }
 
         // Fours badge. We give partial credit here.
@@ -50,6 +52,8 @@ public class Badges {
 
         if (lines >= 4) {
             foursGain += mjBoost.applyAsInt((int) (2.5 * lines));
+            foursGain += mjBoost.applyAsInt(Math.min(B2B_BONUS_MAX, engine.b2bcount - 1));
+
             if (minorBoost) ++foursGain;
         } else if (lines == 3) {
             foursGain += mjBoost.applyAsInt(4);
@@ -60,29 +64,33 @@ public class Badges {
         }
 
         fours += foursGain;
-        foursGreen += foursGain;
+        foursGreen += foursGain * 3;
 
         // Spin badge.
         int spinsGain = 0;
 
         if (engine.tspin) {
             if (lines >= 4) {
-                spinsGain += mjBoost.applyAsInt((int) (7.5 * lines));
+                spinsGain += mjBoost.applyAsInt(10 * lines);
                 if (minorBoost) ++spinsGain;
             } else if (lines == 3) {
-                spinsGain += mjBoost.applyAsInt(20);
+                spinsGain += mjBoost.applyAsInt(25);
                 if (minorBoost) ++spinsGain;
             } else if (lines == 2) {
                 spinsGain += mjBoost.applyAsInt(10);
                 if (minorBoost) ++spinsGain;
             } else if (lines == 1) {
                 spinsGain += mjBoost.applyAsInt((engine.tspinmini || engine.tspinez) ? 1 : 2);
+            }
+
+            if (lines >= 1) {
+                if (engine.b2b) spinsGain += mjBoost.applyAsInt(Math.min(B2B_BONUS_MAX, engine.b2bcount - 1));
                 if (minorBoost) ++spinsGain;
             }
         }
 
         spins += spinsGain;
-        spinsGreen += spinsGain;
+        spinsGreen += spinsGain * 3;
     }
 
     public void addSeasonBadges(int seasonBadges, boolean minorBoost, boolean majorBoost) {
@@ -95,7 +103,7 @@ public class Badges {
         if (seasonBadges > 0 && minorBoost) ++gain;
 
         season += gain;
-        seasonGreen += gain;
+        seasonGreen += gain * 3;
     }
 
     public Map<String, Integer> getBadgesAsLevelBonuses() {

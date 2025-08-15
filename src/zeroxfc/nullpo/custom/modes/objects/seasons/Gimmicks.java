@@ -869,7 +869,7 @@ public class Gimmicks {
                     receiver,
                     minX, minY,
                     fSizeX, maxY - minY,
-                    255, 255, 255, 48,
+                    255, 255, 255, 56,
                     true
                 );
 
@@ -877,7 +877,7 @@ public class Gimmicks {
                     receiver,
                     maxX - fSizeX, minY,
                     fSizeX, maxY - minY,
-                    255, 255, 255, 48,
+                    255, 255, 255, 56,
                     true
                 );
             }
@@ -894,7 +894,7 @@ public class Gimmicks {
                     receiver,
                     0, 0,
                     outSizeX, 480,
-                    255, 255, 255, 48,
+                    255, 255, 255, 56,
                     true
                 );
 
@@ -902,7 +902,7 @@ public class Gimmicks {
                     receiver,
                     640 - outSizeX, 0,
                     outSizeX, 480,
-                    255, 255, 255, 48,
+                    255, 255, 255, 56,
                     true
                 );
             }

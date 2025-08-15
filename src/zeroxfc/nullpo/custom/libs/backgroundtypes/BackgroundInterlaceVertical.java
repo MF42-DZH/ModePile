@@ -64,9 +64,13 @@ public class BackgroundInterlaceVertical extends AnimatedBackgroundHook {
         for (int i = 0; i < chunks.length; i++) {
             final boolean up = upOdd && (i % 2 == 1);
             final ObjectAlignment anchorType = up ? ObjectAlignment.BOTTOM_LEFT : ObjectAlignment.TOP_LEFT;
-            final IntPair anchorLocation = IntPair.of(i * columnWidth, up ? SCREEN_HEIGHT : 0);
-            final IntPair srcLocation = IntPair.of(i * columnWidth, 0);
-            chunks[i] = new ImageChunk(anchorType, anchorLocation, srcLocation, IntPair.of(columnWidth, 480), FloatPair.of(1f, baseScale));
+            chunks[i] = new ImageChunk(
+                anchorType,
+                i * columnWidth, up ? SCREEN_HEIGHT : 0,
+                i * columnWidth, 0,
+                columnWidth, 480,
+                1f, baseScale
+            );
         }
     }
 
@@ -88,7 +92,7 @@ public class BackgroundInterlaceVertical extends AnimatedBackgroundHook {
             double s = Math.sin(Math.PI * ((double) ppu / pulseTimerMax));
             double scale = baseScale + (scaleVariance * s);
             if (scale < 1d) scale = 1d;
-            chunks[j].setScale(FloatPair.of(1f, (float) scale));
+            chunks[j].setScale(1f, (float) scale);
         }
     }
 

@@ -916,12 +916,14 @@ public class CustomResourceHolder {
      * @param alpha  Alpha component
      */
     public void drawOffsetImage(GameEngine engine, String name, ImageChunk chunk, int red, int green, int blue, int alpha) {
-        final IntPair dpos = chunk.getDrawLocation();
-        final IntPair ddim = chunk.getDrawDimensions();
-        final IntPair sloc = chunk.getSourceLocation();
-        final IntPair sdim = chunk.getSourceDimensions();
-
-        drawOffsetImage(engine, name, dpos.valL, dpos.valR, ddim.valL, ddim.valR, sloc.valL, sloc.valR, sdim.valL, sdim.valR, red, green, blue, alpha);
+        drawOffsetImage(
+            engine, name,
+            chunk.getDrawLocationX(), chunk.getDrawLocationY(),
+            chunk.getDrawDimensionsX(), chunk.getDrawDimensionsY(),
+            chunk.getSourceX(), chunk.getSourceY(),
+            chunk.getSourceDimensionsX(), chunk.getSourceDimensionsY(),
+            red, green, blue, alpha
+        );
     }
 
     /**
@@ -936,14 +938,15 @@ public class CustomResourceHolder {
      * @param alpha   Alpha component
      */
     public void drawOffsetImage(GameEngine engine, String logName, RuntimeImage<?> image, ImageChunk chunk, int red, int green, int blue, int alpha) {
-        final IntPair dpos = chunk.getDrawLocation();
-        final IntPair ddim = chunk.getDrawDimensions();
-        final IntPair sloc = chunk.getSourceLocation();
-        final IntPair sdim = chunk.getSourceDimensions();
-
-        drawOffsetImage(engine, logName, image, dpos.valL, dpos.valR, ddim.valL, ddim.valR, sloc.valL, sloc.valR, sdim.valL, sdim.valR, red, green, blue, alpha);
+        drawOffsetImage(
+            engine, logName, image,
+            chunk.getDrawLocationX(), chunk.getDrawLocationY(),
+            chunk.getDrawDimensionsX(), chunk.getDrawDimensionsY(),
+            chunk.getSourceX(), chunk.getSourceY(),
+            chunk.getSourceDimensionsX(), chunk.getSourceDimensionsY(),
+            red, green, blue, alpha
+        );
     }
-
 
     /**
      * Draws whole image to game with no tint.
