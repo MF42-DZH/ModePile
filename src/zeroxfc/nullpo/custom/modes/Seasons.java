@@ -2048,6 +2048,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         settings.perk.energyStore,
                         currentEnergy + (int) (abilityCharge(engine, settings.perk.restoredForFour) * (lines / 4d))
                     );
+
+                    if (engine.b2bcount > 1) currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + ((currentAbilityTimer > 0) ? 0 : settings.perk.restoredForSingle));
                 }
             } else if (lines == 4) {
                 levelIncrease += 8 * naturalLevelIncrement;
@@ -2075,6 +2077,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 }
             }
             // endregion Lines
+
+            if (engine.tspin) {
+                if (engine.b2bcount > 1) currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + ((currentAbilityTimer > 0) ? 0 : settings.perk.restoredForSingle));
+            }
 
             levelIncrease += badges.getLevelBonus() * naturalLevelIncrement;
 
