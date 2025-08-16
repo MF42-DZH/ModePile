@@ -1732,7 +1732,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         if (areFireworksWaiting()) {
-            engine.statc[9] = selectedGradeBarTime;
+            engine.statc[9] = Math.min(engine.statc[9], selectedGradeBarTime);
         }
 
         return engine.statc[9] > (selectedGradeBarTime + GRADE_TIME_OFFSET);
