@@ -148,7 +148,7 @@ public enum SeasonPerk {
             case SPRING_PASSIVE:
                 return "SEED OF GROWTH";
             case SPRING_ACTIVE:
-                return "UNBOUDED NATURE";
+                return "UNBOUNDED NATURE";
             case SUMMER_PASSIVE:
                 return "BRIGHT FORESIGHT";
             case SUMMER_ACTIVE:

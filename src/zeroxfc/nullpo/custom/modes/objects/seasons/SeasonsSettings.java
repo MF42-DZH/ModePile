@@ -58,6 +58,12 @@ public class SeasonsSettings extends ModeSettings {
     public int[][] rankingTime = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
     public int[][] rankingTimePlayer = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
 
+    private String rankingPerkProp(String ruleName, int leaderboard, int position) {
+        return propPath("ranking", currentVersion, leaderboard, ruleName, "perk", position);
+    }
+    public int[][] rankingPerk = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
+    public int[][] rankingPerkPlayer = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
+
     private Order compareRanking(boolean forPlayer, int leaderboard, int position, int gradePoints, int rollLevel, int level, int time) {
         final int[][] gp = forPlayer ? rankingGradePointPlayer : rankingGradePoint;
         final int[][] rd = forPlayer ? rankingRollDatePlayer : rankingRollDate;
@@ -88,11 +94,15 @@ public class SeasonsSettings extends ModeSettings {
                 rankingGradePoint[leaderboard][i] = rankingGradePoint[leaderboard][i - 1];
                 rankingRollDate[leaderboard][i] = rankingRollDate[leaderboard][i - 1];
                 rankingDate[leaderboard][i] = rankingDate[leaderboard][i - 1];
+                rankingTime[leaderboard][i] = rankingTime[leaderboard][i - 1];
+                rankingPerk[leaderboard][i] = rankingPerk[leaderboard][i - 1];
             }
 
             rankingGradePoint[leaderboard][ranking] = gradePoints;
             rankingRollDate[leaderboard][ranking] = rollLevel;
             rankingDate[leaderboard][ranking] = level;
+            rankingTime[leaderboard][ranking] = time;
+            rankingPerk[leaderboard][ranking] = perk.ordinal();
         }
 
         return ranking;
@@ -109,17 +119,20 @@ public class SeasonsSettings extends ModeSettings {
                 rankingGradePointPlayer[leaderboard][i] = rankingGradePointPlayer[leaderboard][i - 1];
                 rankingRollDate[leaderboard][i] = rankingRollDatePlayer[leaderboard][i - 1];
                 rankingDatePlayer[leaderboard][i] = rankingDatePlayer[leaderboard][i - 1];
+                rankingTimePlayer[leaderboard][i] = rankingTimePlayer[leaderboard][i - 1];
+                rankingPerkPlayer[leaderboard][i] = rankingPerkPlayer[leaderboard][i - 1];
             }
 
             rankingGradePointPlayer[leaderboard][ranking] = gradePoints;
             rankingRollDatePlayer[leaderboard][ranking] = rollLevel;
             rankingDatePlayer[leaderboard][ranking] = level;
+            rankingTimePlayer[leaderboard][ranking] = time;
+            rankingPerkPlayer[leaderboard][ranking] = perk.ordinal();
         }
 
         return ranking;
     }
 
-    // TODO: add a separate system for storing if players have seen the roll, to give them the ability to skip
     // TODO: achievements?
 
     public SeasonsSettings(int currentVersion, ProfileProperties playerProperties) {
@@ -188,6 +201,8 @@ public class SeasonsSettings extends ModeSettings {
                 rankingGradePoint[b][i] = owner.modeConfig.getProperty(rankingGradePointProp(ruleName, b, i), 0);
                 rankingRollDate[b][i] = owner.modeConfig.getProperty(rankingRollDateProp(ruleName, b, i), -1);
                 rankingDate[b][i] = owner.modeConfig.getProperty(rankingDateProp(ruleName, b, i), 0);
+                rankingTime[b][i] = owner.modeConfig.getProperty(rankingTimeProp(ruleName, b, i), 0);
+                rankingPerk[b][i] = owner.modeConfig.getProperty(rankingPerkProp(ruleName, b, i), SeasonPerk.PERKLESS.ordinal());
             }
         }
     }
@@ -199,6 +214,8 @@ public class SeasonsSettings extends ModeSettings {
                 owner.modeConfig.setProperty(rankingGradePointProp(ruleName, b, i), rankingGradePoint[b][i]);
                 owner.modeConfig.setProperty(rankingDateProp(ruleName, b, i), rankingDate[b][i]);
                 owner.modeConfig.setProperty(rankingRollDateProp(ruleName, b, i), rankingRollDate[b][i]);
+                owner.modeConfig.setProperty(rankingTimeProp(ruleName, b, i), rankingTime[b][i]);
+                owner.modeConfig.setProperty(rankingPerkProp(ruleName, b, i), rankingPerk[b][i]);
             }
         }
     }
@@ -212,6 +229,8 @@ public class SeasonsSettings extends ModeSettings {
                 rankingGradePointPlayer[b][i] = prop.getProperty(rankingGradePointProp(ruleName, b, i), 0);
                 rankingRollDatePlayer[b][i] = prop.getProperty(rankingRollDateProp(ruleName, b, i), -1);
                 rankingDatePlayer[b][i] = prop.getProperty(rankingDateProp(ruleName, b, i), 0);
+                rankingTimePlayer[b][i] = prop.getProperty(rankingTimeProp(ruleName, b, i), 0);
+                rankingPerkPlayer[b][i] = prop.getProperty(rankingPerkProp(ruleName, b, i), SeasonPerk.PERKLESS.ordinal());
             }
         }
     }
@@ -225,6 +244,8 @@ public class SeasonsSettings extends ModeSettings {
                 prop.setProperty(rankingGradePointProp(ruleName, b, i), rankingGradePointPlayer[b][i]);
                 prop.setProperty(rankingDateProp(ruleName, b, i), rankingDatePlayer[b][i]);
                 prop.setProperty(rankingRollDateProp(ruleName, b, i), rankingRollDatePlayer[b][i]);
+                prop.setProperty(rankingTimeProp(ruleName, b, i), rankingTimePlayer[b][i]);
+                prop.setProperty(rankingPerkProp(ruleName, b, i), rankingPerkPlayer[b][i]);
             }
         }
     }

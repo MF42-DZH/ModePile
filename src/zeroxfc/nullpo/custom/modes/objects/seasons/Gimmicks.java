@@ -825,8 +825,10 @@ public class Gimmicks {
 
     // Winter's gimmicks are all about those visuals.
     public static class Whiteout implements HasDescription {
-        public static int SNOW_IDENTIFIER = 0xABCD0000;
-        public static int SNOW_MASK = 0xFFFF0000;
+        public static final int ALPHA = 64;
+
+        public static final int SNOW_IDENTIFIER = 0xABCD0000;
+        public static final int SNOW_MASK = 0xFFFF0000;
 
         private static final double BASE_PROPORTION = 0.9995;
         private double proportion;
@@ -836,7 +838,7 @@ public class Gimmicks {
         }
 
         public void updateProportion(Badges badges, boolean perkBoost) {
-            final int usedBadges = (perkBoost ? badges.getBadges() * 2 : badges.getBadges()) / 10;
+            final int usedBadges = (perkBoost ? badges.getBadges() * 2 : badges.getBadges()) / 8;
             proportion = Math.pow(BASE_PROPORTION, usedBadges);
         }
 
@@ -869,7 +871,7 @@ public class Gimmicks {
                     receiver,
                     minX, minY,
                     fSizeX, maxY - minY,
-                    255, 255, 255, 56,
+                    255, 255, 255, ALPHA,
                     true
                 );
 
@@ -877,7 +879,7 @@ public class Gimmicks {
                     receiver,
                     maxX - fSizeX, minY,
                     fSizeX, maxY - minY,
-                    255, 255, 255, 56,
+                    255, 255, 255, ALPHA,
                     true
                 );
             }
@@ -894,7 +896,7 @@ public class Gimmicks {
                     receiver,
                     0, 0,
                     outSizeX, 480,
-                    255, 255, 255, 56,
+                    255, 255, 255, ALPHA,
                     true
                 );
 
@@ -902,7 +904,7 @@ public class Gimmicks {
                     receiver,
                     640 - outSizeX, 0,
                     outSizeX, 480,
-                    255, 255, 255, 56,
+                    255, 255, 255, ALPHA,
                     true
                 );
             }

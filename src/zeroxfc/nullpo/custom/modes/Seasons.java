@@ -11,7 +11,9 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.function.BooleanSupplier;
+import java.util.function.IntBinaryOperator;
 import java.util.function.IntFunction;
+import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Block;
@@ -46,6 +48,7 @@ import zeroxfc.nullpo.custom.libs.mixins.HasCustomLineClear;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomMove;
 import zeroxfc.nullpo.custom.libs.particles.Fireworks;
 import zeroxfc.nullpo.custom.libs.particles.TextEmitter;
+import zeroxfc.nullpo.custom.libs.types.ColourMixer;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 import zeroxfc.nullpo.custom.libs.types.tuples.Pair;
@@ -60,9 +63,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
      *   - [ ] Heat haze effect for Summer Months / Roll in background
      *   - [ ] Leaves in the wind in Autumn Months / Roll
      *   - [ ] Snowfall & Icicles in Winter Months / Roll
-     *   - [ ] Custom frames
-     *   - [ ] Shimmer effect on custom frames
-     *   - [ ] Fallback fade-ish effect for people who don't use bg fade
+     *   - [x] Custom frames
+     *   - [x] Shimmer effect on custom frames on Roll
+     *   - [x] Fallback fade-ish effect for people who don't use bg fade
+     *   - [ ] Extra end passage (dark clouds...)
+     *   - [ ] Visual effect for Haunting
+     *   - [ ] Replace Zero Celsius with Icicles (... inspired by a certain other game (ew))
      */
 
     private static final int CURRENT_VERSION = 0;
@@ -79,6 +85,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         FireworkLauncher(int maxCooldown) {
             this.maxCooldown = maxCooldown;
+            this.currentCooldown = maxCooldown;
+
             tick = 0;
         }
 
@@ -359,7 +367,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             ModePileCredits.creditText("GAUNTLET AND", EventReceiver.COLOR_YELLOW, 0.625f),
             ModePileCredits.creditTextNoSp("FINISH SEASONS!", EventReceiver.COLOR_YELLOW, 0.625f)
         ),
-        0.9, 0.15, false
+        0.875, 0.125, false
     );
 
     private String levelToString(int level) {
@@ -422,11 +430,15 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private SeasonsSettings settings;
     private ProfileProperties playerProperties;
     private boolean showPlayerStats;
-    private boolean showTime;
+    private SubRanking showBoard;
     private RuleOptions ruleOptCopy;
 
     private boolean getGimmickPerkBoost() {
         return settings.perk == SeasonPerk.AUTUMN_PASSIVE;
+    }
+
+    private enum SubRanking {
+        DATE, TIME, PERK
     }
 
     // Gameplay variables
@@ -444,6 +456,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int rollElapsed;
     private int lastRank;
     private int lastRankPlayer;
+    private int timeSpentInSeason;
 
     private static final int INCREMENT_IN_ROLL = 2;
     private int naturalLevelIncrement;
@@ -564,9 +577,174 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private static final int REWIND_TIME = 60 * 5;
     private static final int FINAL_REWIND_TIME = 60 * 40;
 
+    private class OuterFrame implements IntBinaryOperator {
+        protected final GameEngine engine;
+        protected final int playerID;
+
+        public OuterFrame(GameEngine engine, int playerID) {
+            this.engine = engine;
+            this.playerID = playerID;
+        }
+
+        private static final int BASE_COLOUR_MENU = 0x00_404040;
+        private static final int BASE_COLOUR_REWIND = 0x00_CC00FF;
+        private static final int BASE_COLOUR_SPRING = 0x00_00F000;
+        private static final int BASE_COLOUR_SUMMER_1 = 0x00_F0F000;
+        private static final int BASE_COLOUR_SUMMER_2 = 0x00_F06400;
+        private static final int BASE_COLOUR_AUTUMN = 0x00_D85600;
+        private static final int BASE_COLOUR_WINTER_1 = 0x00_C0FFFF;
+        private static final int BASE_COLOUR_WINTER_2 = 0x00_3272FF;
+
+        protected final ColourMixer mixer = ColourMixer.rgb(0, 0, 0);
+        protected final ColourMixer auxMixer = ColourMixer.rgb(0, 0, 0);
+
+        @Override
+        public int applyAsInt(int x, int y) {
+            final int width = engine.field != null ? engine.field.getWidth() : 10;
+            final int height = engine.field != null ? engine.field.getHeight() : 20;
+
+            final int maxX = RendererExtension.getShowMeter(receiver) ? width * 4 + 4 : width * 4 + 2;
+            final int maxY = height * 4 + 2;
+
+            final double distance =
+                Math.abs((maxY * x) - (maxX * y)) / Math.sqrt((double) (maxY * maxY) + (maxX * maxX));
+
+            final double lMult = Interpolation.sineStep(
+                1.25, 0.75,
+                MathHelper.clamp(
+                    distance / (maxX / 2d),
+                    0d, 1d
+                )
+            );
+
+            // Set the base colour.
+            if (!engine.gameActive) {
+                return mixer.setRGB24(BASE_COLOUR_MENU).setLightness(mixer.getLightness() * lMult).getRGB24();
+            } else if (inRewind(engine)) {
+                return mixer.setRGB24(BASE_COLOUR_REWIND).setLightness(mixer.getLightness() * lMult).getRGB24();
+            } else if (!settings.perk.isActive() || currentAbilityTimer <= 0) {
+                switch (currentSeason) {
+                    case SPRING: mixer.setRGB24(BASE_COLOUR_SPRING); break;
+                    case SUMMER: mixer.setRGB24(BASE_COLOUR_SUMMER_1); break;
+                    case AUTUMN: mixer.setRGB24(BASE_COLOUR_AUTUMN); break;
+                    case WINTER: mixer.setRGB24(BASE_COLOUR_WINTER_1); break;
+                }
+            } else {
+                switch (settings.perk) {
+                    case SPRING_ACTIVE: mixer.setRGB24(BASE_COLOUR_SPRING); break;
+                    case SUMMER_ACTIVE: mixer.setRGB24(BASE_COLOUR_SUMMER_1); break;
+                    case AUTUMN_ACTIVE: mixer.setRGB24(BASE_COLOUR_AUTUMN); break;
+                    case WINTER_ACTIVE: mixer.setRGB24(BASE_COLOUR_WINTER_1); break;
+                    default: mixer.setRGB24(0x00_FFFFFF); break;
+                }
+            }
+
+            mixer.setLightness(mixer.getLightness() * lMult);
+
+            final double phase = (Math.sin((((timeSpentInSeason + y) / 30d) % (2.0 * Math.PI))) + 1.0) / 2.0;
+
+            // Specific effects for summer and winter.
+            if (!settings.perk.isActive() || currentAbilityTimer <= 0) {
+                switch (currentSeason) {
+                    case SUMMER: {
+                        auxMixer
+                            .setRGB24(BASE_COLOUR_SUMMER_2)
+                            .setHue(Interpolation.lerp(mixer.getHue(), auxMixer.getHue(), phase))
+                            .setSaturation(Interpolation.lerp(mixer.getSaturation(), auxMixer.getSaturation(), phase))
+                            .setValue(Interpolation.lerp(mixer.getValue(), auxMixer.getValue(), phase));
+
+                        mixer
+                            .setHue(auxMixer.getHue())
+                            .setSaturation(auxMixer.getSaturation())
+                            .setValue(auxMixer.getValue());
+                        break;
+                    }
+                    case WINTER: {
+                        auxMixer
+                            .setRGB24(BASE_COLOUR_WINTER_2)
+                            .setHue(Interpolation.lerp(mixer.getHue(), auxMixer.getHue(), 1 - phase))
+                            .setSaturation(Interpolation.lerp(mixer.getSaturation(), auxMixer.getSaturation(), 1 - phase))
+                            .setValue(Interpolation.lerp(mixer.getValue(), auxMixer.getValue(), 1 - phase));
+
+                        mixer
+                            .setHue(auxMixer.getHue())
+                            .setSaturation(auxMixer.getSaturation())
+                            .setValue(auxMixer.getValue());
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
+
+            // Roll Shimmer
+            if (engine.ending != 0 && engine.gameActive) {
+                mixer.setLightness(Interpolation.lerp(
+                    mixer.getLightness() * 2.25,
+                    mixer.getLightness(),
+                    (phase + 0.5) % 1.0
+                ));
+            }
+
+            // Active ability glow
+            if (settings.perk.isActive() && currentAbilityTimer > 0) {
+                final double abilityPhase = (Math.cos((((timeSpentInSeason + y) / 6d) % (2.0 * Math.PI))) + 1.0) / 2.0;
+                mixer.setLightness(Interpolation.lerp(mixer.getLightness(), 1.0, abilityPhase));
+            }
+
+            return mixer.getRGB24();
+        }
+    }
+
+    private class InnerFrame extends OuterFrame {
+        public InnerFrame(GameEngine engine, int playerID) {
+            super(engine, playerID);
+        }
+
+        @Override
+        public int applyAsInt(int x, int y) {
+            return auxMixer.setRGB24(super.applyAsInt(x, y)).setValue(auxMixer.getValue() * 0.25).getRGB24();
+        }
+    }
+
+    private class MeterFunction implements IntSupplier {
+        private final GameEngine engine;
+        private final ColourMixer mixer = ColourMixer.hsv(0, 1, 1);
+
+        public MeterFunction(GameEngine engine) {
+            this.engine = engine;
+        }
+
+        @Override
+        public int getAsInt() {
+            if (settings.perk.isActive()) {
+                final double proportion = engine.meterValue / (double) receiver.getMeterMax(engine);
+
+                if (currentAbilityTimer > 0) return mixer.setHueAngle(Interpolation.lerp(0.0, 120.0, proportion)).getRGB24();
+                else if (currentEnergy == settings.perk.energyStore) return 0x00_00FF00;
+                else return mixer.setHueAngle(Interpolation.lerp(0.0, 60.0, proportion)).getRGB24();
+            } else {
+                switch (currentSeason) {
+                    case SPRING:
+                        return mixer.setHueAngle(120).getRGB24();
+                    case SUMMER:
+                        return mixer.setHueAngle(60).getRGB24();
+                    case AUTUMN:
+                        return mixer.setHueAngle(30).getRGB24();
+                    case WINTER:
+                        return 0x00_30A8FF;
+                    default:
+                        return 0x00FFFFFF;
+                }
+            }
+        }
+    }
+
+    private FrameDrawingParameters frameParams;
+
     @Override
     public FrameDrawingParameters getFrameDrawingParameters(GameEngine engine, int playerID) {
-        return null;
+        return frameParams;
     }
 
     @Override
@@ -645,6 +823,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         customGraphics.loadImage("res/graphics/iceblock.png", "iceblock");
 
         setupBackgrounds(engine);
+        frameParams = new FrameDrawingParameters(
+            new OuterFrame(engine, playerID),
+            new InnerFrame(engine, playerID),
+            new MeterFunction(engine)
+        );
 
         levelUpFlag = false;
         currentSeason = Season.SPRING;
@@ -655,6 +838,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         rollLevelReached = -1;
         fieldPurifyQueued = false;
         descriptionToDraw = null;
+        timeSpentInSeason = 0;
 
         lastRank = -1;
         lastRankPlayer = -1;
@@ -683,7 +867,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             showPlayerStats = false;
         }
 
-        showTime = false;
+        showBoard = SubRanking.DATE;
 
         settings = new SeasonsSettings(CURRENT_VERSION, playerProperties);
 
@@ -823,9 +1007,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     engine.timerActive = false;
 
                     if (engine.statc[0] == 0) {
-                        // Not guaranteed to run the GC, but it's nice to run it here when there's no player input expected.
                         statesAtTimes.keySet().removeIf(k -> k < engine.statistics.time - (60 * 600));
-                        System.gc();
                     }
 
                     performRewindSteps(engine, playerID, REWIND_TIME, 30, 60);
@@ -864,9 +1046,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     engine.timerActive = false;
 
                     if (engine.statc[0] == 0) {
-                        // Not guaranteed to run the GC, but it's nice to run it here when there's no player input expected.
                         statesAtTimes.keySet().removeIf(k -> k < engine.statistics.time - (60 * 600));
-                        System.gc();
                     }
 
                     if (settings.hasSeenRollIntro && engine.ctrl.isPush(Controller.BUTTON_D) && engine.statc[0] < FINAL_REWIND_TIME) {
@@ -1033,7 +1213,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             } else if (engine.gameStarted && customState == CustomState.FINAL_REWIND) {
                 // region Final Rewind
                 if (settings.hasSeenRollIntro) {
-                    receiver.drawMenuFont(engine, playerID, 0, 22, "D: SKIP b", engine.statc[0] % 2 == 0 ? EventReceiver.COLOR_PINK : EventReceiver.COLOR_WHITE);
+                    receiver.drawMenuFont(engine, playerID, 0, 21, "D:SKIP b", EventReceiver.COLOR_GREEN);
                 }
 
                 if (engine.statc[0] < 600) {
@@ -1171,9 +1351,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             if (engine.ctrl.isPush(Controller.BUTTON_B)) {
                 engine.quitflag = true;
-                ruleOptCopy = null;
-
-                playerProperties = new ProfileProperties(HEADER_COLOUR);
             }
 
             if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
@@ -1236,7 +1413,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (gimmickAutMo1 != null) {
             // VERY LOW ARE:
-            engine.speed.are = 6;
+            engine.speed.are = 8;
             engine.speed.areLine = 6;
 
             engine.speed.gravity = 0;
@@ -1554,7 +1731,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             engine.statc[9] = selectedGradeBarTime + GRADE_TIME_OFFSET + 1;
         }
 
-        return engine.statc[9] > (selectedGradeBarTime + GRADE_TIME_OFFSET) && !areFireworksWaiting();
+        if (areFireworksWaiting()) {
+            engine.statc[9] = selectedGradeBarTime;
+        }
+
+        return engine.statc[9] > (selectedGradeBarTime + GRADE_TIME_OFFSET);
     }
 
     @Override
@@ -1579,11 +1760,28 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         final Pair<GameTextUtilities.TextBlock, IntPair> rankDisplay = TotalGrades.GRADE_NAMES.apply(currentPoints);
 
         if (nextTitleLevel < rankDisplay.valR.valR) {
-            addFireworksLeft(5);
-            engine.playSE("gradeup");
+            if (currentPoints == Grading.MAX_GRADE_POINTS) {
+                addFireworksLeft(50);
+                engine.playSE("cool");
+            } else {
+                addFireworksLeft(5);
+                engine.playSE("medal");
+            }
         } else if (nextRankLevel < rankDisplay.valR.valL) {
-            addFireworksLeft(2);
-            engine.playSE("medal");
+            // TODO: Package these sounds as custom sounds so they remain constant.
+            if (rankDisplay.valL.get(2).getString().contains("1ST")) {
+                addFireworksLeft(5);
+                engine.playSE("combo4");
+            } else if (rankDisplay.valL.get(2).getString().contains("2ND")) {
+                addFireworksLeft(4);
+                engine.playSE("combo3");
+            } else if (rankDisplay.valL.get(2).getString().contains("3RD")) {
+                addFireworksLeft(3);
+                engine.playSE("combo2");
+            } else {
+                addFireworksLeft(2);
+                engine.playSE("combo1");
+            }
         }
 
         gradeName = rankDisplay.valL;
@@ -2037,6 +2235,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             int levelIncrease = 0;
+            final int oldEnergy = currentEnergy;
 
             // region Lines
             if (lines > 4) {
@@ -2081,6 +2280,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 if (engine.b2bcount > 1) currentEnergy = Math.min(settings.perk.energyStore, currentEnergy + ((currentAbilityTimer > 0) ? 0 : settings.perk.restoredForSingle));
             }
 
+            if (settings.perk.isActive() && oldEnergy < settings.perk.energyStore && currentEnergy >= settings.perk.energyStore) {
+                engine.playSE("cool");
+            }
+
             levelIncrease += badges.getLevelBonus() * naturalLevelIncrement;
 
             if (settings.perk == SeasonPerk.SPRING_PASSIVE) {
@@ -2122,7 +2325,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 gimmickRollSpr = new Gimmicks.RisingEarth(new Random(engine.randSeed * 7355608), badges, getGimmickPerkBoost());
                 descriptionToDraw = new DescriptionDraw(gimmickRollSpr);
 
-                rollTime = (150 * 60) + badges.getBadges(); // 2.5 minutes + 1 frame per 0.1 badges (5f per 0.1 AC).
+                rollTime = (150 * 60) + badges.getBadges() + (badges.getBadges() >>> 2); // 2.5 minutes + 1 frame per 0.1 badges (and extra frame per 4 badges).
 
                 customState = CustomState.FINAL_REWIND;
                 engine.stat = GameEngine.STAT_CUSTOM;
@@ -2142,6 +2345,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 currentSeason = SEASON_TABLE.apply(engine.statistics.level);
 
                 if (currentSeason != oldSeason) {
+                    timeSpentInSeason = 0;
+
                     switch (currentSeason) {
                         case SUMMER:
                             gimmickRollSpr = null;
@@ -2238,7 +2443,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 final Season oldSeason = currentSeason;
                 currentSeason = SEASON_TABLE.apply(engine.statistics.level);
 
-                if (currentSeason != oldSeason) fieldPurifyQueued = true;
+                if (currentSeason != oldSeason) {
+                    timeSpentInSeason = 0;
+                    fieldPurifyQueued = true;
+                }
 
                 if (owner.bgmStatus.bgm <= BGM_TABLE.apply(engine.statistics.level)) {
                     owner.bgmStatus.fadesw = false;
@@ -2593,7 +2801,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         setSpeed(engine);
 
-        if ((engine.statistics.level >= LEVELS_APR) && (!settings.fullGhost)) engine.ghost = false;
+        // Autumn having the Flowing Winds gimmick makes alternative solutions with a partial ghost less fun.
+        engine.ghost = engine.ending == 0 && (currentSeason == Season.SPRING || currentSeason == Season.AUTUMN);
 
         final int fadeout = engine.ending == 0 ? BGM_FADE_LEVEL_TABLE.apply(engine.statistics.level) : -1;
         if ((fadeout > 0) && (engine.statistics.level >= fadeout)) {
@@ -2601,11 +2810,25 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
     }
 
+    private boolean inRewind(GameEngine engine) {
+        return engine.stat == GameEngine.STAT_CUSTOM && (customState == CustomState.REWIND || customState == CustomState.FINAL_REWIND);
+    }
+
     @Override
     public void drawBackgroundElements(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
         HasCustomFieldDrawing.super.drawBackgroundElements(rendererExtension, receiver, engine, playerID);
 
-        if (gimmickWinMo1 != null) {
+        if (!RendererExtension.hasUserEnabledFadeEffect(receiver) && inRewind(engine)) {
+            drawing.drawRectangle(
+                receiver,
+                0, 0,
+                640, 480,
+                0, 0, 0, 255,
+                true
+            );
+        }
+
+        if (gimmickWinMo1 != null && !inRewind(engine)) {
             gimmickWinMo1.drawOuterFog(receiver, drawing);
         }
 
@@ -2736,6 +2959,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (gimmickWinMo1 != null) {
             gimmickWinMo1.drawInnerFog(receiver, engine, playerID, drawing);
         }
+
+        if (gimmickAutMo3 != null && engine.stat != GameEngine.STAT_CUSTOM && engine.gameActive) {
+            gimmickAutMo3.renderFlashlight(receiver, engine, playerID, drawing);
+        }
     }
 
     @Override
@@ -2784,6 +3011,15 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             && (customState == CustomState.REWIND || customState == CustomState.FINAL_REWIND)
             && fadeProgress == 150)) {
             updateFadeProgress();
+        }
+
+        if (!engine.lagStop && engine.gameActive) {
+            ++timeSpentInSeason;
+        }
+
+        if (engine.quitflag) {
+            ruleOptCopy = null;
+            playerProperties = new ProfileProperties(HEADER_COLOUR);
         }
 
         if (rollStarted && engine.gameActive) {
@@ -2899,7 +3135,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             // Show time
             if (engine.ctrl.isPush(Controller.BUTTON_F) && engine.stat != GameEngine.STAT_CUSTOM) {
-                showTime = !showTime;
+                showBoard = SubRanking.values()[(showBoard.ordinal() + 1) % SubRanking.values().length];
                 engine.playSE("change");
             }
         }
@@ -2921,14 +3157,17 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 final int[][] rrd = showPlayerStats ? settings.rankingRollDatePlayer : settings.rankingRollDate;
                 final int[][] rd = showPlayerStats ? settings.rankingDatePlayer : settings.rankingDate;
                 final int[][] rt = showPlayerStats ? settings.rankingTimePlayer : settings.rankingTime;
+                final int[][] rp = showPlayerStats ? settings.rankingPerkPlayer : settings.rankingPerk;
 
-                receiver.drawScoreFont(engine, playerID, 3, topY - 1, "TI&RN   " + (showTime ? "TIME" : "DATE"), titlesColour, scale);
+                receiver.drawScoreFont(engine, playerID, 3, topY - 1, "TI&RN   " + showBoard.toString(), titlesColour, scale);
                 for (int i = 0; i < SeasonsSettings.RANKING_MAX; ++i) {
+                    final boolean rankFlag = (lastRank == i && !showPlayerStats) || (lastRankPlayer == i && showPlayerStats);
+
                     receiver.drawScoreFont(
                         engine, playerID,
                         0, topY + i,
                         String.format("%2d", i + 1),
-                        (lastRank == i && !showPlayerStats) || (lastRankPlayer == i && showPlayerStats)
+                        rankFlag
                     );
                     GameTextUtilities.drawAlignedScoreTextBlock(
                         receiver, engine, playerID,
@@ -2938,14 +3177,36 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         TotalGrades.gradeForRank(rgp[settings.perk.leaderboard][i]),
                         ObjectAlignment.TOP_LEFT
                     );
+
+                    final GameTextUtilities.TextBlock subRankText;
+                    switch (showBoard) {
+                        case DATE:
+                            subRankText = levelToRankBlock(rd[settings.perk.leaderboard][i], rrd[settings.perk.leaderboard][i]);
+                            break;
+                        case TIME:
+                            subRankText = GameTextUtilities.TextBlock.of(GameTextUtilities.Text.of(GeneralUtil.getTime(rt[settings.perk.leaderboard][i]), rankFlag ? EventReceiver.COLOR_RED : EventReceiver.COLOR_WHITE));
+                            break;
+                        case PERK:
+                            subRankText = GameTextUtilities.TextBlock.of(
+                                GameTextUtilities.Text.blankLine(0.125f),
+                                GameTextUtilities.Text.custom(
+                                    SeasonPerk.values()[rp[settings.perk.leaderboard][i]].getName(),
+                                    rankFlag ? EventReceiver.COLOR_RED : EventReceiver.COLOR_WHITE,
+                                    0.75f
+                                )
+                            );
+                            break;
+                        default:
+                            // Shouldn't happen, but Java can't figure it out.
+                            subRankText = GameTextUtilities.TextBlock.of(GameTextUtilities.Text.of("N/A"));
+                    }
+
                     GameTextUtilities.drawAlignedScoreTextBlock(
                         receiver, engine, playerID,
                         receiver.getNextDisplayType() == 2,
                         11, topY + i,
                         false,
-                        showTime
-                            ? GameTextUtilities.TextBlock.of(GameTextUtilities.Text.of(GeneralUtil.getTime(rt[settings.perk.leaderboard][i])))
-                            : levelToRankBlock(rd[settings.perk.leaderboard][i], rrd[settings.perk.leaderboard][i]),
+                        subRankText,
                         ObjectAlignment.TOP_LEFT
                     );
                 }
@@ -2970,7 +3231,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 11, "D:SWITCH LOC./PLY. RANK", EventReceiver.COLOR_GREEN);
                 }
 
-                receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 12, "F:SWITCH DATE/TIME", EventReceiver.COLOR_GREEN);
+                receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 12, "F:SWITCH DATE/TIME/PERK", EventReceiver.COLOR_GREEN);
             }
 
             GameTextUtilities.drawAlignedScoreTextBlock(
@@ -3033,6 +3294,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 receiver.drawScoreFont(engine, playerID, 0, 17, "EFFECTS", titlesColour);
             }
 
+            // region Gimmicks
             if (gimmickSprMo2 != null) {
                 GameTextUtilities.drawAlignedScoreTextBlock(
                     receiver, engine, playerID, false,
@@ -3182,6 +3444,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     ObjectAlignment.TOP_LEFT
                 );
             }
+            // endregion Gimmicks
 
             if (descriptionToDraw != null) {
                 descriptionToDraw.descObj.drawDescription(drawing, receiver, engine, descriptionToDraw.getDrawXOffset(), descriptionToDraw.getDrawY());
@@ -3282,7 +3545,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         // 0->4000
         public static int getBadgePerformance(Badges badges) {
-            return Math.min(MAX_BADGE_POINTS, (int) Math.floor(badges.getBadges() * (5d / 4d)));
+            return Math.min(MAX_BADGE_POINTS, (int) Math.floor(badges.getBadges() * (9d / 8d)));
         }
 
         // 0->3000 (level + roll level each)
@@ -3342,13 +3605,18 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 else if (rank == 2) suffix = "ND";
                 else if (rank == 1) suffix = "ST";
 
+                int rankColour = EventReceiver.COLOR_BLUE;
+                if (rank == 3) rankColour = EventReceiver.COLOR_ORANGE;
+                else if (rank == 2) rankColour = EventReceiver.COLOR_WHITE;
+                else if (rank == 1) rankColour = EventReceiver.COLOR_YELLOW;
+
                 table.addValue(
                     Pair.of(
                         GameTextUtilities.TextBlock.of(
                             GameTextUtilities.TextJustification.CENTRE,
                             GameTextUtilities.Text.of(name, titleColour),
                             GameTextUtilities.Text.newLine(),
-                            GameTextUtilities.Text.custom(rank + suffix + " RANK", EventReceiver.COLOR_WHITE, 0.75f)
+                            GameTextUtilities.Text.custom(rank + suffix + " RANK", rankColour, 0.75f)
                         ),
                         IntPair.of(
                             basePoints + (i * 100),

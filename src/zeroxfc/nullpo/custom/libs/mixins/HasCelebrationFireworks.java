@@ -74,6 +74,22 @@ public interface HasCelebrationFireworks {
         return 30;
     }
 
+    default int fireworkMinX(EventReceiver receiver, GameEngine engine, int playerID) {
+        return receiver.getFieldDisplayPositionX(engine, playerID) - 48;
+    }
+
+    default int fireworkMaxX(EventReceiver receiver, GameEngine engine, int playerID) {
+        return receiver.getFieldDisplayPositionX(engine, playerID) + (engine.field.getWidth() * 16) + 48;
+    }
+
+    default int fireworkMinY(EventReceiver receiver, GameEngine engine, int playerID) {
+        return receiver.getFieldDisplayPositionY(engine, playerID) - 48;
+    }
+
+    default int fireworkMaxY(EventReceiver receiver, GameEngine engine, int playerID) {
+        return receiver.getFieldDisplayPositionY(engine, playerID) + (16 * 7);
+    }
+
     // Return a more useful value if you want to do extra things when a firework explodes.
     default Runnable explodeExtraAction() {
         return () -> { };
@@ -86,7 +102,7 @@ public interface HasCelebrationFireworks {
     }
 
     default void queueFireworkIf(GameEngine engine, BooleanSupplier when, Stream stream) {
-        if (!when.getAsBoolean() || getFireworksLeft() <= 0) return;
+        if (getFireworksLeft() <= 0 || !when.getAsBoolean()) return;
         queueFirework(engine, stream);
     }
 
@@ -104,15 +120,11 @@ public interface HasCelebrationFireworks {
         final Fireworks emitter = getFireworkEmitter();
 
         if (emitter != null) {
-            int minX = receiver.getFieldDisplayPositionX(engine, playerID) - 48;
-            int maxX = receiver.getFieldDisplayPositionX(engine, playerID) + (engine.field.getWidth() * 16) + 48;
-            int minY = receiver.getFieldDisplayPositionY(engine, playerID) - 48;
-            int maxY = receiver.getFieldDisplayPositionY(engine, playerID) + (16 * 7);
-
             emitter.addNumber(
                 1,
                 new Object[] {
-                    minX, maxX, minY, maxY,
+                    fireworkMinX(receiver, engine, playerID), fireworkMaxX(receiver, engine, playerID),
+                    fireworkMinY(receiver, engine, playerID), fireworkMaxY(receiver, engine, playerID),
                     colour[0], colour[1], colour[2], colour[3], colour[4],
                     Fireworks.DEF_MAX_VEL,
                     fireworkMinLife(), fireworkMaxLife()

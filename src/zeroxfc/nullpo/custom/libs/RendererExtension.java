@@ -1479,6 +1479,16 @@ public class RendererExtension {
     }
 
     /**
+     * Checks the current renderer to see if the user has enabled the performance-heavier background fade effect.
+     *
+     * @param receiver Current renderer
+     * @return Fade setting enabled or not
+     */
+    public static boolean hasUserEnabledFadeEffect(EventReceiver receiver) {
+        return heavyEffectAccessor != null && heavyEffectAccessor.get(receiver);
+    }
+
+    /**
      * Draw animated backgrounds that fade between the two. The fade effect only works in the Slick renderer if the
      * user has fades enabled. Will draw non-fading backgrounds if the user has fades disabled.
      *
