@@ -230,7 +230,7 @@ public interface HasCustomLineClear {
 
     default boolean inAfterLineDelay(GameEngine engine, int playerID) {
         // Next ステータス
-        if(engine.statc[0] >= engine.getLineDelay()) {
+        if (isLineDelayFinished(engine)) {
             if (processCascade(engine)) return true;
             afterLineClearFinishes(engine, playerID);
 
@@ -238,6 +238,10 @@ public interface HasCustomLineClear {
         }
         
         return false;
+    }
+
+    default boolean isLineDelayFinished(GameEngine engine) {
+        return engine.statc[0] >= engine.getLineDelay();
     }
 
     default boolean processCascade(GameEngine engine) {

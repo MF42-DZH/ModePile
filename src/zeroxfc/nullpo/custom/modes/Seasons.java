@@ -459,6 +459,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int lastRank;
     private int lastRankPlayer;
     private int timeSpentInSeason;
+    private boolean lineClearAfterPiece;
 
     private static final int INCREMENT_IN_ROLL = 2;
     private int naturalLevelIncrement;
@@ -579,6 +580,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private static final int REWIND_TIME = 60 * 5;
     private static final int FINAL_REWIND_TIME = 60 * 40;
 
+    private boolean abilityIsActive(GameEngine engine) {
+        return settings.perk.isActive() && engine.gameStarted && engine.gameActive && (
+            (currentAbilityTimer > 0)
+                || (queuedFreefall || (engine.stat == GameEngine.STAT_CUSTOM && customState == CustomState.FREEFALL))
+                || ((HasCustomMove.getNextObject(engine, engine.nextPieceCount).block[0].item == -1) || (engine.holdPieceObject != null && engine.holdPieceObject.block[0].item == -1))
+        );
+    }
+
     private class OuterFrame implements IntBinaryOperator {
         protected final GameEngine engine;
         protected final int playerID;
@@ -591,7 +600,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         private static final int BASE_COLOUR_MENU = 0x00_404040;
         private static final int BASE_COLOUR_REWIND = 0x00_CC00FF;
         private static final int BASE_COLOUR_SPRING_1 = 0x00_00F000;
-        private static final int BASE_COLOUR_SPRING_2 = 0x00_64F000;
+        private static final int BASE_COLOUR_SPRING_2 = 0x00_80F000;
         private static final int BASE_COLOUR_SUMMER_1 = 0x00_F0F000;
         private static final int BASE_COLOUR_SUMMER_2 = 0x00_F06400;
         private static final int BASE_COLOUR_AUTUMN_1 = 0x00_D85600;
@@ -621,12 +630,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 )
             );
 
+            final boolean isAbilityActive = abilityIsActive(engine);
+
             // Set the base colour.
             if (!engine.gameActive) {
                 return mixer.setRGB24(BASE_COLOUR_MENU).setLightness(mixer.getLightness() * lMult).getRGB24();
             } else if (inRewind(engine)) {
                 return mixer.setRGB24(BASE_COLOUR_REWIND).setLightness(mixer.getLightness() * lMult).getRGB24();
-            } else if (!settings.perk.isActive() || currentAbilityTimer <= 0) {
+            } else if (!isAbilityActive) {
                 switch (currentSeason) {
                     case SPRING: mixer.setRGB24(BASE_COLOUR_SPRING_1); break;
                     case SUMMER: mixer.setRGB24(BASE_COLOUR_SUMMER_1); break;
@@ -648,7 +659,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             final double phase = (Math.sin((((timeSpentInSeason + y) / 30d) % (2.0 * Math.PI))) + 1.0) / 2.0;
 
             // Specific effects for summer and winter.
-            if (!settings.perk.isActive() || currentAbilityTimer <= 0) {
+            if (!isAbilityActive) {
                 switch (currentSeason) {
                     case SPRING:
                         auxMixer
@@ -707,15 +718,17 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             // Roll Shimmer
             if (engine.ending != 0 && engine.gameActive) {
+                final double rollPhase = (Math.sin((MathHelper.pythonModulo((timeSpentInSeason + y) / 12d, 2.0 * Math.PI))) + 1.0) / 2.0;
+
                 mixer.setLightness(Interpolation.lerp(
                     mixer.getLightness() * 2.25,
                     mixer.getLightness(),
-                    (phase + 0.5) % 1.0
+                    rollPhase
                 ));
             }
 
             // Active ability glow
-            if (settings.perk.isActive() && currentAbilityTimer > 0) {
+            if (isAbilityActive) {
                 final double abilityPhase = (Math.cos((((timeSpentInSeason + y) / 6d) % (2.0 * Math.PI))) + 1.0) / 2.0;
                 mixer.setLightness(Interpolation.lerp(mixer.getLightness(), 1.0, abilityPhase));
             }
@@ -867,6 +880,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         fieldPurifyQueued = false;
         descriptionToDraw = null;
         timeSpentInSeason = 0;
+        lineClearAfterPiece = true;
 
         lastRank = -1;
         lastRankPlayer = -1;
@@ -1003,6 +1017,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (engine.gameStarted) {
             switch (customState) {
                 case FREEFALL: {
+                    if (engine.statc[0] == 0) {
+                        engine.speed.lineDelay = 40;
+                    }
+
                     // Arrived here from ARE, this is where the freefall happens.
                     if (engine.statc[0] > 0 && engine.statc[0] % 3 == 0) {
                         final Field oldField = new Field(engine.field);
@@ -1012,13 +1030,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                             hasLandedBefore = landed;
                             if (hasLandedBefore) engine.playSE("linefall");
                         } else {
-                            engine.lineClearing = engine.field.checkLineNoFlag();
+                            getCompleteLinesWithoutFlagging(engine);
 
                             if (engine.lineClearing == 0) {
                                 engine.stat = GameEngine.STAT_ARE;
                                 engine.resetStatc();
                             } else {
                                 engine.stat = GameEngine.STAT_LINECLEAR;
+                                lineClearAfterPiece = false;
                                 engine.resetStatc();
 
                                 engine.tspin = false;
@@ -1650,7 +1669,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public boolean inPostLockProcessing(GameEngine engine, int playerID, boolean instantlock) {
-        if (pieceisLocking(engine, instantlock)) {
+        if (pieceIsLocking(engine, instantlock)) {
             ++lockedPieces;
 
             // Add a new I-piece into the next queue if using summer passive perk.
@@ -1665,7 +1684,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         // This needs to be performed before the piece is actually put in place.
-        if (gimmickWinMo3 != null && pieceisLocking(engine, instantlock) && engine.nowPieceObject.block[0].color == Block.BLOCK_COLOR_GEM_CYAN) {
+        if (gimmickWinMo3 != null && pieceIsLocking(engine, instantlock) && engine.nowPieceObject.block[0].color == Block.BLOCK_COLOR_GEM_CYAN) {
             Gimmicks.Icicles.fragmentPieceAndDrillDown(engine);
         }
 
@@ -1674,6 +1693,18 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (gimmickWinMo3 != null) {
             FieldManipulation.updateAllBlockConnections(engine.field);
         }
+
+        if (pieceIsLocking(engine, instantlock) && settings.perk == SeasonPerk.AUTUMN_ACTIVE && queuedFreefall && engine.gameStarted) {
+            queuedFreefall = false;
+
+            customState = CustomState.FREEFALL;
+            engine.stat = GameEngine.STAT_CUSTOM;
+            engine.resetStatc();
+
+            return true;
+        }
+
+        lineClearAfterPiece = true;
 
         return ovr;
     }
@@ -1737,18 +1768,17 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public boolean onARE(GameEngine engine, int playerID) {
-        if (engine.statc[0] == 0 && queuedFreefall && engine.gameStarted) {
-            queuedFreefall = false;
-
-            customState = CustomState.FREEFALL;
-            engine.stat = GameEngine.STAT_CUSTOM;
-            engine.resetStatc();
-
-            return true;
-        }
-
         if (engine.statc[0] == 0 && !engine.holdDisable && !levelUpFlag) {
-            if (gimmickSprMo3 != null) gimmickSprMo3.explode(engine);
+            if (gimmickSprMo3 != null) {
+                gimmickSprMo3.explode(engine);
+
+                if (getCompleteLinesWithoutFlagging(engine) > 0) {
+                    engine.stat = GameEngine.STAT_LINECLEAR;
+                    lineClearAfterPiece = false;
+
+                    engine.resetStatc();
+                }
+            }
         }
 
         if (((engine.statc[0] >= engine.statc[1] - 1) && (!levelUpFlag))) {
@@ -2111,25 +2141,35 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private void addEventText(GameEngine engine, int playerID, int lines) {
         final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
         final int baseY = receiver.getFieldDisplayPositionX(engine, playerID) + 52;
-        final int pieceX = (16 * engine.nowPieceX) + baseX;
-        final int pieceY = (16 * engine.nowPieceY) + baseY;
 
-        int pieceXs = 0;
-        int pieceYs = 0;
+        final DoubleVector basePosition;
+        final boolean reverse;
 
-        for (int i = 0; i < engine.nowPieceObject.getMaxBlock(); ++i) {
-            pieceXs += pieceX + (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] * 16) + 8;
-            pieceYs += pieceY + (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] * 16) + 8;
+        if (lineClearAfterPiece) {
+            final int pieceX = (16 * engine.nowPieceX) + baseX;
+            final int pieceY = (16 * engine.nowPieceY) + baseY;
+
+            int pieceXs = 0;
+            int pieceYs = 0;
+
+            for (int i = 0; i < engine.nowPieceObject.getMaxBlock(); ++i) {
+                pieceXs += pieceX + (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] * 16) + 8;
+                pieceYs += pieceY + (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] * 16) + 8;
+            }
+
+            pieceXs /= engine.nowPieceObject.getMaxBlock();
+            pieceYs /= engine.nowPieceObject.getMaxBlock();
+
+            final double upX = pieceXs < (baseX + (engine.field.getWidth() * 8))
+                ? (baseX + ((engine.nowPieceX + engine.nowPieceObject.getMaximumBlockX()) * 16))
+                : (baseX + ((engine.nowPieceX + engine.nowPieceObject.getMinimumBlockX()) * 16));
+
+            basePosition = new DoubleVector(upX, pieceYs, false);
+            reverse = pieceXs < (receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (8 * engine.field.getWidth()));
+        } else {
+            basePosition = new DoubleVector(baseX + (engine.field.getWidth() * 8) + 8, baseY + (engine.field.getHeight() * 16), false);
+            reverse = false;
         }
-
-        pieceXs /= engine.nowPieceObject.getMaxBlock();
-        pieceYs /= engine.nowPieceObject.getMaxBlock();
-
-        final double upX = pieceXs < (baseX + (engine.field.getWidth() * 8))
-            ? (baseX + ((engine.nowPieceX + engine.nowPieceObject.getMaximumBlockX()) * 16))
-            : (baseX + ((engine.nowPieceX + engine.nowPieceObject.getMinimumBlockX()) * 16));
-
-        final DoubleVector basePosition = new DoubleVector(upX, pieceYs, false);
 
         final String pieceName = Piece.getPieceName(engine.nowPieceObject.id);
         final DoubleVector baseVelocity = new DoubleVector(0.0, -6.4, false);
@@ -2139,7 +2179,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         final int maxLife = 60;
         final int lifeOffset = 2;
         final int colour = 0x00FFFFFF;
-        final boolean reverse = pieceXs < (receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (8 * engine.field.getWidth()));
 
         final StringBuilder sb = new StringBuilder();
 
@@ -2147,8 +2186,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             textEmitter.addString(
                 "BRAVO!",
                 new DoubleVector(
-                    receiver.getFieldDisplayPositionX(engine, playerID) + 4d + (8 * engine.field.getWidth()),
-                    receiver.getFieldDisplayPositionY(engine, playerID) + 52d + 32d,
+                    baseX + (8d * engine.field.getWidth()) + 8d,
+                    baseY + 32d,
                     false
                 ), baseVelocity, baseAcceleration,
                 ObjectAlignment.MIDDLE_MIDDLE,
@@ -2852,7 +2891,34 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             purifyFieldAndNexts(engine);
         }
 
-        return HasCustomLineClear.super.inOnLineClear(engine, playerID);
+        final boolean olc = HasCustomLineClear.super.inOnLineClear(engine, playerID);
+
+        if (isLineDelayFinished(engine) && getCompleteLinesWithoutFlagging(engine) > 0 && engine.gameActive) {
+            lineClearAfterPiece = false;
+            engine.resetStatc();
+
+            return true;
+        }
+
+        return olc;
+    }
+
+    @Override
+    public void renderLineClear(GameEngine engine, int playerID) {
+        // When the infinite line clear loop.
+        if (settings.perk == SeasonPerk.AUTUMN_ACTIVE && !lineClearAfterPiece && gimmickRollWin != null) {
+            GameTextUtilities.drawAlignedTextBlock(
+                engine,
+                receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (engine.field.getWidth() * 8),
+                receiver.getFieldDisplayPositionY(engine, playerID) + 52 + (engine.field.getHeight() * 8),
+                false,
+                GameTextUtilities.TextBlock.of(
+                    GameTextUtilities.TextJustification.LEFT,
+                    GameTextUtilities.Text.ofBig("NICE :)", EventReceiver.COLOR_GREEN)
+                ),
+                ObjectAlignment.MIDDLE_MIDDLE
+            );
+        }
     }
 
     private void levelUp(GameEngine engine) {
@@ -3326,7 +3392,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             receiver.drawScoreFont(engine, playerID, 0, 8, "PERK", titlesColour);
-            receiver.drawScoreFont(engine, playerID, 0, 9, settings.perk.getName(), currentAbilityTimer > 0);
+            receiver.drawScoreFont(engine, playerID, 0, 9, settings.perk.getName(), abilityIsActive(engine));
 
             receiver.drawScoreFont(engine, playerID, 0, 11, "BADGES", titlesColour);
             GameTextUtilities.drawAlignedScoreTextBlock(
@@ -3516,21 +3582,24 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public void saveReplay(GameEngine engine, int playerID, CustomProperties prop) {
-        if (!settings.hasSeenRollIntro) settings.hasSeenRollIntro = engine.statistics.level >= MAX_LEVEL;
-        if (!settings.hasCompletedGame) settings.hasCompletedGame = engine.statistics.level >= MAX_LEVEL && rollLevelReached >= MAX_LEVEL;
+        if (!owner.replayMode && !owner.replayRerecord) {
+            if (!settings.hasSeenRollIntro) settings.hasSeenRollIntro = engine.statistics.level >= MAX_LEVEL;
+            if (!settings.hasCompletedGame)
+                settings.hasCompletedGame = engine.statistics.level >= MAX_LEVEL && rollLevelReached >= MAX_LEVEL;
 
-        // Forcefully save settings if roll completed or game completed.
-        if (settings.hasSeenRollIntro || settings.hasCompletedGame) {
-            settings.saveSetting(owner.modeConfig, false);
-            if (playerProperties.isLoggedIn()) settings.saveSettingPlayer(playerProperties);
-        }
+            // Forcefully save settings if roll completed or game completed.
+            if (settings.hasSeenRollIntro || settings.hasCompletedGame) {
+                settings.saveSetting(owner.modeConfig, false);
+                if (playerProperties.isLoggedIn()) settings.saveSettingPlayer(playerProperties);
+            }
 
-        settings.saveSetting(owner.replayProp, true);
+            settings.saveSetting(owner.replayProp, true);
 
-        // If they have completed the game, set the completion status to true for their profile.
-        if (playerProperties.isLoggedIn() && engine.ending > 0 && engine.statistics.level >= MAX_LEVEL) {
-            settings.hasCompletedGame = true;
-            settings.saveSettingPlayer(playerProperties);
+            // If they have completed the game, set the completion status to true for their profile.
+            if (playerProperties.isLoggedIn() && engine.ending > 0 && engine.statistics.level >= MAX_LEVEL) {
+                settings.hasCompletedGame = true;
+                settings.saveSettingPlayer(playerProperties);
+            }
         }
 
         if (!owner.replayMode && !settings.fullGhost && engine.ai == null) {

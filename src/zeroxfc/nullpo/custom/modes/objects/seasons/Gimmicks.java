@@ -11,7 +11,6 @@ import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.component.SpeedParam;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
-import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
@@ -1510,6 +1509,7 @@ public class Gimmicks {
                         if (((blk.bonusValue & ZERO_MASK) == ZERO_IDENTIFIER) && ++blk.countdown > countdownMax) {
                             blk.countdown = 0;
                             blk.hard = Integer.MAX_VALUE;
+                            blk.color = Block.BLOCK_COLOR_GRAY;
                         }
                     }
                 }

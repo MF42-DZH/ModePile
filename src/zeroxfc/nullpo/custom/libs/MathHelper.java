@@ -79,6 +79,32 @@ public class MathHelper {
     }
 
     /**
+     * Modulo operator that functions similarly to Python's % operator.
+     *
+     * @param value   Number
+     * @param divisor Divisor
+     * @return Remainder after division
+     */
+    public static float pythonModulo(float value, float divisor) {
+        float dividend = value % divisor;
+        if (dividend < 0) dividend = divisor + dividend;
+        return dividend;
+    }
+
+    /**
+     * Modulo operator that functions similarly to Python's % operator.
+     *
+     * @param value   Number
+     * @param divisor Divisor
+     * @return Remainder after division
+     */
+    public static double pythonModulo(double value, double divisor) {
+        double dividend = value % divisor;
+        if (dividend < 0) dividend = divisor + dividend;
+        return dividend;
+    }
+
+    /**
      * Clamps a value to within a range.
      *
      * @param value Value to clamp

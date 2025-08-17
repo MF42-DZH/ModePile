@@ -766,7 +766,7 @@ public interface HasCustomMove {
     // Runs after a piece has locked. This is where the engine usually changes state.
     default boolean inPostLockProcessing(GameEngine engine, int playerID, boolean instantlock) {
         // 固定
-        if (pieceisLocking(engine, instantlock)) {
+        if (pieceIsLocking(engine, instantlock)) {
             if (engine.ruleopt.lockflash > 0) engine.nowPieceObject.setDarkness(-0.8f);
 
             // T-Spin判定
@@ -789,14 +789,8 @@ public interface HasCustomMove {
             if ((engine.ending == 0) || (engine.staffrollEnableStatistics))
                 engine.statistics.totalPieceLocked++;
 
-            if (engine.clearMode == GameEngine.CLEAR_LINE)
-                engine.lineClearing = engine.field.checkLineNoFlag();
-            else if (engine.clearMode == GameEngine.CLEAR_COLOR)
-                engine.lineClearing = engine.field.checkColor(engine.colorClearSize, false, engine.garbageColorClear, engine.gemSameColor, engine.ignoreHidden);
-            else if (engine.clearMode == GameEngine.CLEAR_LINE_COLOR)
-                engine.lineClearing = engine.field.checkLineColor(engine.colorClearSize, false, engine.lineColorDiagonals, engine.gemSameColor);
-            else if (engine.clearMode == GameEngine.CLEAR_GEM_COLOR)
-                engine.lineClearing = engine.field.gemColorCheck(engine.colorClearSize, false, engine.garbageColorClear, engine.ignoreHidden);
+            getCompleteLinesWithoutFlagging(engine);
+
             engine.chain = 0;
             engine.lineGravityTotalLines = 0;
 
@@ -866,7 +860,24 @@ public interface HasCustomMove {
         return false;
     }
 
-    default boolean pieceisLocking(GameEngine engine, boolean instantlock) {
+    default int getCompleteLinesWithoutFlagging(GameEngine engine) {
+        return defaultGetCompleteLinesWithoutFlagging(engine);
+    }
+
+    static int defaultGetCompleteLinesWithoutFlagging(GameEngine engine) {
+        if (engine.clearMode == GameEngine.CLEAR_LINE)
+            engine.lineClearing = engine.field.checkLineNoFlag();
+        else if (engine.clearMode == GameEngine.CLEAR_COLOR)
+            engine.lineClearing = engine.field.checkColor(engine.colorClearSize, false, engine.garbageColorClear, engine.gemSameColor, engine.ignoreHidden);
+        else if (engine.clearMode == GameEngine.CLEAR_LINE_COLOR)
+            engine.lineClearing = engine.field.checkLineColor(engine.colorClearSize, false, engine.lineColorDiagonals, engine.gemSameColor);
+        else if (engine.clearMode == GameEngine.CLEAR_GEM_COLOR)
+            engine.lineClearing = engine.field.gemColorCheck(engine.colorClearSize, false, engine.garbageColorClear, engine.ignoreHidden);
+
+        return engine.lineClearing;
+    }
+
+    default boolean pieceIsLocking(GameEngine engine, boolean instantlock) {
         return ((engine.lockDelayNow >= engine.getLockDelay()) && (engine.getLockDelay() > 0)) || instantlock;
     }
 
