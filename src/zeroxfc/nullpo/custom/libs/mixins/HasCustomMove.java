@@ -766,7 +766,7 @@ public interface HasCustomMove {
     // Runs after a piece has locked. This is where the engine usually changes state.
     default boolean inPostLockProcessing(GameEngine engine, int playerID, boolean instantlock) {
         // 固定
-        if (((engine.lockDelayNow >= engine.getLockDelay()) && (engine.getLockDelay() > 0)) || (instantlock)) {
+        if (pieceisLocking(engine, instantlock)) {
             if (engine.ruleopt.lockflash > 0) engine.nowPieceObject.setDarkness(-0.8f);
 
             // T-Spin判定
@@ -864,6 +864,10 @@ public interface HasCustomMove {
             return true;
         }
         return false;
+    }
+
+    default boolean pieceisLocking(GameEngine engine, boolean instantlock) {
+        return ((engine.lockDelayNow >= engine.getLockDelay()) && (engine.getLockDelay() > 0)) || instantlock;
     }
 
     // A bit jank, but sure. Both bodies are usually the same.

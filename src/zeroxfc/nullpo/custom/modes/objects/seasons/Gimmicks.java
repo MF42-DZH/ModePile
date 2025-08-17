@@ -1,20 +1,25 @@
 package zeroxfc.nullpo.custom.modes.objects.seasons;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.IntFunction;
 import mu.nu.nullpo.game.component.Block;
 import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.component.SpeedParam;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
+import org.apache.log4j.Logger;
+import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomMove;
+import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 
 public class Gimmicks {
     // This class just holds other classes. We don't need to instantiate it.
@@ -62,7 +67,7 @@ public class Gimmicks {
     // OCT - Ghouls Afoot (Stack Outline Only + Flashlight around piece and a scrolling light around the stack (more badges = bigger light))
     // NOV - Whiteout (Pieces all turn white, and a haze obscures the screen)
     // DEC - Snow Mounds (HEBO HIDDEN, slowed with badges)
-    // JAN - Zero Celsius (1G, an easier version of a certain gimmick ABSOLUTEly terrorising people, interval can be delayed with badges)
+    // JAN - Icicles (Occasionally, blocks are replaced with icicle blocks that penetrate the stack.)
 
     // There will also be 4 gimmicks across the credits roll as you pass through the months.
 
@@ -734,6 +739,7 @@ public class Gimmicks {
                 engine.ruleopt.pieceColor[piece.id]
             });
 
+            // TODO: replace this sound
             engine.playSE("rotate");
         }
     }
@@ -965,14 +971,12 @@ public class Gimmicks {
             height = 0;
             currentCounter = 0;
 
-            setTickTime(badges, perkBoost, false);
+            setTickTime(badges, perkBoost);
         }
 
-        public void setTickTime(Badges badges, boolean perkBoost, boolean iceActive) {
+        public void setTickTime(Badges badges, boolean perkBoost) {
             final int usedBadges = badges.getBadges() / 10;
-
             currentTickTime = 48 + usedBadges / (perkBoost ? 5 : 10);
-            if (iceActive) currentTickTime += (currentTickTime >>> 1);
         }
 
         public boolean isYInSnow(GameEngine engine, int y) {
@@ -1062,49 +1066,77 @@ public class Gimmicks {
         }
     }
 
-    public static class ZeroCelsius implements HasDescription {
-        public static int ZERO_IDENTIFIER = 0x0000DCBA;
-        public static int ZERO_MASK = 0x0000FFFF;
+    public static class Icicles implements HasDescription {
+        public static final int ICICLE_IDENTIFIER = 0x00002738;
+        public static final int ICICLE_MASK = 0x0000FFFF;
 
-        private int countdownMax;
+        private final Random random;
+        private final int seasonStartLv;
+        private final int seasonEndLv;
 
-        public ZeroCelsius(Badges badges, boolean perkBoost) {
-            setCountdownMax(badges, perkBoost);
+        private double chance; // 0 - 1
+
+        public Icicles(Random random, int seasonStartLv, int seasonEndLv) {
+            this.random = random;
+            this.seasonStartLv = seasonStartLv;
+            this.seasonEndLv = seasonEndLv;
         }
 
-        public void setCountdownMax(Badges badges, boolean perkBoost) {
-            countdownMax = badges.getBadges() / (perkBoost ? 15 : 30);
+        public void updateChance(GameEngine engine, Badges badges, boolean perkBoost) {
+            final double progress = (engine.statistics.level - seasonStartLv) / (double) (seasonEndLv - seasonStartLv);
+            final double baseChance = Interpolation.lerp(0.9935, 1.0, progress);
+
+            final int denominator = perkBoost ? 15 : 30;
+
+            chance = Math.pow(baseChance, badges.getBadges() / (double) denominator);
         }
 
-        public void updateField(GameEngine engine) {
-            if (engine.field == null) return;
+        public void updateNext(GameEngine engine) {
+            if (random.nextDouble() > chance) return;
 
-            for (int y = engine.field.getHighestBlockY(); y < engine.field.getHeight(); ++y) {
-                for (int x = 0; x < engine.field.getWidth(); ++x) {
-                    if (!engine.field.getBlockEmpty(x, y)) {
-                        final Block blk = engine.field.getBlock(x, y);
-                        if (((blk.bonusValue & ZERO_MASK) == ZERO_IDENTIFIER) && ++blk.countdown > countdownMax) {
-                            blk.countdown = 0;
-                            ++blk.hard;
-                        }
+            final Piece piece = HasCustomMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
+            if (piece == null) return;
+
+            for (Block blk : piece.block) blk.bonusValue |= ICICLE_IDENTIFIER;
+
+            piece.setColor(Block.BLOCK_COLOR_GEM_CYAN);
+        }
+
+        public static void fragmentPieceAndDrillDown(GameEngine engine) {
+            final Set<IntPair> filled = new HashSet<>();
+
+            for (int i = 0; i < engine.nowPieceObject.getMaxBlock(); ++i) {
+                // First, we get the current position of the block.
+                final int currentX = engine.nowPieceX + engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i];
+                final int currentY = engine.nowPieceY + engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i];
+
+                // Find the lowest hole, if it exists, and shove the block in there.
+                for (int y = engine.field.getHeightWithoutHurryupFloor() - 1; y >= -engine.field.getHiddenHeight(); --y) {
+                    if (!filled.contains(IntPair.of(currentX, y)) && engine.field.getBlockEmpty(currentX, y)) {
+                        engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] = y - engine.nowPieceY;
+                        filled.add(IntPair.of(currentX, y));
+
+                        break;
                     }
                 }
             }
+
+            // TODO: add custom sound for the piece fragmenting
         }
 
         @Override
         public String getName() {
-            return "ZERO CELSIUS";
+            return "ICICLES";
         }
 
         @Override
         public GameTextUtilities.TextBlock getSummary() {
             return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
-                GameTextUtilities.Text.of("ZERO C.", EventReceiver.COLOR_CYAN),
+                GameTextUtilities.Text.of("ICICLES", EventReceiver.COLOR_CYAN),
                 GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
-                GameTextUtilities.Text.of(countdownMax + "F", EventReceiver.COLOR_YELLOW),
-                GameTextUtilities.Text.of(" DELAY)", EventReceiver.COLOR_RED)
+                GameTextUtilities.Text.of(String.format("%.02f", chance * 100d) + "%", EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(")", EventReceiver.COLOR_RED)
             );
         }
 
@@ -1126,12 +1158,12 @@ public class Gimmicks {
                 ),
                 GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom(
-                    "BY THIS WINTER'S UNRELENTING COLD. MOVE SWIFTLY,",
+                    "BY THIS WINTER'S UNRELENTING COLD. THE ICE IS",
                     EventReceiver.COLOR_WHITE, 0.75f
                 ),
                 GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom(
-                    "AS THE FLASH FREEZE CAN HOLD YOU FOREVER.",
+                    "DELICATE, IT BREAKS EASILY.",
                     EventReceiver.COLOR_WHITE, 0.75f
                 )
             );
@@ -1316,7 +1348,96 @@ public class Gimmicks {
 
     // Autumn Roll Gimmick - Pure Visuals
     public static class Haunting implements HasDescription {
-        // Just set the bone and outline only params lmao.
+        private static final int DEFAULT_RADIUS = 24;
+        private static final double MULT = 0.99925;
+        private static final double CD_MAX = 2;
+
+        private int currentRadius;
+        private int countdown;
+        private final Random random;
+        private final LinkedList<Ghost> ghosts = new LinkedList<>();
+
+        private class Ghost {
+            private int posX;
+            private final int posY;
+            private final int speed;
+
+            public Ghost(int posX, int posY, int speed) {
+                this.posX = posX;
+                this.posY = posY;
+                this.speed = speed;
+            }
+
+            public boolean update(EventReceiver receiver, GameEngine engine, int playerID) {
+                if (engine.field == null) return true;
+
+                final int minX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+                final int maxX = minX + (engine.field.getWidth() * 16) + 16;
+
+                posX += speed;
+
+                if (speed < 0) {
+                    return posX < (minX - currentRadius);
+                } else {
+                    return posX > (maxX + currentRadius);
+                }
+            }
+        }
+
+        public Haunting(Random random, Badges badges, boolean perkBoost) {
+            this.countdown = 0;
+            this.random = random;
+
+            setCurrentRadius(badges, perkBoost);
+        }
+
+        public void setCurrentRadius(Badges badges, boolean perkBoost) {
+            currentRadius = (int) Math.ceil(DEFAULT_RADIUS * Math.pow(MULT, badges.getBadges() / (perkBoost ? 5d : 10d)));
+        }
+
+        public void update(EventReceiver receiver, GameEngine engine, int playerID) {
+            final int minX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+            final int maxX = minX + (engine.field.getWidth() * 16) + 16;
+            final int minY = receiver.getFieldDisplayPositionY(engine, playerID) + 52 + currentRadius;
+            final int maxY = minY + (engine.field.getHeight() * 16) + 16 - currentRadius;
+
+            if (++countdown >= CD_MAX) {
+                countdown = 0;
+                ghosts.addFirst(
+                    new Ghost(
+                        random.nextInt(maxX - minX + 1) + minX,
+                        random.nextInt(maxY - minY + 1) + minY,
+                        random.nextDouble() < 0.5 ? (random.nextInt(6) + 1) : -(random.nextInt(6) + 1)
+                    )
+                );
+            }
+
+            ghosts.removeIf(g -> g.update(receiver, engine, playerID));
+        }
+
+        public void draw(PrimitiveDrawingHook drawing, EventReceiver receiver) {
+            final CustomResourceHolder.Runtime runtime = CustomResourceHolder.getCurrentNullpominoRuntime();
+
+            for (Ghost ghost : ghosts) {
+                if (runtime == CustomResourceHolder.Runtime.SDL) {
+                    drawing.drawRectangle(
+                        receiver,
+                        ghost.posX - currentRadius, ghost.posY - currentRadius,
+                        currentRadius * 2, currentRadius * 2,
+                        255, 255, 255, 200,
+                        true
+                    );
+                } else if (runtime != CustomResourceHolder.Runtime.UNKNOWN) {
+                    drawing.drawOval(
+                        receiver,
+                        ghost.posX - currentRadius, ghost.posY - currentRadius,
+                        currentRadius * 2, currentRadius * 2,
+                        255, 255, 255, 200,
+                        true
+                    );
+                }
+            }
+        }
 
         @Override
         public String getName() {
@@ -1327,7 +1448,10 @@ public class Gimmicks {
         public GameTextUtilities.TextBlock getSummary() {
             return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
-                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_ORANGE)
+                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_ORANGE),
+                GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
+                GameTextUtilities.Text.of(String.valueOf(currentRadius), EventReceiver.COLOR_YELLOW),
+                GameTextUtilities.Text.of(" RADIUS)", EventReceiver.COLOR_RED)
             );
         }
 
@@ -1363,6 +1487,9 @@ public class Gimmicks {
 
     // Winter Roll Gimmick - Familiar
     public static class AbsoluteZero implements HasDescription {
+        public static int ZERO_IDENTIFIER = 0x0000DCBA;
+        public static int ZERO_MASK = 0x0000FFFF;
+
         private int countdownMax;
 
         public AbsoluteZero(Badges badges, boolean perkBoost) {
@@ -1380,7 +1507,7 @@ public class Gimmicks {
                 for (int x = 0; x < engine.field.getWidth(); ++x) {
                     if (!engine.field.getBlockEmpty(x, y)) {
                         final Block blk = engine.field.getBlock(x, y);
-                        if (((blk.bonusValue & ZeroCelsius.ZERO_MASK) == ZeroCelsius.ZERO_IDENTIFIER) && ++blk.countdown > countdownMax) {
+                        if (((blk.bonusValue & ZERO_MASK) == ZERO_IDENTIFIER) && ++blk.countdown > countdownMax) {
                             blk.countdown = 0;
                             blk.hard = Integer.MAX_VALUE;
                         }
