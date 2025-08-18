@@ -109,7 +109,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("WINTER GIFTS YOU A BOON", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("TO LET YOU FOCUS EVEN", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("IN THE TOUGHEST TIMES.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(+6F LOCK DELAY, OR LOWER GRAVITY)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
+                GameTextUtilities.Text.custom("(+6F LOCK DLY., SLOWER NON-INSTANT GRV.)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             winterActive = GameTextUtilities.TextBlock.of(

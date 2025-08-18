@@ -1113,7 +1113,7 @@ public class Gimmicks {
                     if (blk.color == Block.BLOCK_COLOR_GEM_CYAN) {
                         blk.color = Block.BLOCK_COLOR_GRAY;
                         blk.hard = 1;
-                    } else if ((blk.bonusValue & ICICLE_MASK) == ICICLE_IDENTIFIER) {
+                    } else if (blk.hard > 0) {
                         blk.hard = 0;
                     }
                 }

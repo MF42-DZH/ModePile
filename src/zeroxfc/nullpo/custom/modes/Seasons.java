@@ -623,7 +623,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 Math.abs((maxY * x) - (maxX * y)) / Math.sqrt((double) (maxY * maxY) + (maxX * maxX));
 
             final double lMult = Interpolation.sineStep(
-                1.25, 0.75,
+                1.35, 0.75,
                 MathHelper.clamp(
                     distance / (maxX / 2d),
                     0d, 1d
@@ -653,8 +653,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     default: mixer.setRGB24(0x00_FFFFFF); break;
                 }
             }
-
-            mixer.setLightness(mixer.getLightness() * lMult);
 
             final double phase = (Math.sin((((timeSpentInSeason + y) / 30d) % (2.0 * Math.PI))) + 1.0) / 2.0;
 
@@ -716,13 +714,15 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 }
             }
 
+            mixer.setLightness(mixer.getLightness() * lMult);
+
             // Roll Shimmer
             if (engine.ending != 0 && engine.gameActive && !isAbilityActive) {
-                final double rollPhase = (Math.sin((MathHelper.pythonModulo((timeSpentInSeason + y) / 12d, 2.0 * Math.PI))) + 1.0) / 2.0;
+                final double rollPhase = (Math.sin((MathHelper.pythonModulo(((Integer.MAX_VALUE - timeSpentInSeason) - y) / 10d, 2.0 * Math.PI))) + 1.0) / 2.0;
 
                 mixer.setLightness(Interpolation.lerp(
-                    mixer.getLightness() * 2.25,
                     mixer.getLightness(),
+                    mixer.getLightness() * 2.25,
                     rollPhase
                 ));
             }
@@ -1473,7 +1473,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 final double gravityProp = engine.speed.gravity / (double) engine.speed.denominator;
                 final int newGravity = (int) Math.floor(gravityProp * 65536d * 0.8);
 
-                engine.speed.gravity = Math.max(1024, newGravity);
+                engine.speed.gravity = newGravity;
                 engine.speed.denominator = 65536;
             }
         }
@@ -2085,7 +2085,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             GameTextUtilities.TextBlock.of(
                 GameTextUtilities.Text.ofSmall(String.valueOf(totalGrades.totalRollLevelPoints), textColour),
                 GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.ofSmall("/" + Grading.MAX_LEVEL_POINTS, textColour)
+                GameTextUtilities.Text.ofSmall("/" + Grading.MAX_ROLL_LEVEL_POINTS, textColour)
             ),
             ObjectAlignment.TOP_RIGHT
         );
@@ -3679,6 +3679,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         public static final int MAX_PERFORMANCE_POINTS = 2500;
         public static final int MAX_BADGE_POINTS = 4000;
         public static final int MAX_LEVEL_POINTS = 3000;
+        public static final int MAX_ROLL_LEVEL_POINTS = 2500;
 
         private static final int BASE_PERF_DECAY = 45;
         private static final double PERF_DECAY_POW = 343d / 400d;
@@ -3728,26 +3729,31 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             return Math.min(MAX_PERFORMANCE_POINTS, performance);
         }
 
-        // 0->4000
+        // 0->4000 (Maximum at 640 badges (6400 internal badges))
         public static int getBadgePerformance(Badges badges) {
             return Math.min(MAX_BADGE_POINTS, (int) Math.floor(badges.getBadges() * (6d / 10d)));
         }
 
-        // 0->3000 (level + roll level each)
+        // 0->3000 (level)
         public static int getLevelPerformance(int level) {
             return (int) Math.floor((double) MAX_LEVEL_POINTS * level / (double) MAX_LEVEL);
         }
 
-        public static final int ALL_CLEAR_BONUS = 400;
+        // 0->3000 roll level)
+        public static int getRollLevelPerformance(int level) {
+            return (int) Math.floor((double) MAX_ROLL_LEVEL_POINTS * level / (double) MAX_LEVEL);
+        }
 
-        public static final int PERKLESS_BONUS = 600;
+        public static final int ALL_CLEAR_BONUS = 500;
+
+        public static final int PERKLESS_BONUS = 500;
 
         public TotalGrades freeze(int level, int rollLevel, Badges badges, SeasonPerk perk) {
             return new TotalGrades(
                 getPerformance(),
                 getBadgePerformance(badges),
                 getLevelPerformance(level),
-                rollLevel < 0 ? 0 : getLevelPerformance(rollLevel),
+                rollLevel < 0 ? 0 : getRollLevelPerformance(rollLevel),
                 (rollLevel >= level) && (level >= MAX_LEVEL) ? ALL_CLEAR_BONUS : 0,
                 perk == SeasonPerk.PERKLESS ? Interpolation.lerp(0, PERKLESS_BONUS, (level + Math.max(0, rollLevel)) / (MAX_LEVEL * 2d)) : 0
             );
