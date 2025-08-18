@@ -717,7 +717,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             // Roll Shimmer
-            if (engine.ending != 0 && engine.gameActive) {
+            if (engine.ending != 0 && engine.gameActive && !isAbilityActive) {
                 final double rollPhase = (Math.sin((MathHelper.pythonModulo((timeSpentInSeason + y) / 12d, 2.0 * Math.PI))) + 1.0) / 2.0;
 
                 mixer.setLightness(Interpolation.lerp(
@@ -1802,7 +1802,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     }
 
     private static final int GRADE_TIME_OFFSET = 300;
-    private static final int GRADE_BAR_TIME_MIN = 120;
+    private static final int GRADE_BAR_TIME_MIN = 300;
     private static final int GRADE_BAR_TIME_MAX = 1200;
     private int selectedGradeBarTime;
     private boolean fireworksLaunched;
