@@ -1096,9 +1096,28 @@ public class Gimmicks {
             final Piece piece = HasCustomMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
             if (piece == null) return;
 
-            for (Block blk : piece.block) blk.bonusValue |= ICICLE_IDENTIFIER;
+            for (Block blk : piece.block) {
+                blk.bonusValue |= ICICLE_IDENTIFIER;
+                blk.hard = 0;
+            }
 
             piece.setColor(Block.BLOCK_COLOR_GEM_CYAN);
+        }
+
+        public void updateField(GameEngine engine) {
+            for (int y = -engine.field.getHiddenHeight(); y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
+                for (int x = 0; x < engine.field.getWidth(); ++x) {
+                    final Block blk = engine.field.getBlock(x, y);
+                    if (blk == null || blk.isEmpty()) continue;
+
+                    if (blk.color == Block.BLOCK_COLOR_GEM_CYAN) {
+                        blk.color = Block.BLOCK_COLOR_GRAY;
+                        blk.hard = 1;
+                    } else if ((blk.bonusValue & ICICLE_MASK) == ICICLE_IDENTIFIER) {
+                        blk.hard = 0;
+                    }
+                }
+            }
         }
 
         public static void fragmentPieceAndDrillDown(GameEngine engine) {
@@ -1162,7 +1181,7 @@ public class Gimmicks {
                 ),
                 GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom(
-                    "DELICATE, IT BREAKS EASILY.",
+                    "TOUGH, BUT BRITTLE.",
                     EventReceiver.COLOR_WHITE, 0.75f
                 )
             );
@@ -1398,7 +1417,7 @@ public class Gimmicks {
             final int minX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             final int maxX = minX + (engine.field.getWidth() * 16) + 16;
             final int minY = receiver.getFieldDisplayPositionY(engine, playerID) + 52 + currentRadius;
-            final int maxY = minY + (engine.field.getHeight() * 16) + 16 - currentRadius;
+            final int maxY = minY + (engine.field.getHeight() * 16) - currentRadius;
 
             if (++countdown >= CD_MAX) {
                 countdown = 0;

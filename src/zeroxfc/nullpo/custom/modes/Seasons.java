@@ -73,7 +73,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 1;
+    private static final int CURRENT_VERSION = 2;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(12), TWO(24), THREE(48);
@@ -584,7 +584,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         return settings.perk.isActive() && engine.gameStarted && engine.gameActive && (
             (currentAbilityTimer > 0)
                 || (queuedFreefall || (engine.stat == GameEngine.STAT_CUSTOM && customState == CustomState.FREEFALL))
-                || ((HasCustomMove.getNextObject(engine, engine.nextPieceCount).block[0].item == -1) || (engine.holdPieceObject != null && engine.holdPieceObject.block[0].item == -1))
+                || (HasCustomMove.getNextObject(engine, engine.nextPieceCount).block[0].item == -1)
         );
     }
 
@@ -1018,11 +1018,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             switch (customState) {
                 case FREEFALL: {
                     if (engine.statc[0] == 0) {
-                        engine.speed.lineDelay = 40;
+                        engine.speed.lineDelay = Math.max(20, engine.speed.lineDelay);
                     }
 
                     // Arrived here from ARE, this is where the freefall happens.
-                    if (engine.statc[0] > 0 && engine.statc[0] % 3 == 0) {
+                    if (engine.statc[0] > 0 && engine.statc[0] % 2 == 0) {
                         final Field oldField = new Field(engine.field);
                         final boolean landed = FieldManipulation.freeFallStep(engine.field);
 
@@ -1259,7 +1259,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 // endregion Rewind
             } else if (engine.gameStarted && customState == CustomState.FINAL_REWIND) {
                 // region Final Rewind
-                if (settings.hasSeenRollIntro && (!owner.replayMode && !owner.replayRerecord)) {
+                if (settings.hasSeenRollIntro && (!owner.replayMode || owner.replayRerecord)) {
                     receiver.drawMenuFont(engine, playerID, 0, 21, "D:SKIP b", EventReceiver.COLOR_GREEN);
                 }
 
@@ -1297,8 +1297,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 if (engine.statc[0] >= basisTime) {
                     drawing.drawRectangle(
                         receiver,
-                        receiver.getFieldDisplayPositionX(engine, playerID) + 4 - 48, baseY - 68,
-                        (engine.field.getWidth() + 6) * 16, 120,
+                        receiver.getFieldDisplayPositionX(engine, playerID) + 4 - 32, baseY - 68,
+                        (engine.field.getWidth() + 4) * 16, 120,
                         0, 0, 0, 180,
                         true
                     );
@@ -1384,8 +1384,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         break;
                     case 2:
                         settings.spinType += change;
-                        if (settings.spinType < GameEngine.SPINTYPE_4POINT) settings.spinType = 2;
-                        else if (settings.spinType > 2) settings.spinType = GameEngine.SPINTYPE_4POINT;
+                        if (settings.spinType < GameEngine.SPINTYPE_4POINT) settings.spinType = GameEngine.SPINTYPE_IMMOBILE;
+                        else if (settings.spinType > GameEngine.SPINTYPE_IMMOBILE) settings.spinType = GameEngine.SPINTYPE_4POINT;
                         break;
                     default:
                         break;
@@ -1465,8 +1465,18 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         final boolean instantG = engine.speed.gravity < 0 || ((engine.speed.gravity / engine.speed.denominator) >= engine.field.getHeight());
-        if (settings.perk == SeasonPerk.WINTER_PASSIVE && instantG) engine.speed.lockDelay += 6;
-        else if (settings.perk == SeasonPerk.WINTER_PASSIVE) engine.speed.gravity = Math.max(1, engine.speed.gravity >>> 1);
+        if (settings.perk == SeasonPerk.WINTER_PASSIVE) {
+            engine.speed.lockDelay += 6;
+
+            // Slow gravity to 80% speed.
+            if (!instantG) {
+                final double gravityProp = engine.speed.gravity / (double) engine.speed.denominator;
+                final int newGravity = (int) Math.floor(gravityProp * 65536d * 0.8);
+
+                engine.speed.gravity = Math.max(1024, newGravity);
+                engine.speed.denominator = 65536;
+            }
+        }
 
         if (gimmickAutMo1 != null) {
             // VERY LOW ARE:
@@ -1717,13 +1727,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (gimmickRollSpr != null) gimmickRollSpr.update(engine);
         }
 
-        if (engine.statc[0] == 0 && gimmickWinMo3 != null) {
-            for (int y = -engine.field.getHiddenHeight(); y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
-                for (int x = 0; x < engine.field.getWidth(); ++x) {
-                    final Block blk = engine.field.getBlock(x, y);
-                    if (!blk.isEmpty()) blk.color = Block.gemToNormalColor(blk.color);
-                }
-            }
+        if (engine.statc[0] == 0 && gimmickWinMo3 != null && !engine.lagStop && !engine.holdDisable) {
+            gimmickWinMo3.updateField(engine);
         }
 
         if ((engine.statc[0] == 0) && (!engine.holdDisable) && (!levelUpFlag)) {
@@ -1870,6 +1875,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (engine.statc[9] == selectedGradeBarTime && !fireworksLaunched) {
             fireworksLaunched = true;
             addFireworksLeft(currentPoints / 100);
+            addFireworksLeft(30);
         }
 
         gradeName = rankDisplay.valL;
@@ -1918,6 +1924,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 )
             );
 
+            engine.statistics.score = totalGrades.totalGradePoints;
+
             selectedGradeBarTime = Interpolation.lerp(GRADE_BAR_TIME_MIN, GRADE_BAR_TIME_MAX, totalGrades.totalGradePoints / (double) Grading.MAX_GRADE_POINTS);
 
             final Pair<GameTextUtilities.TextBlock, IntPair> rankDisplay = TotalGrades.GRADE_NAMES.apply(0);
@@ -1932,7 +1940,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private void renderGrading(GameEngine engine, int baseX, int baseY) {
         if (engine.statc[8] <= 180) return;
 
-        final int textColour = engine.statc[9] % 2 == 0 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE;
+        final int textColour = engine.statc[8] % 2 == 0 ? EventReceiver.COLOR_YELLOW : EventReceiver.COLOR_WHITE;
 
         // Title and Rank
         GameTextUtilities.drawAlignedTextBlock(
@@ -2153,7 +2161,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             int pieceYs = 0;
 
             for (int i = 0; i < engine.nowPieceObject.getMaxBlock(); ++i) {
-                pieceXs += pieceX + (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] * 16) + 8;
+                pieceXs += pieceX + (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] * 16);
                 pieceYs += pieceY + (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] * 16) + 8;
             }
 
@@ -2167,7 +2175,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             basePosition = new DoubleVector(upX, pieceYs, false);
             reverse = pieceXs < (receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (8 * engine.field.getWidth()));
         } else {
-            basePosition = new DoubleVector(baseX + (engine.field.getWidth() * 8) + 8, baseY + (engine.field.getHeight() * 16), false);
+            basePosition = new DoubleVector(baseX + (engine.field.getWidth() * 8), baseY + (engine.field.getHeight() * 16), false);
             reverse = false;
         }
 
@@ -2891,6 +2899,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             purifyFieldAndNexts(engine);
         }
 
+        // Fixed line delay for non-piece line clears.
+        if (!lineClearAfterPiece) {
+            engine.speed.lineDelay = Math.max(20, engine.speed.lineDelay);
+        }
+
         final boolean olc = HasCustomLineClear.super.inOnLineClear(engine, playerID);
 
         if (isLineDelayFinished(engine) && getCompleteLinesWithoutFlagging(engine) > 0 && engine.gameActive) {
@@ -3010,7 +3023,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 {
                     final Block blk = engine.field.getBlock(x, y);
 
-                    if (blk != null && !blk.isEmpty() && blk.hard > 0) {
+                    if (blk != null && !blk.isEmpty() && blk.color != Block.BLOCK_COLOR_GEM_CYAN && blk.hard > 0) {
                         customGraphics.drawImage(
                             engine, "iceblock",
                             baseX + (16 * x), baseY + (16 * y),
@@ -3235,7 +3248,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             engine.framecolor = Season.defaultMenuFrameColour();
         }
 
-        if (!engine.lagStop && engine.gameStarted && engine.ctrl.isPush(Controller.BUTTON_F) && currentEnergy >= settings.perk.energyStore && settings.perk.isActive()) {
+        if (!engine.lagStop && engine.gameStarted && engine.gameActive && engine.ctrl.isPush(Controller.BUTTON_F) && currentEnergy >= settings.perk.energyStore && settings.perk.isActive()) {
             currentEnergy = 0;
             currentAbilityTimer = settings.perk.duration;
 
@@ -3265,14 +3278,19 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
     }
 
+    private static final int[] METER_WHITE = { 255, 255, 255 };
+    private static final int[] METER_ORANGE = { 255, 100, 0 };
+
     @Override
     public void renderLast(GameEngine engine, int playerID) {
         final int titlesColour = settings.perk == SeasonPerk.PERKLESS ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_YELLOW;
+        final float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
+        final boolean smallGrid = receiver.getNextDisplayType() == 2;
+        final int gridSize = (int) (scale * 16);
 
         receiver.drawScoreFont(engine, playerID, 0, 0, getName(), titlesColour);
 
         if (engine.stat == GameEngine.STAT_SETTING || (engine.stat == GameEngine.STAT_RESULT && !owner.replayMode)) {
-            final float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
             final int topY = (receiver.getNextDisplayType() == 2) ? 5 : 3;
             final boolean showRankings = !owner.replayMode && !settings.fullGhost;
 
@@ -3327,7 +3345,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                     GameTextUtilities.drawAlignedScoreTextBlock(
                         receiver, engine, playerID,
-                        receiver.getNextDisplayType() == 2,
+                        smallGrid,
                         11, topY + i,
                         false,
                         subRankText,
@@ -3346,7 +3364,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 } else {
                     if (showPlayerStats) {
                         GameTextUtilities.drawAlignedScoreText(
-                            receiver, engine, playerID, false,
+                            receiver, engine, playerID, smallGrid,
                             0, topY + SeasonsSettings.RANKING_MAX + 8,
                             GameTextUtilities.Text.ofBig(owner.replayMode ? settings.playerName : playerProperties.getNameDisplay())
                         );
@@ -3387,8 +3405,45 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 receiver.drawScoreFont(engine, playerID, 0, 5, "TIME...?", titlesColour);
                 receiver.drawScoreFont(engine, playerID, 0, 6, GeneralUtil.getTime(timeDisplay));
             } else if (engine.ending > 0) {
-                receiver.drawScoreFont(engine, playerID, 0, 5, "ROLL TIME LIMIT", EventReceiver.COLOR_DARKBLUE);
+                receiver.drawScoreFont(engine, playerID, 0, 5, "ROLL LIMIT", EventReceiver.COLOR_DARKBLUE);
                 receiver.drawScoreFont(engine, playerID, 0, 6, GeneralUtil.getTime(rollTime), rollTime <= 600 && rollTime % 2 == 0 && engine.gameActive);
+            }
+
+            {
+                final int height = engine.field == null ? 20 : engine.field.getHeight();
+
+                final float speedProp;
+
+                if (engine.field == null) {
+                    speedProp = 0.0f;
+                } else {
+                    speedProp = engine.speed.gravity == -1 ? ((float) height) : MathHelper.clamp(
+                        engine.speed.gravity / (float) engine.speed.denominator,
+                        0.0f, (float) height
+                    );
+                }
+
+                final float meterValue = speedProp < 1.0 ? speedProp : MathHelper.clamp(speedProp / 10.0f, 0.0f, 1.0f);
+
+                rendererExtension.drawAlignedSpeedMeter(
+                    receiver,
+                    receiver.getScoreDisplayPositionX(engine, playerID) + (gridSize * 12),
+                    receiver.getScoreDisplayPositionY(engine, playerID) + (gridSize * 5) + (gridSize / 2),
+                    ObjectAlignment.MIDDLE_LEFT,
+                    meterValue,
+                    (160f / 42f),
+                    2f,
+                    speedProp < 1.0 ? METER_WHITE : RendererExtension.SPEED_METER_GREEN,
+                    speedProp < 1.0 ? METER_ORANGE : RendererExtension.SPEED_METER_RED
+                );
+                receiver.drawScoreFont(
+                    engine, playerID,
+                    12, 6,
+                    speedProp < 1.0
+                        ? (speedProp == 0.0f ? "0.00G" : String.format("1/%d.%02dG", (int) Math.floor(1f / speedProp), (int) Math.floor(((1f / speedProp) % 1.0f) * 100.0f)))
+                        : String.format("%d.%02dG", (int) Math.floor(speedProp), (int) Math.floor((speedProp % 1.0f) * 100.0f)),
+                    EventReceiver.COLOR_WHITE
+                );
             }
 
             receiver.drawScoreFont(engine, playerID, 0, 8, "PERK", titlesColour);
@@ -3396,7 +3451,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             receiver.drawScoreFont(engine, playerID, 0, 11, "BADGES", titlesColour);
             GameTextUtilities.drawAlignedScoreTextBlock(
-                receiver, engine, playerID, false,
+                receiver, engine, playerID, smallGrid,
                 0, 12, false,
                 badges.getBadgeDisplay(false),
                 ObjectAlignment.TOP_LEFT
@@ -3407,7 +3462,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 receiver.drawScoreFont(engine, playerID, 13, 12, "PLAYER", titlesColour);
                 GameTextUtilities.drawAlignedScoreText(
-                    receiver, engine, playerID, false,
+                    receiver, engine, playerID, smallGrid,
                     13, 13,
                     GameTextUtilities.Text.ofBig(name),
                     ObjectAlignment.TOP_LEFT
@@ -3422,7 +3477,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 // region Gimmicks
                 if (gimmickSprMo2 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 18,
                         false,
                         gimmickSprMo2.getSummary(),
@@ -3432,7 +3487,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickSprMo3 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 19,
                         false,
                         gimmickSprMo3.getSummary(),
@@ -3442,7 +3497,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickSumMo1 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 18,
                         false,
                         gimmickSumMo1.getSummary(),
@@ -3452,7 +3507,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickSumMo2 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 19,
                         false,
                         gimmickSumMo2.getSummary(),
@@ -3462,7 +3517,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickSumMo3 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 20,
                         false,
                         gimmickSumMo3.getSummary(),
@@ -3472,7 +3527,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickAutMo1 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 18,
                         false,
                         gimmickAutMo1.getSummary(),
@@ -3482,7 +3537,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickAutMo2 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 19,
                         false,
                         gimmickAutMo2.getSummary(),
@@ -3492,7 +3547,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickAutMo3 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 20,
                         false,
                         gimmickAutMo3.getSummary(),
@@ -3502,7 +3557,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickWinMo1 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 18,
                         false,
                         gimmickWinMo1.getSummary(),
@@ -3512,7 +3567,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickWinMo2 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 19,
                         false,
                         gimmickWinMo2.getSummary(),
@@ -3522,7 +3577,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickWinMo3 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 20,
                         false,
                         gimmickWinMo3.getSummary(),
@@ -3532,7 +3587,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickRollSpr != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 18,
                         false,
                         gimmickRollSpr.getSummary(),
@@ -3542,7 +3597,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickRollSum != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 18,
                         false,
                         gimmickRollSum.getSummary(),
@@ -3552,7 +3607,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickRollAut != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 18,
                         false,
                         gimmickRollAut.getSummary(),
@@ -3562,7 +3617,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (gimmickRollWin != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
+                        receiver, engine, playerID, smallGrid,
                         0, 18,
                         false,
                         gimmickRollWin.getSummary(),
@@ -3593,14 +3648,15 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 if (playerProperties.isLoggedIn()) settings.saveSettingPlayer(playerProperties);
             }
 
-            settings.saveSetting(owner.replayProp, true);
-
             // If they have completed the game, set the completion status to true for their profile.
             if (playerProperties.isLoggedIn() && engine.ending > 0 && engine.statistics.level >= MAX_LEVEL) {
                 settings.hasCompletedGame = true;
                 settings.saveSettingPlayer(playerProperties);
             }
         }
+
+        // Save Replay Properties
+        settings.saveSetting(owner.replayProp, true);
 
         if (!owner.replayMode && !settings.fullGhost && engine.ai == null) {
             lastRank = settings.updateRanking(totalGrades.totalGradePoints, rollLevelReached, engine.statistics.level, engine.statistics.time);
@@ -3674,7 +3730,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         // 0->4000
         public static int getBadgePerformance(Badges badges) {
-            return Math.min(MAX_BADGE_POINTS, (int) Math.floor(badges.getBadges() * (9d / 8d)));
+            return Math.min(MAX_BADGE_POINTS, (int) Math.floor(badges.getBadges() * (6d / 10d)));
         }
 
         // 0->3000 (level + roll level each)
@@ -3693,7 +3749,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 getLevelPerformance(level),
                 rollLevel < 0 ? 0 : getLevelPerformance(rollLevel),
                 (rollLevel >= level) && (level >= MAX_LEVEL) ? ALL_CLEAR_BONUS : 0,
-                perk == SeasonPerk.PERKLESS ? PERKLESS_BONUS : 0
+                perk == SeasonPerk.PERKLESS ? Interpolation.lerp(0, PERKLESS_BONUS, (level + Math.max(0, rollLevel)) / (MAX_LEVEL * 2d)) : 0
             );
         }
     }
