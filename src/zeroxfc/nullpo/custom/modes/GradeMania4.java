@@ -172,7 +172,7 @@ public class GradeMania4 extends DummyMode implements HasCustomFieldDrawing {
         }
 
         return GameTextUtilities.TextBlock.of(
-            GameTextUtilities.Text.custom(TABLE_CLASSIC_GRADE_NAME[left + right], color, 1f)
+            GameTextUtilities.Text.custom(TABLE_CLASSIC_GRADE_NAME[left + right], color, scale)
         );
     }
 
