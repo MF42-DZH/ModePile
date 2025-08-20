@@ -73,7 +73,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 2;
+    private static final int CURRENT_VERSION = 3;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(12), TWO(24), THREE(48);
@@ -126,6 +126,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         return baseLevel + HOURS_IN_DAY * days;
     }
 
+    // The levels start on February instead of January because January is a little too early for Spring lmao.
     private static final int LEVELS_FEB = (28 * HOURS_IN_DAY);
     private static final int LEVELS_MAR = LEVELS_FEB + (31 * HOURS_IN_DAY);
     private static final int LEVELS_APR = LEVELS_MAR + (30 * HOURS_IN_DAY);
@@ -141,37 +142,66 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     // Base game July speed doesn't need to be set.
     private static final IntFunction<SpeedParam> SPEED_TABLE = SpeedTableBuilder.createNew()
+        .addGravity(512, 65536, addDays(0, 1) + 12)
         .addGravity(1024, 65536, addDays(0, 3))
+        .addGravity((1024 + 1536) / 2, 65536, addDays(0, 4) + 12)
         .addGravity(1536, 65536, addDays(0, 6))
+        .addGravity((1536 + 2048) / 2, 65536, addDays(0, 7) + 12)
         .addGravity(2048, 65536, addDays(0, 9))
+        .addGravity((2048 + 2560) / 2, 65536, addDays(0, 10) + 12)
         .addGravity(2560, 65536, addDays(0, 12))
+        .addGravity((2560 + 3072) / 2, 65536, addDays(0, 13) + 12)
         .addGravity(3072, 65536, addDays(0, 15))
+        .addGravity((3072 + 4096) / 2, 65536, addDays(0, 16) + 12)
         .addGravity(4096, 65536, addDays(0, 21))
+        .addGravity((4096 + 8192) / 2, 65536, addDays(0, 22) + 12)
         .addGravity(8192, 65536, addDays(0, 24))
+        .addGravity((8192 + 12288) / 2, 65536, addDays(0, 25) + 12)
         .addGravity(12288, 65536, addDays(0, 27))
+        .addGravity((12288 + 16384) / 2, 65536, addDays(0, 28) + 12)
         .addGravity(16384, 65536, addDays(LEVELS_FEB, 1))
+        .addGravity((16384 + 20480) / 2, 65536, addDays(LEVELS_FEB, 4) + 12)
         .addGravity(20480, 65536, addDays(LEVELS_FEB, 7))
+        .addGravity((20480 + 24576) / 2, 65536, addDays(LEVELS_FEB, 10) + 12)
         .addGravity(24576, 65536, addDays(LEVELS_FEB, 13))
+        .addGravity((24576 + 28672) / 2, 65536, addDays(LEVELS_FEB, 16) + 12)
         .addGravity(28672, 65536, addDays(LEVELS_FEB, 19))
+        .addGravity((28672 + 32768) / 2, 65536, addDays(LEVELS_FEB, 22) + 12)
         .addGravity(32768, 65536, addDays(LEVELS_FEB, 25))
+        .addGravity((32768 + 36864) / 2, 65536, addDays(LEVELS_FEB, 28) + 12)
         .addGravity(36864, 65536, addDays(LEVELS_MAR, 0))
+        .addGravity(512, 65536, addDays(LEVELS_MAR, 1) + 12)
         .addGravity(1024, 65536, addDays(LEVELS_MAR, 3))
+        .addGravity((1024 + 8192) / 2, 65536, addDays(LEVELS_MAR, 4) + 12)
         .addGravity(8192, 65536, addDays(LEVELS_MAR, 6))
+        .addGravity((8192 + 16384) / 2, 65536, addDays(LEVELS_MAR, 7) + 12)
         .addGravity(16384, 65536, addDays(LEVELS_MAR, 9))
+        .addGravity((16384 + 25476) / 2, 65536, addDays(LEVELS_MAR, 10) + 12)
         .addGravity(25476, 65536, addDays(LEVELS_MAR, 12))
+        .addGravity((25476 + 32768) / 2, 65536, addDays(LEVELS_MAR, 13) + 12)
         .addGravity(32768, 65536, addDays(LEVELS_MAR, 15))
+        .addGravity((32768 + 40960) / 2, 65536, addDays(LEVELS_MAR, 16) + 12)
         .addGravity(40960, 65536, addDays(LEVELS_MAR, 18))
+        .addGravity((40960 + 49152) / 2, 65536, addDays(LEVELS_MAR, 19) + 12)
         .addGravity(49152, 65536, addDays(LEVELS_MAR, 21))
+        .addGravity((49152 + 57344) / 2, 65536, addDays(LEVELS_MAR, 22) + 12)
         .addGravity(57344, 65536, addDays(LEVELS_MAR, 24))
+        .addGravity((57344 + 65536) / 2, 65536, addDays(LEVELS_MAR, 25) + 12)
         .addGravity(1, 1, addDays(LEVELS_MAR, 27))
         .addGravity(2, 1, addDays(LEVELS_APR, 0))
+        .addGravity(3, 2, addDays(LEVELS_APR, 7) + 12)
         .addGravity(3, 1, addDays(LEVELS_APR, 15))
+        .addGravity(7, 2, addDays(LEVELS_APR, 23))
         .addGravity(4, 1, addDays(LEVELS_APR, 31))
         .addGravity(5, 1, addDays(LEVELS_MAY, 0))
+        .addGravity(9, 2, addDays(LEVELS_MAY, 7) + 12)
         .addGravity(4, 1, addDays(LEVELS_MAY, 15))
+        .addGravity(7, 2, addDays(LEVELS_MAY, 22) + 12)
         .addGravity(3, 1, addDays(LEVELS_MAY, 30))
         .addGravity(2, 1, LEVELS_NOV)
+        .addGravity(3, 2, addDays(LEVELS_NOV, 15))
         .addGravity(1, 1, LEVELS_DEC)
+        .addGravity(3, 4, addDays(LEVELS_DEC, 15))
         .addTerminalGravity(1, 2)
         .addARE(14, LEVELS_APR)
         .addARE(12, LEVELS_MAY)
@@ -623,12 +653,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 Math.abs((maxY * x) - (maxX * y)) / Math.sqrt((double) (maxY * maxY) + (maxX * maxX));
 
             final double lMult = Interpolation.sineStep(
-                1.35, 0.75,
+                1.25, 0.75,
                 MathHelper.clamp(
                     distance / (maxX / 2d),
                     0d, 1d
                 )
             );
+
+            final double sMult = MathHelper.clamp(1.0 / lMult, 0.0, 1.0);
 
             final boolean isAbilityActive = abilityIsActive(engine);
 
@@ -714,7 +746,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 }
             }
 
-            mixer.setLightness(mixer.getLightness() * lMult);
+            mixer.setLightness(mixer.getLightness() * lMult).setSaturation(sMult);
 
             // Roll Shimmer
             if (engine.ending != 0 && engine.gameActive && !isAbilityActive) {
@@ -1336,6 +1368,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             bvr = new Random(engine.randSeed);
             rewindBlockRandom = new Random(engine.randSeed);
 
+            engine.statistics.level = 0;
+            setSpeed(engine);
+
             // Setup active ability stuff.
             currentEnergy = 0;
             currentAbilityTimer = 0;
@@ -1464,7 +1499,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             engine.speed = ROLL_SPEED_TABLE.apply(engine.statistics.level);
         }
 
-        final boolean instantG = engine.speed.gravity < 0 || ((engine.speed.gravity / engine.speed.denominator) >= engine.field.getHeight());
+        final boolean instantG = engine.speed.gravity < 0 || ((engine.speed.gravity / engine.speed.denominator) >= (engine.field == null ? 20 : engine.field.getHeight()));
         if (settings.perk == SeasonPerk.WINTER_PASSIVE) {
             engine.speed.lockDelay += 6;
 
@@ -2180,7 +2215,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         final String pieceName = Piece.getPieceName(engine.nowPieceObject.id);
-        final DoubleVector baseVelocity = new DoubleVector(0.0, -6.4, false);
+        final DoubleVector baseVelocity = new DoubleVector(0.0, -8, false);
         final DoubleVector baseAcceleration = new DoubleVector(0.0, 9.80665 / 15.0, false);
         final float startScale = 1f;
         final float endScale = 2f;
@@ -2311,6 +2346,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         if (engine.b2b && engine.b2bcount > 1 && lines > 0) {
+            final int b2bc = engine.b2bcount == 2 ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_RED;
+
             textEmitter.addString(
                 "B2B",
                 DoubleVector.sub(basePosition, new DoubleVector(0, 24, false)),
@@ -2318,7 +2355,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 baseAcceleration,
                 ObjectAlignment.MIDDLE_MIDDLE,
                 -1 * ((lifeOffset * (sb.length() - 3)) / 2), lifeOffset, maxLife,
-                EventReceiver.COLOR_RED,
+                b2bc,
                 startScale, endScale,
                 colour, 255,
                 colour, 255,
@@ -2413,6 +2450,15 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (engine.ending == 0) {
                 final int performance = performanceForLines(engine, lines);
                 grading.addPerformancePoints(performance);
+            } else {
+                // Add a small amount of bonus time for line clears.
+                if (lines >= 4) {
+                    rollTime += 5 * lines;
+                } else if (lines == 3) {
+                    rollTime += 9;
+                } else {
+                    rollTime += 2 * lines;
+                }
             }
 
             if (engine.statistics.level >= MAX_LEVEL && !rollStarted) {
@@ -3481,152 +3527,75 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 }
 
                 // region Gimmicks
-                if (gimmickSprMo2 != null) {
+                final Gimmicks.HasDescription gimmickSlot1;
+                final Gimmicks.HasDescription gimmickSlot2;
+                final Gimmicks.HasDescription gimmickSlot3;
+
+                if (engine.ending == 0) {
+                    switch (currentSeason) {
+                        case SPRING:
+                            gimmickSlot1 = gimmickSprMo2;
+                            gimmickSlot2 = gimmickSprMo3;
+                            gimmickSlot3 = null;
+                            break;
+                        case SUMMER:
+                            gimmickSlot1 = gimmickSumMo1;
+                            gimmickSlot2 = gimmickSumMo2;
+                            gimmickSlot3 = gimmickSumMo3;
+                            break;
+                        case AUTUMN:
+                            gimmickSlot1 = gimmickAutMo1;
+                            gimmickSlot2 = gimmickAutMo2;
+                            gimmickSlot3 = gimmickAutMo3;
+                            break;
+                        case WINTER:
+                            gimmickSlot1 = gimmickWinMo1;
+                            gimmickSlot2 = gimmickWinMo2;
+                            gimmickSlot3 = gimmickWinMo3;
+                            break;
+                        default:
+                            gimmickSlot1 = null;
+                            gimmickSlot2 = null;
+                            gimmickSlot3 = null;
+                            break;
+                    }
+                } else {
+                    if (gimmickRollSpr != null) gimmickSlot1 = gimmickRollSpr;
+                    else if (gimmickRollSum != null) gimmickSlot1 = gimmickRollSum;
+                    else if (gimmickRollAut != null) gimmickSlot1 = gimmickRollAut;
+                    else if (gimmickRollWin != null) gimmickSlot1 = gimmickRollWin;
+                    else gimmickSlot1 = null;
+
+                    gimmickSlot2 = null;
+                    gimmickSlot3 = null;
+                }
+
+                if (gimmickSlot1 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
                         receiver, engine, playerID, false,
                         0, 18,
                         false,
-                        gimmickSprMo2.getSummary(),
+                        gimmickSlot1.getSummary(),
                         ObjectAlignment.TOP_LEFT
                     );
                 }
 
-                if (gimmickSprMo3 != null) {
+                if (gimmickSlot2 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
                         receiver, engine, playerID, false,
                         0, 19,
                         false,
-                        gimmickSprMo3.getSummary(),
+                        gimmickSlot2.getSummary(),
                         ObjectAlignment.TOP_LEFT
                     );
                 }
 
-                if (gimmickSumMo1 != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 18,
-                        false,
-                        gimmickSumMo1.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickSumMo2 != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 19,
-                        false,
-                        gimmickSumMo2.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickSumMo3 != null) {
+                if (gimmickSlot3 != null) {
                     GameTextUtilities.drawAlignedScoreTextBlock(
                         receiver, engine, playerID, false,
                         0, 20,
                         false,
-                        gimmickSumMo3.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickAutMo1 != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 18,
-                        false,
-                        gimmickAutMo1.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickAutMo2 != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 19,
-                        false,
-                        gimmickAutMo2.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickAutMo3 != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 20,
-                        false,
-                        gimmickAutMo3.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickWinMo1 != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 18,
-                        false,
-                        gimmickWinMo1.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickWinMo2 != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 19,
-                        false,
-                        gimmickWinMo2.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickWinMo3 != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 20,
-                        false,
-                        gimmickWinMo3.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickRollSpr != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 18,
-                        false,
-                        gimmickRollSpr.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickRollSum != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 18,
-                        false,
-                        gimmickRollSum.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickRollAut != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 18,
-                        false,
-                        gimmickRollAut.getSummary(),
-                        ObjectAlignment.TOP_LEFT
-                    );
-                }
-
-                if (gimmickRollWin != null) {
-                    GameTextUtilities.drawAlignedScoreTextBlock(
-                        receiver, engine, playerID, false,
-                        0, 18,
-                        false,
-                        gimmickRollWin.getSummary(),
+                        gimmickSlot3.getSummary(),
                         ObjectAlignment.TOP_LEFT
                     );
                 }
