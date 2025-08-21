@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: eclipse-temurin:8-jdk-alpine-3.22
+      image: 0xfc963f18dc21/misc-build-images:jdk8-alpine-curl
     steps:
       - name: Clone the Pack
         uses: actions/checkout@v4
