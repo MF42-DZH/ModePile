@@ -16,6 +16,7 @@ import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
+import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomMove;
 import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
@@ -323,6 +324,7 @@ public class Gimmicks {
     public static class Dehydration implements HasDescription {
         private final Random pieceRandom;
         private final Random fieldRandom;
+        private final Random soundRandom;
 
         private final int seasonStartLv;
         private final int seasonEndLv;
@@ -332,7 +334,10 @@ public class Gimmicks {
         // Set the badge chance manually!
         public Dehydration(Random random, int seasonStartLv, int seasonEndLv) {
             this.pieceRandom = random;
-            this.fieldRandom = new Random(pieceRandom.nextLong());
+
+            final long reseed = pieceRandom.nextLong();
+            this.fieldRandom = new Random(reseed);
+            this.soundRandom = new Random(~reseed);
 
             this.seasonStartLv = seasonStartLv;
             this.seasonEndLv = seasonEndLv;
@@ -393,7 +398,9 @@ public class Gimmicks {
             if (piece == null) return;
 
             piece.setAttribute(Block.BLOCK_ATTRIBUTE_BONE, true);
-            engine.playSE("movefail");
+
+            final int sound = soundRandom.nextInt(3);
+            engine.playSE(SoundLoader.Sounds.Seasons.values()[(SoundLoader.Sounds.Seasons.GROUND_CRACKLE_1.ordinal()) + sound].sfx());
         }
 
         public void updateField(GameEngine engine) {
@@ -413,8 +420,10 @@ public class Gimmicks {
                 }
             }
 
-            // TODO: I really need a sound for things evaporating.
-            //       Deal with that once I finish the core of the mode.
+            if (playSound) {
+                final int sound = soundRandom.nextInt(3);
+                engine.playSE(SoundLoader.Sounds.Seasons.values()[(SoundLoader.Sounds.Seasons.GROUND_CRACKLE_1.ordinal()) + sound].sfx());
+            }
         }
     }
 
@@ -451,7 +460,7 @@ public class Gimmicks {
                 // Skip I-piece.
                 engine.nextPieceCount++;
 
-                engine.playSE("movefail");
+                engine.playSE(SoundLoader.Sounds.Seasons.STEAM.sfx());
                 return true;
             }
 
@@ -652,6 +661,8 @@ public class Gimmicks {
 
     public static class FlowingWinds implements HasDescription {
         private final Random random;
+        private final Random soundRandom;
+
         private final int seasonStartLv;
         private final int seasonEndLv;
 
@@ -660,6 +671,8 @@ public class Gimmicks {
         // Set the badge chance manually!
         public FlowingWinds(Random random, int seasonStartLv, int seasonEndLv) {
             this.random = random;
+            this.soundRandom = new Random(seasonStartLv ^ seasonEndLv);
+
             this.seasonStartLv = seasonStartLv;
             this.seasonEndLv = seasonEndLv;
         }
@@ -738,8 +751,8 @@ public class Gimmicks {
                 engine.ruleopt.pieceColor[piece.id]
             });
 
-            // TODO: replace this sound
-            engine.playSE("rotate");
+            final int sound = soundRandom.nextInt(3);
+            engine.playSE(SoundLoader.Sounds.Seasons.values()[(SoundLoader.Sounds.Seasons.WIND_1.ordinal()) + sound].sfx());
         }
     }
 
@@ -1111,10 +1124,10 @@ public class Gimmicks {
                     if (blk == null || blk.isEmpty()) continue;
 
                     if (blk.color == Block.BLOCK_COLOR_GEM_CYAN) {
-                        blk.color = Block.BLOCK_COLOR_GRAY;
-                        blk.hard = 1;
+                        blk.color = Block.BLOCK_COLOR_CYAN;
+                        blk.hard = 2;
                     } else if (blk.hard > 0) {
-                        blk.hard = 0;
+                        if (--blk.hard == 0) blk.color = Block.BLOCK_COLOR_GRAY;
                     }
                 }
             }
@@ -1139,7 +1152,7 @@ public class Gimmicks {
                 }
             }
 
-            // TODO: add custom sound for the piece fragmenting
+            engine.playSE(SoundLoader.Sounds.Seasons.ICICLE.sfx());
         }
 
         @Override
@@ -1521,6 +1534,8 @@ public class Gimmicks {
         public void updateField(GameEngine engine) {
             if (engine.field == null) return;
 
+            boolean playSound = false;
+
             for (int y = engine.field.getHighestBlockY(); y < engine.field.getHeight(); ++y) {
                 for (int x = 0; x < engine.field.getWidth(); ++x) {
                     if (!engine.field.getBlockEmpty(x, y)) {
@@ -1529,9 +1544,15 @@ public class Gimmicks {
                             blk.countdown = 0;
                             blk.hard = Integer.MAX_VALUE;
                             blk.color = Block.BLOCK_COLOR_GRAY;
+
+                            playSound = true;
                         }
                     }
                 }
+            }
+
+            if (playSound) {
+                engine.playSE(SoundLoader.Sounds.Seasons.ZERO_FREEZE.sfx());
             }
         }
 

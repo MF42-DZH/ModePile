@@ -51,7 +51,7 @@ public class SoundLoader {
             }
 
             public static void loadAllSounds() {
-                for (Fireworks sound : values()) importSound(sound.sfx());
+                for (Fireworks sound : values()) importSoundZXF(sound.sfx());
             }
             // endregion Boilerplate
         }
@@ -78,7 +78,7 @@ public class SoundLoader {
             }
 
             public static void loadAllSounds() {
-                for (Scanner sound : values()) importSound(sound.sfx());
+                for (Scanner sound : values()) importSoundZXF(sound.sfx());
             }
             // endregion Boilerplate
         }
@@ -107,7 +107,7 @@ public class SoundLoader {
             }
 
             public static void loadAllSounds() {
-                for (Minesweeper sound : values()) importSound(sound.sfx());
+                for (Minesweeper sound : values()) importSoundZXF(sound.sfx());
             }
             // endregion Boilerplate
         }
@@ -142,7 +142,7 @@ public class SoundLoader {
             }
 
             public static void loadAllSounds() {
-                for (Collapse sound : values()) importSound(sound.sfx());
+                for (Collapse sound : values()) importSoundZXF(sound.sfx());
             }
             // endregion Boilerplate
         }
@@ -170,9 +170,44 @@ public class SoundLoader {
             }
 
             public static void loadAllSounds() {
-                for (Constantris sound : values()) importSound(sound.sfx());
+                for (Constantris sound : values()) importSoundZXF(sound.sfx());
             }
             // endregion Boilerplate
+        }
+
+        public enum Seasons implements IsSounds {
+            STEAM("steam"),
+            ICICLE("icicle"),
+            GROUND_CRACKLE_1("groundcrackle1"),
+            GROUND_CRACKLE_2("groundcrackle2"),
+            GROUND_CRACKLE_3("groundcrackle3"),
+            WIND_1("wind1"),
+            WIND_2("wind2"),
+            WIND_3("wind3"),
+            ZERO_FREEZE("zerofreeze");
+
+            private final String soundName;
+
+            // region Boilerplate
+            Seasons(String soundName) {
+                this.soundName = soundName;
+            }
+
+            @Override
+            public String sfx() {
+                return soundName;
+            }
+
+            @Override
+            public String toString() {
+                return soundName;
+            }
+
+            public static void loadAllSounds() {
+                for (Seasons sound : values()) importSoundZXF(sound.sfx());
+            }
+            // endregion Boilerplate
+
         }
 
         private Sounds() {}
@@ -274,7 +309,7 @@ public class SoundLoader {
      *
      * @param soundName Name of sound in pack
      */
-    private static void importSound(String soundName) {
+    private static void importSoundZXF(String soundName) {
         extendClipMaps();
 
         String skindir = null;

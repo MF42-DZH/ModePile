@@ -41,7 +41,7 @@ public class Badges {
         // AC badge.
         if ((lines >= 1) && (engine.field.isEmpty())) {
             int gain = mjBoost.applyAsInt(10);
-            if (minorBoost) ++gain;
+            if (minorBoost) gain += 2;
 
             ac += gain;
             acGreen += gain * 6;
@@ -54,13 +54,13 @@ public class Badges {
             foursGain += mjBoost.applyAsInt((int) (2.5 * lines));
             foursGain += mjBoost.applyAsInt(Math.min(B2B_BONUS_MAX, engine.b2bcount - 1));
 
-            if (minorBoost) ++foursGain;
+            if (minorBoost) foursGain += 2;
         } else if (lines == 3) {
             foursGain += mjBoost.applyAsInt(4);
-            if (minorBoost) ++foursGain;
+            if (minorBoost) foursGain += 2;
         } else if (lines >= 1) {
             foursGain += mjBoost.applyAsInt(lines);
-            if (minorBoost) ++foursGain;
+            if (minorBoost) foursGain += 2;
         }
 
         fours += foursGain;
@@ -72,20 +72,20 @@ public class Badges {
         if (engine.tspin) {
             if (lines >= 4) {
                 spinsGain += mjBoost.applyAsInt(10 * lines);
-                if (minorBoost) ++spinsGain;
+                if (minorBoost) spinsGain += 2;
             } else if (lines == 3) {
                 spinsGain += mjBoost.applyAsInt(25);
-                if (minorBoost) ++spinsGain;
+                if (minorBoost) spinsGain += 2;
             } else if (lines == 2) {
                 spinsGain += mjBoost.applyAsInt(10);
-                if (minorBoost) ++spinsGain;
+                if (minorBoost) spinsGain += 2;
             } else if (lines == 1) {
                 spinsGain += mjBoost.applyAsInt((engine.tspinmini || engine.tspinez) ? 1 : 2);
             }
 
             if (lines >= 1) {
                 if (engine.b2b) spinsGain += mjBoost.applyAsInt(Math.min(B2B_BONUS_MAX, engine.b2bcount - 1));
-                if (minorBoost) ++spinsGain;
+                if (minorBoost) spinsGain += 2;
             }
         }
 
@@ -100,7 +100,7 @@ public class Badges {
         int gain = 0;
 
         gain += mjBoost.applyAsInt(seasonBadges);
-        if (seasonBadges > 0 && minorBoost) ++gain;
+        if (seasonBadges > 0 && minorBoost) gain += 2;
 
         season += gain;
         seasonGreen += gain * 3;

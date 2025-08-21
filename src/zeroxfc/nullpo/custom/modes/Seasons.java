@@ -40,6 +40,7 @@ import zeroxfc.nullpo.custom.libs.ModePileCredits;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
+import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.mixins.HasCelebrationFireworks;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
@@ -73,7 +74,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 3;
+    private static final int CURRENT_VERSION = 4;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(12), TWO(24), THREE(48);
@@ -653,7 +654,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 Math.abs((maxY * x) - (maxX * y)) / Math.sqrt((double) (maxY * maxY) + (maxX * maxX));
 
             final double lMult = Interpolation.sineStep(
-                1.25, 0.75,
+                1.125, 0.75,
                 MathHelper.clamp(
                     distance / (maxX / 2d),
                     0d, 1d
@@ -877,6 +878,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     public void playerInit(GameEngine engine, int playerID) {
         owner = engine.owner;
         receiver = engine.owner.receiver;
+
+        // Load all unique sound effects for this mode.
+        SoundLoader.Sounds.Seasons.loadAllSounds();
 
         customGraphics = new CustomResourceHolder();
         rendererExtension = new RendererExtension(customGraphics);
@@ -1810,14 +1814,13 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     public boolean onARE(GameEngine engine, int playerID) {
         if (engine.statc[0] == 0 && !engine.holdDisable && !levelUpFlag && gimmickSprMo3 != null) {
             gimmickSprMo3.explode(engine);
-        }
 
-        if (engine.statc[0] == 0 && gimmickSprMo3 != null) {
             if (getCompleteLinesWithoutFlagging(engine) > 0) {
                 engine.stat = GameEngine.STAT_LINECLEAR;
                 lineClearAfterPiece = false;
 
                 engine.resetStatc();
+                return true;
             }
         }
 
@@ -3065,7 +3068,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     }
                 }
 
-                // Absolute Zero
+                // Absolute Zero & Icicles
                 {
                     final Block blk = engine.field.getBlock(x, y);
 
@@ -3077,6 +3080,16 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                             200, 255, 255, 255,
                             0.5f
                         );
+
+                        // For Icicles, draw dot on top of block if double-hard block.
+                        if (gimmickWinMo3 != null && blk.hard >= 2) {
+                            GameTextUtilities.drawDirectText(
+                                engine,
+                                baseX + (16 * x) + 4,
+                                baseY + (16 * y) + 4,
+                                GameTextUtilities.Text.ofSmall("g")
+                            );
+                        }
                     }
                 }
             }
