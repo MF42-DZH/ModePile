@@ -160,8 +160,7 @@ public interface HasCustomLineClear {
                         Block blk = engine.field.getBlock(j, i);
 
                         if(blk != null) {
-                            if(engine.owner.mode != null) engine.owner.mode.blockBreak(engine, playerID, j, i, blk);
-                            engine.owner.receiver.blockBreak(engine, playerID, j, i, blk);
+                            callModeBlockBreak(engine, playerID, j, i, blk);
                         }
                     }
                 }
@@ -186,6 +185,11 @@ public interface HasCustomLineClear {
                     }
                 }
             }
+    }
+
+    default void callModeBlockBreak(GameEngine engine, int playerID, int x, int y, Block blk) {
+        if(engine.owner.mode != null) engine.owner.mode.blockBreak(engine, playerID, x, y, blk);
+        engine.owner.receiver.blockBreak(engine, playerID, x, y, blk);
     }
 
     default void eraseFlaggedBlocks(GameEngine engine, int li) {

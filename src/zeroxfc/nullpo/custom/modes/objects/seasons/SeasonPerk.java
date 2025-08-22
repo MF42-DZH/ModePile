@@ -8,13 +8,13 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 public enum SeasonPerk {
     PERKLESS(0), // Only selectable if the player has beaten the mode in their current player profile.
     SPRING_PASSIVE(1), // +1 levels to level bonus, and gain +0.2 badges per badge gain, always.
-    SPRING_ACTIVE(1, 600, 300, 5, 10, 25, 60), // 2x levels from line clears, and 2.5x badge gain while active.
+    SPRING_ACTIVE(1, 600, 600, 5, 10, 25, 60), // 2x levels from line clears, and 3x badge gain while active.
     SUMMER_PASSIVE(1), // +3 to visible next queue length. Guarantees an I-piece every 50 pieces (pushes back the next queue).
     SUMMER_ACTIVE(1, 250, 0, 2, 5, 10, 25), // Get three I-pieces instantly, pushing the next queue back.
     AUTUMN_PASSIVE(1), // Badge benefits against gimmicks work 2x better.
     AUTUMN_ACTIVE(1, 800, 0, 5, 10, 20, 40), // Freefalls the field.
     WINTER_PASSIVE(1), // +6 frames of lock delay in 20G, Less gravity otherwise.
-    WINTER_ACTIVE(1, 1000, 600, 5, 10, 20, 50); // Freezes gravity and gives increased lock delay (= 180) while active.
+    WINTER_ACTIVE(1, 1000, 450, 5, 10, 20, 50); // Freezes gravity and gives increased lock delay (= 180) while active.
 
     private static class Descriptions {
         private static final Map<Float, Descriptions> INSTANCES = new HashMap<>();
@@ -66,7 +66,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("SPRING EMPOWERS YOU WITH", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("A TEMPORARY SURGE OF", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("FERTILIZING POWER.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(2X LV & 2.5X BADGES/CLEAR WHEN ACTIVE)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
+                GameTextUtilities.Text.custom("(2X LV & 3X BADGES/CLEAR WHEN ACTIVE)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             summerPassive = GameTextUtilities.TextBlock.of(
@@ -126,7 +126,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("WINTER GIVES YOU THE", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("ENCOURAGEMENT TO LET YOU", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("STEP BACK AND ASSESS.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(0G, 180F LOCK DELAY WHILE ACTIVE)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
+                GameTextUtilities.Text.custom("(0G, 180F LOCK, CLEAR FRZ. WHILE ACTIVE)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
         }
     }

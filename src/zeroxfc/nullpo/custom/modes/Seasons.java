@@ -70,6 +70,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
      *   - [ ] Extra end passage (dark clouds...)
      *   - [x] Visual effect for Haunting
      *   - [x] Replace Zero Celsius with Icicles (... inspired by a certain other game (ew))
+     *   - [x] Sound Effects!
+     *   - [x] Make the Winter Active gimmick less boring.
      */
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
@@ -512,6 +514,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int blocksUnderSnow;
     private int hardBlocksSeen;
 
+    // Winter active stuff.
+    private int waCurrentFreezeRow;
+    private int waFrozenRows;
+
     private static class FireworkContainer {
         public static Fireworks fireworks;
         public static Random fireworkColourRandomizer;
@@ -917,6 +923,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         descriptionToDraw = null;
         timeSpentInSeason = 0;
         lineClearAfterPiece = true;
+        waCurrentFreezeRow = 19;
 
         lastRank = -1;
         lastRankPlayer = -1;
@@ -1936,6 +1943,30 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public boolean onGameOver(GameEngine engine, int playerID) {
+        if (settings.perk == SeasonPerk.WINTER_ACTIVE && engine.gameActive && abilityIsActive(engine) && waFrozenRows > 0) {
+            currentAbilityTimer = 1;
+
+            final NextAndFieldState state = statesAtTimes.lowerEntry(engine.statistics.time).getValue();
+
+            engine.field = state.field;
+            engine.nextPieceCount = state.nextPosition;
+            engine.holdPieceObject = state.holdPiece;
+
+            engine.stat = GameEngine.STAT_LINECLEAR;
+
+            lineClearAfterPiece = false;
+            engine.tspin = false;
+            engine.tspinmini = false;
+            engine.tspinez = false;
+
+            waCurrentFreezeRow = engine.field.getHeightWithoutHurryupFloor() - 1;
+            waFrozenRows = 0;
+
+            engine.resetStatc();
+
+            return true;
+        }
+
         // Set the level back to max level if roll reached.
         if (engine.statc[0] == 0 && rollStarted && rollLevelReached < 0) {
             rollLevelReached = engine.statistics.level;
@@ -2217,7 +2248,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             reverse = false;
         }
 
-        final String pieceName = Piece.getPieceName(engine.nowPieceObject.id);
+        final String pieceName = (engine.nowPieceObject != null && lineClearAfterPiece) ? Piece.getPieceName(engine.nowPieceObject.id) : "";
         final DoubleVector baseVelocity = new DoubleVector(0.0, -8, false);
         final DoubleVector baseAcceleration = new DoubleVector(0.0, 9.80665 / 15.0, false);
         final float startScale = 1f;
@@ -2782,6 +2813,80 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     }
 
     @Override
+    public void inLineClearing(GameEngine engine, int playerID) {
+        if(engine.statc[0] == 0) {
+            final int li = Math.max(0, flagLinesForClearing(engine) - waFrozenRows);
+            engine.lineClearing = li;
+
+            if (settings.perk != SeasonPerk.WINTER_ACTIVE || !abilityIsActive(engine)) {
+                processLineClearStatistics(engine, li);
+
+                processB2B(engine, li);
+
+                processCombo(engine, li);
+
+                engine.lineGravityTotalLines += engine.lineClearing - waFrozenRows;
+
+                processTotalLineStatistics(engine, li);
+
+                if(engine.field.getHowManyGemClears() > 0) engine.playSE("gem");
+
+                callCalcScore(engine, playerID, li);
+
+                callAndDrawBrokenBlocks(engine, playerID, li);
+
+                eraseFlaggedBlocks(engine, li);
+            } else if (li > 0) {
+                if (engine.clearMode == GameEngine.CLEAR_LINE)
+                    engine.playSE("erase" + Math.min(4, li));
+
+                // Move lines to the bottom.
+                boolean moved = false;
+
+                for (int y = waCurrentFreezeRow; y >= -engine.field.getHiddenHeight(); --y) {
+                    if (engine.field.getLineFlag(y)) {
+                        engine.field.setLineFlag(y, false);
+                        FieldManipulation.exchangeLines(engine.field, y, waCurrentFreezeRow);
+
+                        for (int x = 0; x < engine.field.getWidth(); ++x) {
+                            final Block blk = engine.field.getBlock(x, waCurrentFreezeRow);
+                            blk.color = Block.BLOCK_COLOR_RED + (waFrozenRows % 7);
+                        }
+
+                        --waCurrentFreezeRow;
+                        ++waFrozenRows;
+                        moved = true;
+
+                        FieldManipulation.updateAllBlockConnections(engine.field);
+                    }
+                }
+
+                if (moved) {
+                    engine.playSE("combo" + Math.min(20, waFrozenRows));
+                }
+
+                engine.stat = GameEngine.STAT_ARE;
+
+                engine.resetStatc();
+                engine.statc[1] = engine.getARELine();
+            } else {
+                engine.stat = GameEngine.STAT_ARE;
+
+                engine.resetStatc();
+                engine.statc[1] = engine.getARE();
+            }
+        }
+    }
+
+    @Override
+    public int getCompleteLinesWithoutFlagging(GameEngine engine) {
+        final int result = HasCustomMove.super.getCompleteLinesWithoutFlagging(engine) - waFrozenRows;
+        engine.lineClearing = Math.max(0, engine.lineClearing - waFrozenRows);
+
+        return result;
+    }
+
+    @Override
     public void eraseFlaggedBlocks(GameEngine engine, int li) {
         if (li >= 4 && gimmickRollWin != null) {
             FieldManipulation.pushDown(engine.field);
@@ -2940,6 +3045,26 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     }
 
     @Override
+    public boolean inOnLineClear(GameEngine engine, int playerID) {
+        inInputRepeatCheck(engine);
+
+        inLineClearing(engine, playerID);
+
+        if (engine.stat != GameEngine.STAT_LINECLEAR) {
+            return true;
+        }
+
+        inLineClearAnimation(engine);
+
+        inLineDelayCancelCheck(engine);
+
+        if (inAfterLineDelay(engine, playerID)) return true;
+
+        engine.statc[0]++;
+        return true;
+    }
+
+    @Override
     public boolean onLineClear(GameEngine engine, int playerID) {
         // If field purify queued, clear field effects.
         // It will be true when seasons change, or when the ending starts.
@@ -2953,7 +3078,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             engine.speed.lineDelay = Math.max(20, engine.speed.lineDelay);
         }
 
-        final boolean olc = HasCustomLineClear.super.inOnLineClear(engine, playerID);
+        final boolean olc = inOnLineClear(engine, playerID);
+        if (engine.stat != GameEngine.STAT_LINECLEAR) {
+            return true;
+        }
 
         if (isLineDelayFinished(engine) && getCompleteLinesWithoutFlagging(engine) > 0 && engine.gameActive) {
             lineClearAfterPiece = false;
@@ -3115,6 +3243,56 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             gimmickRollAut.draw(drawing, receiver);
         }
 
+        if (settings.perk == SeasonPerk.WINTER_ACTIVE && abilityIsActive(engine) && waFrozenRows > 0) {
+            final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+            final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+            final double phase1 = Math.sin(timeSpentInSeason / (2d * Math.PI)) * 0.75;
+            final double phase2 = Math.sin((timeSpentInSeason / (2d * Math.PI)) + Math.PI) * 0.75;
+            final double phase3 = Math.cos(timeSpentInSeason / (2d * Math.PI)) * 0.75;
+            final double phase4 = Math.cos((timeSpentInSeason / (2d * Math.PI)) + Math.PI) * 0.75;
+
+            drawing.drawRectangle(
+                receiver,
+                (int) Math.round(baseX - ((phase1 / 2) * 16)),
+                (int) Math.round(baseY + (16 * (waCurrentFreezeRow + 1)) - ((phase1 / 2) * 16d)),
+                (int) Math.round((16d * engine.field.getWidth()) + (phase1 * 16d)),
+                (int) Math.round((16d * waFrozenRows) + (phase1 * 16d)),
+                63, 255, 255, 64,
+                true
+            );
+
+            drawing.drawRectangle(
+                receiver,
+                (int) Math.round(baseX - ((phase2 / 2) * 16)),
+                (int) Math.round(baseY + (16 * (waCurrentFreezeRow + 1)) - ((phase2 / 2) * 16d)),
+                (int) Math.round((16d * engine.field.getWidth()) + (phase2 * 16d)),
+                (int) Math.round((16d * waFrozenRows) + (phase2 * 16d)),
+                63, 255, 255, 64,
+                true
+            );
+
+            drawing.drawRectangle(
+                receiver,
+                (int) Math.round(baseX - ((phase3 / 2) * 16)),
+                (int) Math.round(baseY + (16 * (waCurrentFreezeRow + 1)) - ((phase3 / 2) * 16d)),
+                (int) Math.round((16d * engine.field.getWidth()) + (phase3 * 16d)),
+                (int) Math.round((16d * waFrozenRows) + (phase3 * 16d)),
+                255, 255, 255, 64,
+                true
+            );
+
+            drawing.drawRectangle(
+                receiver,
+                (int) Math.round(baseX - ((phase4 / 2) * 16)),
+                (int) Math.round(baseY + (16 * (waCurrentFreezeRow + 1)) - ((phase4 / 2) * 16d)),
+                (int) Math.round((16d * engine.field.getWidth()) + (phase4 * 16d)),
+                (int) Math.round((16d * waFrozenRows) + (phase4 * 16d)),
+                255, 255, 255, 64,
+                true
+            );
+        }
+
         rewindBlocks.forEach(rb -> rb.draw(rendererExtension, receiver));
         textEmitter.drawAll(engine);
     }
@@ -3211,6 +3389,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (!engine.lagStop && engine.gameActive) {
             ++timeSpentInSeason;
+
+            if (settings.perk == SeasonPerk.WINTER_ACTIVE && !abilityIsActive(engine) && engine.field != null) {
+                waCurrentFreezeRow = engine.field.getHeightWithoutHurryupFloor() - 1;
+                waFrozenRows = 0;
+            }
         }
 
         if (engine.quitflag) {
@@ -3269,7 +3452,26 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             if (settings.perk == SeasonPerk.WINTER_ACTIVE && prevTimer == 1) {
                 setSpeed(engine);
-                engine.lockDelayNow = (int) Math.floor((engine.lockDelayNow * engine.getLockDelay()) / 180d);
+
+                if (engine.stat == GameEngine.STAT_MOVE) {
+                    final NextAndFieldState state = statesAtTimes.lastEntry().getValue();
+
+                    engine.field = state.field;
+                    engine.nextPieceCount = state.nextPosition;
+                    engine.holdPieceObject = state.holdPiece;
+                }
+
+                engine.stat = GameEngine.STAT_LINECLEAR;
+
+                lineClearAfterPiece = false;
+                engine.tspin = false;
+                engine.tspinmini = false;
+                engine.tspinez = false;
+
+                waCurrentFreezeRow = engine.field.getHeightWithoutHurryupFloor() - 1;
+                waFrozenRows = 0;
+
+                engine.resetStatc();
             }
 
             if (prevTimer == 1) {
@@ -3476,7 +3678,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 final float speedProp;
 
-                if (engine.field == null) {
+                if (engine.field == null || engine.speed.gravity == 0) {
                     speedProp = 0.0f;
                 } else {
                     speedProp = engine.speed.gravity == -1 ? ((float) height) : MathHelper.clamp(

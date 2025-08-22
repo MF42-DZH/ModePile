@@ -150,7 +150,7 @@ public class FieldManipulation {
         for (int y = field.getHighestBlockY(); y < field.getHeight(); y++)
             for (int x = 0; x < field.getWidth(); x++) {
                 if (field.getBlockEmpty(x, y))
-                    field.garbageDropPlace(x, y, false, 0); // TODO: Set color
+                    field.garbageDropPlace(x, y, false, 0, Block.BLOCK_COLOR_RED + (field.getHeight() - y - 1) % 7);
                 else
                     field.setBlockColor(x, y, Block.BLOCK_COLOR_NONE);
             }
@@ -418,6 +418,43 @@ public class FieldManipulation {
                 }
             }
         }
+    }
+
+    /**
+     * Swaps two rows, and their line clear flags.
+     *
+     * @param field Field to operate on
+     * @param rowA  Index of first row to swap with
+     * @param rowB  Index of second row to swap with
+     */
+    public static void exchangeLines(Field field, int rowA, int rowB) {
+        if (rowA < (-field.getHiddenHeight()) || rowA >= field.getHeight() || rowB < (-field.getHiddenHeight()) || rowB >= field.getHeight()) {
+            log.info("One of these row indices are out of bounds! " + String.format("(%d <-> %d)", rowA, rowB));
+            return;
+        }
+
+        final boolean flagA = field.getLineFlag(rowA);
+        final boolean flagB = field.getLineFlag(rowB);
+
+        Block tmpA, tmpB;
+        for (int x = 0; x < field.getWidth(); ++x) {
+            tmpA = field.getBlock(x, rowA);
+            tmpB = field.getBlock(x, rowB);
+
+            if (tmpA == null) tmpA = new Block();
+            else tmpA = new Block(tmpA);
+
+            if (tmpB == null) tmpB = new Block();
+            else tmpB = new Block(tmpB);
+
+            field.setBlock(x, rowA, tmpB);
+            field.setBlock(x, rowB, tmpA);
+        }
+
+        field.setLineFlag(rowA, flagB);
+        field.setLineFlag(rowB, flagA);
+
+        updateAllBlockConnections(field);
     }
 
     /** Compares if two fields are equal. */
