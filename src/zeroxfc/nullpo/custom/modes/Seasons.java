@@ -1524,6 +1524,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
         }
 
+        if (settings.perk == SeasonPerk.WINTER_ACTIVE && abilityIsActive(engine)) {
+            engine.speed.gravity = 0;
+        }
+
         if (gimmickAutMo1 != null) {
             // VERY LOW ARE:
             engine.speed.are = 8;
@@ -1573,10 +1577,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         // 出現時の処理
         if (engine.statc[0] == 0) {
             // Store current field state.
-            if (engine.statc[1] == 0 && engine.ending == 0) {
+            if (engine.statc[1] == 0) {
                 if (gimmickSumMo2 != null) gimmickSumMo2.replaceQueue(engine);
 
-                statesAtTimes.put(engine.statistics.time, new NextAndFieldState(engine));
+                statesAtTimes.put(engine.statistics.time + rollElapsed, new NextAndFieldState(engine));
             }
 
             if ((engine.statc[1] == 0) && (!engine.initialHoldFlag)) {
@@ -1760,6 +1764,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             return true;
         }
 
+        if (pieceIsLocking(engine, instantlock)) {
+            // Store current field state.
+            statesAtTimes.put(engine.statistics.time + rollElapsed, new NextAndFieldState(engine));
+        }
+
         lineClearAfterPiece = true;
 
         return ovr;
@@ -1767,7 +1776,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public boolean onMove(GameEngine engine, int playerID) {
-        if (engine.statc[0] == 0 && !engine.holdDisable) {
+        if (engine.statc[0] == 0 && !engine.holdDisable && !(settings.perk == SeasonPerk.WINTER_ACTIVE && abilityIsActive(engine))) {
             if (gimmickSprMo2 != null) gimmickSprMo2.update(engine);
             if (gimmickSprMo3 != null) gimmickSprMo3.attemptPlacement(engine);
             if (gimmickRollSpr != null) gimmickRollSpr.update(engine);
@@ -1819,7 +1828,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public boolean onARE(GameEngine engine, int playerID) {
-        if (engine.statc[0] == 0 && !engine.holdDisable && !levelUpFlag && gimmickSprMo3 != null) {
+        if (engine.statc[0] == 0 && !engine.holdDisable && !levelUpFlag && gimmickSprMo3 != null && !(settings.perk == SeasonPerk.WINTER_ACTIVE && abilityIsActive(engine))) {
             gimmickSprMo3.explode(engine);
 
             if (getCompleteLinesWithoutFlagging(engine) > 0) {
@@ -2322,7 +2331,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             String lineName = "SINGLE";
             if (lines == 2) lineName = "DOUBLE";
             else if (lines == 3) lineName = "TRIPLE";
-            else if (lines >= 4) lineName = "FOUR";
+            else if (lines == 4) lineName = "FOUR";
+            else if (lines > 4) lineName = lines + "-CLEAR";
 
             if (engine.tspinez) {
                 sb.append("EZ-").append(pieceName).append("-").append(lineName);
@@ -2812,6 +2822,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
     }
 
+    // TODO: Figure out why the faux zone mechanic clashes horribly with Absolute Zero
+    private void clearWalls(GameEngine engine) {
+        if (engine.field != null) engine.field.setAllAttribute(Block.BLOCK_ATTRIBUTE_WALL, false);
+    }
+
     @Override
     public void inLineClearing(GameEngine engine, int playerID) {
         if(engine.statc[0] == 0) {
@@ -2825,7 +2840,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 processCombo(engine, li);
 
-                engine.lineGravityTotalLines += engine.lineClearing - waFrozenRows;
+                engine.lineGravityTotalLines += engine.lineClearing;
 
                 processTotalLineStatistics(engine, li);
 
@@ -2840,18 +2855,15 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 if (engine.clearMode == GameEngine.CLEAR_LINE)
                     engine.playSE("erase" + Math.min(4, li));
 
+                callCalcScore(engine, playerID, 0);
+
                 // Move lines to the bottom.
                 boolean moved = false;
 
                 for (int y = waCurrentFreezeRow; y >= -engine.field.getHiddenHeight(); --y) {
                     if (engine.field.getLineFlag(y)) {
                         engine.field.setLineFlag(y, false);
-                        FieldManipulation.exchangeLines(engine.field, y, waCurrentFreezeRow);
-
-                        for (int x = 0; x < engine.field.getWidth(); ++x) {
-                            final Block blk = engine.field.getBlock(x, waCurrentFreezeRow);
-                            blk.color = Block.BLOCK_COLOR_RED + (waFrozenRows % 7);
-                        }
+                        FieldManipulation.rotateLinesUp(engine.field, y, waCurrentFreezeRow);
 
                         --waCurrentFreezeRow;
                         ++waFrozenRows;
@@ -2865,11 +2877,21 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     engine.playSE("combo" + Math.min(20, waFrozenRows));
                 }
 
+                for (int y = -engine.field.getHiddenHeight(); y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
+                    engine.field.setLineFlag(y, false);
+                }
+
                 engine.stat = GameEngine.STAT_ARE;
 
                 engine.resetStatc();
                 engine.statc[1] = engine.getARELine();
             } else {
+                callCalcScore(engine, playerID, 0);
+
+                for (int y = -engine.field.getHiddenHeight(); y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
+                    engine.field.setLineFlag(y, false);
+                }
+
                 engine.stat = GameEngine.STAT_ARE;
 
                 engine.resetStatc();
@@ -3096,7 +3118,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     @Override
     public void renderLineClear(GameEngine engine, int playerID) {
         // When the infinite line clear loop.
-        if (settings.perk == SeasonPerk.AUTUMN_ACTIVE && !lineClearAfterPiece && gimmickRollWin != null) {
+        if ((settings.perk == SeasonPerk.WINTER_ACTIVE || settings.perk == SeasonPerk.AUTUMN_ACTIVE) && !lineClearAfterPiece && gimmickRollWin != null) {
             GameTextUtilities.drawAlignedTextBlock(
                 engine,
                 receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (engine.field.getWidth() * 8),
@@ -3678,7 +3700,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 final float speedProp;
 
-                if (engine.field == null || engine.speed.gravity == 0) {
+                if (engine.field == null || engine.speed.gravity == 0 || (settings.perk == SeasonPerk.WINTER_ACTIVE && abilityIsActive(engine))) {
                     speedProp = 0.0f;
                 } else {
                     speedProp = engine.speed.gravity == -1 ? ((float) height) : MathHelper.clamp(

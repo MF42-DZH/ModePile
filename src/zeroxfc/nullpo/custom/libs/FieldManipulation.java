@@ -457,6 +457,38 @@ public class FieldManipulation {
         updateAllBlockConnections(field);
     }
 
+    /**
+     * Rotates a selection of rows, moving the row at {@code rowMin} to where
+     * {@code rowMax} is, and moving all lines between up.
+     *
+     * @param field  Field to rotate
+     * @param rowMin Upper row
+     * @param rowMax Lower row
+     */
+    public static void rotateLinesUp(Field field, int rowMin, int rowMax) {
+        if (rowMin >= rowMax) return;
+
+        for (int y = rowMin; y < rowMax; ++y) {
+            exchangeLines(field, y, y + 1);
+        }
+    }
+
+    /**
+     * Rotates a selection of rows, moving the row at {@code rowMax} to where
+     * {@code rowMin} is, and moving all lines between down.
+     *
+     * @param field  Field to rotate
+     * @param rowMin Upper row
+     * @param rowMax Lower row
+     */
+    public static void rotateLinesDown(Field field, int rowMin, int rowMax) {
+        if (rowMin >= rowMax) return;
+
+        for (int y = rowMax; y > rowMin; --y) {
+            exchangeLines(field, y - 1, y);
+        }
+    }
+
     /** Compares if two fields are equal. */
     public static boolean fieldEquals(Field a, Field b) {
         if (a.getWidth() != b.getWidth()) return false;

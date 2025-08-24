@@ -1540,7 +1540,7 @@ public class Gimmicks {
                 for (int x = 0; x < engine.field.getWidth(); ++x) {
                     if (!engine.field.getBlockEmpty(x, y)) {
                         final Block blk = engine.field.getBlock(x, y);
-                        if (((blk.bonusValue & ZERO_MASK) == ZERO_IDENTIFIER) && ++blk.countdown > countdownMax) {
+                        if (((blk.bonusValue & ZERO_MASK) == ZERO_IDENTIFIER) && ++blk.countdown > countdownMax && blk.hard == 0) {
                             blk.countdown = 0;
                             blk.hard = Integer.MAX_VALUE;
                             blk.color = Block.BLOCK_COLOR_GRAY;
