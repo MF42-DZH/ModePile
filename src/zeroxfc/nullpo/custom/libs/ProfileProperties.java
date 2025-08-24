@@ -16,7 +16,7 @@ import mu.nu.nullpo.util.CustomProperties;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 
-public class ProfileProperties {
+public class ProfileProperties { // TODO: Remove duplicate profile names.
     /**
      * Button password values
      */

@@ -508,6 +508,25 @@ public class FieldManipulation {
         return true;
     }
 
+    /** Compares if two fields are equal in shape. */
+    public static boolean fieldShapeEquals(Field a, Field b) {
+        if (a.getWidth() != b.getWidth()) return false;
+        if (getFullHeight(a) != getFullHeight(b)) return false;
+
+        for (int y = (-1 * a.getHiddenHeight()); y < a.getHeight(); ++y) {
+            for (int x = 0; x < a.getWidth(); ++x) {
+                final Block ba = a.getBlock(x, y);
+                final Block bb = b.getBlock(x, y);
+
+                if (ba.isEmpty() != bb.isEmpty()) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     /**
      * Compares two fields and calculates the percentage maps between them. Useful for "build shape modes".
      * This overload uses non-exact, non-colourmatch matching.

@@ -76,7 +76,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 4;
+    private static final int CURRENT_VERSION = 5;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(12), TWO(24), THREE(48);
@@ -1033,9 +1033,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             final NextAndFieldState state = statesAtTimes.get(validKeys.get(interpTime));
 
-            if (!FieldManipulation.fieldEquals(engine.field, state.field)
+            if (!FieldManipulation.fieldShapeEquals(engine.field, state.field)
                 || engine.nextPieceCount != state.nextPosition) {
-                engine.playSE("step");
+                if (!FieldManipulation.fieldShapeEquals(engine.field, state.field)) engine.playSE("step");
+                else engine.playSE("move");
 
                 addRewindBlocks(engine, playerID, state.field);
                 engine.field = new Field(state.field);
@@ -1069,7 +1070,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         final Field oldField = new Field(engine.field);
                         final boolean landed = FieldManipulation.freeFallStep(engine.field);
 
-                        if (!FieldManipulation.fieldEquals(engine.field, oldField)) {
+                        if (!FieldManipulation.fieldShapeEquals(engine.field, oldField)) {
                             hasLandedBefore = landed;
                             if (hasLandedBefore) engine.playSE("linefall");
                         } else {
@@ -1531,7 +1532,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (gimmickAutMo1 != null) {
             // VERY LOW ARE:
             engine.speed.are = 8;
-            engine.speed.areLine = 6;
+            engine.speed.areLine = 8;
 
             engine.speed.gravity = 0;
             engine.speed.denominator = 1;
@@ -1914,7 +1915,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 engine.playSE("medal");
             }
         } else if (nextRankLevel < rankDisplay.valR.valL) {
-            // TODO: Package these sounds as custom sounds so they remain constant.
             if (rankDisplay.valL.get(2).getString().contains("1ST")) {
                 engine.playSE("combo4");
             } else if (rankDisplay.valL.get(2).getString().contains("2ND")) {
@@ -3416,6 +3416,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 waCurrentFreezeRow = engine.field.getHeightWithoutHurryupFloor() - 1;
                 waFrozenRows = 0;
             }
+
+            engine.ghost |= settings.perk == SeasonPerk.WINTER_ACTIVE && abilityIsActive(engine);
         }
 
         if (engine.quitflag) {

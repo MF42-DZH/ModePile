@@ -6,6 +6,7 @@ import java.util.function.IntUnaryOperator;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.annotations.DebugOps;
 
 // Badges for level bonuses and other stuff.
 public class Badges {
@@ -24,6 +25,8 @@ public class Badges {
 
     public Badges() {
         ac = 0;
+        DebugOps.ifDebug(this, () -> ac = 1000);
+
         fours = 0;
         spins = 0;
         season = 0;
