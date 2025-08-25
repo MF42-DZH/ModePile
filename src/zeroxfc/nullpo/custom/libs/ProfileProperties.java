@@ -573,8 +573,22 @@ public class ProfileProperties { // TODO: Remove duplicate profile names.
                     currentChar = 0;
                 } else if (s.equals("q")) {
                     if (nameEntry.length() < 3) nameEntry = String.format("%-3s", nameEntry);
-                    engine.playSE("decide");
                     currentChar = 0;
+
+                    if ((signup && testUsernameTaken(nameEntry, playerProperties)) || (login && testUsernameAvailability(nameEntry, playerProperties))) {
+                        success = false;
+
+                        customState = CUSTOM_STATE_IS_SUCCESS_SCREEN;
+                        engine.resetStatc();
+
+                        if (signup) log.warn("Signup failed, Name " + nameEntry + " taken.");
+                        else if (login) log.warn("Login failed, Name " + nameEntry + " doesn't exist.");
+
+                        engine.playSE("regret");
+                        return true;
+                    }
+
+                    engine.playSE("decide");
 
                     customState = CUSTOM_STATE_PASSWORD_INPUT;
                     engine.resetStatc();
@@ -635,10 +649,12 @@ public class ProfileProperties { // TODO: Remove duplicate profile names.
                 engine.statc[1] = 0;
                 engine.statc[2] = 1;
             } else if (engine.statc[1] == 6) {
+                success = false;
+
                 if (login && !signup) {
                     success = playerProperties.loginScreen.attemptLogIn(nameEntry, buttonPresses, playerProperties);
                 } else if (signup) {
-                    boolean adequate = isAdequate(buttonPresses, secondButtonPresses) && !playerProperties.loginScreen.testPasswordCrash(nameEntry, buttonPresses, playerProperties);
+                    boolean adequate = isAdequate(buttonPresses, secondButtonPresses);
                     if (adequate) success = playerProperties.loginScreen.createAccount(nameEntry, buttonPresses, playerProperties);
                 }
 
@@ -751,36 +767,6 @@ public class ProfileProperties { // TODO: Remove duplicate profile names.
         }
 
         /**
-         * Tests to see if a password conflict arises.
-         *
-         * @param name Name to test
-         * @return Available?
-         */
-        private boolean testPasswordCrash(String name, int[] buttonPresses, ProfileProperties profileProperties) {
-            String nCap = profileProperties.getStorageName(name);
-            boolean crash = false;
-            long number = 0;
-
-            while (profileProperties.loginScreen.testUsernameTaken(name, number, profileProperties)) {
-                if (!profileProperties.propProfile.getProperty(PREFIX_NAME + nCap + "." + number, false)) return false;
-                else {
-                    crash = true;
-                    int pass = profileProperties.propProfile.getProperty(PREFIX_PASS + nCap + "." + number, 0);
-                    for (int i = 0; i < buttonPresses.length; i++) {
-                        int j = 4 * (buttonPresses.length - i - 1);
-                        if (((buttonPresses[i] << j) & pass) == 0) {
-                            crash = false;
-                            break;
-                        }
-                    }
-                }
-                number++;
-            }
-
-            return crash;
-        }
-
-        /**
          * Attempt to log into an account with a name and password.
          *
          * @param name          Account name
@@ -795,36 +781,24 @@ public class ProfileProperties { // TODO: Remove duplicate profile names.
                 return false;  // If username does not exist, fail login.
             }
 
-            boolean successfulLogin = false;
-
-            long number = 0;
-            while (profileProperties.loginScreen.testUsernameTaken(nCap, number, profileProperties)) {
-                int pass = profileProperties.propProfile.getProperty(PREFIX_PASS + nCap + "." + number, 0);
+            if (profileProperties.loginScreen.testUsernameTaken(nCap, profileProperties)) {
+                int pass = profileProperties.propProfile.getProperty(PREFIX_PASS + nCap + "." + 0, 0);
 
                 for (int i = 0; i < buttonPresses.length; i++) {
-                    successfulLogin = true;
-
                     int j = 4 * (buttonPresses.length - i - 1);
                     if (((buttonPresses[i] << j) & pass) == 0) {
-                        log.warn("Login to " + nCapDisplay + " " + number + " failed. Password mismatch.");
-                        successfulLogin = false;
-                        break;
+                        log.warn("Login to " + nCapDisplay + " " + " failed. Password mismatch.");
+                        return false;
                     }
                 }
-
-                if (successfulLogin) {
-                    break;
-                }
-
-                number++;
             }
 
             profileProperties.nameDisplay = nCapDisplay;
-            profileProperties.nameProp = nCap + "." + number;
+            profileProperties.nameProp = nCap + "." + 0;
 
             profileProperties.loggedIn = true;
 
-            log.info("Login to " + nCapDisplay + " " + number + " successful!");
+            log.info("Login to " + nCapDisplay + " successful!");
 
             return true;
         }
@@ -840,14 +814,13 @@ public class ProfileProperties { // TODO: Remove duplicate profile names.
             String nCap = profileProperties.getStorageName(name);
             String nCapDisplay = name.toUpperCase();
 
-            long number = 0;
-            while (profileProperties.loginScreen.testUsernameTaken(nCap, number, profileProperties)) {
-                log.warn("Creation of " + nCapDisplay + " " + number + " failed. Name and number taken.");
-                number++;
+            if (profileProperties.loginScreen.testUsernameTaken(nCap, profileProperties)) {
+                log.warn("Creation of " + nCapDisplay + " failed. Name taken.");
+                return false;
             }
 
             profileProperties.nameDisplay = nCapDisplay;
-            profileProperties.nameProp = nCap + "." + number;
+            profileProperties.nameProp = nCap + "." + 0;
 
             int password = new SecureRandom().nextInt(128);
             password <<= 4;
@@ -861,7 +834,7 @@ public class ProfileProperties { // TODO: Remove duplicate profile names.
             profileProperties.propProfile.setProperty(PREFIX_PASS + profileProperties.nameProp, password);
             profileProperties.loggedIn = true;
 
-            log.info("Account " + profileProperties.nameDisplay + " " + number + " created!");
+            log.info("Account " + profileProperties.nameDisplay + " " + " created!");
 
             profileProperties.saveProfileConfig();
 
@@ -874,9 +847,9 @@ public class ProfileProperties { // TODO: Remove duplicate profile names.
          * @param name Name to test
          * @return Available?
          */
-        private boolean testUsernameTaken(String name, long number, ProfileProperties profileProperties) {
+        private boolean testUsernameTaken(String name, ProfileProperties profileProperties) {
             String nCap = profileProperties.getStorageName(name);
-            return profileProperties.propProfile.getProperty(PREFIX_NAME + nCap + "." + number, false);
+            return profileProperties.propProfile.getProperty(PREFIX_NAME + nCap + "." + 0, false);
         }
 
         /**
