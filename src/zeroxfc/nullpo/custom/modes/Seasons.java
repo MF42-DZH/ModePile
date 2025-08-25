@@ -484,8 +484,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private Season currentSeason;
     private int lastBackground, currentBackground, fadeProgress;
     private Badges badges;
-    private final TextEmitter textEmitter = new TextEmitter();
-    private final Collection<RewindBlock> rewindBlocks = new LinkedList<>();
+    private TextEmitter textEmitter;
+    private Collection<RewindBlock> rewindBlocks;
     private Random rewindBlockRandom;
     private Grading grading;
     private TotalGrades totalGrades;
@@ -894,8 +894,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         rendererExtension = new RendererExtension(customGraphics);
         drawing = new PrimitiveDrawingHook(customGraphics);
         statesAtTimes = new TreeMap<>();
-        textEmitter.clear();
-        rewindBlocks.clear();
+        textEmitter = new TextEmitter();
+        rewindBlocks = new LinkedList<>();
 
         FireworkContainer.fireworks = new Fireworks(customGraphics, engine.randSeed ^ 0x73556080);
         FireworkContainer.fireworks.enableSounds(engine);
@@ -1928,7 +1928,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (engine.statc[9] == selectedGradeBarTime && !fireworksLaunched) {
             fireworksLaunched = true;
-            addFireworksLeft((currentPoints / 100) * ((fwMultiplier / 6) + 1));
+            addFireworksLeft((currentPoints / 100) * ((fwMultiplier / 8) + 1));
         }
 
         gradeName = rankDisplay.valL;
@@ -3452,8 +3452,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         if (!engine.lagStop) {
-            textEmitter.updateAll();
-            rewindBlocks.removeIf(RewindBlock::update);
+            if (textEmitter != null) textEmitter.updateAll();
+            if (rewindBlocks != null) rewindBlocks.removeIf(RewindBlock::update);
 
             if (engine.stat == GameEngine.STAT_CUSTOM && engine.gameStarted && fadeProgress < 240) {
                 vortex.add(bvr, bvr.nextInt(7) + 2, engine.getSkin());
