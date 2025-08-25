@@ -37,7 +37,7 @@ public final class MiscUtils {
         }
 
         // PRE: 1 <= num < 100.
-        private static String nameTo99(BigInteger num) {
+        private static String nameTo99(BigInteger num, boolean hyphen) {
             // Special cases:
             if (numIs(num, 10)) return "TEN";
             else if (numIs(num, 11)) return "ELEVEN";
@@ -55,13 +55,13 @@ public final class MiscUtils {
 
             if (unitComponent.isEmpty()) return tensComponent;
             else if (tensComponent.isEmpty()) return unitComponent;
-            else return tensComponent + "-" + unitComponent;
+            else return tensComponent + (hyphen ? "-" : "") + unitComponent;
         }
 
         // PRE: 1 <= num < 1000
-        private static String nameTo999(BigInteger num, boolean and) {
+        private static String nameTo999(BigInteger num, boolean hyphen, boolean and) {
             final String hundreds = nameTo9(num.divide(BigInteger.valueOf(100)));
-            final String remainder = nameTo99(num.mod(BigInteger.valueOf(100)));
+            final String remainder = nameTo99(num.mod(BigInteger.valueOf(100)), hyphen);
 
             if (hundreds.isEmpty()) return remainder;
             else if (remainder.isEmpty()) return hundreds;
@@ -71,9 +71,9 @@ public final class MiscUtils {
             }
         }
 
-        private static String nameTo999999(BigInteger num, boolean and) {
-            final String thousands = nameTo999(num.divide(BigInteger.valueOf(1000)), and);
-            final String remainder = nameTo999(num.mod(BigInteger.valueOf(1000)), and);
+        private static String nameTo999999(BigInteger num, boolean hyphen, boolean and) {
+            final String thousands = nameTo999(num.divide(BigInteger.valueOf(1000)), hyphen, and);
+            final String remainder = nameTo999(num.mod(BigInteger.valueOf(1000)), hyphen, and);
 
             if (thousands.isEmpty()) return remainder;
             else if (remainder.isEmpty()) return thousands;
@@ -83,6 +83,17 @@ public final class MiscUtils {
         // Minus or Negative?
         public enum BelowZeroPrefix {
             MINUS, NEGATIVE
+        }
+
+        // Short or Long counting?
+        public enum CountingSystem {
+            SHORT(false), LONG(true);
+
+            private final boolean useExtraAffix;
+
+            CountingSystem(boolean useExtraAffix) {
+                this.useExtraAffix = useExtraAffix;
+            }
         }
 
         private static final String[] BELOW_DECI = {
@@ -142,36 +153,39 @@ public final class MiscUtils {
             }
         }
 
-        private static String nameAbove999999(BigInteger num, boolean and) {
+        private static String nameAbove999999(BigInteger num, CountingSystem system, boolean hyphen, boolean and) {
             final StringBuilder sb = new StringBuilder(64);
 
             BigInteger currentMainAffixIndex = BigInteger.ONE;
+            boolean extraAffix = false;
 
             for (BigInteger current = num; !current.equals(BigInteger.ZERO); current = current.divide(BigInteger.valueOf(1000))) {
                 final BigInteger rem = current.remainder(BigInteger.valueOf(1000));
-                final String remString = nameTo999(rem, and);
+                final String remString = nameTo999(rem, hyphen, and);
 
                 if (!remString.isEmpty()) {
                     sb
                         .insert(0, ' ')
                         .insert(0, getFullAffix(currentMainAffixIndex))
+                        .insert(0, extraAffix ? "THOUSAND " : "")
                         .insert(0, ' ')
                         .insert(0, remString);
                 }
 
-                currentMainAffixIndex = currentMainAffixIndex.add(BigInteger.ONE);
+                if (extraAffix || !system.useExtraAffix) currentMainAffixIndex = currentMainAffixIndex.add(BigInteger.ONE);
+                extraAffix = (!extraAffix) && system.useExtraAffix;
             }
 
             return sb.toString();
         }
 
-        private static String baseNumName(BigInteger num, boolean and) {
-            if (num.compareTo(BigInteger.valueOf(1_000_000)) < 0) return nameTo999999(num, and);
+        private static String baseNumName(BigInteger num, CountingSystem system, boolean hyphen, boolean and) {
+            if (num.compareTo(BigInteger.valueOf(1_000_000)) < 0) return nameTo999999(num, hyphen, and);
             else {
                 final BigInteger aboveNum = num.subtract(num.remainder(BigInteger.valueOf(1_000_000))).divide(BigInteger.valueOf(1_000_000));
 
-                final String above = nameAbove999999(aboveNum, and);
-                final String below = nameTo999999(num.remainder(BigInteger.valueOf(1_000_000)), and);
+                final String above = nameAbove999999(aboveNum, system, hyphen, and);
+                final String below = nameTo999999(num.remainder(BigInteger.valueOf(1_000_000)), hyphen, and);
 
                 return above + below;
             }
@@ -307,26 +321,29 @@ public final class MiscUtils {
         }
 
         /**
-         * Get the name of a number using the Short system of counting.
+         * Get the name of a number.
          *
          * @param num         Number to get the name of
          * @param ifBelowZero "MINUS" or "NEGATIVE" for numbers below zero
-         * @param and         Insert "AND" between hundreds and tens components
+         * @param system      Long (Million -> Thousand Million -> Billion -> ...) or Short (Million -> Billion -> Trillion -> ...)
+         * @param hyphen      Insert "-" between tens and units components (e.g. "SIXTY-FOUR")
+         * @param and         Insert "AND" between hundreds and 0-99 components (e.g. "ONE HUNDRED AND ONE")
          * @return Name of number given those parameters.
          */
-        public static String nameOfNumber(BigInteger num, BelowZeroPrefix ifBelowZero, boolean and) {
+        public static String nameOfNumber(BigInteger num, BelowZeroPrefix ifBelowZero, CountingSystem system, boolean hyphen, boolean and) {
             if (numIs(num, 0)) return "ZERO";
-            else if (num.compareTo(BigInteger.ZERO) < 0) return ifBelowZero.name() + nameOfNumber(num.abs(), ifBelowZero, and);
-            else return baseNumName(num, and);
+            else if (num.compareTo(BigInteger.ZERO) < 0) return ifBelowZero.name() + nameOfNumber(num.abs(), ifBelowZero, system, hyphen, and);
+            else return baseNumName(num, system, hyphen, and);
         }
 
         /**
-         * Overload of {@link Numerics#nameOfNumber(BigInteger, BelowZeroPrefix, boolean)} that uses the default of
+         * Overload of {@link Numerics#nameOfNumber(BigInteger, BelowZeroPrefix, CountingSystem, boolean, boolean)} that uses the default of
          * "MINUS" for negative numbers and the Short system for large numbers, not showing "AND" between each of the
-         * hundreds and tens components.
+         * hundreds and 0-99 components (i.e. "SIX HUNDRED THIRTY"), and showing hyphens between the tens and
+         * units components (i.e. "TWENTY-FIVE").
          */
         public static String nameOfNumber(BigInteger num) {
-            return nameOfNumber(num, BelowZeroPrefix.MINUS, false);
+            return nameOfNumber(num, BelowZeroPrefix.MINUS, CountingSystem.SHORT, true, false);
         }
 
         private enum UnitMultAffixes implements Affix {

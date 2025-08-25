@@ -2332,7 +2332,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (lines == 2) lineName = "DOUBLE";
             else if (lines == 3) lineName = "TRIPLE";
             else if (lines == 4) lineName = "FOUR";
-            else if (lines > 4) lineName = MiscUtils.Numerics.nameOfNumber(BigInteger.valueOf(lines), MiscUtils.Numerics.BelowZeroPrefix.MINUS, true);
+            else if (lines > 4) lineName = MiscUtils.Numerics.nameOfNumber(BigInteger.valueOf(lines));
 
             if (engine.tspinez) {
                 sb.append("EZ-").append(pieceName).append("-").append(lineName);
