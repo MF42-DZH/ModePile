@@ -78,7 +78,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 5;
+    private static final int CURRENT_VERSION = 6;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(12), TWO(24), THREE(48);
@@ -1767,11 +1767,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             return true;
         }
 
-        if (pieceIsLocking(engine, instantlock)) {
-            // Store current field state.
-            statesAtTimes.put(engine.statistics.time + rollElapsed, new NextAndFieldState(engine));
-        }
-
         lineClearAfterPiece = true;
 
         return ovr;
@@ -1869,6 +1864,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int nextTitleLevel;
     private int previousPoints;
     private int currentPoints;
+    private int fwMultiplier;
     private static final int[] GBF = { 255, 255, 0 };
     private static final int[] GBB = { 0, 0, 0 };
 
@@ -1916,6 +1912,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             } else {
                 engine.playSE("medal");
             }
+
+            ++fwMultiplier;
         } else if (nextRankLevel < rankDisplay.valR.valL) {
             if (rankDisplay.valL.get(2).getString().contains("1ST")) {
                 engine.playSE("combo4");
@@ -1930,8 +1928,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (engine.statc[9] == selectedGradeBarTime && !fireworksLaunched) {
             fireworksLaunched = true;
-            addFireworksLeft(currentPoints / 100);
-            addFireworksLeft(30);
+            addFireworksLeft((currentPoints / 100) * ((fwMultiplier / 6) + 1));
         }
 
         gradeName = rankDisplay.valL;
@@ -1987,6 +1984,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (engine.statc[0] == 0) {
             previousPoints = 0;
             currentPoints = 0;
+            fwMultiplier = 1;
 
             fireworksLaunched = false;
 
@@ -2255,7 +2253,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             basePosition = new DoubleVector(upX, pieceYs, false);
             reverse = pieceXs < (receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (8 * engine.field.getWidth()));
         } else {
-            basePosition = new DoubleVector(baseX + (engine.field.getWidth() * 8), baseY + (engine.field.getHeight() * 16), false);
+            basePosition = new DoubleVector(baseX + (engine.field.getWidth() * 8), baseY + (engine.field.getHeight() * 4), false);
             reverse = false;
         }
 
@@ -2275,7 +2273,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 "BRAVO!",
                 new DoubleVector(
                     baseX + (8d * engine.field.getWidth()) + 8d,
-                    baseY + 32d,
+                    baseY + 16d,
                     false
                 ), baseVelocity, baseAcceleration,
                 ObjectAlignment.MIDDLE_MIDDLE,

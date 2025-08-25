@@ -861,7 +861,13 @@ public class Gimmicks {
         }
 
         public void updateNext(GameEngine engine) {
-            final Piece piece = HasCustomMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
+            Piece piece = HasCustomMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay);
+            if (piece == null) return;
+
+            piece.setColor(Block.BLOCK_COLOR_GRAY);
+            for (Block blk : piece.block) blk.bonusValue = SNOW_IDENTIFIER;
+
+            piece = HasCustomMove.getNextObject(engine, engine.nextPieceCount + engine.ruleopt.nextDisplay + 1);
             if (piece == null) return;
 
             piece.setColor(Block.BLOCK_COLOR_GRAY);

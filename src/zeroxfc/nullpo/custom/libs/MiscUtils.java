@@ -2,6 +2,8 @@ package zeroxfc.nullpo.custom.libs;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.function.UnaryOperator;
 
 public final class MiscUtils {
     public static final class Numerics {
@@ -95,14 +97,14 @@ public final class MiscUtils {
                 final TensAffixes ten = TensAffixes.values()[(int) ((n / 10L) % 10L)];
                 final HundredsAffixes hundred = HundredsAffixes.values()[(int) ((n / 100L) % 10L)];
 
-                if (ten == TensAffixes.ZERO) return unit.getAffix(hundred) + hundred.getAffix(null) + "LLION";
+                if (ten == TensAffixes.ZERO) return unit.getAffix(null, hundred) + hundred.getAffix(null, null) + "LLION";
                 else if (hundred == HundredsAffixes.ZERO) {
-                    String replaced = ten.getAffix(null);
+                    String replaced = ten.getAffix(null, null);
                     if (replaced.endsWith("A")) replaced = replaced.substring(0, replaced.length() - 1) + "I";
 
-                return unit.getAffix(ten) + replaced + "LLION";
+                return unit.getAffix(null, ten) + replaced + "LLION";
                 }
-                else return unit.getAffix(ten) + ten.getAffix(null) + hundred.getAffix(null) + "LLION";
+                else return unit.getAffix(null, ten) + ten.getAffix(null, null) + hundred.getAffix(null, null) + "LLION";
             } else {
                 throw new NumberFormatException("Index of main affix too large!");
             }
@@ -188,7 +190,7 @@ public final class MiscUtils {
                 return (getProperties() & property) > 0;
             }
 
-            String getAffix(Affix nextAffix);
+            String getAffix(Affix prevAffix, Affix nextAffix);
         }
 
         // Unit affixes.
@@ -221,7 +223,7 @@ public final class MiscUtils {
             }
 
             @Override
-            public String getAffix(Affix nextAffix) {
+            public String getAffix(Affix prevAffix, Affix nextAffix) {
                 if (nextAffix == null) return baseAffix;
 
                 switch (this) {
@@ -268,7 +270,7 @@ public final class MiscUtils {
             }
 
             @Override
-            public String getAffix(Affix nextAffix) {
+            public String getAffix(Affix prevAffix, Affix nextAffix) {
                 return baseAffix;
             }
         }
@@ -299,7 +301,7 @@ public final class MiscUtils {
             }
 
             @Override
-            public String getAffix(Affix nextAffix) {
+            public String getAffix(Affix prevAffix, Affix nextAffix) {
                 return baseAffix;
             }
         }
@@ -325,6 +327,210 @@ public final class MiscUtils {
          */
         public static String nameOfNumber(BigInteger num) {
             return nameOfNumber(num, BelowZeroPrefix.MINUS, false);
+        }
+
+        private enum UnitMultAffixes implements Affix {
+            ZERO(""),
+            ONE("HEN"),
+            TWO("DO"),
+            THREE("TRI"),
+            FOUR("TETRA"),
+            FIVE("PENTA"),
+            SIX("HEXA"),
+            SEVEN("HEPTA"),
+            EIGHT("OCTA"),
+            NINE("NONA"),
+            ONE_ALONE("MONO"), // For 1x
+            ONE_ELEVEN("UN"),  // For 11x
+            TWO_ALONE("DI");   // For 2x
+
+            private final String baseAffix;
+
+            UnitMultAffixes(String baseAffix) {
+                this.baseAffix = baseAffix;
+            }
+
+            @Override
+            public String getAffix(Affix prevAffix, Affix nextAffix) {
+                return baseAffix;
+            }
+
+            @Override
+            public int getProperties() {
+                return 0;
+            }
+
+            @Override
+            public boolean hasProperty(int property) {
+                return false;
+            }
+        }
+
+        private enum TensMultAffixes implements Affix {
+            ZERO(""),
+            ONE("DECA"),
+            TWO("ICOSA"),
+            THREE("TRIACONTA"),
+            FOUR("TETRACONTA"),
+            FIVE("PENTACONTA"),
+            SIX("HEXACONTA"),
+            SEVEN("HEPTACONTA"),
+            EIGHT("OCTACONTA"),
+            NINE("NONACONTA");
+
+            private final String baseAffix;
+
+            TensMultAffixes(String baseAffix) {
+                this.baseAffix = baseAffix;
+            }
+
+            @Override
+            public String getAffix(Affix prevAffix, Affix nextAffix) {
+                if (this == TWO && !(prevAffix == UnitMultAffixes.ZERO || prevAffix == UnitMultAffixes.ONE)) {
+                    return baseAffix.substring(1);
+                }
+
+                return baseAffix;
+            }
+
+            @Override
+            public int getProperties() {
+                return 0;
+            }
+
+            @Override
+            public boolean hasProperty(int property) {
+                return false;
+            }
+        }
+
+        private enum HundredsMultAffixes implements Affix {
+            ZERO(""),
+            ONE("HECTA"),
+            TWO("DICTA"),
+            THREE("TRICTA"),
+            FOUR("TETRACTA"),
+            FIVE("PENTACTA"),
+            SIX("HEXACTA"),
+            SEVEN("HEPTACTA"),
+            EIGHT("OCTACTA"),
+            NINE("NONACTA");
+
+            private final String baseAffix;
+
+            HundredsMultAffixes(String baseAffix) {
+                this.baseAffix = baseAffix;
+            }
+
+            @Override
+            public String getAffix(Affix prevAffix, Affix nextAffix) {
+                return baseAffix;
+            }
+
+            @Override
+            public int getProperties() {
+                return 0;
+            }
+
+            @Override
+            public boolean hasProperty(int property) {
+                return false;
+            }
+        }
+
+        private enum ThousandsMultAffixes implements Affix {
+            ZERO(""),
+            ONE("KILLA"),
+            TWO("DILLA"),
+            THREE("TRILLA"),
+            FOUR("TETRALIA"),
+            FIVE("PENTALIA"),
+            SIX("HEXALIA"),
+            SEVEN("HEPTALIA"),
+            EIGHT("OCTALIA"),
+            NINE("NONALIA");
+
+            private final String baseAffix;
+
+            ThousandsMultAffixes(String baseAffix) {
+                this.baseAffix = baseAffix;
+            }
+
+            @Override
+            public String getAffix(Affix prevAffix, Affix nextAffix) {
+                return baseAffix;
+            }
+
+            @Override
+            public int getProperties() {
+                return 0;
+            }
+
+            @Override
+            public boolean hasProperty(int property) {
+                return false;
+            }
+        }
+
+        /**
+         * Get an IUPAC numerical multiplier for values between 1 and 9999 (inclusive).
+         *
+         * @param multiplier Multiplier value [1, 9999].
+         * @return IUPAC numerical multiplier prefix
+         */
+        public static String multiplierPrefix(int multiplier) {
+            if (multiplier <= 0) throw new IllegalArgumentException("Cannot determine a multiplier prefix for a 0x multiplication.");
+            if (multiplier > 9999) throw new IllegalArgumentException("Cannot determine a multiplier prefix for a > 9999x multiplication.");
+
+            final List<Affix> affixes = new LinkedList<>();
+            affixes.add(null);
+
+            // Add all affixes.
+            if (multiplier == 1) affixes.add(UnitMultAffixes.ONE_ALONE);
+            else if (multiplier == 2) affixes.add(UnitMultAffixes.TWO_ALONE);
+            else {
+                final ThousandsMultAffixes th = ThousandsMultAffixes.values()[multiplier / 1000];
+                final HundredsMultAffixes h = HundredsMultAffixes.values()[(multiplier % 1000) / 100];
+                final TensMultAffixes t = TensMultAffixes.values()[(multiplier % 100) / 10];
+                final UnitMultAffixes u = UnitMultAffixes.values()[multiplier % 10];
+
+                if (t == TensMultAffixes.ONE && u == UnitMultAffixes.ONE) {
+                    affixes.add(UnitMultAffixes.ONE_ELEVEN);
+                } else {
+                    affixes.add(u);
+                }
+
+                affixes.add(t);
+                affixes.add(h);
+                affixes.add(th);
+            }
+
+            affixes.add(null);
+
+            final StringBuilder sb = new StringBuilder(24);
+            for (int i = 1; i < affixes.size() - 1; ++i) {
+                sb.append(affixes.get(i).getAffix(affixes.get(i - 1), affixes.get(i + 1)));
+            }
+
+            return sb.toString();
+        }
+
+        /**
+         * Get the "canonical name" for a line clear.
+         *
+         * @param lines      Lines cleared
+         * @param preprocess Process the prefix via this function before appending the suffix
+         * @param suffix     Canonical line clear suffix
+         * @return Canonical line clear name
+         */
+        public static String lineClearName(int lines, UnaryOperator<String> preprocess, String suffix) {
+            if (lines <= 0) return "";
+            else if (lines == 1) return "SINGLE";
+            else if (lines == 2) return "DOUBLE";
+            else if (lines == 3) return "TRIPLE";
+            else if (lines >= 10000) return lines + "-" + suffix;
+
+            return preprocess.apply(multiplierPrefix(lines)) + suffix;
         }
     }
 
