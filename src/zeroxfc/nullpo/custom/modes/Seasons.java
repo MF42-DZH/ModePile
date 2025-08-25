@@ -1,5 +1,6 @@
 package zeroxfc.nullpo.custom.modes;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -36,6 +37,7 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.LevelTableBuilder;
 import zeroxfc.nullpo.custom.libs.MathHelper;
+import zeroxfc.nullpo.custom.libs.MiscUtils;
 import zeroxfc.nullpo.custom.libs.ModePileCredits;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
@@ -2332,7 +2334,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (lines == 2) lineName = "DOUBLE";
             else if (lines == 3) lineName = "TRIPLE";
             else if (lines == 4) lineName = "FOUR";
-            else if (lines > 4) lineName = lines + "-CLEAR";
+            else if (lines > 4) lineName = MiscUtils.Numerics.nameOfNumber(BigInteger.valueOf(lines), MiscUtils.Numerics.BelowZeroPrefix.MINUS, true);
 
             if (engine.tspinez) {
                 sb.append("EZ-").append(pieceName).append("-").append(lineName);
