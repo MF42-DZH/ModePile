@@ -89,10 +89,10 @@ public final class MiscUtils {
         public enum CountingSystem {
             SHORT(false), LONG(true);
 
-            private final boolean useExtraAffix;
+            private final boolean useLongSystemAffix;
 
-            CountingSystem(boolean useExtraAffix) {
-                this.useExtraAffix = useExtraAffix;
+            CountingSystem(boolean useLongSystemAffix) {
+                this.useLongSystemAffix = useLongSystemAffix;
             }
         }
 
@@ -100,13 +100,13 @@ public final class MiscUtils {
             "", "MI", "BI", "TRI", "QUADRI", "QUINTI", "SEXTI", "SEPTI", "OCTI", "NONI"
         };
 
-        private static String getMainAffix(long n) {
+        private static String getMainAffix(int n) {
             if (n <= 0) return "";
-            else if (n < 10L) return BELOW_DECI[(int) n] + "LLION";
+            else if (n < 10L) return BELOW_DECI[n] + "LLION";
             else if (n < 1000L) {
-                final UnitAffixes unit = UnitAffixes.values()[(int) (n % 10L)];
-                final TensAffixes ten = TensAffixes.values()[(int) ((n / 10L) % 10L)];
-                final HundredsAffixes hundred = HundredsAffixes.values()[(int) ((n / 100L) % 10L)];
+                final UnitAffixes unit = UnitAffixes.values()[n % 10];
+                final TensAffixes ten = TensAffixes.values()[(n / 10) % 10];
+                final HundredsAffixes hundred = HundredsAffixes.values()[(n / 100) % 10];
 
                 if (ten == TensAffixes.ZERO) return unit.getAffix(null, hundred) + hundred.getAffix(null, null) + "LLION";
                 else if (hundred == HundredsAffixes.ZERO) {
@@ -123,19 +123,19 @@ public final class MiscUtils {
 
         private static String getFullAffix(BigInteger n) {
             if (n.compareTo(BigInteger.ZERO) < 0) throw new NumberFormatException("Invalid index.");
-            else if (n.compareTo(BigInteger.valueOf(1000)) < 0) return getMainAffix(n.longValueExact());
+            else if (n.compareTo(BigInteger.valueOf(1000)) < 0) return getMainAffix(n.intValueExact());
             else {
                 final StringBuilder sb = new StringBuilder();
-                final LinkedList<Long> groups = new LinkedList<>();
+                final LinkedList<Integer> groups = new LinkedList<>();
 
-                // First initialize the groups.
+                // Get the individual digit groups of n.
                 for (BigInteger cN = n; cN.compareTo(BigInteger.ZERO) > 0; cN = cN.divide(BigInteger.valueOf(1000))) {
-                    groups.addFirst(cN.mod(BigInteger.valueOf(1000)).longValueExact());
+                    groups.addFirst(cN.mod(BigInteger.valueOf(1000)).intValueExact());
                 }
 
-                // Get the group name for the current index.
+                // For the digit groups, get name, replace -ILLI- with -NILLI- whenever a digit group is 0.
                 for (int i = 0; i < groups.size(); ++i) {
-                    final long group = groups.get(i);
+                    final int group = groups.get(i);
 
                     String suffix = "ILLI";
                     if (i == groups.size() - 1) suffix = suffix + "ON";
@@ -156,8 +156,10 @@ public final class MiscUtils {
         private static String nameAbove999999(BigInteger num, CountingSystem system, boolean hyphen, boolean and) {
             final StringBuilder sb = new StringBuilder(64);
 
+            // If you are requesting the name of a number large enough for currentMainAffixIndex to reach past the limit
+            // of a long integer, I think there are bigger problems at hand.
             BigInteger currentMainAffixIndex = BigInteger.ONE;
-            boolean extraAffix = false;
+            boolean longSystemAffix = false;
 
             for (BigInteger current = num; !current.equals(BigInteger.ZERO); current = current.divide(BigInteger.valueOf(1000))) {
                 final BigInteger rem = current.remainder(BigInteger.valueOf(1000));
@@ -167,13 +169,12 @@ public final class MiscUtils {
                     sb
                         .insert(0, ' ')
                         .insert(0, getFullAffix(currentMainAffixIndex))
-                        .insert(0, extraAffix ? "THOUSAND " : "")
-                        .insert(0, ' ')
+                        .insert(0, longSystemAffix ? " THOUSAND " : " ")
                         .insert(0, remString);
                 }
 
-                if (extraAffix || !system.useExtraAffix) currentMainAffixIndex = currentMainAffixIndex.add(BigInteger.ONE);
-                extraAffix = (!extraAffix) && system.useExtraAffix;
+                if (longSystemAffix || !system.useLongSystemAffix) currentMainAffixIndex = currentMainAffixIndex.add(BigInteger.ONE);
+                longSystemAffix = (!longSystemAffix) && system.useLongSystemAffix;
             }
 
             return sb.toString();
