@@ -351,7 +351,7 @@ public class Interpolation {
                 }
             }
 
-            return Math.max(gain, 1);
+            return gain;
         }
 
         /**
@@ -393,17 +393,19 @@ public class Interpolation {
             ++frame;
 
             if (frame % 2 == 0) {
-                increase = Math.max(1, increase + gainIncrease(usedFrame()));
+                increase = increase + gainIncrease(usedFrame());
             }
 
             int addition = Math.min(increase, (int) Math.ceil((targetScore - scoreToDisplay) * easeOutFactor));
             if (fullRate) addition = (int) Math.round(addition / 2d);
 
+            int oldScDisc = scoreToDisplay;
             if (fullRate || (frame % 2 == 0)) {
                 scoreToDisplay += addition;
             }
 
-            if (scoreToDisplay >= targetScore || scoreToDisplay < 0) {
+            if (scoreToDisplay >= targetScore || scoreToDisplay < oldScDisc || increase < 0) {
+                scoreToDisplay = targetScore;
                 resetIncrements();
             }
         }
