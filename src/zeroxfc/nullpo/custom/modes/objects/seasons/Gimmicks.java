@@ -128,13 +128,20 @@ public class Gimmicks {
         }
 
         public void setCountdown(Badges badges, boolean perkBoost) {
-            // Every 30 badges will decrease the countdown by 1.
-            // The default countdown is 12
+            // Every 30 badges will increase the countdown by 1.
+            // The default countdown is 4
 
             final int usedBadges = badges.getBadges() / 10;
             final int denominator = perkBoost ? 15 : 30;
 
-            countdown = Math.max(4, 12 - (usedBadges / denominator));
+            countdown = 5 + getScoreMult(badges, perkBoost);
+        }
+
+        public int getScoreMult(Badges badges, boolean perkBoost) {
+            final int usedBadges = badges.getBadges() / 10;
+            final int denominator = perkBoost ? 15 : 30;
+
+            return usedBadges / denominator;
         }
 
         private static final int ATTRS = Block.BLOCK_ATTRIBUTE_GARBAGE | Block.BLOCK_ATTRIBUTE_VISIBLE | Block.BLOCK_ATTRIBUTE_OUTLINE;
@@ -176,12 +183,19 @@ public class Gimmicks {
         }
 
         public void setCountdown(Badges badges, boolean perkBoost) {
-            // Every 40 badges decreases the countdown by 1.
+            // Every 40 badges increases the countdown by 1.
 
             final int usedBadges = badges.getBadges() / 10;
             final int denominator = perkBoost ? 20 : 40;
 
-            currentCountdown = Math.max(4, 12 - (usedBadges / denominator));
+            currentCountdown = 4 + getScoreMult(badges, perkBoost);
+        }
+
+        public int getScoreMult(Badges badges, boolean perkBoost) {
+            final int usedBadges = badges.getBadges() / 10;
+            final int denominator = perkBoost ? 20 : 40;
+
+            return usedBadges / denominator;
         }
 
         @Override

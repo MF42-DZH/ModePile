@@ -61,27 +61,23 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private static final Logger log = Logger.getLogger(Seasons.class);
 
     /* TODO:
-     *   - [ ] Growth effect for Spring Month 2-3
-     *   - [ ] Fire Effect for Summer Month 3 / Summer Roll
-     *   - [ ] Heat haze effect for Summer Months / Roll in background
-     *   - [ ] Leaves in the wind in Autumn Months / Roll
-     *   - [ ] Snowfall & Icicles in Winter Months / Roll
+     *   - [ ] Fire Effect for Credits Roll
      *   - [x] Custom frames
      *   - [x] Shimmer effect on custom frames on Roll
      *   - [x] Fallback fade-ish effect for people who don't use bg fade
-     *   - [ ] Extra end passage (dark clouds...)
      *   - [x] Visual effect for Haunting
      *   - [x] Replace Zero Celsius with Icicles (... inspired by a certain other game (ew))
      *   - [x] Sound Effects!
      *   - [x] Make the Winter Active gimmick less boring.
+     *   - [x] Rebalance the non-roll spring gimmicks?
      */
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 6;
+    private static final int CURRENT_VERSION = 8;
 
     private enum FireworkLauncher implements BooleanSupplier {
-        ONE(12), TWO(24), THREE(48);
+        ONE(15), TWO(30), THREE(60);
 
         private final int maxCooldown;
 
@@ -2931,8 +2927,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         // Janky... lmao. Update season badges based on single blocks.
         if (brokenMinorBonusGems > 0) {
+            int bonus = brokenMinorBonusGems + brokenMinorBonusGems / 9;
+            if (gimmickSprMo2 != null) {
+                bonus += gimmickSprMo2.getScoreMult(badges, getGimmickPerkBoost()) * li;
+                bonus >>>= 1;
+            }
+
             badges.addSeasonBadges(
-                brokenMinorBonusGems + brokenMinorBonusGems / 9,
+                bonus,
                 settings.perk == SeasonPerk.SPRING_PASSIVE,
                 settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
             );
@@ -2940,7 +2942,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (brokenFlorets > 0) {
             badges.addSeasonBadges(
-                brokenFlorets,
+                brokenFlorets + (gimmickSprMo3.getScoreMult(badges, getGimmickPerkBoost()) * li),
                 settings.perk == SeasonPerk.SPRING_PASSIVE,
                 settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0
             );
