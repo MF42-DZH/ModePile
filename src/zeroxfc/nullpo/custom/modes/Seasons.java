@@ -61,7 +61,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private static final Logger log = Logger.getLogger(Seasons.class);
 
     /* TODO:
-     *   - [ ] Fire Effect for Credits Roll
+     *   - [x] Fire Effect for Credits Roll
      *   - [x] Custom frames
      *   - [x] Shimmer effect on custom frames on Roll
      *   - [x] Fallback fade-ish effect for people who don't use bg fade
@@ -511,6 +511,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int brokenSnowBlocks;
     private int blocksUnderSnow;
     private int hardBlocksSeen;
+    private Fire fireEffect;
 
     // Winter active stuff.
     private int waCurrentFreezeRow;
@@ -1543,6 +1544,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         nextSectionLevel = NEXT_SECTION_LEVELS.apply(engine.statistics.level);
         setNewBackground(BACKGROUND_TABLE.apply(engine.statistics.level));
+
+        fireEffect = new Fire(engine.randSeed * 23457968);
 
         owner.backgroundStatus.bg = -1;
         owner.backgroundStatus.fadebg = -1;
@@ -3183,6 +3186,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (vortex != null) {
             vortex.draw(rendererExtension, receiver);
         }
+
+        if (rollStarted && engine.gameStarted) {
+            fireEffect.draw(drawing, receiver);
+        }
     }
 
     @Override
@@ -3437,7 +3444,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             if (rollTime <= 600 && rollTime > 0 && rollTime % 60 == 0) engine.playSE("countdown");
+
+            if (rollTime % 4 == 1) fireEffect.add(4);
         }
+
+        if (fireEffect != null) fireEffect.update();
 
         queueFireworkIf(engine, FireworkLauncher.ONE, Stream.STREAM_1);
         queueFireworkIf(engine, FireworkLauncher.TWO, Stream.STREAM_2);
@@ -3800,13 +3811,17 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                             gimmickSlot3 = null;
                             break;
                     }
-                } else {
+                } else if (rollStarted) {
                     if (gimmickRollSpr != null) gimmickSlot1 = gimmickRollSpr;
                     else if (gimmickRollSum != null) gimmickSlot1 = gimmickRollSum;
                     else if (gimmickRollAut != null) gimmickSlot1 = gimmickRollAut;
                     else if (gimmickRollWin != null) gimmickSlot1 = gimmickRollWin;
                     else gimmickSlot1 = null;
 
+                    gimmickSlot2 = null;
+                    gimmickSlot3 = null;
+                } else {
+                    gimmickSlot1 = null;
                     gimmickSlot2 = null;
                     gimmickSlot3 = null;
                 }
