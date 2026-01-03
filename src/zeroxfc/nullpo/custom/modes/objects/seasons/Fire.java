@@ -19,14 +19,15 @@ public class Fire {
         particles.removeIf(Particle::update);
     }
 
-    public void add(int num) {
+    public void add(int num, boolean winter) {
         for (int i = 0; i < num; ++i) {
             particles.add(
                 new Particle(
                     random,
                     random.nextInt(640), 480,
                     random.nextInt(5) - 2, -(random.nextInt(5) + 2),
-                    random.nextInt(12) + 4
+                    random.nextInt(12) + 4,
+                    winter
                 )
             );
         }
@@ -47,7 +48,7 @@ public class Fire {
         private final int size;
         private final ColourMixer colour;
 
-        public Particle(Random random, int x, int y, int velocityX, int velocityY, int size) {
+        public Particle(Random random, int x, int y, int velocityX, int velocityY, int size, boolean winter) {
             this.x = x;
             this.y = y;
 
@@ -57,10 +58,18 @@ public class Fire {
             this.size = size;
 
             colour = ColourMixer.rgb(0, 0, 0);
-            colour
-                .setHue(random.nextDouble() * 0.066666666666)
-                .setSaturation(0.8 + (random.nextDouble() * 0.2))
-                .setValue(1.0);
+
+            if (winter) {
+                colour
+                    .setHueAngle((random.nextDouble() * 60.0) + 180.0)
+                    .setSaturation(0.75 + (random.nextDouble() * 0.25))
+                    .setValue(1.0);
+            } else {
+                colour
+                    .setHue(random.nextDouble() * 0.066666666666)
+                    .setSaturation(0.8 + (random.nextDouble() * 0.2))
+                    .setValue(1.0);
+            }
         }
 
         public boolean update() {

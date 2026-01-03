@@ -3187,7 +3187,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             vortex.draw(rendererExtension, receiver);
         }
 
-        if (rollStarted && engine.gameStarted) {
+        if (fireEffect != null && engine.gameStarted) {
             fireEffect.draw(drawing, receiver);
         }
     }
@@ -3426,6 +3426,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 waFrozenRows = 0;
             }
 
+            if (gimmickSumMo3 != null && engine.statistics.time % 4 == 1) fireEffect.add(2, false);
+
             engine.ghost |= settings.perk == SeasonPerk.WINTER_ACTIVE && abilityIsActive(engine);
         }
 
@@ -3445,7 +3447,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             if (rollTime <= 600 && rollTime > 0 && rollTime % 60 == 0) engine.playSE("countdown");
 
-            if (rollTime % 4 == 1) fireEffect.add(4);
+            if (rollTime % 4 == 1) fireEffect.add(currentSeason == Season.SUMMER ? 8 : 4, currentSeason == Season.WINTER);
         }
 
         if (fireEffect != null) fireEffect.update();
