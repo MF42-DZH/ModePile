@@ -74,7 +74,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 8;
+    private static final int CURRENT_VERSION = 9;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(15), TWO(30), THREE(60);
@@ -490,6 +490,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int lastRank;
     private int lastRankPlayer;
     private int timeSpentInSeason;
+    private int activeTimeSpentInSeason;
     private boolean lineClearAfterPiece;
 
     private static final int INCREMENT_IN_ROLL = 2;
@@ -511,7 +512,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int brokenSnowBlocks;
     private int blocksUnderSnow;
     private int hardBlocksSeen;
-    private Fire fireEffect;
+    private FireAndSnow fireAndSnowEffect;
 
     // Winter active stuff.
     private int waCurrentFreezeRow;
@@ -921,6 +922,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         fieldPurifyQueued = false;
         descriptionToDraw = null;
         timeSpentInSeason = 0;
+        activeTimeSpentInSeason = 0;
         lineClearAfterPiece = true;
         waCurrentFreezeRow = 19;
 
@@ -1011,7 +1013,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
     }
 
-    private void performRewindSteps(GameEngine engine, int playerID, int rewindTime, int rewindStartDelay, int oldestStateSeconds) {
+    private int performRewindSteps(GameEngine engine, int playerID, int rewindTime, int rewindStartDelay, int oldestStateSeconds) {
         if (engine.statc[0] >= rewindStartDelay) {
             final NavigableSet<Integer> keys = statesAtTimes.navigableKeySet();
             final int maxTime = keys.last();
@@ -1052,7 +1054,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     engine.holdPieceObject = null;
                 }
             }
+
+            return minTime;
         }
+
+        return -1;
     }
 
     @Override
@@ -1100,7 +1106,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         statesAtTimes.keySet().removeIf(k -> k < engine.statistics.time - (60 * 600));
                     }
 
-                    performRewindSteps(engine, playerID, REWIND_TIME, 30, 60);
+                    final int boardTime = performRewindSteps(engine, playerID, REWIND_TIME, 30, 60);
 
                     if (engine.statc[0] >= REWIND_TIME) {
                         engine.speed.lineDelay = 60;
@@ -1126,6 +1132,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         }
 
                         clearAddedSummerIPieces(engine);
+
+                        // This *SHOULD* stop weird block mods from other seasons leaking in.
+                        if (boardTime < (engine.statistics.time - activeTimeSpentInSeason)) {
+                            purifyFieldAndNexts(engine);
+                        }
 
                         engine.stat = GameEngine.STAT_LINECLEAR;
                         engine.resetStatc();
@@ -1545,7 +1556,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         nextSectionLevel = NEXT_SECTION_LEVELS.apply(engine.statistics.level);
         setNewBackground(BACKGROUND_TABLE.apply(engine.statistics.level));
 
-        fireEffect = new Fire(engine.randSeed * 23457968);
+        fireAndSnowEffect = new FireAndSnow(engine.randSeed * 23457968);
 
         owner.backgroundStatus.bg = -1;
         owner.backgroundStatus.fadebg = -1;
@@ -2542,6 +2553,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (currentSeason != oldSeason) {
                     timeSpentInSeason = 0;
+                    activeTimeSpentInSeason = 0;
 
                     switch (currentSeason) {
                         case SUMMER:
@@ -2642,6 +2654,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (currentSeason != oldSeason) {
                     timeSpentInSeason = 0;
+                    activeTimeSpentInSeason = 0;
                     fieldPurifyQueued = true;
                 }
 
@@ -3187,8 +3200,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             vortex.draw(rendererExtension, receiver);
         }
 
-        if (fireEffect != null && engine.gameStarted) {
-            fireEffect.draw(drawing, receiver);
+        if (fireAndSnowEffect != null && engine.gameStarted) {
+            fireAndSnowEffect.draw(drawing, receiver);
         }
     }
 
@@ -3420,13 +3433,20 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (!engine.lagStop && engine.gameActive) {
             ++timeSpentInSeason;
+            if (engine.timerActive) ++activeTimeSpentInSeason;
 
             if (settings.perk == SeasonPerk.WINTER_ACTIVE && !abilityIsActive(engine) && engine.field != null) {
                 waCurrentFreezeRow = engine.field.getHeightWithoutHurryupFloor() - 1;
                 waFrozenRows = 0;
             }
 
-            if (gimmickSumMo3 != null && engine.statistics.time % 4 == 1) fireEffect.add(2, false);
+            if (engine.timerActive) {
+                if (gimmickSumMo3 != null && engine.statistics.time % 4 == 1) fireAndSnowEffect.addFire(2, false);
+
+                if (gimmickWinMo3 != null && engine.statistics.time % 4 == 1) fireAndSnowEffect.addSnow(5);
+                else if (gimmickWinMo2 != null && engine.statistics.time % 4 == 1) fireAndSnowEffect.addSnow(3);
+                else if (gimmickWinMo1 != null && engine.statistics.time % 4 == 1) fireAndSnowEffect.addSnow(2);
+            }
 
             engine.ghost |= settings.perk == SeasonPerk.WINTER_ACTIVE && abilityIsActive(engine);
         }
@@ -3447,10 +3467,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             if (rollTime <= 600 && rollTime > 0 && rollTime % 60 == 0) engine.playSE("countdown");
 
-            if (rollTime % 4 == 1) fireEffect.add(currentSeason == Season.SUMMER ? 8 : 4, currentSeason == Season.WINTER);
+            if (rollTime % 4 == 1) fireAndSnowEffect.addFire(currentSeason == Season.SUMMER ? 8 : 4, currentSeason == Season.WINTER);
         }
 
-        if (fireEffect != null) fireEffect.update();
+        if (fireAndSnowEffect != null) fireAndSnowEffect.update();
 
         queueFireworkIf(engine, FireworkLauncher.ONE, Stream.STREAM_1);
         queueFireworkIf(engine, FireworkLauncher.TWO, Stream.STREAM_2);
