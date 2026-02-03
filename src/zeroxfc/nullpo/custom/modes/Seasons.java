@@ -413,6 +413,25 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         return String.format("%02d:00 %02d/%s/X%d", normLevel % 24, (normLevel / 24) + 1, month, level >= LEVELS_DEC ? 1 : 0);
     }
 
+    private GameTextUtilities.TextBlock levelToResultBlock(int level) {
+        if (level >= MAX_LEVEL) {
+            return GameTextUtilities.TextBlock.of(GameTextUtilities.Text.of("END"));
+        }
+
+        final String month = MONTH_NAME_TABLE.apply(level);
+        final int normLevel = level - LEVELS_SO_FAR.apply(level);
+
+        final String time = String.format("%02d:00", normLevel % 24);
+        final String date = String.format("%02d/%s/X%d", (normLevel / 24) + 1, month, level >= LEVELS_DEC ? 1 : 0);
+
+        return GameTextUtilities.TextBlock.of(
+            GameTextUtilities.TextJustification.CENTRE,
+            GameTextUtilities.Text.of(time),
+            GameTextUtilities.Text.newLine(),
+            GameTextUtilities.Text.of(date)
+        );
+    }
+
     private static GameTextUtilities.TextBlock levelToRankBlock(int gameLevel, int rollLevel) {
         if (rollLevel >= 0) {
             return GameTextUtilities.TextBlock.of(
@@ -1874,7 +1893,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int nextTitleLevel;
     private int previousPoints;
     private int currentPoints;
-    private int fwMultiplier;
     private static final int[] GBF = { 255, 255, 0 };
     private static final int[] GBB = { 0, 0, 0 };
 
@@ -1922,8 +1940,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             } else {
                 engine.playSE("medal");
             }
-
-            ++fwMultiplier;
         } else if (nextRankLevel < rankDisplay.valR.valL) {
             if (rankDisplay.valL.get(2).getString().contains("1ST")) {
                 engine.playSE("combo4");
@@ -1938,7 +1954,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (engine.statc[9] == selectedGradeBarTime && !fireworksLaunched) {
             fireworksLaunched = true;
-            addFireworksLeft((currentPoints / 100) * ((fwMultiplier / 8) + 1));
+
+            addFireworksLeft(currentPoints / 250);
+            if (currentPoints == Grading.MAX_GRADE_POINTS) addFireworksLeft(30);
         }
 
         gradeName = rankDisplay.valL;
@@ -1994,7 +2012,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (engine.statc[0] == 0) {
             previousPoints = 0;
             currentPoints = 0;
-            fwMultiplier = 1;
 
             fireworksLaunched = false;
 
@@ -3388,9 +3405,91 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         inRenderExcellent(rendererExtension, receiver, engine, playerID);
     }
 
+    private enum ResultScreenPage {
+        GRADE_AND_BADGE, LEVELS_AND_TIME, SECONDARY_STATS;
+    }
+
     @Override
     public void renderResult(GameEngine engine, int playerID) {
         inRenderResult(rendererExtension, receiver, engine, playerID);
+
+        int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+        int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+        receiver.drawMenuFont(engine, playerID, 0, 0, "kn PAGE" + (engine.statc[1] + 1) + "/3", EventReceiver.COLOR_RED);
+
+        switch (ResultScreenPage.values()[engine.statc[1]]) {
+            case GRADE_AND_BADGE: {
+                receiver.drawMenuFont(engine, playerID, 0, 2, "TITLE&RANK", EventReceiver.COLOR_BLUE);
+                GameTextUtilities.drawAlignedTextBlock(
+                    engine,
+                    baseX + (engine.field.getWidth() * 8),
+                    baseY + (16 * 4),
+                    false,
+                    gradeName,
+                    ObjectAlignment.TOP_MIDDLE
+                );
+
+                receiver.drawMenuFont(engine, playerID, 0, 9, "BADGES", EventReceiver.COLOR_BLUE);
+                GameTextUtilities.drawAlignedMenuTextBlock(
+                    receiver, engine, playerID, false,
+                    0, 10, false,
+                    badges.getBadgeDisplay(false),
+                    ObjectAlignment.TOP_LEFT
+                );
+                break;
+            }
+            case LEVELS_AND_TIME: {
+                receiver.drawMenuFont(engine, playerID, 0, 2, "DATE", EventReceiver.COLOR_BLUE);
+                GameTextUtilities.drawAlignedMenuTextBlock(
+                    receiver, engine, playerID, false,
+                    engine.field.getWidth() / 2, 3, false,
+                    levelToResultBlock(engine.statistics.level),
+                    ObjectAlignment.TOP_MIDDLE
+                );
+
+                if (rollStarted) {
+                    receiver.drawMenuFont(engine, playerID, 0, 6, "ROLL DATE", EventReceiver.COLOR_BLUE);
+                    GameTextUtilities.drawAlignedMenuTextBlock(
+                        receiver, engine, playerID, false,
+                        engine.field.getWidth() / 2, 7, false,
+                        levelToResultBlock(rollLevelReached),
+                        ObjectAlignment.TOP_MIDDLE
+                    );
+
+                }
+
+                drawResultStats(
+                    engine, playerID, receiver, 11, EventReceiver.COLOR_BLUE,
+                    STAT_TIME
+                );
+                break;
+            }
+            case SECONDARY_STATS: {
+                drawResultStats(
+                    engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE,
+                    STAT_LPM, STAT_SPM, STAT_PIECE, STAT_PPS
+                );
+                break;
+            }
+        }
+    }
+
+    @Override
+    public boolean onResult(GameEngine engine, int playerID) {
+        if (engine.ctrl.isMenuRepeatKey( Controller.BUTTON_UP)) {
+            engine.statc[1]--;
+            if (engine.statc[1] < 0) engine.statc[1] = ResultScreenPage.values().length - 1;
+            engine.playSE("change");
+        }
+
+        if (engine.ctrl.isMenuRepeatKey(Controller.BUTTON_DOWN)) {
+            engine.statc[1]++;
+            if (engine.statc[1] >= ResultScreenPage.values().length) engine.statc[1] = 0;
+            engine.playSE("change");
+        }
+
+        return false;
     }
 
     @Override
@@ -3779,7 +3878,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             GameTextUtilities.drawAlignedScoreTextBlock(
                 receiver, engine, playerID, false,
                 0, 12, false,
-                badges.getBadgeDisplay(false),
+                badges.getBadgeDisplay(true),
                 ObjectAlignment.TOP_LEFT
             );
 

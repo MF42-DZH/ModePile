@@ -144,38 +144,62 @@ public class Badges {
         if (seasonGreen > 0) seasonGreen--;
     }
 
-    public GameTextUtilities.TextBlock getBadgeDisplay(boolean small) {
-        final float baseScale = small ? 0.5f : 1f;
+    public GameTextUtilities.TextBlock getBadgeDisplay(boolean includeDenominator) {
+        final float baseScale = 1f;
 
         final int abc = acGreen > 0 ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE;
         final int fbc = foursGreen > 0 ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE;
         final int sbc = spinsGreen > 0 ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE;
         final int sec = seasonGreen > 0 ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE;
 
-        return GameTextUtilities.TextBlock.of(
-            GameTextUtilities.TextJustification.LEFT,
-            GameTextUtilities.Text.custom("[AC]", EventReceiver.COLOR_GREEN, baseScale),
-            GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom(String.format("%3d.%d", ac / 10, ac % 10), abc, baseScale),
-            GameTextUtilities.Text.custom("/2", abc, 0.5f),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.custom("[4X]", EventReceiver.COLOR_YELLOW, baseScale),
-            GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom(String.format("%3d.%d", fours / 10, fours % 10), fbc, baseScale),
-            GameTextUtilities.Text.custom("/20", fbc, 0.5f),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.custom("[SP]", EventReceiver.COLOR_PURPLE, baseScale),
-            GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom(String.format("%3d.%d", spins / 10, spins % 10), sbc, baseScale),
-            GameTextUtilities.Text.custom("/15", sbc, 0.5f),
-            GameTextUtilities.Text.newLine(),
-            GameTextUtilities.Text.custom("[", EventReceiver.COLOR_GREEN, baseScale),
-            GameTextUtilities.Text.custom("S", EventReceiver.COLOR_YELLOW, baseScale),
-            GameTextUtilities.Text.custom("E", EventReceiver.COLOR_ORANGE, baseScale),
-            GameTextUtilities.Text.custom("]", EventReceiver.COLOR_CYAN, baseScale),
-            GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
-            GameTextUtilities.Text.custom(String.format("%3d.%d", season / 10, season % 10), sec, baseScale),
-            GameTextUtilities.Text.custom("/30", sec, 0.5f)
-        );
+        if (includeDenominator) {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.custom("[AC]", EventReceiver.COLOR_GREEN, baseScale),
+                GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
+                GameTextUtilities.Text.custom(String.format("%3d.%d", ac / 10, ac % 10), abc, baseScale),
+                GameTextUtilities.Text.custom("/2", abc, 0.5f),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("[4X]", EventReceiver.COLOR_YELLOW, baseScale),
+                GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
+                GameTextUtilities.Text.custom(String.format("%3d.%d", fours / 10, fours % 10), fbc, baseScale),
+                GameTextUtilities.Text.custom("/20", fbc, 0.5f),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("[SP]", EventReceiver.COLOR_PURPLE, baseScale),
+                GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
+                GameTextUtilities.Text.custom(String.format("%3d.%d", spins / 10, spins % 10), sbc, baseScale),
+                GameTextUtilities.Text.custom("/15", sbc, 0.5f),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("[", EventReceiver.COLOR_GREEN, baseScale),
+                GameTextUtilities.Text.custom("S", EventReceiver.COLOR_YELLOW, baseScale),
+                GameTextUtilities.Text.custom("E", EventReceiver.COLOR_ORANGE, baseScale),
+                GameTextUtilities.Text.custom("]", EventReceiver.COLOR_CYAN, baseScale),
+                GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
+                GameTextUtilities.Text.custom(String.format("%3d.%d", season / 10, season % 10), sec, baseScale),
+                GameTextUtilities.Text.custom("/30", sec, 0.5f)
+            );
+        } else {
+            return GameTextUtilities.TextBlock.of(
+                GameTextUtilities.TextJustification.LEFT,
+                GameTextUtilities.Text.custom("[AC]", EventReceiver.COLOR_GREEN, baseScale),
+                GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
+                GameTextUtilities.Text.custom(String.format("%3d.%d", ac / 10, ac % 10), abc, baseScale),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("[4X]", EventReceiver.COLOR_YELLOW, baseScale),
+                GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
+                GameTextUtilities.Text.custom(String.format("%3d.%d", fours / 10, fours % 10), fbc, baseScale),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("[SP]", EventReceiver.COLOR_PURPLE, baseScale),
+                GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
+                GameTextUtilities.Text.custom(String.format("%3d.%d", spins / 10, spins % 10), sbc, baseScale),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("[", EventReceiver.COLOR_GREEN, baseScale),
+                GameTextUtilities.Text.custom("S", EventReceiver.COLOR_YELLOW, baseScale),
+                GameTextUtilities.Text.custom("E", EventReceiver.COLOR_ORANGE, baseScale),
+                GameTextUtilities.Text.custom("]", EventReceiver.COLOR_CYAN, baseScale),
+                GameTextUtilities.Text.custom(":", EventReceiver.COLOR_WHITE, baseScale),
+                GameTextUtilities.Text.custom(String.format("%3d.%d", season / 10, season % 10), sec, baseScale)
+            );
+        }
     }
 }
