@@ -133,8 +133,6 @@ public class SeasonsSettings extends ModeSettings {
         return ranking;
     }
 
-    // TODO: achievements?
-
     public SeasonsSettings(int currentVersion, ProfileProperties playerProperties) {
         super(PROP_ROOT, playerProperties);
 

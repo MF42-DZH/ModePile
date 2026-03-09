@@ -74,7 +74,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 9;
+    private static final int CURRENT_VERSION = 10;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(15), TWO(30), THREE(60);
@@ -644,6 +644,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         );
     }
 
+    private static final ColourMixer GLOBAL_MIXER = ColourMixer.rgb(0, 0, 0);
+
     private class OuterFrame implements IntBinaryOperator {
         protected final GameEngine engine;
         protected final int playerID;
@@ -991,6 +993,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         lastBackground = 0;
         currentBackground = 0;
         fadeProgress = 300;
+
+        engine.comboType = GameEngine.COMBO_TYPE_NORMAL;
     }
 
     // 0 1 2 3 4 (4.5) 5 6 7 8 9
@@ -2251,7 +2255,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
     }
 
-    private void addEventText(GameEngine engine, int playerID, int lines) {
+    private void addEventText(GameEngine engine, int playerID, int lines, int combo) {
         final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
         final int baseY = receiver.getFieldDisplayPositionX(engine, playerID) + 52;
 
@@ -2433,6 +2437,29 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 reverse
             );
         }
+
+        if (combo >= 2 && lines > 0) {
+            final int startColour = GLOBAL_MIXER
+                .setRGB24(colour)
+                .setBlue(1.0 - Math.min(1.0, combo / 11d))
+                .getRGB24();
+
+            final String str = (combo - 1) + " COMBO";
+
+            textEmitter.addString(
+                str,
+                DoubleVector.add(basePosition, new DoubleVector(0, 32, false)),
+                baseVelocity,
+                baseAcceleration,
+                ObjectAlignment.MIDDLE_MIDDLE,
+                ((lifeOffset * (str.length() - 3)) / 2), lifeOffset, maxLife,
+                EventReceiver.COLOR_WHITE,
+                startScale, endScale,
+                startColour, 255,
+                colour, 255,
+                reverse
+            );
+        }
     }
 
     private int abilityCharge(GameEngine engine, int baseCharge) {
@@ -2442,7 +2469,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public void calcScore(GameEngine engine, int playerID, int lines) {
-        addEventText(engine, playerID, lines);
+        addEventText(engine, playerID, lines, engine.combo);
 
         if (lines >= 1) {
             if (engine.field.isEmpty()) {
@@ -3406,7 +3433,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     }
 
     private enum ResultScreenPage {
-        GRADE_AND_BADGE, LEVELS_AND_TIME, SECONDARY_STATS;
+        GRADE_AND_BADGE, LEVELS_AND_TIME, SECONDARY_STATS, BREAKDOWN
     }
 
     @Override
@@ -3468,8 +3495,85 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             case SECONDARY_STATS: {
                 drawResultStats(
                     engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE,
-                    STAT_LPM, STAT_SPM, STAT_PIECE, STAT_PPS
+                    STAT_LINES, // 2 - 3
+                    STAT_LPM,   // 4 - 5
+                    STAT_PIECE, // 6 - 7
+                    STAT_PPS    // 8 - 9
                 );
+                break;
+            }
+            case BREAKDOWN: {
+                if (totalGrades != null) {
+                    receiver.drawMenuFont(
+                        engine, playerID, 0, 2,
+                        "PERFORMANCE",
+                        EventReceiver.COLOR_YELLOW
+                    );
+
+                    receiver.drawMenuFont(
+                        engine, playerID, 0, 2 + 1,
+                        String.format("%10s", totalGrades.totalPerformancePoints + " / " + Grading.MAX_PERFORMANCE_POINTS)
+                    );
+
+                    receiver.drawMenuFont(
+                        engine, playerID, 0, 4,
+                        "BADGE",
+                        EventReceiver.COLOR_YELLOW
+                    );
+
+                    receiver.drawMenuFont(
+                        engine, playerID, 0, 4 + 1,
+                        String.format("%10s", totalGrades.totalBadgePoints + " / " + Grading.MAX_BADGE_POINTS)
+                    );
+
+                    receiver.drawMenuFont(
+                        engine, playerID, 0, 6,
+                        "LEVEL",
+                        EventReceiver.COLOR_YELLOW
+                    );
+
+                    receiver.drawMenuFont(
+                        engine, playerID, 0, 6 + 1,
+                        String.format("%10s", totalGrades.totalLevelPoints + " / " + Grading.MAX_LEVEL_POINTS)
+                    );
+
+                    if (rollStarted) {
+                        receiver.drawMenuFont(
+                            engine, playerID, 0, 8,
+                            "ROLL",
+                            EventReceiver.COLOR_BLUE
+                        );
+
+                        receiver.drawMenuFont(
+                            engine, playerID, 0, 8 + 1,
+                            String.format("%10s", totalGrades.totalRollLevelPoints + " / " + Grading.MAX_ROLL_LEVEL_POINTS)
+                        );
+
+                        receiver.drawMenuFont(
+                            engine, playerID, 0, 10,
+                            "CLEAR",
+                            EventReceiver.COLOR_GREEN
+                        );
+
+                        receiver.drawMenuFont(
+                            engine, playerID, 0, 10 + 1,
+                            String.format("%10s", totalGrades.allClearBonus > 0 ? "+" + totalGrades.allClearBonus : "N/A")
+                        );
+                    }
+
+                    if (settings.perk == SeasonPerk.PERKLESS) {
+                        receiver.drawMenuFont(
+                            engine, playerID, 0, 12,
+                            "PERKLESS",
+                            EventReceiver.COLOR_ORANGE
+                        );
+
+                        receiver.drawMenuFont(
+                            engine, playerID, 0, 12 + 1,
+                            String.format("%10s", totalGrades.perklessBonus > 0 ? "+" + totalGrades.perklessBonus : "N/A")
+                        );
+                    }
+                }
                 break;
             }
         }
@@ -4083,7 +4187,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         // 0->4000 (Maximum at 640 badges (6400 internal badges))
         public static int getBadgePerformance(Badges badges) {
-            return Math.min(MAX_BADGE_POINTS, (int) Math.floor(badges.getBadges() * (6d / 10d)));
+            return Math.min(MAX_BADGE_POINTS, Interpolation.lerp(0, 4000, badges.getBadges() / 6400d));
         }
 
         // 0->3000 (level)
@@ -4091,7 +4195,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             return (int) Math.floor((double) MAX_LEVEL_POINTS * level / (double) MAX_LEVEL);
         }
 
-        // 0->3000 roll level)
+        // 0->3000 (roll level)
         public static int getRollLevelPerformance(int level) {
             return (int) Math.floor((double) MAX_ROLL_LEVEL_POINTS * level / (double) MAX_LEVEL);
         }
