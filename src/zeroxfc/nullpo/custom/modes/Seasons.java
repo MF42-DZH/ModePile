@@ -3525,6 +3525,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     engine, playerID, receiver, 11, EventReceiver.COLOR_BLUE,
                     STAT_TIME
                 );
+                receiver.drawMenuFont(engine, playerID, 0, 13, "ROLL TIME", EventReceiver.COLOR_BLUE);
+                receiver.drawMenuFont(engine, playerID, 0, 14, String.format("%10s", GeneralUtil.getTime(rollElapsed)));
                 break;
             }
             case SECONDARY_STATS: {
