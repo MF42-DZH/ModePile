@@ -24,6 +24,12 @@ public class SeasonsSettings extends ModeSettings {
     private final String spinTypeProp = propPath("spinType");
     public int spinType;
 
+    private final String sparkEffectProp = propPath("sparks");
+    public boolean sparkEffect;
+
+    private final String landingEffectProp = propPath("landingEffect");
+    public boolean landingEffect;
+
     private final String playerNameProp = propPath("playerName");
     public String playerName;
 
@@ -149,6 +155,9 @@ public class SeasonsSettings extends ModeSettings {
         hasCompletedGame = prop.getProperty(hasCompletedGameProp, false);
         hasSeenRollIntro = prop.getProperty(hasSeenRollIntroProp, false);
 
+        sparkEffect = prop.getProperty(sparkEffectProp, true);
+        landingEffect = prop.getProperty(landingEffectProp, true);
+
         // Version props are not saved on the player.
         version = isReplay ? prop.getProperty(versionProp, 0) : currentVersion;
         playerName = isReplay ? prop.getProperty(playerNameProp, "") : "";
@@ -162,6 +171,9 @@ public class SeasonsSettings extends ModeSettings {
 
         prop.setProperty(hasCompletedGameProp, hasCompletedGame);
         prop.setProperty(hasSeenRollIntroProp, hasSeenRollIntro);
+
+        prop.setProperty(sparkEffectProp, sparkEffect);
+        prop.setProperty(landingEffectProp, landingEffect);
 
         // Version props are not saved on the player.
         prop.setProperty(versionProp, currentVersion);
@@ -178,6 +190,9 @@ public class SeasonsSettings extends ModeSettings {
 
         hasCompletedGame = prop.getProperty(hasCompletedGameProp, false);
         hasSeenRollIntro = prop.getProperty(hasSeenRollIntroProp, false);
+
+        sparkEffect = prop.getProperty(sparkEffectProp, true);
+        landingEffect = prop.getProperty(landingEffectProp, true);
     }
 
     @Override
@@ -190,6 +205,9 @@ public class SeasonsSettings extends ModeSettings {
 
         prop.setProperty(hasCompletedGameProp, hasCompletedGame);
         prop.setProperty(hasSeenRollIntroProp, hasSeenRollIntro);
+
+        prop.setProperty(sparkEffectProp, sparkEffect);
+        prop.setProperty(landingEffectProp, landingEffect);
     }
 
     @Override

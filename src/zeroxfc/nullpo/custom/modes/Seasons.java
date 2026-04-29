@@ -3,8 +3,10 @@ package zeroxfc.nullpo.custom.modes;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Objects;
@@ -50,6 +52,8 @@ import zeroxfc.nullpo.custom.libs.mixins.HasCustomGameOver;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomLineClear;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomMove;
 import zeroxfc.nullpo.custom.libs.particles.Fireworks;
+import zeroxfc.nullpo.custom.libs.particles.LandingParticles;
+import zeroxfc.nullpo.custom.libs.particles.SurfaceSparks;
 import zeroxfc.nullpo.custom.libs.particles.TextEmitter;
 import zeroxfc.nullpo.custom.libs.types.ColourMixer;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
@@ -60,21 +64,9 @@ import zeroxfc.nullpo.custom.modes.objects.seasons.*;
 public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldDrawing, HasCustomLineClear, HasCustomGameOver, HasCelebrationFireworks {
     private static final Logger log = Logger.getLogger(Seasons.class);
 
-    /* TODO:
-     *   - [x] Fire Effect for Credits Roll
-     *   - [x] Custom frames
-     *   - [x] Shimmer effect on custom frames on Roll
-     *   - [x] Fallback fade-ish effect for people who don't use bg fade
-     *   - [x] Visual effect for Haunting
-     *   - [x] Replace Zero Celsius with Icicles (... inspired by a certain other game (ew))
-     *   - [x] Sound Effects!
-     *   - [x] Make the Winter Active gimmick less boring.
-     *   - [x] Rebalance the non-roll spring gimmicks?
-     */
-
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 10;
+    private static final int CURRENT_VERSION = 11;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(15), TWO(30), THREE(60);
@@ -532,6 +524,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int blocksUnderSnow;
     private int hardBlocksSeen;
     private FireAndSnow fireAndSnowEffect;
+
+    private Random sparksRandomiser;
+    private SurfaceSparks sparks;
+
+    private Random lpRandomiser;
+    private LandingParticles landingParticles;
 
     // Winter active stuff.
     private int waCurrentFreezeRow;
@@ -1217,6 +1215,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         engine.speed.areLine = 0;
 
                         engine.stat = GameEngine.STAT_LINECLEAR;
+
+                        gimmickRollSpr = new Gimmicks.RisingEarth(new Random(engine.randSeed * 7355608), badges, getGimmickPerkBoost());
+                        descriptionToDraw = new DescriptionDraw(gimmickRollSpr);
+
                         engine.resetStatc();
                     }
                 }
@@ -1440,7 +1442,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     public boolean onSetting(GameEngine engine, int playerID) {
         if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 2);
+            int change = updateCursor(engine, 4);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -1466,6 +1468,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         settings.spinType += change;
                         if (settings.spinType < GameEngine.SPINTYPE_4POINT) settings.spinType = GameEngine.SPINTYPE_IMMOBILE;
                         else if (settings.spinType > GameEngine.SPINTYPE_IMMOBILE) settings.spinType = GameEngine.SPINTYPE_4POINT;
+                        break;
+                    case 3:
+                        settings.sparkEffect = !settings.sparkEffect;
+                        break;
+                    case 4:
+                        settings.landingEffect = !settings.landingEffect;
                         break;
                     default:
                         break;
@@ -1530,6 +1538,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         );
         drawMenu(engine, playerID, receiver, 4, EventReceiver.COLOR_GREEN, 2,
             "SPIN TYPE", spinString
+        );
+        drawMenu(engine, playerID, receiver, 6, EventReceiver.COLOR_PINK, 3,
+            "SPARKS", GeneralUtil.getONorOFF(settings.sparkEffect)
+        );
+        drawMenu(engine, playerID, receiver, 8, EventReceiver.COLOR_PINK, 4,
+            "DROP EFF.", GeneralUtil.getONorOFF(settings.landingEffect)
         );
     }
 
@@ -1603,6 +1617,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         engine.rainbowAnimate = true;
 
         naturalLevelIncrement = 1;
+
+        sparksRandomiser = new Random(engine.randSeed * 2);
+        sparks = new SurfaceSparks(customGraphics, sparksRandomiser);
+
+        lpRandomiser = new Random(engine.randSeed * 3);
+        landingParticles = new LandingParticles(customGraphics, lpRandomiser);
 
         setSpeed(engine);
         owner.bgmStatus.bgm = BGM_TABLE.apply(engine.statistics.level);
@@ -1852,6 +1872,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
         } else if (gimmickAutMo1 != null) {
             engine.speed.gravity = 0;
+        }
+
+        if (settings.sparkEffect) {
+            sparks.addNumber(engine, receiver, playerID, 12);
         }
 
         return inOnMove(engine, playerID);
@@ -2466,6 +2490,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (currentAbilityTimer > 0) return 0;
         else return engine.tspin ? 5 * baseCharge : baseCharge;
     }
+    @Override
+    public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
+        if (settings.landingEffect) {
+            landingParticles.addNumber(receiver, engine, playerID, 32);
+        }
+    }
+
+    private static final Map<IntPair, Block> wm3HardBlocksClearing = new HashMap<>(40);
 
     @Override
     public void calcScore(GameEngine engine, int playerID, int lines) {
@@ -2572,9 +2604,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 fieldPurifyQueued = true;
 
                 clearBaseGameGimmicks();
-
-                gimmickRollSpr = new Gimmicks.RisingEarth(new Random(engine.randSeed * 7355608), badges, getGimmickPerkBoost());
-                descriptionToDraw = new DescriptionDraw(gimmickRollSpr);
 
                 rollTime = (150 * 60) + badges.getBadges() + (badges.getBadges() >>> 2); // 2.5 minutes + 1 frame per 0.1 badges (and extra frame per 4 badges).
 
@@ -2765,7 +2794,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             ++brokenBoneBlocks;
         }
 
-        if ((gimmickAutMo2 != null && blk.color == Block.BLOCK_COLOR_GEM_RAINBOW) || (gimmickWinMo3 != null && blk.color == Block.BLOCK_COLOR_GEM_CYAN)) {
+        if (gimmickAutMo2 != null && blk.color == Block.BLOCK_COLOR_GEM_RAINBOW) {
             ++brokenMajorBonusGems;
         }
 
@@ -2779,6 +2808,23 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if ((gimmickWinMo3 != null || gimmickRollWin != null) && blk.hard > 0) {
             ++hardBlocksSeen;
+        }
+
+        if (gimmickWinMo3 != null && blk.hard > 0) {
+            wm3HardBlocksClearing.put(IntPair.of(x, y), blk);
+
+            // Only clear the line if the row is full of ice blocks.
+            if (x == engine.field.getWidth() - 1) {
+                final List<Map.Entry<IntPair, Block>> hardInRow = wm3HardBlocksClearing
+                    .entrySet()
+                    .stream()
+                    .filter(e -> e.getKey().valR == y)
+                    .collect(Collectors.toList());
+
+                if (hardInRow.size() == engine.field.getWidth()) {
+                    hardInRow.forEach(e -> e.getValue().hard = 0);
+                }
+            }
         }
     }
 
@@ -2876,11 +2922,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (gimmickRollWin != null) {
             gimmickRollWin.setCountdownMax(badges, getGimmickPerkBoost());
         }
-    }
-
-    // TODO: Figure out why the faux zone mechanic clashes horribly with Absolute Zero
-    private void clearWalls(GameEngine engine) {
-        if (engine.field != null) engine.field.setAllAttribute(Block.BLOCK_ATTRIBUTE_WALL, false);
     }
 
     @Override
@@ -2982,6 +3023,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         brokenSnowBlocks = 0;
         blocksUnderSnow = 0;
         hardBlocksSeen = 0;
+        if (gimmickWinMo3 != null) wm3HardBlocksClearing.clear();
 
         HasCustomLineClear.super.callAndDrawBrokenBlocks(engine, playerID, li);
 
@@ -3296,16 +3338,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                             200, 255, 255, 255,
                             0.5f
                         );
-
-                        // For Icicles, draw dot on top of block if double-hard block.
-                        if (gimmickWinMo3 != null && blk.hard >= 2) {
-                            GameTextUtilities.drawDirectText(
-                                engine,
-                                baseX + (16 * x) + 4,
-                                baseY + (16 * y) + 4,
-                                GameTextUtilities.Text.ofSmall("g")
-                            );
-                        }
                     }
                 }
             }
@@ -3314,6 +3346,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private void renderExtraBoardInfo(GameEngine engine, int playerID) {
         drawBlockTextOverlays(engine, playerID);
+
+        if (sparks != null) sparks.draw(receiver);
+        if (landingParticles != null) landingParticles.draw(receiver);
 
         if (gimmickAutMo3 != null && engine.stat != GameEngine.STAT_CUSTOM && engine.gameActive) {
             gimmickAutMo3.renderFlashlight(receiver, engine, playerID, drawing);
@@ -3443,7 +3478,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
         int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
 
-        receiver.drawMenuFont(engine, playerID, 0, 0, "kn PAGE" + (engine.statc[1] + 1) + "/3", EventReceiver.COLOR_RED);
+        receiver.drawMenuFont(engine, playerID, 0, 0, "kn PAGE" + (engine.statc[1] + 1) + "/" + ResultScreenPage.values().length, EventReceiver.COLOR_RED);
 
         switch (ResultScreenPage.values()[engine.statc[1]]) {
             case GRADE_AND_BADGE: {
@@ -3799,6 +3834,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 engine.playSE("change");
             }
         }
+
+        if (sparks != null) sparks.update();
+        if (landingParticles != null) landingParticles.update();
     }
 
     private static final int[] METER_WHITE = { 255, 255, 255 };

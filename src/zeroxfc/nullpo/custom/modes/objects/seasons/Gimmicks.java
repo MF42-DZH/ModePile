@@ -1045,6 +1045,8 @@ public class Gimmicks {
                 true
             );
 
+            if (height >= engine.field.getHeight()) return;
+
             final double proportion = currentCounter / (double) currentTickTime;
             final int partialH = (int) Math.floor(16.0 * proportion);
 
@@ -1115,12 +1117,13 @@ public class Gimmicks {
         }
 
         public void updateChance(GameEngine engine, Badges badges, boolean perkBoost) {
+            // 100% -> 10%, delayed by badges.
             final double progress = (engine.statistics.level - seasonStartLv) / (double) (seasonEndLv - seasonStartLv);
-            final double baseChance = Interpolation.lerp(0.9935, 1.0, progress);
+            final double baseChance = Interpolation.lerp(0.99, 1.0, progress);
 
             final int denominator = perkBoost ? 15 : 30;
 
-            chance = Math.pow(baseChance, badges.getBadges() / (double) denominator);
+            chance = 1.0 - (0.9 * Math.pow(baseChance, badges.getBadges() / (double) denominator));
         }
 
         public void updateNext(GameEngine engine) {
@@ -1131,7 +1134,7 @@ public class Gimmicks {
 
             for (Block blk : piece.block) {
                 blk.bonusValue |= ICICLE_IDENTIFIER;
-                blk.hard = 0;
+                blk.hard = Integer.MAX_VALUE;
             }
 
             piece.setColor(Block.BLOCK_COLOR_GEM_CYAN);
@@ -1141,14 +1144,8 @@ public class Gimmicks {
             for (int y = -engine.field.getHiddenHeight(); y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
                 for (int x = 0; x < engine.field.getWidth(); ++x) {
                     final Block blk = engine.field.getBlock(x, y);
-                    if (blk == null || blk.isEmpty()) continue;
-
-                    if (blk.color == Block.BLOCK_COLOR_GEM_CYAN) {
-                        blk.color = Block.BLOCK_COLOR_CYAN;
-                        blk.hard = 2;
-                    } else if (blk.hard > 0) {
-                        if (--blk.hard == 0) blk.color = Block.BLOCK_COLOR_GRAY;
-                    }
+                    if (blk == null || blk.isEmpty() || blk.hard <= 0) continue;
+                    blk.hard = Integer.MAX_VALUE;
                 }
             }
         }
