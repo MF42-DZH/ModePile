@@ -1,5 +1,6 @@
 package zeroxfc.nullpo.custom.libs.types;
 
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameManager;
@@ -54,6 +55,10 @@ public abstract class ModeSettings {
             if (cmp < 0) return LT;
             else if (cmp > 0) return GT;
             else return EQ;
+        }
+
+        public static <T extends Comparable<T>> BiFunction<T, T, Order> deriveComparator() {
+            return (a, b) -> fromCompare(a.compareTo(b));
         }
 
         Order(int compareValue) {

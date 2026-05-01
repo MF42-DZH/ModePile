@@ -39,6 +39,7 @@ import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.LevelTableBuilder;
 import zeroxfc.nullpo.custom.libs.MathHelper;
+import zeroxfc.nullpo.custom.libs.MenuBuilder;
 import zeroxfc.nullpo.custom.libs.MiscUtils;
 import zeroxfc.nullpo.custom.libs.ModePileCredits;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
@@ -1438,47 +1439,74 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         return false;
     }
 
+    private final MenuBuilder.Menu settingsMenu = MenuBuilder.forMode(this)
+        .addSetting(
+            change -> {
+                int selectedPerk = settings.perk.ordinal() + change;
+
+                if (!settings.hasCompletedGame) {
+                    if (selectedPerk < 1) selectedPerk = SeasonPerk.values().length - 1;
+                    else if (selectedPerk >= SeasonPerk.values().length) selectedPerk = 1;
+                } else {
+                    if (selectedPerk < 0) selectedPerk = SeasonPerk.values().length - 1;
+                    else if (selectedPerk >= SeasonPerk.values().length) selectedPerk = 0;
+                }
+
+                settings.perk = SeasonPerk.values()[selectedPerk];
+            },
+            () -> {
+                String perkString = settings.perk.name();
+                if (perkString.contains("_")) {
+                    final String[] split = perkString.split("_");
+                    perkString = String.format("%s (%s)", split[0], split[1].charAt(0));
+                }
+
+                return perkString;
+            },
+            "PERK",
+            EventReceiver.COLOR_YELLOW
+        )
+        .addSetting(
+            IGNORED -> settings.fullGhost = !settings.fullGhost,
+            () -> GeneralUtil.getONorOFF(settings.fullGhost),
+            "FULL GHOST",
+            EventReceiver.COLOR_BLUE
+        )
+        .addSetting(
+            change -> {
+                settings.spinType += change;
+                if (settings.spinType < GameEngine.SPINTYPE_4POINT) settings.spinType = GameEngine.SPINTYPE_IMMOBILE;
+                else if (settings.spinType > GameEngine.SPINTYPE_IMMOBILE) settings.spinType = GameEngine.SPINTYPE_4POINT;
+            },
+            () -> {
+                String spinString = "DISABLED";
+                if (settings.spinType == GameEngine.SPINTYPE_4POINT) spinString = "4-POINT";
+                if (settings.spinType == GameEngine.SPINTYPE_IMMOBILE) spinString = "IMMOBILE";
+
+                return spinString;
+            },
+            "SPIN TYPE",
+            EventReceiver.COLOR_GREEN
+        )
+        .addSetting(
+            IGNORED -> settings.sparkEffect = !settings.sparkEffect,
+            () -> GeneralUtil.getONorOFF(settings.sparkEffect),
+            "SPARKS",
+            EventReceiver.COLOR_PINK
+        )
+        .addSetting(
+            IGNORED -> settings.landingEffect = !settings.landingEffect,
+            () -> GeneralUtil.getONorOFF(settings.landingEffect),
+            "DROP EFF.",
+            EventReceiver.COLOR_PINK
+        )
+        .build();
+
     @Override
     public boolean onSetting(GameEngine engine, int playerID) {
         if (!engine.owner.replayMode) {
             // Configuration changes
-            int change = updateCursor(engine, 4);
-
-            if (change != 0) {
-                engine.playSE("change");
-
-                switch (engine.statc[2]) {
-                    case 0:
-                        int selectedPerk = settings.perk.ordinal() + change;
-
-                        if (!settings.hasCompletedGame) {
-                            if (selectedPerk < 1) selectedPerk = SeasonPerk.values().length - 1;
-                            else if (selectedPerk >= SeasonPerk.values().length) selectedPerk = 1;
-                        } else {
-                            if (selectedPerk < 0) selectedPerk = SeasonPerk.values().length - 1;
-                            else if (selectedPerk >= SeasonPerk.values().length) selectedPerk = 0;
-                        }
-
-                        settings.perk = SeasonPerk.values()[selectedPerk];
-                        break;
-                    case 1:
-                        settings.fullGhost = !settings.fullGhost;
-                        break;
-                    case 2:
-                        settings.spinType += change;
-                        if (settings.spinType < GameEngine.SPINTYPE_4POINT) settings.spinType = GameEngine.SPINTYPE_IMMOBILE;
-                        else if (settings.spinType > GameEngine.SPINTYPE_IMMOBILE) settings.spinType = GameEngine.SPINTYPE_4POINT;
-                        break;
-                    case 3:
-                        settings.sparkEffect = !settings.sparkEffect;
-                        break;
-                    case 4:
-                        settings.landingEffect = !settings.landingEffect;
-                        break;
-                    default:
-                        break;
-                }
-            }
+            settingsMenu.updateSettings(engine, playerID);
 
             if (engine.ctrl.isPush(Controller.BUTTON_A) && (engine.statc[3] >= 5)) {
                 engine.playSE("decide");
@@ -1520,31 +1548,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public void renderSetting(GameEngine engine, int playerID) {
-        String perkString = settings.perk.name();
-        if (perkString.contains("_")) {
-            final String[] split = perkString.split("_");
-            perkString = String.format("%s (%s)", split[0], split[1].charAt(0));
-        }
-
-        String spinString = "DISABLED";
-        if (settings.spinType == GameEngine.SPINTYPE_4POINT) spinString = "4-POINT";
-        if (settings.spinType == GameEngine.SPINTYPE_IMMOBILE) spinString = "IMMOBILE";
-
-        drawMenu(engine, playerID, receiver, 0, EventReceiver.COLOR_YELLOW, 0,
-            "PERK", perkString
-        );
-        drawMenu(engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE, 1,
-            "FULL GHOST", GeneralUtil.getONorOFF(settings.fullGhost)
-        );
-        drawMenu(engine, playerID, receiver, 4, EventReceiver.COLOR_GREEN, 2,
-            "SPIN TYPE", spinString
-        );
-        drawMenu(engine, playerID, receiver, 6, EventReceiver.COLOR_PINK, 3,
-            "SPARKS", GeneralUtil.getONorOFF(settings.sparkEffect)
-        );
-        drawMenu(engine, playerID, receiver, 8, EventReceiver.COLOR_PINK, 4,
-            "DROP EFF.", GeneralUtil.getONorOFF(settings.landingEffect)
-        );
+        settingsMenu.renderSettings(engine, playerID, receiver, 0);
     }
 
     private void setSpeed(GameEngine engine) {
@@ -3525,8 +3529,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     engine, playerID, receiver, 11, EventReceiver.COLOR_BLUE,
                     STAT_TIME
                 );
-                receiver.drawMenuFont(engine, playerID, 0, 13, "ROLL TIME", EventReceiver.COLOR_BLUE);
-                receiver.drawMenuFont(engine, playerID, 0, 14, String.format("%10s", GeneralUtil.getTime(rollElapsed)));
+
+                if (rollStarted) {
+                    receiver.drawMenuFont(engine, playerID, 0, 13, "ROLL TIME", EventReceiver.COLOR_BLUE);
+                    receiver.drawMenuFont(engine, playerID, 0, 14, String.format("%10s", GeneralUtil.getTime(rollElapsed)));
+                }
                 break;
             }
             case SECONDARY_STATS: {
@@ -4127,6 +4134,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 }
             }
         }
+
+        rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
 
         drawFireworks(receiver);
     }
