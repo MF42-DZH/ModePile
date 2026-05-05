@@ -9,34 +9,41 @@ import zeroxfc.nullpo.custom.libs.MenuBuilder;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.types.ModeSettings;
 
+@ModeSettings.PropertyRoot(root = "seasons")
 public class SeasonsSettings extends ModeSettings {
     public static final int RANKING_MAX = 5;
-
-    private static final String PROP_ROOT = "seasons";
 
     private final int currentVersion;
     public int version;
     private final String versionProp = propPath("version");
 
-    @MenuBuilder.SettingItem(header = "FULL GHOST", headerColour = EventReceiver.COLOR_BLUE, order = 1)
+    @ModeSettings.PropertyPath(path = "fullGhost")
+    @ModeSettings.DefaultValue(booleanValue = false)
+    @ModeSettings.GlobalProperty
+    @ModeSettings.PlayerProperty
+    @MenuBuilder.SettingItem(id = 1, header = "FULL GHOST", headerColour = EventReceiver.COLOR_BLUE)
     public boolean fullGhost;
-    private final String fullGhostProp = propPath("fullGhost");
 
-    @MenuBuilder.SettingChanger(order = 1)
+    @MenuBuilder.SettingChanger(id = 1)
     public void changeFullGhost(int ignored) {
         fullGhost = !fullGhost;
     }
 
-    @MenuBuilder.SettingPrinter(order = 1)
+    @MenuBuilder.SettingPrinter(id = 1)
     public String printFullGhost() {
         return GeneralUtil.getONorOFF(fullGhost);
     }
 
-    @MenuBuilder.SettingItem(header = "PERK", headerColour = EventReceiver.COLOR_YELLOW, order = 0)
-    public SeasonPerk perk;
-    private final String perkProp = propPath("perk");
+    @ModeSettings.PropertyPath(path = "perk")
+    @ModeSettings.DefaultValue(intValue = 1)
+    @ModeSettings.GlobalProperty
+    @ModeSettings.PlayerProperty
+    public int perkOrdinal;
 
-    @MenuBuilder.SettingChanger(order = 0)
+    @MenuBuilder.SettingItem(id = 0, header = "PERK", headerColour = EventReceiver.COLOR_YELLOW)
+    public SeasonPerk perk;
+
+    @MenuBuilder.SettingChanger(id = 0)
     public void changePerk(int change) {
         int selectedPerk = perk.ordinal() + change;
 
@@ -51,7 +58,7 @@ public class SeasonsSettings extends ModeSettings {
         perk = SeasonPerk.values()[selectedPerk];
     }
 
-    @MenuBuilder.SettingPrinter(order = 0)
+    @MenuBuilder.SettingPrinter(id = 0)
     public String printPerk() {
         String perkString = perk.name();
         if (perkString.contains("_")) {
@@ -62,11 +69,14 @@ public class SeasonsSettings extends ModeSettings {
         return perkString;
     }
 
-    @MenuBuilder.SettingItem(header = "SPIN TYPE", headerColour = EventReceiver.COLOR_GREEN, order = 2)
+    @ModeSettings.PropertyPath(path = "spinType")
+    @ModeSettings.DefaultValue(intValue = GameEngine.SPINTYPE_4POINT)
+    @ModeSettings.GlobalProperty
+    @ModeSettings.PlayerProperty
+    @MenuBuilder.SettingItem(id = 2, header = "SPIN TYPE", headerColour = EventReceiver.COLOR_GREEN)
     public int spinType;
-    private final String spinTypeProp = propPath("spinType");
 
-    @MenuBuilder.SettingChanger(order = 2)
+    @MenuBuilder.SettingChanger(id = 2)
     public void changeSpinType(int change) {
         spinType += change;
 
@@ -74,7 +84,7 @@ public class SeasonsSettings extends ModeSettings {
         else if (spinType > GameEngine.SPINTYPE_IMMOBILE) spinType = GameEngine.SPINTYPE_4POINT;
     }
 
-    @MenuBuilder.SettingPrinter(order = 2)
+    @MenuBuilder.SettingPrinter(id = 2)
     public String printSpinType() {
         String spinString = "DISABLED";
         if (spinType == GameEngine.SPINTYPE_4POINT) spinString = "4-POINT";
@@ -83,44 +93,53 @@ public class SeasonsSettings extends ModeSettings {
         return spinString;
     }
 
-    @MenuBuilder.SettingItem(header = "SPARKS", headerColour = EventReceiver.COLOR_PINK, order = 3)
+    @ModeSettings.PropertyPath(path = "sparks")
+    @ModeSettings.DefaultValue(booleanValue = true)
+    @ModeSettings.GlobalProperty
+    @ModeSettings.PlayerProperty
+    @MenuBuilder.SettingItem(id = 3, header = "SPARKS", headerColour = EventReceiver.COLOR_PINK)
     public boolean sparkEffect;
-    private final String sparkEffectProp = propPath("sparks");
 
-    @MenuBuilder.SettingChanger(order = 3)
+    @MenuBuilder.SettingChanger(id = 3)
     public void changeSparkEffect(int ignored) {
         sparkEffect = !sparkEffect;
     }
 
-    @MenuBuilder.SettingPrinter(order = 3)
+    @MenuBuilder.SettingPrinter(id = 3)
     public String printSparkEffect() {
         return GeneralUtil.getONorOFF(sparkEffect);
     }
 
-    @MenuBuilder.SettingItem(header = "DROP EFF.", headerColour = EventReceiver.COLOR_PINK, order = 4)
+    @ModeSettings.PropertyPath(path = "landingEffect")
+    @ModeSettings.DefaultValue(booleanValue = true)
+    @ModeSettings.GlobalProperty
+    @ModeSettings.PlayerProperty
+    @MenuBuilder.SettingItem(id = 4, header = "DROP EFF.", headerColour = EventReceiver.COLOR_PINK)
     public boolean landingEffect;
-    private final String landingEffectProp = propPath("landingEffect");
 
-    @MenuBuilder.SettingChanger(order = 4)
+    @MenuBuilder.SettingChanger(id = 4)
     public void changeLandingEffect(int ignored) {
         landingEffect = !landingEffect;
     }
 
-    @MenuBuilder.SettingPrinter(order = 4)
+    @MenuBuilder.SettingPrinter(id = 4)
     public String printLandingEffect() {
         return GeneralUtil.getONorOFF(landingEffect);
     }
 
-    @MenuBuilder.SettingItem(header = "BG WOBBLE", headerColour = EventReceiver.COLOR_PINK, order = 5)
+    @ModeSettings.PropertyPath(path = "wobble")
+    @ModeSettings.DefaultValue(booleanValue = true)
+    @ModeSettings.GlobalProperty
+    @ModeSettings.PlayerProperty
+    @MenuBuilder.SettingItem(id = 5, header = "BG WOBBLE", headerColour = EventReceiver.COLOR_PINK)
     public boolean wobble;
-    private final String wobbleProp = propPath("wobble");
 
-    @MenuBuilder.SettingChanger(order = 5)
+    @MenuBuilder.SettingChanger(id = 5)
     public void changeWobble(int ignored) {
         wobble = !wobble;
     }
 
-    @MenuBuilder.SettingPrinter(order = 5)
+    @MenuBuilder.SettingPrinter(id = 5)
     public String printWobble() {
         return GeneralUtil.getONorOFF(wobble);
     }
@@ -128,12 +147,17 @@ public class SeasonsSettings extends ModeSettings {
     public String playerName;
     private final String playerNameProp = propPath("playerName");
 
-    // Only available for logged-in players.
+    @ModeSettings.PropertyPath(path = "hasCompletedGame")
+    @ModeSettings.DefaultValue(booleanValue = true)
+    @ModeSettings.GlobalProperty
+    @ModeSettings.PlayerProperty
     public boolean hasCompletedGame;
-    private final String hasCompletedGameProp = propPath("hasCompletedGame");
 
+    @ModeSettings.PropertyPath(path = "hasSeenRollIntro")
+    @ModeSettings.DefaultValue(booleanValue = true)
+    @ModeSettings.GlobalProperty
+    @ModeSettings.PlayerProperty
     public boolean hasSeenRollIntro;
-    private final String hasSeenRollIntroProp = propPath("hasSeenRollIntro");
 
     private String rankingGradePointProp(String ruleName, int leaderboard, int position) {
         return propPath("ranking", currentVersion, leaderboard, ruleName, "gradePoint", position);
@@ -234,25 +258,20 @@ public class SeasonsSettings extends ModeSettings {
         return ranking;
     }
 
-    public SeasonsSettings(int currentVersion, ProfileProperties playerProperties) {
-        super(PROP_ROOT, playerProperties);
+    private final SettingsHandler simpleSettingsHandler;
 
+    public SeasonsSettings(int currentVersion, ProfileProperties playerProperties) {
+        super(playerProperties);
+
+        this.simpleSettingsHandler = ModeSettings.generateSettingsHandler(this);
         this.currentVersion = currentVersion;
         this.hasCompletedGame = false;
     }
 
     @Override
     public void loadSetting(CustomProperties prop, boolean isReplay) {
-        perk = SeasonPerk.values()[prop.getProperty(perkProp, SeasonPerk.SPRING_PASSIVE.ordinal())];
-        fullGhost = prop.getProperty(fullGhostProp, false);
-        spinType = prop.getProperty(spinTypeProp, GameEngine.SPINTYPE_4POINT);
-
-        hasCompletedGame = prop.getProperty(hasCompletedGameProp, false);
-        hasSeenRollIntro = prop.getProperty(hasSeenRollIntroProp, false);
-
-        sparkEffect = prop.getProperty(sparkEffectProp, true);
-        landingEffect = prop.getProperty(landingEffectProp, true);
-        wobble = prop.getProperty(wobbleProp, true);
+        simpleSettingsHandler.loadSetting(prop);
+        perk = SeasonPerk.values()[perkOrdinal];
 
         // Version props are not saved on the player.
         version = isReplay ? prop.getProperty(versionProp, 0) : currentVersion;
@@ -261,16 +280,8 @@ public class SeasonsSettings extends ModeSettings {
 
     @Override
     public void saveSetting(CustomProperties prop, boolean forReplay) {
-        prop.setProperty(perkProp, perk.ordinal());
-        prop.setProperty(fullGhostProp, fullGhost);
-        prop.setProperty(spinTypeProp, spinType);
-
-        prop.setProperty(hasCompletedGameProp, hasCompletedGame);
-        prop.setProperty(hasSeenRollIntroProp, hasSeenRollIntro);
-
-        prop.setProperty(sparkEffectProp, sparkEffect);
-        prop.setProperty(landingEffectProp, landingEffect);
-        prop.setProperty(wobbleProp, wobble);
+        perkOrdinal = perk.ordinal();
+        simpleSettingsHandler.saveSetting(prop);
 
         // Version props are not saved on the player.
         prop.setProperty(versionProp, currentVersion);
@@ -281,32 +292,16 @@ public class SeasonsSettings extends ModeSettings {
     public void loadSettingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return;
 
-        perk = SeasonPerk.values()[prop.getProperty(perkProp, SeasonPerk.SPRING_PASSIVE.ordinal())];
-        fullGhost = prop.getProperty(fullGhostProp, false);
-        spinType = prop.getProperty(spinTypeProp, GameEngine.SPINTYPE_4POINT);
-
-        hasCompletedGame = prop.getProperty(hasCompletedGameProp, false);
-        hasSeenRollIntro = prop.getProperty(hasSeenRollIntroProp, false);
-
-        sparkEffect = prop.getProperty(sparkEffectProp, true);
-        landingEffect = prop.getProperty(landingEffectProp, true);
-        wobble = prop.getProperty(wobbleProp, true);
+        simpleSettingsHandler.loadPlayerSetting(prop);
+        perk = SeasonPerk.values()[perkOrdinal];
     }
 
     @Override
     public void saveSettingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return;
 
-        prop.setProperty(perkProp, perk.ordinal());
-        prop.setProperty(fullGhostProp, fullGhost);
-        prop.setProperty(spinTypeProp, spinType);
-
-        prop.setProperty(hasCompletedGameProp, hasCompletedGame);
-        prop.setProperty(hasSeenRollIntroProp, hasSeenRollIntro);
-
-        prop.setProperty(sparkEffectProp, sparkEffect);
-        prop.setProperty(landingEffectProp, landingEffect);
-        prop.setProperty(wobbleProp, wobble);
+        perkOrdinal = perk.ordinal();
+        simpleSettingsHandler.savePlayerSetting(prop);
     }
 
     @Override

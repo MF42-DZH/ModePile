@@ -1,28 +1,40 @@
 package zeroxfc.nullpo.custom.libs.types;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.util.CustomProperties;
+import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 
 /** Representation of an object that holds the settings that a mode uses. */
 public abstract class ModeSettings {
+    private static final Logger log = Logger.getLogger(ModeSettings.class);
+
     private final String propRoot;
     public final ProfileProperties playerProperties;
 
-    protected ModeSettings(String propRoot, ProfileProperties playerProperties) {
-        this.propRoot = propRoot;
+    protected ModeSettings(ProfileProperties playerProperties) {
+        this.propRoot = Optional
+            .ofNullable(this.getClass().getAnnotation(PropertyRoot.class))
+            .map(PropertyRoot::root)
+            .orElseThrow(() -> new RuntimeException("No PropertyRoot defined on settings class: " + this.getClass().getName()));
         this.playerProperties = playerProperties;
     }
 
     // Construct a property path for settings and rankings.
     protected final String propPath(Object... path) {
-        final StringBuilder sb = new StringBuilder(propRoot);
-        for (Object obj : path) sb.append('.').append(obj.toString());
-
-        return sb.toString();
+        return joinPropPath(propRoot, path);
     }
 
     public abstract void loadSetting(CustomProperties prop, boolean isReplay);
@@ -69,5 +81,209 @@ public abstract class ModeSettings {
             if (this == EQ) return other.get();
             else return this;
         }
+    }
+
+    // Settings properties handling annotation framework. Intricacies for version saving and other such things
+    // need to be handled manually, as this is only for automating the simple properties.
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface PropertyRoot {
+        String root();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface GlobalProperty { }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface PlayerProperty { }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface PropertyPath {
+        String[] path();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface DefaultValue {
+        byte byteValue() default 0;
+        short shortValue() default 0;
+        int intValue() default 0;
+        long longValue() default 0;
+        float floatValue() default 0.0f;
+        double doubleValue() default 0.0;
+        boolean booleanValue() default false;
+        char charValue() default '\0';
+        String stringValue() default "";
+    }
+
+    private static String joinPropPath(String root, Object[] path) {
+        final StringBuilder sb = new StringBuilder(root);
+        for (final Object segment : path) sb.append('.').append(segment);
+
+        return sb.toString();
+    }
+
+    /**
+     * Generate a simple settings handler for a settings object.
+     *
+     * @param settingsObject Setting object holding mode settings.
+     * @return Handler that automatically handles annotated fields.
+     */
+    @SuppressWarnings("unchecked")
+    public static <S extends ModeSettings> SettingsHandler generateSettingsHandler(S settingsObject) {
+        final Class<S> settingsClass = (Class<S>) settingsObject.getClass();
+        final String propRoot = Optional
+            .ofNullable(settingsClass.getAnnotation(PropertyRoot.class))
+            .map(PropertyRoot::root)
+            .orElseThrow(() -> new RuntimeException("No PropertyRoot defined on settings class: " + settingsClass.getName()));
+
+        final List<FieldHandler<S>> settingsHandlers = Arrays
+            .stream(settingsClass.getFields())
+            .filter(f -> f.getAnnotation(PropertyPath.class) != null)
+            .map(f -> new FieldHandler<>(settingsObject, propRoot, f))
+            .collect(Collectors.toList());
+
+        return new SettingsHandler() {
+            @Override
+            public void loadSetting(CustomProperties prop) {
+                for (final FieldHandler<S> fieldHandler : settingsHandlers) fieldHandler.readGlobal(prop);
+            }
+
+            @Override
+            public void saveSetting(CustomProperties prop) {
+                for (final FieldHandler<S> fieldHandler : settingsHandlers) fieldHandler.writeGlobal(prop);
+            }
+
+            @Override
+            public void loadPlayerSetting(ProfileProperties prop) {
+                for (final FieldHandler<S> fieldHandler : settingsHandlers) fieldHandler.readPlayer(prop);
+            }
+
+            @Override
+            public void savePlayerSetting(ProfileProperties prop) {
+                for (final FieldHandler<S> fieldHandler : settingsHandlers) fieldHandler.writePlayer(prop);
+            }
+        };
+    }
+
+    private static final class FieldHandler<S extends ModeSettings> {
+        private final S modeSettings;
+        private final String root;
+        private final Field field;
+
+        private final Optional<GlobalProperty> isGlobal;
+        private final Optional<PlayerProperty> isPlayer;
+        private final String[] path;
+        private final DefaultValue defaults;
+
+        public FieldHandler(S modeSettings, String root, Field field) {
+            this.modeSettings = modeSettings;
+            this.root = root;
+            this.field = field;
+
+            isGlobal = Optional
+                .ofNullable(field.getAnnotation(GlobalProperty.class));
+            isPlayer = Optional
+                .ofNullable(field.getAnnotation(PlayerProperty.class));
+            path = Optional
+                .ofNullable(field.getAnnotation(PropertyPath.class))
+                .map(PropertyPath::path)
+                .orElseThrow(() -> new RuntimeException("No path defined on property: " + field.getName()));
+            defaults = Optional
+                .ofNullable(field.getAnnotation(DefaultValue.class))
+                .orElseThrow(() -> new RuntimeException("No default values defined on property: " + field.getName()));
+        }
+
+        public void readGlobal(CustomProperties prop) {
+            if (!isGlobal.isPresent()) return;
+
+            try {
+                final Class<?> fieldType = field.getType();
+                if (fieldType.isAssignableFrom(byte.class)) field.setByte(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.byteValue()));
+                else if (fieldType.isAssignableFrom(short.class)) field.setShort(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.shortValue()));
+                else if (fieldType.isAssignableFrom(int.class)) field.setInt(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.intValue()));
+                else if (fieldType.isAssignableFrom(long.class)) field.setLong(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.longValue()));
+                else if (fieldType.isAssignableFrom(float.class)) field.setFloat(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.floatValue()));
+                else if (fieldType.isAssignableFrom(double.class)) field.setDouble(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.doubleValue()));
+                else if (fieldType.isAssignableFrom(boolean.class)) field.setBoolean(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.booleanValue()));
+                else if (fieldType.isAssignableFrom(char.class)) field.setChar(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.charValue()));
+                else if (fieldType.isAssignableFrom(String.class)) field.set(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.stringValue()));
+            } catch (IllegalAccessException e) {
+                log.error("Failed to assign global field (" + field.getName() + "): ");
+                log.error(e);
+            }
+        }
+
+        public void readPlayer(ProfileProperties prop) {
+            if (!isPlayer.isPresent() || !prop.isLoggedIn()) return;
+
+            try {
+                final Class<?> fieldType = field.getType();
+                if (fieldType.isAssignableFrom(byte.class)) field.setByte(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.byteValue()));
+                else if (fieldType.isAssignableFrom(short.class)) field.setShort(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.shortValue()));
+                else if (fieldType.isAssignableFrom(int.class)) field.setInt(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.intValue()));
+                else if (fieldType.isAssignableFrom(long.class)) field.setLong(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.longValue()));
+                else if (fieldType.isAssignableFrom(float.class)) field.setFloat(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.floatValue()));
+                else if (fieldType.isAssignableFrom(double.class)) field.setDouble(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.doubleValue()));
+                else if (fieldType.isAssignableFrom(boolean.class)) field.setBoolean(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.booleanValue()));
+                else if (fieldType.isAssignableFrom(char.class)) field.setChar(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.charValue()));
+                else if (fieldType.isAssignableFrom(String.class)) field.set(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.stringValue()));
+            } catch (IllegalAccessException e) {
+                log.error("Failed to assign player field (" + field.getName() + "): ");
+                log.error(e);
+            }
+        }
+
+        public void writeGlobal(CustomProperties prop) {
+            if (!isGlobal.isPresent()) return;
+
+            try {
+                final Class<?> fieldType = field.getType();
+                if (fieldType.isAssignableFrom(byte.class)) prop.setProperty(joinPropPath(root, path), field.getByte(modeSettings));
+                else if (fieldType.isAssignableFrom(short.class)) prop.setProperty(joinPropPath(root, path), field.getShort(modeSettings));
+                else if (fieldType.isAssignableFrom(int.class)) prop.setProperty(joinPropPath(root, path), field.getInt(modeSettings));
+                else if (fieldType.isAssignableFrom(long.class)) prop.setProperty(joinPropPath(root, path), field.getLong(modeSettings));
+                else if (fieldType.isAssignableFrom(float.class)) prop.setProperty(joinPropPath(root, path), field.getFloat(modeSettings));
+                else if (fieldType.isAssignableFrom(double.class)) prop.setProperty(joinPropPath(root, path), field.getDouble(modeSettings));
+                else if (fieldType.isAssignableFrom(boolean.class)) prop.setProperty(joinPropPath(root, path), field.getBoolean(modeSettings));
+                else if (fieldType.isAssignableFrom(char.class)) prop.setProperty(joinPropPath(root, path), field.getChar(modeSettings));
+                else if (fieldType.isAssignableFrom(String.class)) prop.setProperty(joinPropPath(root, path), field.get(modeSettings).toString());
+            } catch (IllegalAccessException e) {
+                log.error("Failed to read global field (" + field.getName() + "): ");
+                log.error(e);
+            }
+        }
+
+        public void writePlayer(ProfileProperties prop) {
+            if (!isPlayer.isPresent() || !prop.isLoggedIn()) return;
+
+            try {
+                final Class<?> fieldType = field.getType();
+                if (fieldType.isAssignableFrom(byte.class)) prop.setProperty(joinPropPath(root, path), field.getByte(modeSettings));
+                else if (fieldType.isAssignableFrom(short.class)) prop.setProperty(joinPropPath(root, path), field.getShort(modeSettings));
+                else if (fieldType.isAssignableFrom(int.class)) prop.setProperty(joinPropPath(root, path), field.getInt(modeSettings));
+                else if (fieldType.isAssignableFrom(long.class)) prop.setProperty(joinPropPath(root, path), field.getLong(modeSettings));
+                else if (fieldType.isAssignableFrom(float.class)) prop.setProperty(joinPropPath(root, path), field.getFloat(modeSettings));
+                else if (fieldType.isAssignableFrom(double.class)) prop.setProperty(joinPropPath(root, path), field.getDouble(modeSettings));
+                else if (fieldType.isAssignableFrom(boolean.class)) prop.setProperty(joinPropPath(root, path), field.getBoolean(modeSettings));
+                else if (fieldType.isAssignableFrom(char.class)) prop.setProperty(joinPropPath(root, path), field.getChar(modeSettings));
+                else if (fieldType.isAssignableFrom(String.class)) prop.setProperty(joinPropPath(root, path), field.get(modeSettings).toString());
+            } catch (IllegalAccessException e) {
+                log.error("Failed to read player field (" + field.getName() + "): ");
+                log.error(e);
+            }
+        }
+    }
+
+    // Settings handler object, generated using above method. Used for simple properties only.
+    public static abstract class SettingsHandler {
+        public abstract void loadSetting(CustomProperties prop);
+        public abstract void saveSetting(CustomProperties prop);
+        public abstract void loadPlayerSetting(ProfileProperties prop);
+        public abstract void savePlayerSetting(ProfileProperties prop);
     }
 }

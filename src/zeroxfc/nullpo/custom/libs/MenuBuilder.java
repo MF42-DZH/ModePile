@@ -14,9 +14,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
@@ -134,35 +132,32 @@ public final class MenuBuilder {
             this.changer = changer;
             this.asString = asString;
         }
-
-        public static final BiFunction<String, Integer, Function<Consumer<Integer>, Function<Supplier<String>, Setting>>> curryConstructor =
-            (header, headerColour) -> changer -> asString -> new Setting(header, headerColour, changer, asString);
     }
 
     // Setting menu autogenerator framework.
-    // Order values are used as the keys.
+    // Integer id values are used as the keys.
 
     // Placed on settings object PUBLIC modifiable fields.
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     public @interface SettingItem {
+        int id();
         String header();
         int headerColour();
-        int order();
     }
 
     // Should be placed on PUBLIC methods with the signature "void NAME(int change)".
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface SettingChanger {
-        int order();
+        int id();
     }
 
     // Should be placed on PUBLIC methods with the signature "String NAME()".
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface SettingPrinter {
-        int order();
+        int id();
     }
 
     /**
@@ -183,21 +178,21 @@ public final class MenuBuilder {
 
         for (final Field field : settingsClass.getFields()) {
             for (final SettingItem itemAnnotation : field.getDeclaredAnnotationsByType(SettingItem.class)) {
-                settingFields.put(itemAnnotation.order(), itemAnnotation);
+                settingFields.put(itemAnnotation.id(), itemAnnotation);
                 break;
             }
         }
 
         for (final Method method : settingsClass.getMethods()) {
             for (final SettingChanger changerAnnotation : method.getDeclaredAnnotationsByType(SettingChanger.class)) {
-                settingChangers.put(changerAnnotation.order(), method);
+                settingChangers.put(changerAnnotation.id(), method);
                 break;
             }
         }
 
         for (final Method method : settingsClass.getMethods()) {
             for (final SettingPrinter printerAnnotation : method.getDeclaredAnnotationsByType(SettingPrinter.class)) {
-                settingPrinters.put(printerAnnotation.order(), method);
+                settingPrinters.put(printerAnnotation.id(), method);
                 break;
             }
         }
