@@ -1,8 +1,11 @@
 package zeroxfc.nullpo.custom.modes.objects.seasons;
 
+import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.util.CustomProperties;
+import mu.nu.nullpo.util.GeneralUtil;
+import zeroxfc.nullpo.custom.libs.MenuBuilder;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.types.ModeSettings;
 
@@ -11,37 +14,126 @@ public class SeasonsSettings extends ModeSettings {
 
     private static final String PROP_ROOT = "seasons";
 
-    private final String versionProp = propPath("version");
     private final int currentVersion;
     public int version;
+    private final String versionProp = propPath("version");
 
-    private final String fullGhostProp = propPath("fullGhost");
+    @MenuBuilder.SettingItem(header = "FULL GHOST", headerColour = EventReceiver.COLOR_BLUE, order = 1)
     public boolean fullGhost;
+    private final String fullGhostProp = propPath("fullGhost");
 
-    private final String perkProp = propPath("perk");
+    @MenuBuilder.SettingChanger(order = 1)
+    public void changeFullGhost(int ignored) {
+        fullGhost = !fullGhost;
+    }
+
+    @MenuBuilder.SettingPrinter(order = 1)
+    public String printFullGhost() {
+        return GeneralUtil.getONorOFF(fullGhost);
+    }
+
+    @MenuBuilder.SettingItem(header = "PERK", headerColour = EventReceiver.COLOR_YELLOW, order = 0)
     public SeasonPerk perk;
+    private final String perkProp = propPath("perk");
 
-    private final String spinTypeProp = propPath("spinType");
+    @MenuBuilder.SettingChanger(order = 0)
+    public void changePerk(int change) {
+        int selectedPerk = perk.ordinal() + change;
+
+        if (!hasCompletedGame) {
+            if (selectedPerk < 1) selectedPerk = SeasonPerk.values().length - 1;
+            else if (selectedPerk >= SeasonPerk.values().length) selectedPerk = 1;
+        } else {
+            if (selectedPerk < 0) selectedPerk = SeasonPerk.values().length - 1;
+            else if (selectedPerk >= SeasonPerk.values().length) selectedPerk = 0;
+        }
+
+        perk = SeasonPerk.values()[selectedPerk];
+    }
+
+    @MenuBuilder.SettingPrinter(order = 0)
+    public String printPerk() {
+        String perkString = perk.name();
+        if (perkString.contains("_")) {
+            final String[] split = perkString.split("_");
+            perkString = String.format("%s (%s)", split[0], split[1].charAt(0));
+        }
+
+        return perkString;
+    }
+
+    @MenuBuilder.SettingItem(header = "SPIN TYPE", headerColour = EventReceiver.COLOR_GREEN, order = 2)
     public int spinType;
+    private final String spinTypeProp = propPath("spinType");
 
-    private final String sparkEffectProp = propPath("sparks");
+    @MenuBuilder.SettingChanger(order = 2)
+    public void changeSpinType(int change) {
+        spinType += change;
+
+        if (spinType < GameEngine.SPINTYPE_4POINT) spinType = GameEngine.SPINTYPE_IMMOBILE;
+        else if (spinType > GameEngine.SPINTYPE_IMMOBILE) spinType = GameEngine.SPINTYPE_4POINT;
+    }
+
+    @MenuBuilder.SettingPrinter(order = 2)
+    public String printSpinType() {
+        String spinString = "DISABLED";
+        if (spinType == GameEngine.SPINTYPE_4POINT) spinString = "4-POINT";
+        if (spinType == GameEngine.SPINTYPE_IMMOBILE) spinString = "IMMOBILE";
+
+        return spinString;
+    }
+
+    @MenuBuilder.SettingItem(header = "SPARKS", headerColour = EventReceiver.COLOR_PINK, order = 3)
     public boolean sparkEffect;
+    private final String sparkEffectProp = propPath("sparks");
 
-    private final String landingEffectProp = propPath("landingEffect");
+    @MenuBuilder.SettingChanger(order = 3)
+    public void changeSparkEffect(int ignored) {
+        sparkEffect = !sparkEffect;
+    }
+
+    @MenuBuilder.SettingPrinter(order = 3)
+    public String printSparkEffect() {
+        return GeneralUtil.getONorOFF(sparkEffect);
+    }
+
+    @MenuBuilder.SettingItem(header = "DROP EFF.", headerColour = EventReceiver.COLOR_PINK, order = 4)
     public boolean landingEffect;
+    private final String landingEffectProp = propPath("landingEffect");
 
-    private final String wobbleProp = propPath("wobble");
+    @MenuBuilder.SettingChanger(order = 4)
+    public void changeLandingEffect(int ignored) {
+        landingEffect = !landingEffect;
+    }
+
+    @MenuBuilder.SettingPrinter(order = 4)
+    public String printLandingEffect() {
+        return GeneralUtil.getONorOFF(landingEffect);
+    }
+
+    @MenuBuilder.SettingItem(header = "BG WOBBLE", headerColour = EventReceiver.COLOR_PINK, order = 5)
     public boolean wobble;
+    private final String wobbleProp = propPath("wobble");
 
-    private final String playerNameProp = propPath("playerName");
+    @MenuBuilder.SettingChanger(order = 5)
+    public void changeWobble(int ignored) {
+        wobble = !wobble;
+    }
+
+    @MenuBuilder.SettingPrinter(order = 5)
+    public String printWobble() {
+        return GeneralUtil.getONorOFF(wobble);
+    }
+
     public String playerName;
+    private final String playerNameProp = propPath("playerName");
 
     // Only available for logged-in players.
-    private final String hasCompletedGameProp = propPath("hasCompletedGame");
     public boolean hasCompletedGame;
+    private final String hasCompletedGameProp = propPath("hasCompletedGame");
 
-    private final String hasSeenRollIntroProp = propPath("hasSeenRollIntro");
     public boolean hasSeenRollIntro;
+    private final String hasSeenRollIntroProp = propPath("hasSeenRollIntro");
 
     private String rankingGradePointProp(String ruleName, int leaderboard, int position) {
         return propPath("ranking", currentVersion, leaderboard, ruleName, "gradePoint", position);

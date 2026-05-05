@@ -475,6 +475,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     // Settings
     private static final int HEADER_COLOUR = EventReceiver.COLOR_ORANGE;
     private SeasonsSettings settings;
+    private MenuBuilder.Menu settingsMenu;
     private ProfileProperties playerProperties;
     private boolean showPlayerStats;
     private SubRanking showBoard;
@@ -997,6 +998,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         showBoard = SubRanking.DATE;
 
         settings = new SeasonsSettings(CURRENT_VERSION, playerProperties);
+        settingsMenu = MenuBuilder.generateMenu(this, settings);
 
         if (!owner.replayMode) {
             settings.loadSetting(owner.modeConfig, false);
@@ -1462,75 +1464,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         return false;
     }
-
-    private final MenuBuilder.Menu settingsMenu = MenuBuilder.forMode(this)
-        .addSetting(
-            change -> {
-                int selectedPerk = settings.perk.ordinal() + change;
-
-                if (!settings.hasCompletedGame) {
-                    if (selectedPerk < 1) selectedPerk = SeasonPerk.values().length - 1;
-                    else if (selectedPerk >= SeasonPerk.values().length) selectedPerk = 1;
-                } else {
-                    if (selectedPerk < 0) selectedPerk = SeasonPerk.values().length - 1;
-                    else if (selectedPerk >= SeasonPerk.values().length) selectedPerk = 0;
-                }
-
-                settings.perk = SeasonPerk.values()[selectedPerk];
-            },
-            () -> {
-                String perkString = settings.perk.name();
-                if (perkString.contains("_")) {
-                    final String[] split = perkString.split("_");
-                    perkString = String.format("%s (%s)", split[0], split[1].charAt(0));
-                }
-
-                return perkString;
-            },
-            "PERK",
-            EventReceiver.COLOR_YELLOW
-        )
-        .addSetting(
-            IGNORED -> settings.fullGhost = !settings.fullGhost,
-            () -> GeneralUtil.getONorOFF(settings.fullGhost),
-            "FULL GHOST",
-            EventReceiver.COLOR_BLUE
-        )
-        .addSetting(
-            change -> {
-                settings.spinType += change;
-                if (settings.spinType < GameEngine.SPINTYPE_4POINT) settings.spinType = GameEngine.SPINTYPE_IMMOBILE;
-                else if (settings.spinType > GameEngine.SPINTYPE_IMMOBILE) settings.spinType = GameEngine.SPINTYPE_4POINT;
-            },
-            () -> {
-                String spinString = "DISABLED";
-                if (settings.spinType == GameEngine.SPINTYPE_4POINT) spinString = "4-POINT";
-                if (settings.spinType == GameEngine.SPINTYPE_IMMOBILE) spinString = "IMMOBILE";
-
-                return spinString;
-            },
-            "SPIN TYPE",
-            EventReceiver.COLOR_GREEN
-        )
-        .addSetting(
-            IGNORED -> settings.sparkEffect = !settings.sparkEffect,
-            () -> GeneralUtil.getONorOFF(settings.sparkEffect),
-            "SPARKS",
-            EventReceiver.COLOR_PINK
-        )
-        .addSetting(
-            IGNORED -> settings.landingEffect = !settings.landingEffect,
-            () -> GeneralUtil.getONorOFF(settings.landingEffect),
-            "DROP EFF.",
-            EventReceiver.COLOR_PINK
-        )
-        .addSetting(
-            IGNORED -> settings.wobble = !settings.wobble,
-            () -> GeneralUtil.getONorOFF(settings.wobble),
-            "BG WOBBLE",
-            EventReceiver.COLOR_PINK
-        )
-        .build();
 
     @Override
     public boolean onSetting(GameEngine engine, int playerID) {

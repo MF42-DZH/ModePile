@@ -33,6 +33,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _Roll Training_ - Practice your credit roll plays here.
 * [_Scanline_](https://www.youtube.com/watch?v=ouooFDdWdf4) - Inspired by Scanner mode on [\*\*\*ris for the PSP Mini](https://harddrop.com/wiki/Tetris_(PSP_Mini)) and [\*\*\*ris Pop](https://harddrop.com/wiki/Tetris_Pop).
 * [_Score Trial_](https://www.youtube.com/watch?v=-hc6ggAOQf8) - An approximation of the SCORE ATTACK modes in DTET.
+* _Seasons_ - A very long original mode with a lot of gimmicks.
 * [_Shadow Marahton_](https://www.youtube.com/watch?v=HxuRyM-g1TQ) - Build your own pieces in this extended Marathon.
 * _Single Death Marathon_ - Marathon, but the pieces queue up to become big.
 * _Subscriber Challenge_ - git gud, get subscriber!
@@ -56,7 +57,9 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _Interpolation_ - Linear interpolation functions.
 * _LevelTableBuilder_ - A general form for _SpeedTableBuilder_ for building other level-based progressions.
 * _MathHelper_ - A few extra mathematical functions such as LCM or GCD.
+* _MenuBuilder_ - A simple system for creating settings menus for modes.
 * _Mirror_ - Reflective access helper.
+* _ModeSettings_ - A helper class for making settings containers for gamemodes.
 * _MouseParser_ - Allows the use of mouse inside a mode.
 * _Particle_ - Particles for the particle engine.
 * _ParticleEmitterBase_ - Particle emitter engine. Used for holding and drawing particles.
