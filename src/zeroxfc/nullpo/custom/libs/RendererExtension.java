@@ -1560,8 +1560,6 @@ public class RendererExtension {
                 break;
         }
 
-        if (fadeFrom == null || fadeTo == null) return;
-
         customGraphics.drawImage(
             engine,
             "bgF" + bgFadeFrom + "TO" + bgFadeTo,
@@ -1620,8 +1618,6 @@ public class RendererExtension {
             default:
                 break;
         }
-
-        if (fadeFrom == null || fadeTo == null) return;
 
         if (progress < 1f) {
             customGraphics.drawImage(

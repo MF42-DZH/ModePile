@@ -27,7 +27,8 @@ public abstract class AnimatedBackgroundHook {
         ANIMATION_TGM3TI_STYLE = 8,           // NOTE: Swing and SDL will not be able to use rotations.
         ANIMATION_INTERLACE_HORIZONTAL = 9,   // I hope you like Earthbound.
         ANIMATION_INTERLACE_VERTICAL = 10,    // I hope you like Earthbound.
-        ANIMATION_FAKE_SCANLINES = 11;        // Fake CRT Scanlines.
+        ANIMATION_FAKE_SCANLINES = 11,        // Fake CRT Scanlines.
+        ANIMATION_PIECE_MOVEMENT = 12;        // Player piece movement.
 
     protected static Logger log = Logger.getLogger(AnimatedBackgroundHook.class);
     private static int LAST_BG = -1;

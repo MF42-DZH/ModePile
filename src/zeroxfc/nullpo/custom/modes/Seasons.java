@@ -47,6 +47,8 @@ import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
+import zeroxfc.nullpo.custom.libs.backgroundtypes.AnimatedBackgroundHook;
+import zeroxfc.nullpo.custom.libs.backgroundtypes.BackgroundPieceMovement;
 import zeroxfc.nullpo.custom.libs.mixins.HasCelebrationFireworks;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomFieldDrawing;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomGameOver;
@@ -629,6 +631,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private BlockVortex vortex;
     private Random bvr;
 
+    private BackgroundPieceMovement[] animatedBackgrounds;
+
     private enum CustomState { PROFILE, FREEFALL, REWIND, FINAL_REWIND, FINAL_REWIND_RECOVERY }
     private CustomState customState;
 
@@ -907,6 +911,23 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         // Load all unique sound effects for this mode.
         SoundLoader.Sounds.Seasons.loadAllSounds();
+
+        if (animatedBackgrounds == null) {
+            animatedBackgrounds = new BackgroundPieceMovement[] {
+                /* FEB */ new BackgroundPieceMovement(0, 1f),
+                /* MAR */ new BackgroundPieceMovement(1, 1f),
+                /* APR */ new BackgroundPieceMovement(2, 1f),
+                /* MAY */ new BackgroundPieceMovement(3, 1f),
+                /* JUN */ new BackgroundPieceMovement(4, 1f),
+                /* JUL */ new BackgroundPieceMovement(5, 1f),
+                /* AUG */ new BackgroundPieceMovement(6, 1f),
+                /* SEP */ new BackgroundPieceMovement(7, 1f),
+                /* OCT */ new BackgroundPieceMovement(8, 1f),
+                /* NOV */ new BackgroundPieceMovement(9, 1f),
+                /* DEC */ new BackgroundPieceMovement(10, 1f),
+                /* JAN */ new BackgroundPieceMovement(11, 1f),
+            };
+        }
 
         customGraphics = new CustomResourceHolder();
         rendererExtension = new RendererExtension(customGraphics);
@@ -1416,6 +1437,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             bvr = new Random(engine.randSeed);
             rewindBlockRandom = new Random(engine.randSeed);
 
+            for (BackgroundPieceMovement bg : animatedBackgrounds) bg.setZoomFactor(settings.wobble ? 1.025f : 1f);
+            for (AnimatedBackgroundHook bg : animatedBackgrounds) bg.reset();
+
             engine.statistics.level = 0;
             setSpeed(engine);
 
@@ -1498,6 +1522,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             IGNORED -> settings.landingEffect = !settings.landingEffect,
             () -> GeneralUtil.getONorOFF(settings.landingEffect),
             "DROP EFF.",
+            EventReceiver.COLOR_PINK
+        )
+        .addSetting(
+            IGNORED -> settings.wobble = !settings.wobble,
+            () -> GeneralUtil.getONorOFF(settings.wobble),
+            "BG WOBBLE",
             EventReceiver.COLOR_PINK
         )
         .build();
@@ -2494,11 +2524,21 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (currentAbilityTimer > 0) return 0;
         else return engine.tspin ? 5 * baseCharge : baseCharge;
     }
+
+    @Override
+    public void afterSoftDropFall(GameEngine engine, int playerID, int fall) {
+        animatedBackgrounds[getLastBackground()].updateDrop(engine, fall);
+        animatedBackgrounds[getCurrentBackground()].updateDrop(engine, fall);
+    }
+
     @Override
     public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
         if (settings.landingEffect) {
             landingParticles.addNumber(receiver, engine, playerID, 32);
         }
+
+        animatedBackgrounds[getLastBackground()].updateDrop(engine, fall * 2);
+        animatedBackgrounds[getCurrentBackground()].updateDrop(engine, fall * 2);
     }
 
     private static final Map<IntPair, Block> wm3HardBlocksClearing = new HashMap<>(40);
@@ -3270,7 +3310,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public void drawBackgroundElements(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
-        HasCustomFieldDrawing.super.drawBackgroundElements(rendererExtension, receiver, engine, playerID);
+        if (engine.gameStarted) {
+           rendererExtension.drawFadingAnimatedBackground(receiver, engine, playerID, animatedBackgrounds[getLastBackground()], animatedBackgrounds[getCurrentBackground()], getFadeProgress());
+        } else {
+            HasCustomFieldDrawing.super.drawBackgroundElements(rendererExtension, receiver, engine, playerID);
+        }
 
         if (!RendererExtension.hasUserEnabledFadeEffect(receiver) && inRewind(engine)) {
             drawing.drawRectangle(
@@ -3701,6 +3745,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (engine.quitflag) {
             ruleOptCopy = null;
             playerProperties = new ProfileProperties(HEADER_COLOUR);
+        }
+
+        if (engine.gameActive) {
+            animatedBackgrounds[getLastBackground()].updateMove(engine);
+            animatedBackgrounds[getCurrentBackground()].updateMove(engine);
+
+            animatedBackgrounds[getLastBackground()].updateDrop(engine, 0);
+            animatedBackgrounds[getCurrentBackground()].updateDrop(engine, 0);
         }
 
         if (rollStarted && engine.gameActive) {

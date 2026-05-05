@@ -30,6 +30,9 @@ public class SeasonsSettings extends ModeSettings {
     private final String landingEffectProp = propPath("landingEffect");
     public boolean landingEffect;
 
+    private final String wobbleProp = propPath("wobble");
+    public boolean wobble;
+
     private final String playerNameProp = propPath("playerName");
     public String playerName;
 
@@ -157,6 +160,7 @@ public class SeasonsSettings extends ModeSettings {
 
         sparkEffect = prop.getProperty(sparkEffectProp, true);
         landingEffect = prop.getProperty(landingEffectProp, true);
+        wobble = prop.getProperty(wobbleProp, true);
 
         // Version props are not saved on the player.
         version = isReplay ? prop.getProperty(versionProp, 0) : currentVersion;
@@ -174,6 +178,7 @@ public class SeasonsSettings extends ModeSettings {
 
         prop.setProperty(sparkEffectProp, sparkEffect);
         prop.setProperty(landingEffectProp, landingEffect);
+        prop.setProperty(wobbleProp, wobble);
 
         // Version props are not saved on the player.
         prop.setProperty(versionProp, currentVersion);
@@ -193,6 +198,7 @@ public class SeasonsSettings extends ModeSettings {
 
         sparkEffect = prop.getProperty(sparkEffectProp, true);
         landingEffect = prop.getProperty(landingEffectProp, true);
+        wobble = prop.getProperty(wobbleProp, true);
     }
 
     @Override
@@ -208,6 +214,7 @@ public class SeasonsSettings extends ModeSettings {
 
         prop.setProperty(sparkEffectProp, sparkEffect);
         prop.setProperty(landingEffectProp, landingEffect);
+        prop.setProperty(wobbleProp, wobble);
     }
 
     @Override

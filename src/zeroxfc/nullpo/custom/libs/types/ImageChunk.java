@@ -129,7 +129,7 @@ public class ImageChunk {
         return sourceY;
     }
 
-    private void setSourceLocation(int x, int y) {
+    public void setSourceLocation(int x, int y) {
         this.sourceX = x;
         this.sourceY = y;
     }
