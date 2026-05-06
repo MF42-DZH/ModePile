@@ -131,9 +131,6 @@ public class Gimmicks {
             // Every 30 badges will increase the countdown by 1.
             // The default countdown is 4
 
-            final int usedBadges = badges.getBadges() / 10;
-            final int denominator = perkBoost ? 15 : 30;
-
             countdown = 5 + getScoreMult(badges, perkBoost);
         }
 

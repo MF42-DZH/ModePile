@@ -3708,7 +3708,13 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             if (rollTime <= 600 && rollTime > 0 && rollTime % 60 == 0) engine.playSE("countdown");
 
-            if (rollTime % 4 == 1) fireAndSnowEffect.addFire(currentSeason == Season.SUMMER ? 8 : 4, currentSeason == Season.WINTER);
+            if (rollElapsed % 4 == 1) {
+                if (currentSeason == Season.SPRING || currentSeason == Season.AUTUMN) {
+                    fireAndSnowEffect.addGrass(4, currentSeason == Season.AUTUMN);
+                } else {
+                    fireAndSnowEffect.addFire(currentSeason == Season.SUMMER ? 8 : 4, currentSeason == Season.WINTER);
+                }
+            }
         }
 
         if (fireAndSnowEffect != null) fireAndSnowEffect.update();

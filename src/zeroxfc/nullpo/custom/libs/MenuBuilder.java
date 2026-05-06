@@ -98,7 +98,7 @@ public final class MenuBuilder {
             if (pages >= 1) {
                 drawMenuInvoker.invoke(
                     mode,
-                    engine, playerID, receiver, 21, EventReceiver.COLOR_RED, "kn PAGE " + (currentPage + 1) / (pages + 1), -1
+                    engine, playerID, receiver, 21, EventReceiver.COLOR_RED, "kn PAGE" + (currentPage + 1) / (pages + 1), -1
                 );
             }
 

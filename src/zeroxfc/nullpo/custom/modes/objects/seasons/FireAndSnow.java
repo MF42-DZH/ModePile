@@ -33,6 +33,20 @@ public class FireAndSnow {
         }
     }
 
+    public void addGrass(int num, boolean autumn) {
+        for (int i = 0; i < num; ++i) {
+            particles.add(
+                new GrassParticle(
+                    random,
+                    random.nextInt(640), 480,
+                    random.nextInt(5) - 2, -(random.nextInt(5) + 2),
+                    random.nextInt(12) + 4,
+                    autumn
+                )
+            );
+        }
+    }
+
     public void addSnow(int num) {
         for (int i = 0; i < num; ++i) {
             particles.add(
@@ -89,6 +103,45 @@ public class FireAndSnow {
                 colour
                     .setHue(random.nextDouble() * 0.066666666666)
                     .setSaturation(0.8 + (random.nextDouble() * 0.2))
+                    .setValue(1.0);
+            }
+        }
+
+        public boolean update() {
+            x += velocityX;
+            y += velocityY;
+
+            return y < -size;
+        }
+
+        // Hardcodes the drawing limit of 480y because idc at this point lmao.
+        public void draw(PrimitiveDrawingHook drawing, EventReceiver receiver) {
+            final float yRatio = (float) Math.sqrt(y / 480.0);
+            final int drawSize = (int) Math.ceil(size * yRatio);
+
+            drawing.drawRectangle(
+                receiver,
+                x - (drawSize / 2), y - (drawSize / 2),
+                drawSize, drawSize,
+                colour.getRed8(), colour.getGreen8(), colour.getBlue8(), (int) Math.ceil(255.0 * yRatio),
+                true
+            );
+        }
+    }
+
+    private static class GrassParticle extends Particle {
+        public GrassParticle(Random random, int x, int y, int velocityX, int velocityY, int size, boolean autumn) {
+            super(x, y, velocityX, velocityY, size);
+
+            if (autumn) {
+                colour
+                    .setHueAngle((random.nextDouble() * 60.0) + 30.0)
+                    .setSaturation(0.75 + (random.nextDouble() * 0.25))
+                    .setValue(1.0);
+            } else {
+                colour
+                    .setHueAngle((random.nextDouble() * 60.0) + 90.0)
+                    .setSaturation(0.6 + (random.nextDouble() * 0.34))
                     .setValue(1.0);
             }
         }
