@@ -8,8 +8,6 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameManager;
@@ -57,20 +55,16 @@ public abstract class ModeSettings {
     // Settings properties handling annotation framework. Intricacies for version saving and other such things
     // need to be handled manually, as this is only for automating the simple properties.
 
+    // Only applicable to primitive and String fields.
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
-    public @interface GlobalProperty { }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    public @interface PlayerProperty { }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    public @interface PropertyPath {
+    public @interface Property {
         String[] path();
+        boolean isGlobal() default true;
+        boolean isPlayer() default true;
     }
 
+    // Only applicable to primitive and String fields.
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     public @interface DefaultValue {
@@ -85,11 +79,15 @@ public abstract class ModeSettings {
         String stringValue() default "";
     }
 
-    private static String joinPropPath(String root, Object[] path) {
+    protected static String joinPropPath(String root, Object... path) {
         final StringBuilder sb = new StringBuilder(root);
         for (final Object segment : path) sb.append('.').append(segment);
 
         return sb.toString();
+    }
+
+    protected static String joinPropPaths(String root, Object[] paths) {
+        return joinPropPath(root, paths);
     }
 
     /**
@@ -105,7 +103,7 @@ public abstract class ModeSettings {
 
         final List<FieldHandler<S>> settingsHandlers = Arrays
             .stream(settingsClass.getFields())
-            .filter(f -> f.getAnnotation(PropertyPath.class) != null)
+            .filter(f -> f.getAnnotation(Property.class) != null)
             .map(f -> new FieldHandler<>(settingsObject, propRoot, f))
             .collect(Collectors.toList());
 
@@ -137,9 +135,7 @@ public abstract class ModeSettings {
         private final String root;
         private final Field field;
 
-        private final Optional<GlobalProperty> isGlobal;
-        private final Optional<PlayerProperty> isPlayer;
-        private final String[] path;
+        private final Property property;
         private final DefaultValue defaults;
 
         public FieldHandler(S modeSettings, String root, Field field) {
@@ -147,33 +143,28 @@ public abstract class ModeSettings {
             this.root = root;
             this.field = field;
 
-            isGlobal = Optional
-                .ofNullable(field.getAnnotation(GlobalProperty.class));
-            isPlayer = Optional
-                .ofNullable(field.getAnnotation(PlayerProperty.class));
-            path = Optional
-                .ofNullable(field.getAnnotation(PropertyPath.class))
-                .map(PropertyPath::path)
-                .orElseThrow(() -> new RuntimeException("No path defined on property: " + field.getName()));
+            property = Optional
+                .ofNullable(field.getAnnotation(Property.class))
+                .orElseThrow(() -> new IllegalStateException("No property annotation defined on field: " + field.getName()));
             defaults = Optional
                 .ofNullable(field.getAnnotation(DefaultValue.class))
                 .orElseThrow(() -> new RuntimeException("No default values defined on property: " + field.getName()));
         }
 
         public void readGlobal(CustomProperties prop) {
-            if (!isGlobal.isPresent()) return;
+            if (!property.isGlobal()) return;
 
             try {
                 final Class<?> fieldType = field.getType();
-                if (fieldType.isAssignableFrom(byte.class)) field.setByte(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.byteValue()));
-                else if (fieldType.isAssignableFrom(short.class)) field.setShort(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.shortValue()));
-                else if (fieldType.isAssignableFrom(int.class)) field.setInt(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.intValue()));
-                else if (fieldType.isAssignableFrom(long.class)) field.setLong(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.longValue()));
-                else if (fieldType.isAssignableFrom(float.class)) field.setFloat(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.floatValue()));
-                else if (fieldType.isAssignableFrom(double.class)) field.setDouble(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.doubleValue()));
-                else if (fieldType.isAssignableFrom(boolean.class)) field.setBoolean(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.booleanValue()));
-                else if (fieldType.isAssignableFrom(char.class)) field.setChar(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.charValue()));
-                else if (fieldType.isAssignableFrom(String.class)) field.set(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.stringValue()));
+                if (fieldType.isAssignableFrom(byte.class)) field.setByte(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.byteValue()));
+                else if (fieldType.isAssignableFrom(short.class)) field.setShort(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.shortValue()));
+                else if (fieldType.isAssignableFrom(int.class)) field.setInt(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.intValue()));
+                else if (fieldType.isAssignableFrom(long.class)) field.setLong(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.longValue()));
+                else if (fieldType.isAssignableFrom(float.class)) field.setFloat(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.floatValue()));
+                else if (fieldType.isAssignableFrom(double.class)) field.setDouble(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.doubleValue()));
+                else if (fieldType.isAssignableFrom(boolean.class)) field.setBoolean(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.booleanValue()));
+                else if (fieldType.isAssignableFrom(char.class)) field.setChar(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.charValue()));
+                else if (fieldType.isAssignableFrom(String.class)) field.set(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.stringValue()));
             } catch (IllegalAccessException e) {
                 log.error("Failed to assign global field (" + field.getName() + "): ");
                 log.error(e);
@@ -181,19 +172,19 @@ public abstract class ModeSettings {
         }
 
         public void readPlayer(ProfileProperties prop) {
-            if (!isPlayer.isPresent() || !prop.isLoggedIn()) return;
+            if (!property.isPlayer() || !prop.isLoggedIn()) return;
 
             try {
                 final Class<?> fieldType = field.getType();
-                if (fieldType.isAssignableFrom(byte.class)) field.setByte(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.byteValue()));
-                else if (fieldType.isAssignableFrom(short.class)) field.setShort(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.shortValue()));
-                else if (fieldType.isAssignableFrom(int.class)) field.setInt(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.intValue()));
-                else if (fieldType.isAssignableFrom(long.class)) field.setLong(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.longValue()));
-                else if (fieldType.isAssignableFrom(float.class)) field.setFloat(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.floatValue()));
-                else if (fieldType.isAssignableFrom(double.class)) field.setDouble(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.doubleValue()));
-                else if (fieldType.isAssignableFrom(boolean.class)) field.setBoolean(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.booleanValue()));
-                else if (fieldType.isAssignableFrom(char.class)) field.setChar(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.charValue()));
-                else if (fieldType.isAssignableFrom(String.class)) field.set(modeSettings, prop.getProperty(joinPropPath(root, path), defaults.stringValue()));
+                if (fieldType.isAssignableFrom(byte.class)) field.setByte(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.byteValue()));
+                else if (fieldType.isAssignableFrom(short.class)) field.setShort(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.shortValue()));
+                else if (fieldType.isAssignableFrom(int.class)) field.setInt(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.intValue()));
+                else if (fieldType.isAssignableFrom(long.class)) field.setLong(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.longValue()));
+                else if (fieldType.isAssignableFrom(float.class)) field.setFloat(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.floatValue()));
+                else if (fieldType.isAssignableFrom(double.class)) field.setDouble(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.doubleValue()));
+                else if (fieldType.isAssignableFrom(boolean.class)) field.setBoolean(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.booleanValue()));
+                else if (fieldType.isAssignableFrom(char.class)) field.setChar(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.charValue()));
+                else if (fieldType.isAssignableFrom(String.class)) field.set(modeSettings, prop.getProperty(joinPropPaths(root, property.path()), defaults.stringValue()));
             } catch (IllegalAccessException e) {
                 log.error("Failed to assign player field (" + field.getName() + "): ");
                 log.error(e);
@@ -201,19 +192,19 @@ public abstract class ModeSettings {
         }
 
         public void writeGlobal(CustomProperties prop) {
-            if (!isGlobal.isPresent()) return;
+            if (!property.isGlobal()) return;
 
             try {
                 final Class<?> fieldType = field.getType();
-                if (fieldType.isAssignableFrom(byte.class)) prop.setProperty(joinPropPath(root, path), field.getByte(modeSettings));
-                else if (fieldType.isAssignableFrom(short.class)) prop.setProperty(joinPropPath(root, path), field.getShort(modeSettings));
-                else if (fieldType.isAssignableFrom(int.class)) prop.setProperty(joinPropPath(root, path), field.getInt(modeSettings));
-                else if (fieldType.isAssignableFrom(long.class)) prop.setProperty(joinPropPath(root, path), field.getLong(modeSettings));
-                else if (fieldType.isAssignableFrom(float.class)) prop.setProperty(joinPropPath(root, path), field.getFloat(modeSettings));
-                else if (fieldType.isAssignableFrom(double.class)) prop.setProperty(joinPropPath(root, path), field.getDouble(modeSettings));
-                else if (fieldType.isAssignableFrom(boolean.class)) prop.setProperty(joinPropPath(root, path), field.getBoolean(modeSettings));
-                else if (fieldType.isAssignableFrom(char.class)) prop.setProperty(joinPropPath(root, path), field.getChar(modeSettings));
-                else if (fieldType.isAssignableFrom(String.class)) prop.setProperty(joinPropPath(root, path), field.get(modeSettings).toString());
+                if (fieldType.isAssignableFrom(byte.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getByte(modeSettings));
+                else if (fieldType.isAssignableFrom(short.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getShort(modeSettings));
+                else if (fieldType.isAssignableFrom(int.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getInt(modeSettings));
+                else if (fieldType.isAssignableFrom(long.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getLong(modeSettings));
+                else if (fieldType.isAssignableFrom(float.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getFloat(modeSettings));
+                else if (fieldType.isAssignableFrom(double.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getDouble(modeSettings));
+                else if (fieldType.isAssignableFrom(boolean.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getBoolean(modeSettings));
+                else if (fieldType.isAssignableFrom(char.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getChar(modeSettings));
+                else if (fieldType.isAssignableFrom(String.class)) prop.setProperty(joinPropPaths(root, property.path()), field.get(modeSettings).toString());
             } catch (IllegalAccessException e) {
                 log.error("Failed to read global field (" + field.getName() + "): ");
                 log.error(e);
@@ -221,19 +212,19 @@ public abstract class ModeSettings {
         }
 
         public void writePlayer(ProfileProperties prop) {
-            if (!isPlayer.isPresent() || !prop.isLoggedIn()) return;
+            if (!property.isPlayer() || !prop.isLoggedIn()) return;
 
             try {
                 final Class<?> fieldType = field.getType();
-                if (fieldType.isAssignableFrom(byte.class)) prop.setProperty(joinPropPath(root, path), field.getByte(modeSettings));
-                else if (fieldType.isAssignableFrom(short.class)) prop.setProperty(joinPropPath(root, path), field.getShort(modeSettings));
-                else if (fieldType.isAssignableFrom(int.class)) prop.setProperty(joinPropPath(root, path), field.getInt(modeSettings));
-                else if (fieldType.isAssignableFrom(long.class)) prop.setProperty(joinPropPath(root, path), field.getLong(modeSettings));
-                else if (fieldType.isAssignableFrom(float.class)) prop.setProperty(joinPropPath(root, path), field.getFloat(modeSettings));
-                else if (fieldType.isAssignableFrom(double.class)) prop.setProperty(joinPropPath(root, path), field.getDouble(modeSettings));
-                else if (fieldType.isAssignableFrom(boolean.class)) prop.setProperty(joinPropPath(root, path), field.getBoolean(modeSettings));
-                else if (fieldType.isAssignableFrom(char.class)) prop.setProperty(joinPropPath(root, path), field.getChar(modeSettings));
-                else if (fieldType.isAssignableFrom(String.class)) prop.setProperty(joinPropPath(root, path), field.get(modeSettings).toString());
+                if (fieldType.isAssignableFrom(byte.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getByte(modeSettings));
+                else if (fieldType.isAssignableFrom(short.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getShort(modeSettings));
+                else if (fieldType.isAssignableFrom(int.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getInt(modeSettings));
+                else if (fieldType.isAssignableFrom(long.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getLong(modeSettings));
+                else if (fieldType.isAssignableFrom(float.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getFloat(modeSettings));
+                else if (fieldType.isAssignableFrom(double.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getDouble(modeSettings));
+                else if (fieldType.isAssignableFrom(boolean.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getBoolean(modeSettings));
+                else if (fieldType.isAssignableFrom(char.class)) prop.setProperty(joinPropPaths(root, property.path()), field.getChar(modeSettings));
+                else if (fieldType.isAssignableFrom(String.class)) prop.setProperty(joinPropPaths(root, property.path()), field.get(modeSettings).toString());
             } catch (IllegalAccessException e) {
                 log.error("Failed to read player field (" + field.getName() + "): ");
                 log.error(e);

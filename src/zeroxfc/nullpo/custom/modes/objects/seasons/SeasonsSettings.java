@@ -23,10 +23,8 @@ public class SeasonsSettings extends ModeSettings {
     public int version;
     private final String versionProp = propPath("version");
 
-    @ModeSettings.PropertyPath(path = "fullGhost")
+    @ModeSettings.Property(path = "fullGhost")
     @ModeSettings.DefaultValue(booleanValue = false)
-    @ModeSettings.GlobalProperty
-    @ModeSettings.PlayerProperty
     @MenuBuilder.SettingItem(id = 1, header = "FULL GHOST", headerColour = EventReceiver.COLOR_BLUE)
     public boolean fullGhost;
 
@@ -40,10 +38,8 @@ public class SeasonsSettings extends ModeSettings {
         return GeneralUtil.getONorOFF(fullGhost);
     }
 
-    @ModeSettings.PropertyPath(path = "perk")
+    @ModeSettings.Property(path = "perk")
     @ModeSettings.DefaultValue(intValue = 1)
-    @ModeSettings.GlobalProperty
-    @ModeSettings.PlayerProperty
     public int perkOrdinal;
 
     @MenuBuilder.SettingItem(id = 0, header = "PERK", headerColour = EventReceiver.COLOR_YELLOW)
@@ -75,10 +71,8 @@ public class SeasonsSettings extends ModeSettings {
         return perkString;
     }
 
-    @ModeSettings.PropertyPath(path = "spinType")
+    @ModeSettings.Property(path = "spinType")
     @ModeSettings.DefaultValue(intValue = GameEngine.SPINTYPE_4POINT)
-    @ModeSettings.GlobalProperty
-    @ModeSettings.PlayerProperty
     @MenuBuilder.SettingItem(id = 2, header = "SPIN TYPE", headerColour = EventReceiver.COLOR_GREEN)
     public int spinType;
 
@@ -99,10 +93,8 @@ public class SeasonsSettings extends ModeSettings {
         return spinString;
     }
 
-    @ModeSettings.PropertyPath(path = "sparks")
+    @ModeSettings.Property(path = "sparks")
     @ModeSettings.DefaultValue(booleanValue = true)
-    @ModeSettings.GlobalProperty
-    @ModeSettings.PlayerProperty
     @MenuBuilder.SettingItem(id = 3, header = "SPARKS", headerColour = EventReceiver.COLOR_PINK)
     public boolean sparkEffect;
 
@@ -116,10 +108,8 @@ public class SeasonsSettings extends ModeSettings {
         return GeneralUtil.getONorOFF(sparkEffect);
     }
 
-    @ModeSettings.PropertyPath(path = "landingEffect")
+    @ModeSettings.Property(path = "landingEffect")
     @ModeSettings.DefaultValue(booleanValue = true)
-    @ModeSettings.GlobalProperty
-    @ModeSettings.PlayerProperty
     @MenuBuilder.SettingItem(id = 4, header = "DROP EFF.", headerColour = EventReceiver.COLOR_PINK)
     public boolean landingEffect;
 
@@ -133,10 +123,8 @@ public class SeasonsSettings extends ModeSettings {
         return GeneralUtil.getONorOFF(landingEffect);
     }
 
-    @ModeSettings.PropertyPath(path = "wobble")
+    @ModeSettings.Property(path = "wobble")
     @ModeSettings.DefaultValue(booleanValue = true)
-    @ModeSettings.GlobalProperty
-    @ModeSettings.PlayerProperty
     @MenuBuilder.SettingItem(id = 5, header = "BG WOBBLE", headerColour = EventReceiver.COLOR_PINK)
     public boolean wobble;
 
@@ -153,16 +141,12 @@ public class SeasonsSettings extends ModeSettings {
     public String playerName;
     private final String playerNameProp = propPath("playerName");
 
-    @ModeSettings.PropertyPath(path = "hasCompletedGame")
+    @ModeSettings.Property(path = "hasCompletedGame")
     @ModeSettings.DefaultValue(booleanValue = true)
-    @ModeSettings.GlobalProperty
-    @ModeSettings.PlayerProperty
     public boolean hasCompletedGame;
 
-    @ModeSettings.PropertyPath(path = "hasSeenRollIntro")
+    @ModeSettings.Property(path = "hasSeenRollIntro")
     @ModeSettings.DefaultValue(booleanValue = true)
-    @ModeSettings.GlobalProperty
-    @ModeSettings.PlayerProperty
     public boolean hasSeenRollIntro;
 
     public final ModeLeaderboard<Integer, LeaderboardEntry> leaderboards;
@@ -203,43 +187,49 @@ public class SeasonsSettings extends ModeSettings {
         }
 
         public static final PropertyCodec<LeaderboardEntry> CODEC = new PropertyCodec<LeaderboardEntry>() {
+            private static final String SUFFIX_GRADE_POINTS = "gradePoint";
+            private static final String SUFFIX_ROLL_LEVEL = "rollDate";
+            private static final String SUFFIX_LEVEL = "date";
+            private static final String SUFFIX_TIME = "time";
+            private static final String SUFFIX_PERK = "perk";
+
             @Override
             public void save(CustomProperties properties, String propPath, LeaderboardEntry value) {
-                IntegerCodec.INSTANCE.save(properties, propPath + ".gradePoint", value.gradePoints);
-                IntegerCodec.INSTANCE.save(properties, propPath + ".rollDate", value.rollLevel);
-                IntegerCodec.INSTANCE.save(properties, propPath + ".date", value.level);
-                IntegerCodec.INSTANCE.save(properties, propPath + ".time", value.time);
-                IntegerCodec.INSTANCE.save(properties, propPath + ".perk", value.perkOrdinal);
+                IntegerCodec.INSTANCE.save(properties, joinPropPath(propPath, SUFFIX_GRADE_POINTS), value.gradePoints);
+                IntegerCodec.INSTANCE.save(properties, joinPropPath(propPath, SUFFIX_ROLL_LEVEL), value.rollLevel);
+                IntegerCodec.INSTANCE.save(properties, joinPropPath(propPath, SUFFIX_LEVEL), value.level);
+                IntegerCodec.INSTANCE.save(properties, joinPropPath(propPath, SUFFIX_TIME), value.time);
+                IntegerCodec.INSTANCE.save(properties, joinPropPath(propPath, SUFFIX_PERK), value.perkOrdinal);
             }
 
             @Override
             public void savePlayer(ProfileProperties properties, String propPath, LeaderboardEntry value) {
-                IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".gradePoint", value.gradePoints);
-                IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".rollDate", value.rollLevel);
-                IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".date", value.level);
-                IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".time", value.time);
-                IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".perk", value.perkOrdinal);
+                IntegerCodec.INSTANCE.savePlayer(properties, joinPropPath(propPath, SUFFIX_GRADE_POINTS), value.gradePoints);
+                IntegerCodec.INSTANCE.savePlayer(properties, joinPropPath(propPath, SUFFIX_ROLL_LEVEL), value.rollLevel);
+                IntegerCodec.INSTANCE.savePlayer(properties, joinPropPath(propPath, SUFFIX_LEVEL), value.level);
+                IntegerCodec.INSTANCE.savePlayer(properties, joinPropPath(propPath, SUFFIX_TIME), value.time);
+                IntegerCodec.INSTANCE.savePlayer(properties, joinPropPath(propPath, SUFFIX_PERK), value.perkOrdinal);
             }
 
             @Override
             public LeaderboardEntry load(CustomProperties properties, String propPath, LeaderboardEntry defaultValue) {
                 return new LeaderboardEntry(
-                    IntegerCodec.INSTANCE.load(properties, propPath + ".gradePoint", defaultValue.gradePoints),
-                    IntegerCodec.INSTANCE.load(properties, propPath + ".rollDate", defaultValue.rollLevel),
-                    IntegerCodec.INSTANCE.load(properties, propPath + ".date", defaultValue.level),
-                    IntegerCodec.INSTANCE.load(properties, propPath + ".time", defaultValue.time),
-                    IntegerCodec.INSTANCE.load(properties, propPath + ".perk", defaultValue.perkOrdinal)
+                    IntegerCodec.INSTANCE.load(properties, joinPropPath(propPath, SUFFIX_GRADE_POINTS), defaultValue.gradePoints),
+                    IntegerCodec.INSTANCE.load(properties, joinPropPath(propPath, SUFFIX_ROLL_LEVEL), defaultValue.rollLevel),
+                    IntegerCodec.INSTANCE.load(properties, joinPropPath(propPath, SUFFIX_LEVEL), defaultValue.level),
+                    IntegerCodec.INSTANCE.load(properties, joinPropPath(propPath, SUFFIX_TIME), defaultValue.time),
+                    IntegerCodec.INSTANCE.load(properties, joinPropPath(propPath, SUFFIX_PERK), defaultValue.perkOrdinal)
                 );
             }
 
             @Override
             public LeaderboardEntry loadPlayer(ProfileProperties properties, String propPath, LeaderboardEntry defaultValue) {
                 return new LeaderboardEntry(
-                    IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".gradePoint", defaultValue.gradePoints),
-                    IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".rollDate", defaultValue.rollLevel),
-                    IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".date", defaultValue.level),
-                    IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".time", defaultValue.time),
-                    IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".perk", defaultValue.perkOrdinal)
+                    IntegerCodec.INSTANCE.loadPlayer(properties, joinPropPath(propPath, SUFFIX_GRADE_POINTS), defaultValue.gradePoints),
+                    IntegerCodec.INSTANCE.loadPlayer(properties, joinPropPath(propPath, SUFFIX_ROLL_LEVEL), defaultValue.rollLevel),
+                    IntegerCodec.INSTANCE.loadPlayer(properties, joinPropPath(propPath, SUFFIX_LEVEL), defaultValue.level),
+                    IntegerCodec.INSTANCE.loadPlayer(properties, joinPropPath(propPath, SUFFIX_TIME), defaultValue.time),
+                    IntegerCodec.INSTANCE.loadPlayer(properties, joinPropPath(propPath, SUFFIX_PERK), defaultValue.perkOrdinal)
                 );
             }
         };
