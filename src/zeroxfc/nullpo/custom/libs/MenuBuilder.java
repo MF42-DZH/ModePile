@@ -207,7 +207,7 @@ public final class MenuBuilder {
                         try {
                             c.invoke(settingsObject, change);
                         } catch (IllegalAccessException | InvocationTargetException e) {
-                            log.error(mode.getName() + ": Failed to change setting!");
+                            log.error(mode.getName() + ": Failed to change setting " + settingField.getValue().header() + "!");
                             log.error(e);
                         }
                     };
@@ -216,7 +216,7 @@ public final class MenuBuilder {
                         try {
                             return p.invoke(settingsObject).toString();
                         } catch (IllegalAccessException | InvocationTargetException e) {
-                            log.error(mode.getName() + ": Failed to stringify setting!");
+                            log.error(mode.getName() + ": Failed to stringify setting " + settingField.getValue().header() + "!");
                             log.error(e);
 
                             return "null";
