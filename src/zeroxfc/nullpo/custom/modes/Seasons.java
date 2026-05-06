@@ -41,9 +41,11 @@ import zeroxfc.nullpo.custom.libs.LevelTableBuilder;
 import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.MenuBuilder;
 import zeroxfc.nullpo.custom.libs.MiscUtils;
+import zeroxfc.nullpo.custom.libs.ModeLeaderboard;
 import zeroxfc.nullpo.custom.libs.ModePileCredits;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
+import zeroxfc.nullpo.custom.libs.PropertyCodec;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
@@ -69,7 +71,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 11;
+    private static final int CURRENT_VERSION = 12;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(15), TWO(30), THREE(60);
@@ -477,6 +479,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private SeasonsSettings settings;
     private MenuBuilder.Menu settingsMenu;
     private ProfileProperties playerProperties;
+
+
     private boolean showPlayerStats;
     private SubRanking showBoard;
     private RuleOptions ruleOptCopy;
@@ -997,7 +1001,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         showBoard = SubRanking.DATE;
 
-        settings = new SeasonsSettings(CURRENT_VERSION, playerProperties);
+        settings = new SeasonsSettings(CURRENT_VERSION, playerProperties, () -> new SeasonsSettings.LeaderboardEntry(
+            totalGrades.totalGradePoints,
+            rollLevelReached,
+            engine.statistics.level,
+            engine.statistics.time,
+            settings.perk
+        ));
+
         settingsMenu = MenuBuilder.generateMenu(this, settings);
 
         if (!owner.replayMode) {
@@ -3850,17 +3861,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             final boolean showRankings = !owner.replayMode && !settings.fullGhost;
 
             if (showRankings) {
-                final int[][] rgp = showPlayerStats ? settings.rankingGradePointPlayer : settings.rankingGradePoint;
-                final int[][] rrd = showPlayerStats ? settings.rankingRollDatePlayer : settings.rankingRollDate;
-                final int[][] rd = showPlayerStats ? settings.rankingDatePlayer : settings.rankingDate;
-                final int[][] rt = showPlayerStats ? settings.rankingTimePlayer : settings.rankingTime;
-                final int[][] rp = showPlayerStats ? settings.rankingPerkPlayer : settings.rankingPerk;
-
                 final String spaces = smallGrid ? "          " : "   ";
 
                 receiver.drawScoreFont(engine, playerID, 3, topY - 1, "TI&RN" + spaces + showBoard.toString(), titlesColour, scale);
                 for (int i = 0; i < SeasonsSettings.RANKING_MAX; ++i) {
                     final boolean rankFlag = (lastRank == i && !showPlayerStats) || (lastRankPlayer == i && showPlayerStats);
+                    final SeasonsSettings.LeaderboardEntry entry = showPlayerStats
+                        ? settings.leaderboards.readPlayerLeaderboard(settings.perk.leaderboard, i)
+                        : settings.leaderboards.readLeaderboard(settings.perk.leaderboard, i);
 
                     receiver.drawScoreFont(
                         engine, playerID,
@@ -3874,23 +3882,23 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         smallGrid,
                         3, smallGrid ? topY + i + i : topY + i,
                         false,
-                        TotalGrades.gradeForRank(rgp[settings.perk.leaderboard][i]),
+                        TotalGrades.gradeForRank(entry.gradePoints),
                         ObjectAlignment.TOP_LEFT
                     );
 
                     final GameTextUtilities.TextBlock subRankText;
                     switch (showBoard) {
                         case DATE:
-                            subRankText = levelToRankBlock(rd[settings.perk.leaderboard][i], rrd[settings.perk.leaderboard][i]);
+                            subRankText = levelToRankBlock(entry.level, entry.rollLevel);
                             break;
                         case TIME:
-                            subRankText = GameTextUtilities.TextBlock.of(GameTextUtilities.Text.of(GeneralUtil.getTime(rt[settings.perk.leaderboard][i]), rankFlag ? EventReceiver.COLOR_RED : EventReceiver.COLOR_WHITE));
+                            subRankText = GameTextUtilities.TextBlock.of(GameTextUtilities.Text.of(GeneralUtil.getTime(entry.time), rankFlag ? EventReceiver.COLOR_RED : EventReceiver.COLOR_WHITE));
                             break;
                         case PERK:
                             subRankText = GameTextUtilities.TextBlock.of(
                                 GameTextUtilities.Text.blankLine(0.125f),
                                 GameTextUtilities.Text.custom(
-                                    SeasonPerk.values()[rp[settings.perk.leaderboard][i]].getName(),
+                                    SeasonPerk.values()[entry.perkOrdinal].getName(),
                                     rankFlag ? EventReceiver.COLOR_RED : EventReceiver.COLOR_WHITE,
                                     0.75f
                                 )
@@ -4149,8 +4157,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         settings.saveSetting(owner.replayProp, true);
 
         if (!owner.replayMode && !settings.fullGhost && engine.ai == null) {
-            lastRank = settings.updateRanking(totalGrades.totalGradePoints, rollLevelReached, engine.statistics.level, engine.statistics.time);
-            lastRankPlayer = settings.updateRankingPlayer(playerProperties, totalGrades.totalGradePoints, rollLevelReached, engine.statistics.level, engine.statistics.time);
+            lastRank = settings.updateRanking();
+            lastRankPlayer = settings.updateRankingPlayer(playerProperties);
 
             if (lastRank != -1) {
                 settings.saveRanking(owner, engine.ruleopt.strRuleName);

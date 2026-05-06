@@ -1,17 +1,23 @@
 package zeroxfc.nullpo.custom.modes.objects.seasons;
 
+import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
 import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.MenuBuilder;
+import zeroxfc.nullpo.custom.libs.ModeLeaderboard;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
-import zeroxfc.nullpo.custom.libs.types.ModeSettings;
+import zeroxfc.nullpo.custom.libs.ModeSettings;
+import zeroxfc.nullpo.custom.libs.PropertyCodec;
+import zeroxfc.nullpo.custom.libs.types.Order;
 
-@ModeSettings.PropertyRoot(root = "seasons")
 public class SeasonsSettings extends ModeSettings {
     public static final int RANKING_MAX = 5;
+    private static final String PROP_ROOT = "seasons";
 
     private final int currentVersion;
     public int version;
@@ -159,113 +165,122 @@ public class SeasonsSettings extends ModeSettings {
     @ModeSettings.PlayerProperty
     public boolean hasSeenRollIntro;
 
-    private String rankingGradePointProp(String ruleName, int leaderboard, int position) {
-        return propPath("ranking", currentVersion, leaderboard, ruleName, "gradePoint", position);
-    }
-    public int[][] rankingGradePoint = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
-    public int[][] rankingGradePointPlayer = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
+    public final ModeLeaderboard<Integer, LeaderboardEntry> leaderboards;
 
-    private String rankingDateProp(String ruleName, int leaderboard, int position) {
-        return propPath("ranking", currentVersion, leaderboard, ruleName, "date", position);
-    }
-    public int[][] rankingDate = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
-    public int[][] rankingDatePlayer = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
+    public static final class LeaderboardEntry {
+        public final int gradePoints;
+        public final int rollLevel;
+        public final int level;
+        public final int time;
+        public final int perkOrdinal;
 
-    private String rankingRollDateProp(String ruleName, int leaderboard, int position) {
-        return propPath("ranking", currentVersion, leaderboard, ruleName, "rollDate", position);
-    }
-    public int[][] rankingRollDate = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
-    public int[][] rankingRollDatePlayer = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
-
-    private String rankingTimeProp(String ruleName, int leaderboard, int position) {
-        return propPath("ranking", currentVersion, leaderboard, ruleName, "time", position);
-    }
-    public int[][] rankingTime = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
-    public int[][] rankingTimePlayer = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
-
-    private String rankingPerkProp(String ruleName, int leaderboard, int position) {
-        return propPath("ranking", currentVersion, leaderboard, ruleName, "perk", position);
-    }
-    public int[][] rankingPerk = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
-    public int[][] rankingPerkPlayer = new int[SeasonPerk.LEADERBOARDS][RANKING_MAX];
-
-    private Order compareRanking(boolean forPlayer, int leaderboard, int position, int gradePoints, int rollLevel, int level, int time) {
-        final int[][] gp = forPlayer ? rankingGradePointPlayer : rankingGradePoint;
-        final int[][] rd = forPlayer ? rankingRollDatePlayer : rankingRollDate;
-        final int[][] d = forPlayer ? rankingDatePlayer : rankingDate;
-        final int[][] t = forPlayer ? rankingTimePlayer : rankingTime;
-
-        return Order.fromCompare(Integer.compare(gradePoints, gp[leaderboard][position]))
-            .fold(() -> Order.fromCompare(Integer.compare(rollLevel, rd[leaderboard][position])))
-            .fold(() -> Order.fromCompare(Integer.compare(level, d[leaderboard][position])))
-            .fold(() -> Order.fromCompare(Integer.compare(t[leaderboard][position], time)));
-    }
-
-    private int getRanking(boolean forPlayer, int leaderboard, int gradePoints, int rollLevel, int level, int time) {
-        for (int i = 0; i < RANKING_MAX; ++i) {
-            final Order order = compareRanking(forPlayer, leaderboard, i, gradePoints, rollLevel, level, time);
-            if (order == Order.GT || order == Order.EQ) return i;
+        public LeaderboardEntry(int gradePoints, int rollLevel, int level, int time, SeasonPerk perk) {
+            this.gradePoints = gradePoints;
+            this.rollLevel = rollLevel;
+            this.level = level;
+            this.time = time;
+            this.perkOrdinal = perk.ordinal();
         }
 
-        return -1;
-    }
+        private LeaderboardEntry(int gradePoints, int rollLevel, int level, int time, int perkOrdinal) {
+            this.gradePoints = gradePoints;
+            this.rollLevel = rollLevel;
+            this.level = level;
+            this.time = time;
+            this.perkOrdinal = perkOrdinal;
+        }
 
-    public int updateRanking(int gradePoints, int rollLevel, int level, int time) {
-        final int leaderboard = perk.leaderboard;
-        final int ranking = getRanking(false, leaderboard, gradePoints, rollLevel, level, time);
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            LeaderboardEntry that = (LeaderboardEntry) o;
+            return gradePoints == that.gradePoints && rollLevel == that.rollLevel && level == that.level && time == that.time && perkOrdinal == that.perkOrdinal;
+        }
 
-        if (ranking != -1) {
-            for (int i = RANKING_MAX - 1; i > ranking; --i) {
-                rankingGradePoint[leaderboard][i] = rankingGradePoint[leaderboard][i - 1];
-                rankingRollDate[leaderboard][i] = rankingRollDate[leaderboard][i - 1];
-                rankingDate[leaderboard][i] = rankingDate[leaderboard][i - 1];
-                rankingTime[leaderboard][i] = rankingTime[leaderboard][i - 1];
-                rankingPerk[leaderboard][i] = rankingPerk[leaderboard][i - 1];
+        @Override
+        public int hashCode() {
+            return Objects.hash(gradePoints, rollLevel, level, time, perkOrdinal);
+        }
+
+        public static final PropertyCodec<LeaderboardEntry> CODEC = new PropertyCodec<LeaderboardEntry>() {
+            @Override
+            public void save(CustomProperties properties, String propPath, LeaderboardEntry value) {
+                IntegerCodec.INSTANCE.save(properties, propPath + ".gradePoint", value.gradePoints);
+                IntegerCodec.INSTANCE.save(properties, propPath + ".rollDate", value.rollLevel);
+                IntegerCodec.INSTANCE.save(properties, propPath + ".date", value.level);
+                IntegerCodec.INSTANCE.save(properties, propPath + ".time", value.time);
+                IntegerCodec.INSTANCE.save(properties, propPath + ".perk", value.perkOrdinal);
             }
 
-            rankingGradePoint[leaderboard][ranking] = gradePoints;
-            rankingRollDate[leaderboard][ranking] = rollLevel;
-            rankingDate[leaderboard][ranking] = level;
-            rankingTime[leaderboard][ranking] = time;
-            rankingPerk[leaderboard][ranking] = perk.ordinal();
-        }
+            @Override
+            public void savePlayer(ProfileProperties properties, String propPath, LeaderboardEntry value) {
+                IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".gradePoint", value.gradePoints);
+                IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".rollDate", value.rollLevel);
+                IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".date", value.level);
+                IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".time", value.time);
+                IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".perk", value.perkOrdinal);
+            }
 
-        return ranking;
+            @Override
+            public LeaderboardEntry load(CustomProperties properties, String propPath, LeaderboardEntry defaultValue) {
+                return new LeaderboardEntry(
+                    IntegerCodec.INSTANCE.load(properties, propPath + ".gradePoint", defaultValue.gradePoints),
+                    IntegerCodec.INSTANCE.load(properties, propPath + ".rollDate", defaultValue.rollLevel),
+                    IntegerCodec.INSTANCE.load(properties, propPath + ".date", defaultValue.level),
+                    IntegerCodec.INSTANCE.load(properties, propPath + ".time", defaultValue.time),
+                    IntegerCodec.INSTANCE.load(properties, propPath + ".perk", defaultValue.perkOrdinal)
+                );
+            }
+
+            @Override
+            public LeaderboardEntry loadPlayer(ProfileProperties properties, String propPath, LeaderboardEntry defaultValue) {
+                return new LeaderboardEntry(
+                    IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".gradePoint", defaultValue.gradePoints),
+                    IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".rollDate", defaultValue.rollLevel),
+                    IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".date", defaultValue.level),
+                    IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".time", defaultValue.time),
+                    IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".perk", defaultValue.perkOrdinal)
+                );
+            }
+        };
+
+        public static final BiFunction<LeaderboardEntry, LeaderboardEntry, Order> ORDER = (newEntry, existing) -> Order
+            .fromCompare(Integer.compare(newEntry.gradePoints, existing.gradePoints))
+            .fold(() -> Order.fromCompare(Integer.compare(newEntry.rollLevel, existing.rollLevel)))
+            .fold(() -> Order.fromCompare(Integer.compare(newEntry.level, existing.level)))
+            .fold(() -> Order.fromCompare(Integer.compare(existing.time, newEntry.time)));
     }
 
-    public int updateRankingPlayer(ProfileProperties prop, int gradePoints, int rollLevel, int level, int time) {
+    public int updateRanking() {
+        return leaderboards.updateLeaderboard(perk.leaderboard);
+    }
+
+    public int updateRankingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return -1;
-
-        final int leaderboard = perk.leaderboard;
-        final int ranking = getRanking(true, leaderboard, gradePoints, rollLevel, level, time);
-
-        if (ranking != -1) {
-            for (int i = RANKING_MAX - 1; i > ranking; --i) {
-                rankingGradePointPlayer[leaderboard][i] = rankingGradePointPlayer[leaderboard][i - 1];
-                rankingRollDate[leaderboard][i] = rankingRollDatePlayer[leaderboard][i - 1];
-                rankingDatePlayer[leaderboard][i] = rankingDatePlayer[leaderboard][i - 1];
-                rankingTimePlayer[leaderboard][i] = rankingTimePlayer[leaderboard][i - 1];
-                rankingPerkPlayer[leaderboard][i] = rankingPerkPlayer[leaderboard][i - 1];
-            }
-
-            rankingGradePointPlayer[leaderboard][ranking] = gradePoints;
-            rankingRollDatePlayer[leaderboard][ranking] = rollLevel;
-            rankingDatePlayer[leaderboard][ranking] = level;
-            rankingTimePlayer[leaderboard][ranking] = time;
-            rankingPerkPlayer[leaderboard][ranking] = perk.ordinal();
-        }
-
-        return ranking;
+        return leaderboards.updatePlayerLeaderboard(perk.leaderboard);
     }
 
     private final SettingsHandler simpleSettingsHandler;
 
-    public SeasonsSettings(int currentVersion, ProfileProperties playerProperties) {
-        super(playerProperties);
+    public SeasonsSettings(int currentVersion, ProfileProperties playerProperties, Supplier<LeaderboardEntry> newEntrySupplier) {
+        super(PROP_ROOT, playerProperties);
 
         this.simpleSettingsHandler = ModeSettings.generateSettingsHandler(this);
         this.currentVersion = currentVersion;
         this.hasCompletedGame = false;
+
+        leaderboards = new ModeLeaderboard<>(
+            this,
+            LeaderboardEntry.CODEC,
+            newEntrySupplier,
+            LeaderboardEntry.ORDER,
+            new LeaderboardEntry(0, -1, 0, 0, SeasonPerk.PERKLESS),
+            currentVersion,
+            RANKING_MAX,
+            true
+        );
+
+        for (int i = 0; i < SeasonPerk.LEADERBOARDS; ++i) leaderboards.registerLeaderboard(i);
     }
 
     @Override
@@ -306,57 +321,23 @@ public class SeasonsSettings extends ModeSettings {
 
     @Override
     public void loadRanking(GameManager owner, String ruleName) {
-        for (int b = 0; b < SeasonPerk.LEADERBOARDS; ++b) {
-            for (int i = 0; i < RANKING_MAX; ++i) {
-                rankingGradePoint[b][i] = owner.modeConfig.getProperty(rankingGradePointProp(ruleName, b, i), 0);
-                rankingRollDate[b][i] = owner.modeConfig.getProperty(rankingRollDateProp(ruleName, b, i), -1);
-                rankingDate[b][i] = owner.modeConfig.getProperty(rankingDateProp(ruleName, b, i), 0);
-                rankingTime[b][i] = owner.modeConfig.getProperty(rankingTimeProp(ruleName, b, i), 0);
-                rankingPerk[b][i] = owner.modeConfig.getProperty(rankingPerkProp(ruleName, b, i), SeasonPerk.PERKLESS.ordinal());
-            }
-        }
+        leaderboards.loadRanking(owner, ruleName);
     }
 
     @Override
     public void saveRanking(GameManager owner, String ruleName) {
-        for (int b = 0; b < SeasonPerk.LEADERBOARDS; ++b) {
-            for (int i = 0; i < RANKING_MAX; ++i) {
-                owner.modeConfig.setProperty(rankingGradePointProp(ruleName, b, i), rankingGradePoint[b][i]);
-                owner.modeConfig.setProperty(rankingDateProp(ruleName, b, i), rankingDate[b][i]);
-                owner.modeConfig.setProperty(rankingRollDateProp(ruleName, b, i), rankingRollDate[b][i]);
-                owner.modeConfig.setProperty(rankingTimeProp(ruleName, b, i), rankingTime[b][i]);
-                owner.modeConfig.setProperty(rankingPerkProp(ruleName, b, i), rankingPerk[b][i]);
-            }
-        }
+        leaderboards.saveRanking(owner, ruleName);
     }
 
     @Override
     public void loadRankingPlayer(ProfileProperties prop, String ruleName) {
         if (!prop.isLoggedIn()) return;
-
-        for (int b = 0; b < SeasonPerk.LEADERBOARDS; ++b) {
-            for (int i = 0; i < RANKING_MAX; ++i) {
-                rankingGradePointPlayer[b][i] = prop.getProperty(rankingGradePointProp(ruleName, b, i), 0);
-                rankingRollDatePlayer[b][i] = prop.getProperty(rankingRollDateProp(ruleName, b, i), -1);
-                rankingDatePlayer[b][i] = prop.getProperty(rankingDateProp(ruleName, b, i), 0);
-                rankingTimePlayer[b][i] = prop.getProperty(rankingTimeProp(ruleName, b, i), 0);
-                rankingPerkPlayer[b][i] = prop.getProperty(rankingPerkProp(ruleName, b, i), SeasonPerk.PERKLESS.ordinal());
-            }
-        }
+        leaderboards.loadPlayerRanking(prop, ruleName);
     }
 
     @Override
     public void saveRankingPlayer(ProfileProperties prop, String ruleName) {
         if (!prop.isLoggedIn()) return;
-
-        for (int b = 0; b < SeasonPerk.LEADERBOARDS; ++b) {
-            for (int i = 0; i < RANKING_MAX; ++i) {
-                prop.setProperty(rankingGradePointProp(ruleName, b, i), rankingGradePointPlayer[b][i]);
-                prop.setProperty(rankingDateProp(ruleName, b, i), rankingDatePlayer[b][i]);
-                prop.setProperty(rankingRollDateProp(ruleName, b, i), rankingRollDatePlayer[b][i]);
-                prop.setProperty(rankingTimeProp(ruleName, b, i), rankingTimePlayer[b][i]);
-                prop.setProperty(rankingPerkProp(ruleName, b, i), rankingPerkPlayer[b][i]);
-            }
-        }
+        leaderboards.savePlayerRanking(prop, ruleName);
     }
 }

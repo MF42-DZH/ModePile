@@ -59,6 +59,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _MathHelper_ - A few extra mathematical functions such as LCM or GCD.
 * _MenuBuilder_ - A simple system for creating settings menus for modes.
 * _Mirror_ - Reflective access helper.
+* _ModeLeaderboard_ - A helper class for making leaderboards for modes.
 * _ModeSettings_ - A helper class for making settings containers for gamemodes.
 * _MouseParser_ - Allows the use of mouse inside a mode.
 * _Particle_ - Particles for the particle engine.

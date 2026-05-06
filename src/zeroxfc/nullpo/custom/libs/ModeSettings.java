@@ -1,4 +1,4 @@
-package zeroxfc.nullpo.custom.libs.types;
+package zeroxfc.nullpo.custom.libs;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -15,25 +15,21 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameManager;
 import mu.nu.nullpo.util.CustomProperties;
 import org.apache.log4j.Logger;
-import zeroxfc.nullpo.custom.libs.ProfileProperties;
 
 /** Representation of an object that holds the settings that a mode uses. */
 public abstract class ModeSettings {
     private static final Logger log = Logger.getLogger(ModeSettings.class);
 
-    private final String propRoot;
+    public final String propRoot;
     public final ProfileProperties playerProperties;
 
-    protected ModeSettings(ProfileProperties playerProperties) {
-        this.propRoot = Optional
-            .ofNullable(this.getClass().getAnnotation(PropertyRoot.class))
-            .map(PropertyRoot::root)
-            .orElseThrow(() -> new RuntimeException("No PropertyRoot defined on settings class: " + this.getClass().getName()));
+    protected ModeSettings(String propRoot, ProfileProperties playerProperties) {
+        this.propRoot = propRoot;
         this.playerProperties = playerProperties;
     }
 
     // Construct a property path for settings and rankings.
-    protected final String propPath(Object... path) {
+    public final String propPath(Object... path) {
         return joinPropPath(propRoot, path);
     }
 
@@ -58,39 +54,8 @@ public abstract class ModeSettings {
         playerProperties.saveProfileConfig();
     }
 
-    // Ranking order helper.
-    protected enum Order {
-        LT(-1), EQ(0), GT(1);
-        public final int compareValue;
-
-        public static Order fromCompare(int cmp) {
-            if (cmp < 0) return LT;
-            else if (cmp > 0) return GT;
-            else return EQ;
-        }
-
-        public static <T extends Comparable<T>> BiFunction<T, T, Order> deriveComparator() {
-            return (a, b) -> fromCompare(a.compareTo(b));
-        }
-
-        Order(int compareValue) {
-            this.compareValue = compareValue;
-        }
-
-        public Order fold(Supplier<Order> other) {
-            if (this == EQ) return other.get();
-            else return this;
-        }
-    }
-
     // Settings properties handling annotation framework. Intricacies for version saving and other such things
     // need to be handled manually, as this is only for automating the simple properties.
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.TYPE)
-    public @interface PropertyRoot {
-        String root();
-    }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
@@ -136,10 +101,7 @@ public abstract class ModeSettings {
     @SuppressWarnings("unchecked")
     public static <S extends ModeSettings> SettingsHandler generateSettingsHandler(S settingsObject) {
         final Class<S> settingsClass = (Class<S>) settingsObject.getClass();
-        final String propRoot = Optional
-            .ofNullable(settingsClass.getAnnotation(PropertyRoot.class))
-            .map(PropertyRoot::root)
-            .orElseThrow(() -> new RuntimeException("No PropertyRoot defined on settings class: " + settingsClass.getName()));
+        final String propRoot = settingsObject.propRoot;
 
         final List<FieldHandler<S>> settingsHandlers = Arrays
             .stream(settingsClass.getFields())
