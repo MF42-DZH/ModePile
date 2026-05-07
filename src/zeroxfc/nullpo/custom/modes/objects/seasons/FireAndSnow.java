@@ -135,12 +135,12 @@ public class FireAndSnow {
 
             if (autumn) {
                 colour
-                    .setHueAngle((random.nextDouble() * 60.0) + 30.0)
+                    .setHueAngle((random.nextDouble() * 30.0) + 45.0)
                     .setSaturation(0.75 + (random.nextDouble() * 0.25))
                     .setValue(1.0);
             } else {
                 colour
-                    .setHueAngle((random.nextDouble() * 60.0) + 90.0)
+                    .setHueAngle((random.nextDouble() * 30.0) + 75.0)
                     .setSaturation(0.6 + (random.nextDouble() * 0.34))
                     .setValue(1.0);
             }
