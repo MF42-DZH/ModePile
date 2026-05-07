@@ -36,9 +36,12 @@ public class ModeLeaderboard<K, V> {
     private final PropertyCodec<V> codec;
     private final Supplier<V> newEntrySupplier;
     private final BiFunction<V, V, Order> orderFunction;
-    private final V defaultValue;
 
-    public ModeLeaderboard(ModeSettings settings, PropertyCodec<V> codec, Supplier<V> newEntrySupplier, BiFunction<V, V, Order> orderFunction, V defaultValue, int currentVersion, int rankingMax, boolean ruleDependent) {
+    public ModeLeaderboard(ModeSettings settings, PropertyCodec<V> codec, Supplier<V> defaultValue, Supplier<V> newEntrySupplier, BiFunction<V, V, Order> orderFunction, int currentVersion, int rankingMax, boolean ruleDependent) {
+        this(settings, codec.deriveWithNewDefault(defaultValue), newEntrySupplier, orderFunction, currentVersion, rankingMax, ruleDependent);
+    }
+
+    public ModeLeaderboard(ModeSettings settings, PropertyCodec<V> codec, Supplier<V> newEntrySupplier, BiFunction<V, V, Order> orderFunction, int currentVersion, int rankingMax, boolean ruleDependent) {
         this.currentVersion = currentVersion;
         this.rankingMax = rankingMax;
         this.ruleDependent = ruleDependent;
@@ -46,7 +49,6 @@ public class ModeLeaderboard<K, V> {
         this.codec = codec;
         this.newEntrySupplier = newEntrySupplier;
         this.orderFunction = orderFunction;
-        this.defaultValue = defaultValue;
 
         leaderboards = new LinkedHashMap<>();
     }
@@ -127,10 +129,10 @@ public class ModeLeaderboard<K, V> {
             this.key = key;
 
             entries = new ArrayList<>(rankingMax + 1);
-            for (int i = 0; i < rankingMax; ++i) entries.add(defaultValue);
+            for (int i = 0; i < rankingMax; ++i) entries.add(codec.defaultLoadValue());
 
             playerEntries = new ArrayList<>(rankingMax + 1);
-            for (int i = 0; i < rankingMax; ++i) playerEntries.add(defaultValue);
+            for (int i = 0; i < rankingMax; ++i) playerEntries.add(codec.defaultLoadValue());
         }
 
         public Order queryNewEntryAt(int position) {
@@ -167,7 +169,7 @@ public class ModeLeaderboard<K, V> {
 
         public void loadRanking(GameManager owner, String ruleName) {
             for (int i = 0; i < rankingMax; ++i) {
-                entries.set(i, codec.load(owner.modeConfig, propPath(ruleName, i), defaultValue));
+                entries.set(i, codec.load(owner.modeConfig, propPath(ruleName, i), codec.defaultLoadValue()));
             }
         }
 
@@ -183,7 +185,7 @@ public class ModeLeaderboard<K, V> {
             if (!prop.isLoggedIn()) return;
 
             for (int i = 0; i < rankingMax; ++i) {
-                entries.set(i, codec.loadPlayer(prop, propPath(ruleName, i), defaultValue));
+                entries.set(i, codec.loadPlayer(prop, propPath(ruleName, i), codec.defaultLoadValue()));
             }
         }
 

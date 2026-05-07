@@ -39,11 +39,11 @@ public class SeasonsSettings extends ModeSettings {
     }
 
     @ModeSettings.Property(path = "perk")
-    @PropertyDefault(intValue = 1) // Spring Passive: 1
-    public int perkOrdinal;
-
     @MenuBuilder.SettingItem(id = 0, header = "PERK", headerColour = EventReceiver.COLOR_YELLOW)
     public SeasonPerk perk;
+
+    @StaticCodec
+    public static final PropertyCodec<SeasonPerk> PERK_CODEC = PropertyCodec.deriveEnumCodec(SeasonPerk.class, SeasonPerk.SPRING_PASSIVE);
 
     @MenuBuilder.SettingChanger(id = 0)
     public void changePerk(int change) {
@@ -234,6 +234,11 @@ public class SeasonsSettings extends ModeSettings {
             }
 
             @Override
+            public LeaderboardEntry defaultLoadValue() {
+                return new LeaderboardEntry(0, -1, 0, 0, SeasonPerk.PERKLESS);
+            }
+
+            @Override
             public Class<LeaderboardEntry> getValueClass() {
                 return LeaderboardEntry.class;
             }
@@ -269,7 +274,6 @@ public class SeasonsSettings extends ModeSettings {
             LeaderboardEntry.CODEC,
             newEntrySupplier,
             LeaderboardEntry.ORDER,
-            new LeaderboardEntry(0, -1, 0, 0, SeasonPerk.PERKLESS),
             currentVersion,
             RANKING_MAX,
             true
@@ -281,7 +285,6 @@ public class SeasonsSettings extends ModeSettings {
     @Override
     public void loadSetting(CustomProperties prop, boolean isReplay) {
         simpleSettingsHandler.loadSetting(prop);
-        perk = SeasonPerk.values()[perkOrdinal];
 
         // Version props are not saved on the player.
         version = isReplay ? prop.getProperty(versionProp, 0) : currentVersion;
@@ -290,7 +293,6 @@ public class SeasonsSettings extends ModeSettings {
 
     @Override
     public void saveSetting(CustomProperties prop, boolean forReplay) {
-        perkOrdinal = perk.ordinal();
         simpleSettingsHandler.saveSetting(prop);
 
         // Version props are not saved on the player.
@@ -303,14 +305,12 @@ public class SeasonsSettings extends ModeSettings {
         if (!prop.isLoggedIn()) return;
 
         simpleSettingsHandler.loadPlayerSetting(prop);
-        perk = SeasonPerk.values()[perkOrdinal];
     }
 
     @Override
     public void saveSettingPlayer(ProfileProperties prop) {
         if (!prop.isLoggedIn()) return;
 
-        perkOrdinal = perk.ordinal();
         simpleSettingsHandler.savePlayerSetting(prop);
     }
 

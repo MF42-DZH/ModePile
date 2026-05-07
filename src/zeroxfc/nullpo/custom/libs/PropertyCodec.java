@@ -1,5 +1,6 @@
 package zeroxfc.nullpo.custom.libs;
 
+import java.util.function.Supplier;
 import mu.nu.nullpo.util.CustomProperties;
 
 // Encodes a value that can be saved to properties.
@@ -11,9 +12,60 @@ public interface PropertyCodec<V> {
     V load(CustomProperties properties, String propPath, V defaultValue);
     V loadPlayer(ProfileProperties properties, String propPath, V defaultValue);
 
+    default V load(CustomProperties properties, String propPath) {
+        return load(properties, propPath, defaultLoadValue());
+    }
+
+    default V loadPlayer(ProfileProperties properties, String propPath) {
+        return loadPlayer(properties, propPath, defaultLoadValue());
+    }
+
+    /** Override this with a non-null return value if you need a different default value in the codec. */
+    default V defaultLoadValue() {
+        return null;
+    }
+
+    default PropertyCodec<V> deriveWithNewDefault(Supplier<V> newDefault) {
+        final PropertyCodec<V> old = this;
+
+        return new PropertyCodec<V>() {
+            @Override
+            public void save(CustomProperties properties, String propPath, V value) {
+                old.save(properties, propPath, value);
+            }
+
+            @Override
+            public void savePlayer(ProfileProperties properties, String propPath, V value) {
+                old.savePlayer(properties, propPath, value);
+            }
+
+            @Override
+            public V load(CustomProperties properties, String propPath, V defaultValue) {
+                return old.load(properties, propPath, defaultValue);
+            }
+
+            @Override
+            public V loadPlayer(ProfileProperties properties, String propPath, V defaultValue) {
+                return old.loadPlayer(properties, propPath, defaultValue);
+            }
+
+            @Override
+            public V defaultLoadValue() {
+                return newDefault.get();
+            }
+
+            @Override
+            public Class<V> getValueClass() {
+                return old.getValueClass();
+            }
+        };
+    }
+
     Class<V> getValueClass();
 
-    static <E extends Enum<?>> PropertyCodec<E> deriveEnumCodec(Class<E> clazz) {
+    // Derivation helpers
+
+    static <E extends Enum<?>> PropertyCodec<E> deriveEnumCodec(Class<E> clazz, E defaultValue) {
         if (!clazz.isEnum()) throw new IllegalArgumentException("Class is not an enum!");
 
         return new PropertyCodec<E>() {
@@ -30,13 +82,18 @@ public interface PropertyCodec<V> {
             @Override
             public E load(CustomProperties properties, String propPath, E defaultValue) {
                 if (properties.getProperty(propPath, "").isEmpty()) return defaultValue;
-                return clazz.getEnumConstants()[IntegerCodec.INSTANCE.load(properties, propPath, 0)];
+                return clazz.getEnumConstants()[IntegerCodec.INSTANCE.load(properties, propPath, defaultValue.ordinal())];
             }
 
             @Override
             public E loadPlayer(ProfileProperties properties, String propPath, E defaultValue) {
                 if (properties.getProperty(propPath, "").isEmpty()) return defaultValue;
-                return clazz.getEnumConstants()[IntegerCodec.INSTANCE.loadPlayer(properties, propPath, 0)];
+                return clazz.getEnumConstants()[IntegerCodec.INSTANCE.loadPlayer(properties, propPath, defaultValue.ordinal())];
+            }
+
+            @Override
+            public E defaultLoadValue() {
+                return defaultValue;
             }
 
             @Override
@@ -316,5 +373,48 @@ public interface PropertyCodec<V> {
         public Class<String> getValueClass() {
             return String.class;
         }
+    }
+}
+
+// Private unsafe codec for use with property codec generators.
+// XXX: DO NOT USE THIS CLASS OUTSIDE THE LIBRARY CLASSES.
+@SuppressWarnings({ "RawUseOfParameterized", "unchecked" })
+final class UnsafePropertyCodec implements PropertyCodec<Object> {
+    private final PropertyCodec codec;
+
+    UnsafePropertyCodec(PropertyCodec codec) {
+        this.codec = codec;
+    }
+
+    @Override
+    public void save(CustomProperties properties, String propPath, Object value) {
+        codec.save(properties, propPath, value);
+    }
+
+    @Override
+    public void savePlayer(ProfileProperties properties, String propPath, Object value) {
+        codec.savePlayer(properties, propPath, value);
+    }
+
+    @Override
+    public Object load(CustomProperties properties, String propPath, Object defaultValue) {
+        return codec.load(properties, propPath, defaultValue);
+    }
+
+    @Override
+    public Object loadPlayer(ProfileProperties properties, String propPath, Object defaultValue) {
+        return codec.loadPlayer(properties, propPath, defaultValue);
+    }
+
+    // This returns null explicitly as there is no valid object for an unsafe codec other than null;
+    @Override
+    public Object defaultLoadValue() {
+        return null;
+    }
+
+    // This returns null explicitly as there is no valid class object for an unsafe codec.
+    @Override
+    public Class<Object> getValueClass() {
+        return null;
     }
 }
