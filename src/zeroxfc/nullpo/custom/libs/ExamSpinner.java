@@ -223,7 +223,7 @@ public class ExamSpinner {
                         int height = ((lifeTime - spinDuration - 113) * 2) - 1;
                         int width = 3;
 
-                        rendererExtension.drawScaledPiece(receiver, baseX + width * 16, baseY + height * 16, HUGE_O, 1f, 0f);
+                        rendererExtension.drawScaledPiece(receiver, baseX + width * 16, baseY + height * 16, HUGE_O, 1f, 1f, 0f);
                     }
                 } else {
                     if (lifeTime == spinDuration + 120) {
@@ -296,7 +296,7 @@ public class ExamSpinner {
                         int height = ((lifeTime - spinDuration - 113) * 2) - 1;
                         int width = 3;
 
-                        rendererExtension.drawScaledPiece(receiver, baseX + width * 16, baseY + height * 16, HUGE_O, 1f, 0f);
+                        rendererExtension.drawScaledPiece(receiver, baseX + width * 16, baseY + height * 16, HUGE_O, 1f, 1f, 0f);
                     }
                 } else {
                     if (lifeTime == spinDuration + 120) {

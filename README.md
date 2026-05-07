@@ -5,7 +5,7 @@ A set of gameplay mods for [NullpoMino](https://github.com/nullpomino/nullpomino
 
 Requires the above to compile and run. The "res" directory in the "required files" needs to be merged with the one in the NullpoMino folder.
 
-[![ModePile Pack CI](https://github.com/0xFC963F18DC21/ModePile/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/0xFC963F18DC21/ModePile/actions/workflows/main.yml)
+[![ModePile Pack CI](https://github.com/MF42-DZH/ModePile/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/MF42-DZH/ModePile/actions/workflows/main.yml)
 
 ## Modes Available:
 
@@ -54,6 +54,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _FieldScatter_ - A 2D implementation of Sega \*\*\*ris '99's block explosion.
 * _FlyInOutText_ - Adds text objects that can fly into the screen from the outside, linger, then return to their starting positions before disappearing.
 * _GameTextUtilities_ - Adds methods for coloured text and other random text / text obfuscation methods.
+* _HardDropTrail_ - A simple implementation of a hard drop afterimage.
 * _Interpolation_ - Linear interpolation functions.
 * _LevelTableBuilder_ - A general form for _SpeedTableBuilder_ for building other level-based progressions.
 * _MathHelper_ - A few extra mathematical functions such as LCM or GCD.

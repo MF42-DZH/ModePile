@@ -487,7 +487,9 @@ public class Gimmicks {
         public GameTextUtilities.TextBlock getSummary() {
             return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
-                GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_YELLOW),
+                counter == currentAllowance
+                    ? GameTextUtilities.Text.ofMixColor(getName(), EventReceiver.COLOR_YELLOW, 255, 180, 48, 255)
+                    : GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_YELLOW),
                 GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),
                 GameTextUtilities.Text.of(String.valueOf(currentAllowance), EventReceiver.COLOR_YELLOW),
                 GameTextUtilities.Text.of(" REAL)", EventReceiver.COLOR_RED)

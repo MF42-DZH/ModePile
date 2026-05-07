@@ -596,7 +596,7 @@ public class ScoreTrial extends MarathonModeBase {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
-                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 1f, 0f);
                 }
             }
 
@@ -1171,14 +1171,14 @@ public class ScoreTrial extends MarathonModeBase {
 
         SCORE_INTERPOLATOR.setTargetScore(engine.statistics.score);
 
-        cPiece = new Piece(engine.nowPieceObject);
-        for (int i = 1; i <= fall; i++) {
-            pCoordList.add(
-                new int[] { engine.nowPieceX, engine.nowPieceY - i }
-            );
-        }
-
         if (hardDropEffect) {
+            cPiece = new Piece(engine.nowPieceObject);
+            for (int i = 1; i <= fall; i++) {
+                pCoordList.add(
+                    new int[] { engine.nowPieceX, engine.nowPieceY - i }
+                );
+            }
+
             landingParticles.addNumber(receiver, engine, playerID, 32);
         }
     }

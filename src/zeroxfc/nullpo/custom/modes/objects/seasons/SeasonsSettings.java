@@ -24,7 +24,7 @@ public class SeasonsSettings extends ModeSettings {
     private final String versionProp = propPath("version");
 
     @ModeSettings.Property(path = "fullGhost")
-    @ModeSettings.DefaultValue(booleanValue = false)
+    @PropertyDefault(booleanValue = false)
     @MenuBuilder.SettingItem(id = 1, header = "FULL GHOST", headerColour = EventReceiver.COLOR_BLUE)
     public boolean fullGhost;
 
@@ -39,7 +39,7 @@ public class SeasonsSettings extends ModeSettings {
     }
 
     @ModeSettings.Property(path = "perk")
-    @ModeSettings.DefaultValue(intValue = 1)
+    @PropertyDefault(intValue = 1) // Spring Passive: 1
     public int perkOrdinal;
 
     @MenuBuilder.SettingItem(id = 0, header = "PERK", headerColour = EventReceiver.COLOR_YELLOW)
@@ -72,7 +72,7 @@ public class SeasonsSettings extends ModeSettings {
     }
 
     @ModeSettings.Property(path = "spinType")
-    @ModeSettings.DefaultValue(intValue = GameEngine.SPINTYPE_4POINT)
+    @PropertyDefault(intValue = GameEngine.SPINTYPE_4POINT)
     @MenuBuilder.SettingItem(id = 2, header = "SPIN TYPE", headerColour = EventReceiver.COLOR_GREEN)
     public int spinType;
 
@@ -94,7 +94,7 @@ public class SeasonsSettings extends ModeSettings {
     }
 
     @ModeSettings.Property(path = "sparks")
-    @ModeSettings.DefaultValue(booleanValue = true)
+    @PropertyDefault(booleanValue = true)
     @MenuBuilder.SettingItem(id = 3, header = "SPARKS", headerColour = EventReceiver.COLOR_PINK)
     public boolean sparkEffect;
 
@@ -109,7 +109,7 @@ public class SeasonsSettings extends ModeSettings {
     }
 
     @ModeSettings.Property(path = "landingEffect")
-    @ModeSettings.DefaultValue(booleanValue = true)
+    @PropertyDefault(booleanValue = true)
     @MenuBuilder.SettingItem(id = 4, header = "DROP EFF.", headerColour = EventReceiver.COLOR_PINK)
     public boolean landingEffect;
 
@@ -124,7 +124,7 @@ public class SeasonsSettings extends ModeSettings {
     }
 
     @ModeSettings.Property(path = "wobble")
-    @ModeSettings.DefaultValue(booleanValue = true)
+    @PropertyDefault(booleanValue = true)
     @MenuBuilder.SettingItem(id = 5, header = "BG WOBBLE", headerColour = EventReceiver.COLOR_PINK)
     public boolean wobble;
 
@@ -142,11 +142,11 @@ public class SeasonsSettings extends ModeSettings {
     private final String playerNameProp = propPath("playerName");
 
     @ModeSettings.Property(path = "hasCompletedGame")
-    @ModeSettings.DefaultValue(booleanValue = true)
+    @PropertyDefault(booleanValue = true)
     public boolean hasCompletedGame;
 
     @ModeSettings.Property(path = "hasSeenRollIntro")
-    @ModeSettings.DefaultValue(booleanValue = true)
+    @PropertyDefault(booleanValue = true)
     public boolean hasSeenRollIntro;
 
     public final ModeLeaderboard<Integer, LeaderboardEntry> leaderboards;
@@ -231,6 +231,11 @@ public class SeasonsSettings extends ModeSettings {
                     IntegerCodec.INSTANCE.loadPlayer(properties, joinPropPath(propPath, SUFFIX_TIME), defaultValue.time),
                     IntegerCodec.INSTANCE.loadPlayer(properties, joinPropPath(propPath, SUFFIX_PERK), defaultValue.perkOrdinal)
                 );
+            }
+
+            @Override
+            public Class<LeaderboardEntry> getValueClass() {
+                return LeaderboardEntry.class;
             }
         };
 

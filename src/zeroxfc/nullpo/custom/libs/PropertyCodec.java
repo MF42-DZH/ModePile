@@ -11,6 +11,41 @@ public interface PropertyCodec<V> {
     V load(CustomProperties properties, String propPath, V defaultValue);
     V loadPlayer(ProfileProperties properties, String propPath, V defaultValue);
 
+    Class<V> getValueClass();
+
+    static <E extends Enum<?>> PropertyCodec<E> deriveEnumCodec(Class<E> clazz) {
+        if (!clazz.isEnum()) throw new IllegalArgumentException("Class is not an enum!");
+
+        return new PropertyCodec<E>() {
+            @Override
+            public void save(CustomProperties properties, String propPath, E value) {
+                IntegerCodec.INSTANCE.save(properties, propPath, value.ordinal());
+            }
+
+            @Override
+            public void savePlayer(ProfileProperties properties, String propPath, E value) {
+                IntegerCodec.INSTANCE.savePlayer(properties, propPath, value.ordinal());
+            }
+
+            @Override
+            public E load(CustomProperties properties, String propPath, E defaultValue) {
+                if (properties.getProperty(propPath, "").isEmpty()) return defaultValue;
+                return clazz.getEnumConstants()[IntegerCodec.INSTANCE.load(properties, propPath, 0)];
+            }
+
+            @Override
+            public E loadPlayer(ProfileProperties properties, String propPath, E defaultValue) {
+                if (properties.getProperty(propPath, "").isEmpty()) return defaultValue;
+                return clazz.getEnumConstants()[IntegerCodec.INSTANCE.loadPlayer(properties, propPath, 0)];
+            }
+
+            @Override
+            public Class<E> getValueClass() {
+                return clazz;
+            }
+        };
+    }
+
     // Predefined codec instances for simple things:
 
     final class ByteCodec implements PropertyCodec<Byte> {
@@ -35,6 +70,11 @@ public interface PropertyCodec<V> {
         @Override
         public Byte loadPlayer(ProfileProperties properties, String propPath, Byte defaultValue) {
             return properties.getProperty(propPath, (byte) defaultValue);
+        }
+
+        @Override
+        public Class<Byte> getValueClass() {
+            return Byte.class;
         }
     }
 
@@ -61,6 +101,11 @@ public interface PropertyCodec<V> {
         public Short loadPlayer(ProfileProperties properties, String propPath, Short defaultValue) {
             return properties.getProperty(propPath, (short) defaultValue);
         }
+
+        @Override
+        public Class<Short> getValueClass() {
+            return Short.class;
+        }
     }
 
     final class IntegerCodec implements PropertyCodec<Integer> {
@@ -85,6 +130,11 @@ public interface PropertyCodec<V> {
         @Override
         public Integer loadPlayer(ProfileProperties properties, String propPath, Integer defaultValue) {
             return properties.getProperty(propPath, (int) defaultValue);
+        }
+
+        @Override
+        public Class<Integer> getValueClass() {
+            return Integer.class;
         }
     }
 
@@ -111,6 +161,11 @@ public interface PropertyCodec<V> {
         public Long loadPlayer(ProfileProperties properties, String propPath, Long defaultValue) {
             return properties.getProperty(propPath, (long) defaultValue);
         }
+
+        @Override
+        public Class<Long> getValueClass() {
+            return Long.class;
+        }
     }
 
     final class FloatCodec implements PropertyCodec<Float> {
@@ -135,6 +190,11 @@ public interface PropertyCodec<V> {
         @Override
         public Float loadPlayer(ProfileProperties properties, String propPath, Float defaultValue) {
             return properties.getProperty(propPath, (float) defaultValue);
+        }
+
+        @Override
+        public Class<Float> getValueClass() {
+            return Float.class;
         }
     }
 
@@ -161,6 +221,11 @@ public interface PropertyCodec<V> {
         public Double loadPlayer(ProfileProperties properties, String propPath, Double defaultValue) {
             return properties.getProperty(propPath, (double) defaultValue);
         }
+
+        @Override
+        public Class<Double> getValueClass() {
+            return Double.class;
+        }
     }
 
     final class BooleanCodec implements PropertyCodec<Boolean> {
@@ -185,6 +250,11 @@ public interface PropertyCodec<V> {
         @Override
         public Boolean loadPlayer(ProfileProperties properties, String propPath, Boolean defaultValue) {
             return properties.getProperty(propPath, (boolean) defaultValue);
+        }
+
+        @Override
+        public Class<Boolean> getValueClass() {
+            return Boolean.class;
         }
     }
 
@@ -211,6 +281,11 @@ public interface PropertyCodec<V> {
         public Character loadPlayer(ProfileProperties properties, String propPath, Character defaultValue) {
             return properties.getProperty(propPath, (char) defaultValue);
         }
+
+        @Override
+        public Class<Character> getValueClass() {
+            return Character.class;
+        }
     }
 
     final class StringCodec implements PropertyCodec<String> {
@@ -235,6 +310,11 @@ public interface PropertyCodec<V> {
         @Override
         public String loadPlayer(ProfileProperties properties, String propPath, String defaultValue) {
             return properties.getProperty(propPath, defaultValue);
+        }
+
+        @Override
+        public Class<String> getValueClass() {
+            return String.class;
         }
     }
 }

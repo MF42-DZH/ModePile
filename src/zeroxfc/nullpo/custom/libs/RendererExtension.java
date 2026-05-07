@@ -179,10 +179,11 @@ public class RendererExtension {
      * @param x        X-coordinate of piece's top-left corner
      * @param y        Y-coordinate of piece's top-left corner
      * @param piece    The piece to draw
+     * @param alpha    Opacity
      * @param scale    Scale factor at which the piece is drawn in
      * @param darkness Darkness value (0f = None, negative = lighter, positive = darker)
      */
-    public void drawScaledPiece(EventReceiver receiver, int x, int y, Piece piece, float scale, float darkness) {
+    public void drawScaledPiece(EventReceiver receiver, int x, int y, Piece piece, float alpha, float scale, float darkness) {
         if (piece.big) {
             for (int i = 0; i < piece.block.length; i++) {
                 int x2 = x + (int) (piece.dataX[piece.direction][i] * 32 * scale);
@@ -191,7 +192,7 @@ public class RendererExtension {
                 Block blkTemp = new Block(piece.block[i]);
                 blkTemp.darkness = darkness;
 
-                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, 2f * scale, blkTemp.attribute);
+                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, alpha, 2f * scale, blkTemp.attribute);
             }
         } else {
             for (int i = 0; i < piece.block.length; i++) {
@@ -201,7 +202,7 @@ public class RendererExtension {
                 Block blkTemp = new Block(piece.block[i]);
                 blkTemp.darkness = darkness;
 
-                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale, blkTemp.attribute);
+                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, alpha, scale, blkTemp.attribute);
             }
         }
     }
@@ -214,10 +215,11 @@ public class RendererExtension {
      * @param x        X-coordinate of piece's top-left corner
      * @param y        Y-coordinate of piece's top-left corner
      * @param piece    The piece to draw
+     * @param alpha    Opacity
      * @param scale    Scale factor at which the piece is drawn in
      * @param darkness Darkness value (0f = None, negative = lighter, positive = darker)
      */
-    public void drawScaledPiece(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, Piece piece, float scale, float darkness) {
+    public void drawScaledPiece(EventReceiver receiver, GameEngine engine, int playerID, int x, int y, Piece piece, float alpha, float scale, float darkness) {
         if (piece.big) {
             for (int i = 0; i < piece.block.length; i++) {
                 int x2 = x + (int) (piece.dataX[piece.direction][i] * 32 * scale);
@@ -233,7 +235,7 @@ public class RendererExtension {
                 Block blkTemp = new Block(piece.block[i]);
                 blkTemp.darkness = darkness;
 
-                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale * 2f, blkTemp.attribute);
+                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, alpha, scale * 2f, blkTemp.attribute);
             }
         } else {
             for (int i = 0; i < piece.block.length; i++) {
@@ -250,7 +252,7 @@ public class RendererExtension {
                 Block blkTemp = new Block(piece.block[i]);
                 blkTemp.darkness = darkness;
 
-                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, 1f, scale, blkTemp.attribute);
+                drawScaledBlock(receiver, x2, y2, blkTemp.getDrawColor(), blkTemp.skin, blkTemp.getAttribute(Block.BLOCK_ATTRIBUTE_BONE), blkTemp.darkness, alpha, scale, blkTemp.attribute);
             }
         }
     }
@@ -265,10 +267,11 @@ public class RendererExtension {
      * @param y         Y-coordinate of piece's top-left corner
      * @param alignment Alignment setting (use <code>ObjectAlignment</code>)
      * @param piece     The piece to draw
+     * @param alpha    Opacity
      * @param scale     Scale factor at which the piece is drawn in
      * @param darkness  Darkness value (0f = None, negative = lighter, positive = darker)
      */
-    public void drawAlignedScaledPiece(EventReceiver receiver, int x, int y, ObjectAlignment alignment, Piece piece, float scale, float darkness) {
+    public void drawAlignedScaledPiece(EventReceiver receiver, int x, int y, ObjectAlignment alignment, Piece piece, float alpha, float scale, float darkness) {
         final int baseSize = 16 * Math.max(piece.getWidth(), piece.getHeight());
         int offsetX, offsetY;
 
@@ -309,7 +312,7 @@ public class RendererExtension {
             offsetY *= 2;
         }
 
-        drawScaledPiece(receiver, x - offsetX, y - offsetY, piece, scale, darkness);
+        drawScaledPiece(receiver, x - offsetX, y - offsetY, piece, alpha, scale, darkness);
     }
 
     /**

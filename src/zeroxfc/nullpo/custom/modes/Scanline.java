@@ -71,6 +71,8 @@ public class Scanline extends MarathonModeBase {
     // Custom Scanner Graphic
     private CustomResourceHolder customHolder;
     private int sx, sy;
+
+    private boolean hardDropEffect;
     /**
      * The good hard drop effect
      */
@@ -144,6 +146,8 @@ public class Scanline extends MarathonModeBase {
         rankingLinesPlayer = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
         rankingTimePlayer = new int[MAX_SCANSPEEDS][RANKING_TYPE][RANKING_MAX];
 
+        hardDropEffect = true;
+
         netPlayerInit(engine, playerID);
 
         if (!owner.replayMode) {
@@ -197,6 +201,9 @@ public class Scanline extends MarathonModeBase {
                 "GOAL", (goaltype == 2) ? "ENDLESS" : tableGameClearLines[goaltype] + " LINES",
                 "BIG", GeneralUtil.getONorOFF(big),
                 "SCAN SPEED", SCAN_GRACE_LIMIT_NAMES[scanSpeed]);
+            drawMenu(engine, playerID, receiver, 10, EventReceiver.COLOR_PINK, 5,
+                "DROP EFF.", GeneralUtil.getONorOFF(hardDropEffect)
+            );
         }
     }
 
@@ -240,16 +247,16 @@ public class Scanline extends MarathonModeBase {
         engine.statistics.scoreFromHardDrop += fall * 2;
         engine.statistics.score += fall * 2;
 
-        int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
-        int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
-        cPiece = new Piece(engine.nowPieceObject);
-        for (int i = 1; i <= fall; i++) {
-            pCoordList.add(
-                new int[] { engine.nowPieceX, engine.nowPieceY - i }
-            );
-        }
-        for (int i = 0; i < cPiece.getMaxBlock(); i++) {
-            landingParticles.addNumber(receiver, engine, playerID, 32);
+        if (hardDropEffect) {
+            cPiece = new Piece(engine.nowPieceObject);
+            for (int i = 1; i <= fall; i++) {
+                pCoordList.add(
+                    new int[] { engine.nowPieceX, engine.nowPieceY - i }
+                );
+            }
+            for (int i = 0; i < cPiece.getMaxBlock(); i++) {
+                landingParticles.addNumber(receiver, engine, playerID, 32);
+            }
         }
     }
 
@@ -340,11 +347,11 @@ public class Scanline extends MarathonModeBase {
 
             int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
-            if (pCoordList.size() > 0 && cPiece != null) {
+            if (pCoordList.size() > 0 && cPiece != null && hardDropEffect) {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
-                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 1f, 0f);
                 }
             }
 
@@ -617,7 +624,7 @@ public class Scanline extends MarathonModeBase {
         // Menu
         else if (engine.owner.replayMode == false) {
             // Configuration changes
-            int change = updateCursor(engine, 4, playerID);
+            int change = updateCursor(engine, 5, playerID);
 
             if (change != 0) {
                 engine.playSE("change");
@@ -654,6 +661,9 @@ public class Scanline extends MarathonModeBase {
                         scanSpeed += change;
                         if (scanSpeed < 0) scanSpeed = MAX_SCANSPEEDS - 1;
                         if (scanSpeed > MAX_SCANSPEEDS - 1) scanSpeed = 0;
+                        break;
+                    case 5:
+                        hardDropEffect = !hardDropEffect;
                         break;
                 }
 
@@ -849,6 +859,7 @@ public class Scanline extends MarathonModeBase {
         big = prop.getProperty("scanline.big", false);
         version = prop.getProperty("scanline.version", 0);
         scanSpeed = prop.getProperty("scanline.speed", 0);
+        hardDropEffect = prop.getProperty("scanline.dropEffect", true);
     }
 
     /**
@@ -864,6 +875,7 @@ public class Scanline extends MarathonModeBase {
         prop.setProperty("scanline.big", big);
         prop.setProperty("scanline.version", version);
         prop.setProperty("scanline.speed", scanSpeed);
+        prop.setProperty("scanline.dropEffect", hardDropEffect);
     }
 
     /**
@@ -879,6 +891,7 @@ public class Scanline extends MarathonModeBase {
         goaltype = prop.getProperty("scanline.gametype", 0);
         big = prop.getProperty("scanline.big", false);
         scanSpeed = prop.getProperty("scanline.speed", 0);
+        hardDropEffect = prop.getProperty("scanline.dropEffect", true);
     }
 
     /**
@@ -894,6 +907,7 @@ public class Scanline extends MarathonModeBase {
         prop.setProperty("scanline.gametype", goaltype);
         prop.setProperty("scanline.big", big);
         prop.setProperty("scanline.speed", scanSpeed);
+        prop.setProperty("scanline.dropEffect", hardDropEffect);
     }
 
     /**

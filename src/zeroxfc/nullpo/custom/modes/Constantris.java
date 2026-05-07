@@ -671,7 +671,7 @@ public class Constantris extends MarathonModeBase {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
-                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 1f, 0f);
                 }
             }
 
@@ -1012,13 +1012,14 @@ public class Constantris extends MarathonModeBase {
 
         int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
         int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
-        cPiece = new Piece(engine.nowPieceObject);
-        for (int i = 1; i <= fall; i++) {
-            pCoordList.add(
-                new int[] { engine.nowPieceX, engine.nowPieceY - i }
-            );
-        }
         if (hardDropEffect) {
+            cPiece = new Piece(engine.nowPieceObject);
+            for (int i = 1; i <= fall; i++) {
+                pCoordList.add(
+                    new int[] { engine.nowPieceX, engine.nowPieceY - i }
+                );
+            }
+
             landingParticles.addNumber(receiver, engine, playerID, 32);
         }
     }

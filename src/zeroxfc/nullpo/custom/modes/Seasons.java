@@ -36,6 +36,7 @@ import zeroxfc.nullpo.custom.libs.CustomResourceHolder;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.FieldManipulation;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.HardDropTrail;
 import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.LevelTableBuilder;
 import zeroxfc.nullpo.custom.libs.MathHelper;
@@ -478,6 +479,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private MenuBuilder.Menu settingsMenu;
     private ProfileProperties playerProperties;
 
+    private HardDropTrail trail = new HardDropTrail();
 
     private boolean showPlayerStats;
     private SubRanking showBoard;
@@ -631,6 +633,39 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private DescriptionDraw descriptionToDraw;
 
+    private static class MiragePiece {
+        private final Piece piece;
+        private final int x;
+        private final int startY;
+
+        private int life;
+
+        public MiragePiece(Piece piece, int x, int startY) {
+            this.piece = new Piece(piece);
+            this.x = x;
+            this.startY = startY;
+
+            this.life = 0;
+        }
+
+        public boolean update() {
+            return life++ >= 120;
+        }
+
+        public void draw(RendererExtension rendererExtension, EventReceiver receiver) {
+            rendererExtension.drawScaledPiece(
+                receiver,
+                x, (int) Interpolation.tanStep(startY + 112, startY - 112, (life + 120) / 240.0),
+                piece,
+                Interpolation.lerp(0.875f, 0.0f, life / 120.0),
+                1f,
+                0f
+            );
+        }
+    }
+
+    private MiragePiece miragePiece;
+
     private BlockVortex vortex;
     private Random bvr;
 
@@ -682,6 +717,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             final int maxX = RendererExtension.getShowMeter(receiver) ? width * 4 + 4 : width * 4 + 2;
             final int maxY = height * 4 + 2;
+
+            final int fieldY = (y - 1) / 4;
 
             final double distance =
                 Math.abs((maxY * x) - (maxX * y)) / Math.sqrt((double) (maxY * maxY) + (maxX * maxX));
@@ -781,6 +818,25 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             mixer.setLightness(mixer.getLightness() * lMult).setSaturation(sMult);
+
+            if (!isAbilityActive && currentSeason == Season.SPRING && !rollStarted && y > 0 && engine.field != null && engine.statistics.level >= LEVELS_MAR) {
+                if (fieldY < engine.field.getHeight()) {
+                    for (final Block blk : engine.field.getRow(fieldY)) {
+                        if (blk.color == Block.BLOCK_COLOR_GEM_ORANGE) {
+                            auxMixer.setRGB24(BASE_COLOUR_AUTUMN_2);
+                            mixer
+                                .setHue(Interpolation.lerp(mixer.getHue(), auxMixer.getHue(), 0.75))
+                                .setValue(Interpolation.lerp(mixer.getValue(), 0.75, 0.75));
+                        }
+                    }
+                }
+            }
+
+            if (!isAbilityActive && currentSeason == Season.AUTUMN && !rollStarted && engine.speed.gravity > 0) {
+                mixer
+                    .setValue(Interpolation.lerp(auxMixer.getValue(), auxMixer.getValue() + 0.25, 0.5))
+                    .setSaturation(Interpolation.lerp(auxMixer.getValue(), 0.8, 0.5));
+            }
 
             // Roll Shimmer
             if (engine.ending != 0 && engine.gameActive && !isAbilityActive) {
@@ -979,6 +1035,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         grading = new Grading();
         totalGrades = null;
+        miragePiece = null;
 
         // Clear all gimmicks.
         clearBaseGameGimmicks();
@@ -1610,7 +1667,20 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (engine.statc[0] == 0) {
             // Store current field state.
             if (engine.statc[1] == 0) {
-                if (gimmickSumMo2 != null) gimmickSumMo2.replaceQueue(engine);
+                if (gimmickSumMo2 != null) {
+                    if (gimmickSumMo2.replaceQueue(engine)) {
+                        final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+                        final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+                        final Piece piece = HasCustomMove.getNextObject(engine, engine.nextPieceCount - 1);
+
+                        miragePiece = new MiragePiece(
+                            piece,
+                            baseX + engine.getSpawnPosX(engine.field, piece) * 16,
+                            baseY + engine.getSpawnPosY(piece) * 16
+                        );
+                    }
+                }
 
                 statesAtTimes.put(engine.statistics.time + rollElapsed, new NextAndFieldState(engine));
             }
@@ -2476,6 +2546,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     @Override
     public void afterHardDropFall(GameEngine engine, int playerID, int fall) {
         if (settings.landingEffect) {
+            trail.addPiece(engine, fall);
             landingParticles.addNumber(receiver, engine, playerID, 32);
         }
 
@@ -3283,6 +3354,57 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public void drawBetweenFrameAndField(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
+        final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+        final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+        if (settings.landingEffect) trail.draw(rendererExtension, receiver, engine, playerID);
+
+        if (engine.field != null && currentSeason == Season.SPRING && !rollStarted && engine.statistics.level >= LEVELS_FEB) {
+            final double levelProportion = (engine.statistics.level - LEVELS_FEB) / (double) (LEVELS_APR - LEVELS_FEB);
+            final int rows = (int) Math.round(levelProportion * engine.field.getHeight());
+            final int ca = engine.statistics.level >= LEVELS_MAR ? 7 : 0;
+
+            for (int i = 0; i < rows; ++i) {
+                rendererExtension.drawScaledBlock(
+                    receiver,
+                    baseX + 24, baseY + ((engine.field.getHeight() - i - 1) * 16),
+                    Block.BLOCK_COLOR_GREEN + ca,
+                    engine.getSkin(),
+                    false, 0.25f,
+                    0.25f,
+                    1f,
+                    0
+                );
+
+                rendererExtension.drawScaledBlock(
+                    receiver,
+                    baseX + ((engine.field.getWidth() - 2) * 16) - 8, baseY + ((engine.field.getHeight() - i - 1) * 16),
+                    Block.BLOCK_COLOR_GREEN + ca,
+                    engine.getSkin(),
+                    false, 0.25f,
+                    0.25f,
+                    1f,
+                    0
+                );
+            }
+        }
+
+        if (engine.field != null && currentSeason == Season.AUTUMN && !rollStarted && engine.stat == GameEngine.STAT_MOVE && gimmickAutMo1 != null) {
+            for (int i = 0; i < 4; ++i) {
+                final int sizeY = (int) (48.0 * Math.pow(0.625, i));
+                final int alpha = Interpolation.lerp(0, 20, Math.min(1.0, engine.statc[0] / (double) gimmickAutMo1.getFallDelay(badges, getGimmickPerkBoost())));
+
+                drawing.drawRectangle(
+                    receiver,
+                    baseX, baseY,
+                    16 * engine.field.getWidth(), sizeY,
+                    255, 120, 20,
+                    alpha,
+                    true
+                );
+            }
+        }
+
         if (rollElapsed <= 120 * 60 && rollStarted && rollTime > 0) {
             CREDITS.drawNoStop(receiver, engine, playerID, rollElapsed / (120d * 60d));
         }
@@ -3628,6 +3750,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public void onFirst(GameEngine engine, int playerID) {
+        trail.inOnFirst();
+
         if (settings.perk == SeasonPerk.WINTER_ACTIVE) {
             if (currentAbilityTimer > 0) {
                 setSpeed(engine);
@@ -3665,6 +3789,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         if (!engine.lagStop && engine.gameActive) {
+            if (miragePiece != null) {
+                if (miragePiece.update()) {
+                    miragePiece = null;
+                }
+            }
+
             ++timeSpentInSeason;
             if (engine.timerActive) ++activeTimeSpentInSeason;
 
@@ -4128,6 +4258,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (descriptionToDraw != null) {
                     descriptionToDraw.descObj.drawDescription(drawing, receiver, engine, descriptionToDraw.getDrawXOffset(), descriptionToDraw.getDrawY());
+                }
+
+                if (miragePiece != null) {
+                    miragePiece.draw(rendererExtension, receiver);
                 }
             }
         }

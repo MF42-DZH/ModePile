@@ -172,7 +172,7 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
             rendererExtension.drawAlignedScaledPiece(
                 receiver,
                 cx, cy, ObjectAlignment.TOP_LEFT,
-                this.piece, 1.0f, Interpolation.lerp(0.0f, 0.333f, (double) lifetime / MAX_LIFETIME)
+                this.piece, 1.0f, 1.0f, Interpolation.lerp(0.0f, 0.333f, (double) lifetime / MAX_LIFETIME)
             );
         }
     }
@@ -575,14 +575,14 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
         engine.statistics.scoreFromHardDrop += fall * 2;
         engine.statistics.score += fall * 2;
 
-        cPiece = new Piece(engine.nowPieceObject);
-        for (int i = 1; i <= fall; i++) {
-            pCoordList.add(
-                new int[] { engine.nowPieceX, engine.nowPieceY - i }
-            );
-        }
-
         if (hardDropEffect) {
+            cPiece = new Piece(engine.nowPieceObject);
+            for (int i = 1; i <= fall; i++) {
+                pCoordList.add(
+                    new int[] { engine.nowPieceX, engine.nowPieceY - i }
+                );
+            }
+
             landingParticles.addNumber(receiver, engine, playerID, 32);
         }
     }
@@ -1416,7 +1416,7 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
-                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 1f, 0f);
                 }
             }
 
@@ -1481,6 +1481,7 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
                             receiver,
                             x2, y2, alignment,
                             piece,
+                            1f,
                             pieceSize(i),
                             extraDarkness
                         );
@@ -1513,6 +1514,7 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
                             receiver,
                             x2, y2, alignment,
                             piece,
+                            1f,
                             pieceSize(i),
                             extraDarkness
                         );

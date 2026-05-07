@@ -431,14 +431,14 @@ public class SingleDeathMarathon extends MarathonModeBase {
         engine.statistics.scoreFromHardDrop += fall * 2;
         engine.statistics.score += fall * 2;
 
-        cPiece = new Piece(engine.nowPieceObject);
-        for (int i = 1; i <= fall; i++) {
-            pCoordList.add(
-                new int[] { engine.nowPieceX, engine.nowPieceY - i }
-            );
-        }
-
         if (hardDropEffect) {
+            cPiece = new Piece(engine.nowPieceObject);
+            for (int i = 1; i <= fall; i++) {
+                pCoordList.add(
+                    new int[] { engine.nowPieceX, engine.nowPieceY - i }
+                );
+            }
+
             landingParticles.addNumber(receiver, engine, playerID, 32);
         }
     }
@@ -556,7 +556,7 @@ public class SingleDeathMarathon extends MarathonModeBase {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
-                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 1f, 0f);
                 }
             }
 

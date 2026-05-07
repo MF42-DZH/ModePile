@@ -785,9 +785,7 @@ public class MarathonTwo extends MarathonModeBase {
         engine.statistics.scoreFromHardDrop += fall * 2;
         engine.statistics.score += fall * 2;
 
-        if (blackoutTimer == 0) {
-            int baseX = (16 * engine.nowPieceX) + 4 + receiver.getFieldDisplayPositionX(engine, playerID);
-            int baseY = (16 * engine.nowPieceY) + 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+        if (blackoutTimer == 0 && hardDropEffect) {
             cPiece = new Piece(engine.nowPieceObject);
             for (int i = 1; i <= fall; i++) {
                 pCoordList.add(
@@ -795,9 +793,7 @@ public class MarathonTwo extends MarathonModeBase {
                 );
             }
 
-            if (hardDropEffect) {
-                landingParticles.addNumber(receiver, engine, playerID, 32);
-            }
+            landingParticles.addNumber(receiver, engine, playerID, 32);
         }
     }
 
@@ -878,7 +874,7 @@ public class MarathonTwo extends MarathonModeBase {
                 for (int[] loc : pCoordList) {
                     int cx = baseX + (16 * loc[0]);
                     int cy = baseY + (16 * loc[1]);
-                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 0f);
+                    rendererExtension.drawScaledPiece(receiver, engine, playerID, cx, cy, cPiece, 1f, 1f, 0f);
                 }
             }
 
