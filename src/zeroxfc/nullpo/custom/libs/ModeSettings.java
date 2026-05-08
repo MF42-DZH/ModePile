@@ -171,7 +171,7 @@ public abstract class ModeSettings {
         private final Property property;
         private final Optional<PropertyDefault> defaults;
 
-        public FieldHandler(S modeSettings, String root, Field field, List<PropertyCodec<?>> possibleCodecs) {
+        FieldHandler(S modeSettings, String root, Field field, List<PropertyCodec<?>> possibleCodecs) {
             this.modeSettings = modeSettings;
             this.field = field;
 
