@@ -162,7 +162,7 @@ public abstract class ModeSettings {
         };
     }
 
-    private static final class FieldHandler<S extends ModeSettings> {
+    static final class FieldHandler<S extends ModeSettings> {
         private final S modeSettings;
         private final String path;
         private final Field field;

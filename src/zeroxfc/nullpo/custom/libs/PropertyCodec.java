@@ -383,6 +383,23 @@ final class UnsafePropertyCodec implements PropertyCodec<Object> {
     private final PropertyCodec codec;
 
     UnsafePropertyCodec(PropertyCodec codec) {
+        /* This really SHOULD NOT be used outside the ModeSettings classes. */ {
+            final StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+            boolean safe = false;
+
+            for (final StackTraceElement element : stackTraceElements) {
+                final String calledBy = element.getClassName();
+                if (calledBy.equals(ModeSettings.FieldHandler.class.getName())) {
+                    safe = true;
+                    break;
+                }
+            }
+
+            if (!safe) throw new RuntimeException(
+                new InstantiationException("Only the property handler generators in ModeSettings is allowed to make instances of unsafe codecs.")
+            );
+        }
+
         this.codec = codec;
     }
 
@@ -406,15 +423,13 @@ final class UnsafePropertyCodec implements PropertyCodec<Object> {
         return codec.loadPlayer(properties, propPath, defaultValue);
     }
 
-    // This returns null explicitly as there is no valid object for an unsafe codec other than null;
     @Override
     public Object defaultLoadValue() {
-        return null;
+        return codec.defaultLoadValue();
     }
 
-    // This returns null explicitly as there is no valid class object for an unsafe codec.
     @Override
     public Class<Object> getValueClass() {
-        return null;
+        return Object.class;
     }
 }
