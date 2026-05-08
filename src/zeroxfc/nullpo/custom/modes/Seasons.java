@@ -3390,18 +3390,22 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         if (engine.field != null && currentSeason == Season.AUTUMN && !rollStarted && engine.stat == GameEngine.STAT_MOVE && gimmickAutMo1 != null) {
-            for (int i = 0; i < 4; ++i) {
-                final int sizeY = (int) (48.0 * Math.pow(0.625, i));
-                final int alpha = Interpolation.lerp(0, 20, Math.min(1.0, engine.statc[0] / (double) gimmickAutMo1.getFallDelay(badges, getGimmickPerkBoost())));
+            final boolean inChill = settings.perk == SeasonPerk.WINTER_ACTIVE && abilityIsActive(engine);
 
-                drawing.drawRectangle(
-                    receiver,
-                    baseX, baseY,
-                    16 * engine.field.getWidth(), sizeY,
-                    255, 120, 20,
-                    alpha,
-                    true
-                );
+            if (!inChill) {
+                for (int i = 0; i < 4; ++i) {
+                    final int sizeY = (int) (48.0 * Math.pow(0.625, i));
+                    final int alpha = Interpolation.lerp(0, 20, Math.min(1.0, engine.statc[0] / (double) gimmickAutMo1.getFallDelay(badges, getGimmickPerkBoost())));
+
+                    drawing.drawRectangle(
+                        receiver,
+                        baseX, baseY,
+                        16 * engine.field.getWidth(), sizeY,
+                        255, 120, 20,
+                        alpha,
+                        true
+                    );
+                }
             }
         }
 
@@ -3529,7 +3533,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         rewindBlocks.forEach(rb -> rb.draw(rendererExtension, receiver));
-        textEmitter.drawAll(engine);
     }
 
     @Override
@@ -4266,6 +4269,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
         }
 
+        if (textEmitter != null) textEmitter.drawAll(engine);
         rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
 
         drawFireworks(receiver);
