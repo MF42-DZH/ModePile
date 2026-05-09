@@ -10,7 +10,7 @@ public enum SeasonPerk {
     SPRING_PASSIVE(1), // +1 levels to level bonus, and gain +0.2 badges per badge gain, always.
     SPRING_ACTIVE(1, 600, 600, 5, 10, 25, 60), // 2x levels from line clears, and 3x badge gain while active.
     SUMMER_PASSIVE(1), // +3 to visible next queue length. Guarantees an I-piece every 50 pieces (pushes back the next queue).
-    SUMMER_ACTIVE(1, 480, 900, 5, 10, 20, 45), // Get four I-pieces instantly, pushing the next queue back, and extends the visible next queue.
+    SUMMER_ACTIVE(1, 450, 0, 3, 6, 12, 30), // Get four I-pieces instantly, pushing the next queue back, and extends the visible next queue.
     AUTUMN_PASSIVE(1), // Badge benefits against gimmicks work 2x better.
     AUTUMN_ACTIVE(1, 800, 0, 5, 10, 20, 40), // Freefalls the field.
     WINTER_PASSIVE(1), // +6 frames of lock delay in 20G, Less gravity otherwise.
@@ -86,7 +86,7 @@ public enum SeasonPerk {
                 GameTextUtilities.Text.custom("SUMMER GIVES YOU THE ABILITY", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("TO END VIOLENT DROUGHTS", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("WHENEVER YOU DESIRE.", EventReceiver.COLOR_WHITE, baseScale * 0.75f), GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.custom("(GET 4 I-PIECES, EXT. NEXT WHILE ACTIVE)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
+                GameTextUtilities.Text.custom("(GET 4 I-PIECES, EXT. NEXT TEMPORARILY)", EventReceiver.COLOR_YELLOW, baseScale * 0.6f)
             );
 
             autumnPassive = GameTextUtilities.TextBlock.of(

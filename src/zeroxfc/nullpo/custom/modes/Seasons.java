@@ -1678,6 +1678,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public void inPieceSpawn(GameEngine engine, int playerID) {
+        final int oldNextPos = engine.nextPieceCount;
+
         // 出現時の処理
         if (engine.statc[0] == 0) {
             // Store current field state.
@@ -1836,6 +1838,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             if ((engine.ai != null) && (!engine.owner.replayMode || engine.owner.replayRerecord))
                 engine.ai.newPiece(engine, playerID);
+
+            // Shrink next
+            if (engine.nextPieceCount != oldNextPos && settings.perk == SeasonPerk.SUMMER_ACTIVE) {
+                engine.ruleopt.nextDisplay = Math.max(ruleOptCopy.nextDisplay, engine.ruleopt.nextDisplay - 1);
+            }
         }
     }
 
@@ -3902,7 +3909,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             processGimmicks(engine, playerID);
         }
 
-        if (currentAbilityTimer > 0 && (engine.stat == GameEngine.STAT_MOVE || settings.perk == SeasonPerk.SUMMER_ACTIVE)) {
+        if (currentAbilityTimer > 0 && engine.stat == GameEngine.STAT_MOVE) {
             final int prevTimer = currentAbilityTimer--;
 
             if (settings.perk == SeasonPerk.WINTER_ACTIVE && prevTimer == 1) {
@@ -3930,8 +3937,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             if (prevTimer == 1) {
-                if (settings.perk == SeasonPerk.SUMMER_ACTIVE) engine.ruleopt.nextDisplay = ruleOptCopy.nextDisplay;
-
                 engine.playSE("stageclear");
             }
         }
@@ -3977,7 +3982,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     for (Block blk : HasCustomMove.getNextObject(engine, i).block) blk.item = -1;
                 }
 
-                engine.ruleopt.nextDisplay = Math.max(engine.ruleopt.nextDisplay, 30);
+                engine.ruleopt.nextDisplay = engine.ruleopt.nextDisplay + 25;
             }
 
             engine.playSE("medal");
