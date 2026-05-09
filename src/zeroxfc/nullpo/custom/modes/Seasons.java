@@ -681,6 +681,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         return (settings.perk.isActive() || settings.perk == SeasonPerk.SUMMER_PASSIVE) && engine.gameStarted && engine.gameActive && (
             (currentAbilityTimer > 0)
                 || (queuedFreefall || (engine.stat == GameEngine.STAT_CUSTOM && customState == CustomState.FREEFALL))
+                || (HasCustomMove.getNextObject(engine, engine.nextPieceCount).block[0].item == -1)
                 || (engine.stat == GameEngine.STAT_MOVE && engine.nowPieceObject != null && engine.nowPieceObject.block[0].item == -1)
         );
     }
