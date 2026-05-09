@@ -123,7 +123,7 @@ public class BackgroundPieceMovement extends AnimatedBackgroundHook {
         final int half = (int) Math.round(downQueue / 2.0);
         downQueue -= half;
 
-        downMove = Math.min(engine.field.getHeight(), downMove + half);
+        downMove = Math.min(engine.field.getHeight() * 2, downMove + half);
 
         if (engine.stat == GameEngine.STAT_MOVE && gravity <= 0 && height == 0 && !engine.ctrl.isPress(Controller.BUTTON_DOWN)) {
             downMove = Math.max(0, downMove - 1);
@@ -157,7 +157,7 @@ public class BackgroundPieceMovement extends AnimatedBackgroundHook {
         final int leewayY = imageDims[1] - sh;
 
         final double leftRightBias = 0.5 - (0.5 * (leftMove / (double) engine.getDAS())) + (0.5 * (rightMove / (double) engine.getDAS()));
-        final double downBias = engine.field != null ? downMove / (double) engine.field.getHeight() : 0.0;
+        final double downBias = engine.field != null ? downMove / ((double) engine.field.getHeight() * 2.0) : 0.0;
 
         chunk.setSourceLocation(
             (int) Interpolation.tanStep(0, leewayX, leftRightBias),
