@@ -682,6 +682,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             (currentAbilityTimer > 0)
                 || (queuedFreefall || (engine.stat == GameEngine.STAT_CUSTOM && customState == CustomState.FREEFALL))
                 || (HasCustomMove.getNextObject(engine, engine.nextPieceCount).block[0].item == -1)
+                || (settings.perk == SeasonPerk.SUMMER_ACTIVE && engine.ruleopt.nextDisplay > ruleOptCopy.nextDisplay)
                 || (engine.stat == GameEngine.STAT_MOVE && engine.nowPieceObject != null && engine.nowPieceObject.block[0].item == -1)
         );
     }
