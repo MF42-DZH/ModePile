@@ -2536,15 +2536,15 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 .setBlue(1.0 - Math.min(1.0, combo / 11d))
                 .getRGB24();
 
-            final String str = (combo - 1) + " COMBO";
+            final String comboStr = (combo - 1) + " COMBO";
 
             textEmitter.addString(
-                str,
-                DoubleVector.add(basePosition, new DoubleVector(0, 32, false)),
+                comboStr,
+                DoubleVector.add(basePosition, new DoubleVector(0, 24, false)),
                 baseVelocity,
                 baseAcceleration,
                 ObjectAlignment.MIDDLE_MIDDLE,
-                ((lifeOffset * (str.length() - 3)) / 2), lifeOffset, maxLife,
+                (lifeOffset * (sb.length() - comboStr.length())) / -2, lifeOffset, maxLife,
                 EventReceiver.COLOR_WHITE,
                 startScale, endScale,
                 startColour, 255,
