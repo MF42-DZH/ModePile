@@ -321,7 +321,19 @@ public class ColourMixer {
         return this;
     }
 
-    public ColourMixer copy() {
+    public ColourMixer copyValuesOf(ColourMixer otherMixer) {
+        this.red = otherMixer.red;
+        this.green = otherMixer.green;
+        this.blue = otherMixer.blue;
+        this.hue = otherMixer.hue;
+        this.saturation = otherMixer.saturation;
+        this.lightness = otherMixer.lightness;
+        this.value = otherMixer.value;
+
+        return this;
+    }
+
+    public ColourMixer makeCopy() {
         final ColourMixer mixerCopy = new ColourMixer();
 
         mixerCopy.red = red;
