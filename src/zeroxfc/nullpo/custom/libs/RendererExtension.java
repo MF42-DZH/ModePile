@@ -739,7 +739,7 @@ public class RendererExtension {
             if (graphics == null) return;
 
             graphics.setColor(Color.black);
-            graphics.drawRect(x, y, baseWidth - 1, baseHeight - 1);
+            graphics.fillRect(x, y, baseWidth, baseHeight);
             graphics.setColor(colorBase);
             graphics.fillRect(x + 1, y + 1, baseWidth - 2, baseHeight - 2);
 
@@ -762,7 +762,7 @@ public class RendererExtension {
             if (graphics == null) return;
 
             graphics.setColor(java.awt.Color.black);
-            graphics.drawRect(x, y, baseWidth - 1, baseHeight - 1);
+            graphics.fillRect(x, y, baseWidth, baseHeight);
             graphics.setColor(colorBase);
             graphics.fillRect(x + 1, y + 1, baseWidth - 2, baseHeight - 2);
 
