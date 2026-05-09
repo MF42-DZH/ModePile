@@ -70,7 +70,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 12;
+    private static final int CURRENT_VERSION = 13;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(15), TWO(30), THREE(60);
@@ -678,10 +678,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private static final int FINAL_REWIND_TIME = 60 * 40;
 
     private boolean abilityIsActive(GameEngine engine) {
-        return settings.perk.isActive() && engine.gameStarted && engine.gameActive && (
+        return (settings.perk.isActive() || settings.perk == SeasonPerk.SUMMER_PASSIVE) && engine.gameStarted && engine.gameActive && (
             (currentAbilityTimer > 0)
                 || (queuedFreefall || (engine.stat == GameEngine.STAT_CUSTOM && customState == CustomState.FREEFALL))
-                || (HasCustomMove.getNextObject(engine, engine.nextPieceCount).block[0].item == -1)
+                || (engine.stat == GameEngine.STAT_MOVE && engine.nowPieceObject != null && engine.nowPieceObject.block[0].item == -1)
         );
     }
 
@@ -750,7 +750,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             } else {
                 switch (settings.perk) {
                     case SPRING_ACTIVE: mixer.setRGB24(BASE_COLOUR_SPRING_1); break;
-                    case SUMMER_ACTIVE: mixer.setRGB24(BASE_COLOUR_SUMMER_1); break;
+                    case SUMMER_PASSIVE:
+                    case SUMMER_ACTIVE:
+                        mixer.setRGB24(BASE_COLOUR_SUMMER_1);
+                        break;
                     case AUTUMN_ACTIVE: mixer.setRGB24(BASE_COLOUR_AUTUMN_1); break;
                     case WINTER_ACTIVE: mixer.setRGB24(BASE_COLOUR_WINTER_1); break;
                     default: mixer.setRGB24(0x00_FFFFFF); break;
@@ -1154,13 +1157,21 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 engine.field = new Field(state.field);
 
                 for (int i = state.nextPosition; i < engine.nextPieceCount + engine.ruleopt.nextDisplay; ++i) {
+                    final int blockItem = engine.nextPieceArrayObject[i].block[0].item;
+
                     engine.nextPieceArrayObject[i] = HasCustomMove.initialisePiece(engine, engine.nextPieceArrayID[i]);
+
+                    for (Block blk : engine.nextPieceArrayObject[i].block) blk.item = blockItem;
                 }
 
                 engine.nextPieceCount = state.nextPosition;
 
                 if (state.holdPiece != null) {
+                    final int blockItem = state.holdPiece.block[0].item;
+
                     engine.holdPieceObject = HasCustomMove.initialisePiece(engine, state.holdPiece.id);
+
+                    for (Block blk : engine.holdPieceObject.block) blk.item = blockItem;
                 } else {
                     engine.holdPieceObject = null;
                 }
@@ -1340,6 +1351,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (engine.nextPieceArrayObject[i].block[0].item == -1) {
                 HasCustomMove.removeFromNext(engine, i);
             }
+        }
+
+        if (engine.holdPieceObject != null && engine.holdPieceObject.block[0].item == -1) {
+            engine.holdPieceObject = null;
         }
     }
 
@@ -3538,6 +3553,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     @Override
     public void renderFirst(GameEngine engine, int playerID) {
         inRenderFirst(rendererExtension, receiver, engine, playerID);
+
         renderExtraBoardInfo(engine, playerID);
     }
 
@@ -3886,7 +3902,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             processGimmicks(engine, playerID);
         }
 
-        if (currentAbilityTimer > 0 && engine.stat == GameEngine.STAT_MOVE) {
+        if (currentAbilityTimer > 0 && (engine.stat == GameEngine.STAT_MOVE || settings.perk == SeasonPerk.SUMMER_ACTIVE)) {
             final int prevTimer = currentAbilityTimer--;
 
             if (settings.perk == SeasonPerk.WINTER_ACTIVE && prevTimer == 1) {
@@ -3914,6 +3930,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             if (prevTimer == 1) {
+                if (settings.perk == SeasonPerk.SUMMER_ACTIVE) engine.ruleopt.nextDisplay = ruleOptCopy.nextDisplay;
+
                 engine.playSE("stageclear");
             }
         }
@@ -3954,10 +3972,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             if (settings.perk == SeasonPerk.AUTUMN_ACTIVE) queuedFreefall = true;
             else if (settings.perk == SeasonPerk.SUMMER_ACTIVE) {
-                HasCustomMove.insertIntoNexts(engine, engine.nextPieceCount, Piece.PIECE_I, Piece.PIECE_I, Piece.PIECE_I);
-                for (int i = engine.nextPieceCount; i < engine.nextPieceCount + 3; ++i) {
+                HasCustomMove.insertIntoNexts(engine, engine.nextPieceCount, Piece.PIECE_I, Piece.PIECE_I, Piece.PIECE_I, Piece.PIECE_I);
+                for (int i = engine.nextPieceCount; i < engine.nextPieceCount + 4; ++i) {
                     for (Block blk : HasCustomMove.getNextObject(engine, i).block) blk.item = -1;
                 }
+
+                engine.ruleopt.nextDisplay = Math.max(engine.ruleopt.nextDisplay, 30);
             }
 
             engine.playSE("medal");
