@@ -70,7 +70,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 13;
+    private static final int CURRENT_VERSION = 14;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(15), TWO(30), THREE(60);
@@ -2378,7 +2378,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             basePosition = new DoubleVector(upX, pieceYs, false);
             reverse = pieceXs < (receiver.getFieldDisplayPositionX(engine, playerID) + 4 + (8 * engine.field.getWidth()));
         } else {
-            basePosition = new DoubleVector(baseX + (engine.field.getWidth() * 8), baseY + (engine.field.getHeight() * 4), false);
+            double totalY = 0.0;
+            for (int y = -engine.field.getHiddenHeight(); y < engine.field.getHeight(); ++y) if (engine.field.getLineFlag(y)) totalY += y;
+            totalY /= lines;
+
+            basePosition = new DoubleVector(baseX + (engine.field.getWidth() * 8), baseY + (totalY * 16.0), false);
             reverse = false;
         }
 
@@ -2574,8 +2578,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             landingParticles.addNumber(receiver, engine, playerID, 32);
         }
 
-        animatedBackgrounds[getLastBackground()].updateDrop(engine, fall * 2);
-        animatedBackgrounds[getCurrentBackground()].updateDrop(engine, fall * 2);
+        animatedBackgrounds[getLastBackground()].updateDrop(engine, fall * 4);
+        animatedBackgrounds[getCurrentBackground()].updateDrop(engine, fall * 4);
     }
 
     private static final Map<IntPair, Block> wm3HardBlocksClearing = new HashMap<>(40);
@@ -2643,6 +2647,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             if (settings.perk == SeasonPerk.SPRING_PASSIVE) {
                 engine.statistics.level += levelIncrease + naturalLevelIncrement;
+                if (rollStarted) engine.statistics.level += naturalLevelIncrement;
             } else if (settings.perk == SeasonPerk.SPRING_ACTIVE && currentAbilityTimer > 0) {
                 engine.statistics.level += levelIncrease * 2;
             } else {
@@ -2734,7 +2739,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                             engine.blockShowOutlineOnly = false;
                             engine.resetFieldVisible();
 
-                            gimmickRollWin = new Gimmicks.AbsoluteZero(badges, getGimmickPerkBoost());
+                            gimmickRollWin = new Gimmicks.AbsoluteZero(settings.perk, badges, getGimmickPerkBoost());
                             descriptionToDraw = new DescriptionDraw(gimmickRollWin);
                             break;
                         default:

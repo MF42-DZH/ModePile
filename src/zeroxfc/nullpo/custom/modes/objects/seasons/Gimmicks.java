@@ -1537,14 +1537,19 @@ public class Gimmicks {
         public static int ZERO_IDENTIFIER = 0x0000DCBA;
         public static int ZERO_MASK = 0x0000FFFF;
 
+        private final SeasonPerk perk;
         private int countdownMax;
 
-        public AbsoluteZero(Badges badges, boolean perkBoost) {
+        public AbsoluteZero(SeasonPerk perk, Badges badges, boolean perkBoost) {
+            this.perk = perk;
             setCountdownMax(badges, perkBoost);
         }
 
         public void setCountdownMax(Badges badges, boolean perkBoost) {
             countdownMax = badges.getBadges() / (perkBoost ? 20 : 40);
+
+            if (perk == SeasonPerk.SUMMER_PASSIVE) countdownMax += 15;
+            else if (perk == SeasonPerk.SUMMER_ACTIVE) countdownMax += 30;
         }
 
         public void updateField(GameEngine engine) {
