@@ -7,11 +7,11 @@ import mu.nu.nullpo.game.event.EventReceiver;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.types.ColourMixer;
 
-public class FireAndSnow {
+public class ColoredFlames {
     private final Deque<Particle> particles = new LinkedList<>();
     private final Random random;
 
-    public FireAndSnow(long seed) {
+    public ColoredFlames(long seed) {
         random = new Random(seed);
     }
 
@@ -135,9 +135,9 @@ public class FireAndSnow {
 
             if (autumn) {
                 colour
-                    .setHueAngle((random.nextDouble() * 30.0) + 45.0)
-                    .setSaturation(0.75 + (random.nextDouble() * 0.25))
-                    .setValue(1.0);
+                    .setHueAngle((random.nextDouble() * 20.0) + 50.0)
+                    .setSaturation(1.0)
+                    .setValue(0.6 + (random.nextDouble() * 0.4));
             } else {
                 colour
                     .setHueAngle((random.nextDouble() * 30.0) + 75.0)

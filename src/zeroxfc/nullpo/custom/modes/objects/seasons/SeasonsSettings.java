@@ -296,8 +296,8 @@ public class SeasonsSettings extends ModeSettings {
         simpleSettingsHandler.saveSetting(prop);
 
         // Version props are not saved on the player.
-        prop.setProperty(versionProp, currentVersion);
-        if (forReplay && playerProperties.isLoggedIn()) prop.setProperty(playerNameProp, playerName);
+        if (forReplay) prop.setProperty(versionProp, currentVersion);
+        if (forReplay && playerProperties.isLoggedIn()) prop.setProperty(playerNameProp, playerProperties.getNameDisplay());
     }
 
     @Override

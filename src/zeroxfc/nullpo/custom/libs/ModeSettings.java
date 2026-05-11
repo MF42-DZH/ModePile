@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 
 /** Representation of an object that holds the settings that a mode uses. */
 public abstract class ModeSettings {
-    private static final Logger log = Logger.getLogger(ModeSettings.class);
+    protected static final Logger log = Logger.getLogger(ModeSettings.class);
 
     public final String propRoot;
     public final ProfileProperties playerProperties;

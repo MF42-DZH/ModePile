@@ -531,7 +531,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int brokenSnowBlocks;
     private int blocksUnderSnow;
     private int hardBlocksSeen;
-    private FireAndSnow fireAndSnowEffect;
+    private ColoredFlames coloredFlamesEffect;
 
     private Random sparksRandomiser;
     private SurfaceSparks sparks;
@@ -665,6 +665,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     }
 
     private MiragePiece miragePiece;
+    private SweepingPassage sweepingPassage;
 
     private BlockVortex vortex;
     private Random bvr;
@@ -1040,7 +1041,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         grading = new Grading();
         totalGrades = null;
+
         miragePiece = null;
+        sweepingPassage = null;
 
         // Clear all gimmicks.
         clearBaseGameGimmicks();
@@ -1392,6 +1395,54 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         GameTextUtilities.Text.custom("FLAMES", EventReceiver.COLOR_ORANGE, 1f)
     );
 
+    private static final GameTextUtilities.TextBlock ENDING_MID_PASSAGE_1 = GameTextUtilities.TextBlock.of(
+        GameTextUtilities.TextJustification.CENTRE,
+        GameTextUtilities.Text.custom("THE ", EventReceiver.COLOR_WHITE, 3f / 4f),
+        GameTextUtilities.Text.custom("DARK CLOUDS", EventReceiver.COLOR_BLUE, 5f / 4f),
+        GameTextUtilities.Text.newLine(),
+        GameTextUtilities.Text.custom(" FADING FROM MY MIND", EventReceiver.COLOR_WHITE, 3f / 4f)
+    );
+
+    private static final GameTextUtilities.TextBlock ENDING_MID_PASSAGE_2 = GameTextUtilities.TextBlock.of(
+        GameTextUtilities.TextJustification.CENTRE,
+        GameTextUtilities.Text.custom("NO ", EventReceiver.COLOR_WHITE, (1.0f)),
+        GameTextUtilities.Text.custom("PAIN", EventReceiver.COLOR_RED, (5f / 3f)),
+        GameTextUtilities.Text.custom(" WILL LAST ", EventReceiver.COLOR_WHITE, (1.0f)),
+        GameTextUtilities.Text.custom("FOREVER", EventReceiver.COLOR_ORANGE, (5f / 3f))
+    );
+
+    private static final GameTextUtilities.TextBlock ENDING_MID_PASSAGE_3 = GameTextUtilities.TextBlock.of(
+        GameTextUtilities.TextJustification.CENTRE,
+        GameTextUtilities.Text.custom("THE ", EventReceiver.COLOR_WHITE, (3f / 4f)),
+        GameTextUtilities.Text.custom("SEASONS", EventReceiver.COLOR_GREEN, (5f / 4f)),
+        GameTextUtilities.Text.custom(" PASS AND", EventReceiver.COLOR_WHITE, (3f / 4f)),
+        GameTextUtilities.Text.newLine(),
+        GameTextUtilities.Text.custom("SUNLIGHT", EventReceiver.COLOR_YELLOW, (5f / 4f)),
+        GameTextUtilities.Text.custom(" WILL SHINE", EventReceiver.COLOR_WHITE, (3f / 4f)),
+        GameTextUtilities.Text.custom(" ON MY LIFE AGAIN", EventReceiver.COLOR_WHITE, (3f / 4f))
+    );
+
+    private static final GameTextUtilities.TextBlock ENDING_MID_PASSAGE_4 = GameTextUtilities.TextBlock.of(
+        GameTextUtilities.TextJustification.CENTRE,
+        GameTextUtilities.Text.custom("SO LET THE ", EventReceiver.COLOR_WHITE, (3f / 4f)),
+        GameTextUtilities.Text.custom("PAST", EventReceiver.COLOR_PINK, (5f / 4f)),
+        GameTextUtilities.Text.newLine(),
+        GameTextUtilities.Text.custom("NOW ", EventReceiver.COLOR_WHITE, (3f / 4f)),
+        GameTextUtilities.Text.custom("BURN", EventReceiver.COLOR_ORANGE, (5f / 4f)),
+        GameTextUtilities.Text.custom(" DOWN IN ", EventReceiver.COLOR_WHITE, (3f / 4f)),
+        GameTextUtilities.Text.custom("FLAMES", EventReceiver.COLOR_ORANGE, (5f / 4f)),
+        GameTextUtilities.Text.custom("!", EventReceiver.COLOR_WHITE, (3f / 4f))
+    );
+
+    private static final GameTextUtilities.TextBlock ENDING_MID_PASSAGE_5 = GameTextUtilities.TextBlock.of(
+        GameTextUtilities.TextJustification.CENTRE,
+        GameTextUtilities.Text.custom("NOW ", EventReceiver.COLOR_WHITE, (1.0f)),
+        GameTextUtilities.Text.custom("BURN", EventReceiver.COLOR_ORANGE, (5f / 3f)),
+        GameTextUtilities.Text.custom(" DOWN IN ", EventReceiver.COLOR_WHITE, (1.0f)),
+        GameTextUtilities.Text.custom("FLAMES!", EventReceiver.COLOR_ORANGE, (5f / 3f)),
+        GameTextUtilities.Text.custom("!", EventReceiver.COLOR_WHITE, (3f / 4f))
+    );
+
     @Override
     public void renderCustom(GameEngine engine, int playerID) {
         if (engine.field != null) {
@@ -1572,8 +1623,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 engine.quitflag = true;
             }
 
-            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
-                playerProperties = new ProfileProperties(HEADER_COLOUR);
+            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !playerProperties.isLoggedIn()) {
                 engine.playSE("decide");
 
                 engine.stat = GameEngine.STAT_CUSTOM;
@@ -1643,7 +1693,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         nextSectionLevel = NEXT_SECTION_LEVELS.apply(engine.statistics.level);
         setNewBackground(BACKGROUND_TABLE.apply(engine.statistics.level));
 
-        fireAndSnowEffect = new FireAndSnow(engine.randSeed * 23457968);
+        coloredFlamesEffect = new ColoredFlames(engine.randSeed * 23457968);
 
         owner.backgroundStatus.bg = -1;
         owner.backgroundStatus.fadebg = -1;
@@ -2587,6 +2637,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     @Override
     public void calcScore(GameEngine engine, int playerID, int lines) {
         addEventText(engine, playerID, lines, engine.combo);
+        final int oldLevel = engine.statistics.level;
 
         if (lines >= 1) {
             if (engine.field.isEmpty()) {
@@ -2655,6 +2706,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             if (engine.statistics.level > MAX_LEVEL) engine.statistics.level = MAX_LEVEL;
+
+            if (rollStarted) {
+                if (oldLevel < LEVELS_MAR && engine.statistics.level >= LEVELS_MAR) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_1, 30, 240, 30);
+                else if (oldLevel < LEVELS_MAY && engine.statistics.level >= LEVELS_MAY) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_2, 30, 240, 30);
+                else if (oldLevel < LEVELS_JUL && engine.statistics.level >= LEVELS_JUL) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_3, 30, 318, 30);
+                else if (oldLevel < LEVELS_SEP && engine.statistics.level >= LEVELS_SEP) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_4, 30, 360, 30);
+                else if (oldLevel < LEVELS_NOV && engine.statistics.level >= LEVELS_NOV) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_5, 15, 270, 15);
+            }
 
             levelUp(engine);
             badges.updateBadges(
@@ -3376,8 +3435,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             vortex.draw(rendererExtension, receiver);
         }
 
-        if (fireAndSnowEffect != null && engine.gameStarted) {
-            fireAndSnowEffect.draw(drawing, receiver);
+        if (coloredFlamesEffect != null && engine.gameStarted) {
+            coloredFlamesEffect.draw(drawing, receiver);
         }
     }
 
@@ -3828,6 +3887,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 }
             }
 
+            if (sweepingPassage != null) {
+                if (sweepingPassage.update()) {
+                    sweepingPassage = null;
+                }
+            }
+
             ++timeSpentInSeason;
             if (engine.timerActive) ++activeTimeSpentInSeason;
 
@@ -3837,11 +3902,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             if (engine.timerActive) {
-                if (gimmickSumMo3 != null && engine.statistics.time % 4 == 1) fireAndSnowEffect.addFire(2, false);
+                if (gimmickSumMo3 != null && engine.statistics.time % 4 == 1) coloredFlamesEffect.addFire(2, false);
 
-                if (gimmickWinMo3 != null && engine.statistics.time % 4 == 1) fireAndSnowEffect.addSnow(5);
-                else if (gimmickWinMo2 != null && engine.statistics.time % 4 == 1) fireAndSnowEffect.addSnow(3);
-                else if (gimmickWinMo1 != null && engine.statistics.time % 4 == 1) fireAndSnowEffect.addSnow(2);
+                if (gimmickWinMo3 != null && engine.statistics.time % 4 == 1) coloredFlamesEffect.addSnow(5);
+                else if (gimmickWinMo2 != null && engine.statistics.time % 4 == 1) coloredFlamesEffect.addSnow(3);
+                else if (gimmickWinMo1 != null && engine.statistics.time % 4 == 1) coloredFlamesEffect.addSnow(2);
             }
 
             engine.ghost |= settings.perk == SeasonPerk.WINTER_ACTIVE && abilityIsActive(engine);
@@ -3849,7 +3914,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (engine.quitflag) {
             ruleOptCopy = null;
-            playerProperties = new ProfileProperties(HEADER_COLOUR);
+            playerProperties = null;
         }
 
         if (engine.gameActive) {
@@ -3873,14 +3938,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             if (rollElapsed % 4 == 1) {
                 if (currentSeason == Season.SPRING || currentSeason == Season.AUTUMN) {
-                    fireAndSnowEffect.addGrass(4, currentSeason == Season.AUTUMN);
+                    coloredFlamesEffect.addGrass(4, currentSeason == Season.AUTUMN);
                 } else {
-                    fireAndSnowEffect.addFire(currentSeason == Season.SUMMER ? 8 : 4, currentSeason == Season.WINTER);
+                    coloredFlamesEffect.addFire(currentSeason == Season.SUMMER ? 8 : 4, currentSeason == Season.WINTER);
                 }
             }
         }
 
-        if (fireAndSnowEffect != null) fireAndSnowEffect.update();
+        if (coloredFlamesEffect != null) coloredFlamesEffect.update();
 
         queueFireworkIf(engine, FireworkLauncher.ONE, Stream.STREAM_1);
         queueFireworkIf(engine, FireworkLauncher.TWO, Stream.STREAM_2);
@@ -4088,27 +4153,29 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     );
                 }
 
-                if (!playerProperties.isLoggedIn() || !showPlayerStats) {
-                    receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 7, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
-                } else {
-                    receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 7, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
-                }
-
-                if (!playerProperties.isLoggedIn()) {
-                    receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 8, "(NOT LOGGED IN)\n(E:LOG IN)");
-                } else {
-                    if (showPlayerStats) {
-                        GameTextUtilities.drawAlignedScoreText(
-                            receiver, engine, playerID, smallGrid,
-                            0, topY + SeasonsSettings.RANKING_MAX + 8,
-                            GameTextUtilities.Text.ofBig(owner.replayMode ? settings.playerName : playerProperties.getNameDisplay())
-                        );
+                if (playerProperties != null) {
+                    if (!playerProperties.isLoggedIn() || !showPlayerStats) {
+                        receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 7, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+                    } else {
+                        receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 7, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
                     }
 
-                    receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 11, "D:SWITCH LOC./PLY. RANK", EventReceiver.COLOR_GREEN);
-                }
+                    if (!playerProperties.isLoggedIn()) {
+                        receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 8, "(NOT LOGGED IN)\n(E:LOG IN)");
+                    } else {
+                        if (showPlayerStats) {
+                            GameTextUtilities.drawAlignedScoreText(
+                                receiver, engine, playerID, smallGrid,
+                                0, topY + SeasonsSettings.RANKING_MAX + 8,
+                                GameTextUtilities.Text.ofBig(owner.replayMode ? settings.playerName : playerProperties.getNameDisplay())
+                            );
+                        }
 
-                receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 12, "F:SWITCH DATE/TIME/PERK", EventReceiver.COLOR_GREEN);
+                        receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 11, "D:SWITCH LOC./PLY. RANK", EventReceiver.COLOR_GREEN);
+                    }
+
+                    receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 12, "F:SWITCH DATE/TIME/PERK", EventReceiver.COLOR_GREEN);
+                }
             }
 
             GameTextUtilities.drawAlignedScoreTextBlock(
@@ -4208,6 +4275,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             if (engine.gameActive) {
+                if (sweepingPassage != null) {
+                    final int baseY = 52 + receiver.getFieldDisplayPositionY(engine, playerID);
+                    sweepingPassage.draw(engine, 320, baseY + 320 + 36);
+                }
+
                 if (engine.statistics.level >= LEVELS_FEB || rollStarted) {
                     receiver.drawScoreFont(engine, playerID, 0, 17, "EFFECTS", titlesColour);
                 }
@@ -4301,8 +4373,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
         }
 
-        if (textEmitter != null) textEmitter.drawAll(engine);
         rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
+        if (textEmitter != null) textEmitter.drawAll(engine);
 
         drawFireworks(receiver);
     }
