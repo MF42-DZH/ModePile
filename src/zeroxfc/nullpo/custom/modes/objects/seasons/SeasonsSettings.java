@@ -255,8 +255,8 @@ public class SeasonsSettings extends ModeSettings {
         return leaderboards.updateLeaderboard(perk.leaderboard);
     }
 
-    public int updateRankingPlayer(ProfileProperties prop) {
-        if (!prop.isLoggedIn()) return -1;
+    public int updateRankingPlayer() {
+        if (!playerProperties.isLoggedIn()) return -1;
         return leaderboards.updatePlayerLeaderboard(perk.leaderboard);
     }
 
@@ -301,17 +301,15 @@ public class SeasonsSettings extends ModeSettings {
     }
 
     @Override
-    public void loadSettingPlayer(ProfileProperties prop) {
-        if (!prop.isLoggedIn()) return;
-
-        simpleSettingsHandler.loadPlayerSetting(prop);
+    public void loadSettingPlayer() {
+        if (!playerProperties.isLoggedIn()) return;
+        simpleSettingsHandler.loadPlayerSetting(playerProperties);
     }
 
     @Override
-    public void saveSettingPlayer(ProfileProperties prop) {
-        if (!prop.isLoggedIn()) return;
-
-        simpleSettingsHandler.savePlayerSetting(prop);
+    public void saveSettingPlayer() {
+        if (!playerProperties.isLoggedIn()) return;
+        simpleSettingsHandler.savePlayerSetting(playerProperties);
     }
 
     @Override
@@ -325,14 +323,14 @@ public class SeasonsSettings extends ModeSettings {
     }
 
     @Override
-    public void loadRankingPlayer(ProfileProperties prop, String ruleName) {
-        if (!prop.isLoggedIn()) return;
-        leaderboards.loadPlayerRanking(prop, ruleName);
+    public void loadRankingPlayer(String ruleName) {
+        if (!playerProperties.isLoggedIn()) return;
+        leaderboards.loadPlayerRanking(playerProperties, ruleName);
     }
 
     @Override
-    public void saveRankingPlayer(ProfileProperties prop, String ruleName) {
-        if (!prop.isLoggedIn()) return;
-        leaderboards.savePlayerRanking(prop, ruleName);
+    public void saveRankingPlayer(String ruleName) {
+        if (!playerProperties.isLoggedIn()) return;
+        leaderboards.savePlayerRanking(playerProperties, ruleName);
     }
 }

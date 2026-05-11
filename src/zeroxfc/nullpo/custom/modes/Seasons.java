@@ -1079,8 +1079,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             settings.loadRanking(owner, engine.ruleopt.strRuleName);
 
             if (playerProperties.isLoggedIn()) {
-                settings.loadSettingPlayer(playerProperties);
-                settings.loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+                settings.loadSettingPlayer();
+                settings.loadRankingPlayer(engine.ruleopt.strRuleName);
             }
         } else {
             settings.loadSetting(owner.replayProp, true);
@@ -1341,8 +1341,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             final boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
             if (playerProperties.isLoggedIn()) {
-                settings.loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
-                settings.loadSettingPlayer(playerProperties);
+                settings.loadRankingPlayer(engine.ruleopt.strRuleName);
+                settings.loadSettingPlayer();
             }
 
             if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
@@ -1609,8 +1609,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 engine.playSE("decide");
 
                 if (playerProperties.isLoggedIn()) {
-                    settings.saveSettingPlayer(playerProperties);
-                    settings.commitPlayerSettingAndRank(playerProperties);
+                    settings.saveSettingPlayer();
+                    settings.commitPlayerSettingAndRank();
                 } else {
                     settings.saveSetting(owner.modeConfig, false);
                     settings.commitSettingAndRank(receiver, owner);
@@ -4389,13 +4389,13 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             // Forcefully save settings if roll completed or game completed.
             if (settings.hasSeenRollIntro || settings.hasCompletedGame) {
                 settings.saveSetting(owner.modeConfig, false);
-                if (playerProperties.isLoggedIn()) settings.saveSettingPlayer(playerProperties);
+                if (playerProperties.isLoggedIn()) settings.saveSettingPlayer();
             }
 
             // If they have completed the game, set the completion status to true for their profile.
             if (playerProperties.isLoggedIn() && engine.ending > 0 && engine.statistics.level >= MAX_LEVEL) {
                 settings.hasCompletedGame = true;
-                settings.saveSettingPlayer(playerProperties);
+                settings.saveSettingPlayer();
             }
         }
 
@@ -4404,7 +4404,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (!owner.replayMode && !settings.fullGhost && engine.ai == null) {
             lastRank = settings.updateRanking();
-            lastRankPlayer = settings.updateRankingPlayer(playerProperties);
+            lastRankPlayer = settings.updateRankingPlayer();
 
             if (lastRank != -1) {
                 settings.saveRanking(owner, engine.ruleopt.strRuleName);
@@ -4412,8 +4412,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             if (lastRankPlayer != -1) {
-                settings.saveRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
-                settings.commitPlayerSettingAndRank(playerProperties);
+                settings.saveRankingPlayer(engine.ruleopt.strRuleName);
+                settings.commitPlayerSettingAndRank();
             }
         }
     }

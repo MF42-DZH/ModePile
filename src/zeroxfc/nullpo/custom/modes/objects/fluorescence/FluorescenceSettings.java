@@ -23,12 +23,12 @@ public class FluorescenceSettings extends ModeSettings {
     }
 
     @Override
-    public void loadSettingPlayer(ProfileProperties prop) {
+    public void loadSettingPlayer() {
 
     }
 
     @Override
-    public void saveSettingPlayer(ProfileProperties prop) {
+    public void saveSettingPlayer() {
 
     }
 
@@ -43,12 +43,12 @@ public class FluorescenceSettings extends ModeSettings {
     }
 
     @Override
-    public void loadRankingPlayer(ProfileProperties prop, String ruleName) {
+    public void loadRankingPlayer(String ruleName) {
 
     }
 
     @Override
-    public void saveRankingPlayer(ProfileProperties prop, String ruleName) {
+    public void saveRankingPlayer(String ruleName) {
 
     }
 }

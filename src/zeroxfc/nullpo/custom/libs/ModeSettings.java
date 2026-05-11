@@ -35,20 +35,20 @@ public abstract class ModeSettings {
     public abstract void loadSetting(CustomProperties prop, boolean isReplay);
     public abstract void saveSetting(CustomProperties prop, boolean forReplay);
 
-    public abstract void loadSettingPlayer(ProfileProperties prop);
-    public abstract void saveSettingPlayer(ProfileProperties prop);
+    public abstract void loadSettingPlayer();
+    public abstract void saveSettingPlayer();
 
     public abstract void loadRanking(GameManager owner, String ruleName);
     public abstract void saveRanking(GameManager owner, String ruleName);
 
-    public abstract void loadRankingPlayer(ProfileProperties prop, String ruleName);
-    public abstract void saveRankingPlayer(ProfileProperties prop, String ruleName);
+    public abstract void loadRankingPlayer(String ruleName);
+    public abstract void saveRankingPlayer(String ruleName);
 
     public void commitSettingAndRank(EventReceiver receiver, GameManager owner) {
         receiver.saveModeConfig(owner.modeConfig);
     }
 
-    public void commitPlayerSettingAndRank(ProfileProperties playerProperties) {
+    public void commitPlayerSettingAndRank() {
         if (!playerProperties.isLoggedIn()) return;
         playerProperties.saveProfileConfig();
     }
