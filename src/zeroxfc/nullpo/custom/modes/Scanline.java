@@ -699,8 +699,7 @@ public class Scanline extends MarathonModeBase {
             }
 
             // New acc
-            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !netIsNetPlay) {
-                playerProperties = new ProfileProperties(headerColour);
+            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !playerProperties.isLoggedIn() && !netIsNetPlay) {
                 engine.playSE("decide");
 
                 engine.stat = GameEngine.STAT_CUSTOM;

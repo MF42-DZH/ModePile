@@ -1015,8 +1015,7 @@ public class GradeMania4 extends DummyMode implements HasCustomFieldDrawing {
                 playerProperties = new ProfileProperties(HEADER_COLOUR);
             }
 
-            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
-                playerProperties = new ProfileProperties(HEADER_COLOUR);
+            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !playerProperties.isLoggedIn()) {
                 engine.playSE("decide");
 
                 engine.stat = GameEngine.STAT_CUSTOM;

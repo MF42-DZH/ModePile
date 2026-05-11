@@ -305,8 +305,7 @@ public class RollTraining extends MarathonModeBase {
             }
 
             // New acc
-            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
-                playerProperties = new ProfileProperties(HEADER);
+            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !playerProperties.isLoggedIn()) {
                 engine.playSE("decide");
 
                 engine.stat = GameEngine.STAT_CUSTOM;

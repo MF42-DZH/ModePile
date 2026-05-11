@@ -427,8 +427,7 @@ public class MultiNextMarathon extends MarathonModeBase implements HasCustomFiel
             }
 
             // New acc
-            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !netIsNetPlay) {
-                playerProperties = new ProfileProperties(HEADER_COLOUR);
+            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !playerProperties.isLoggedIn() && !netIsNetPlay) {
                 engine.playSE("decide");
 
                 engine.stat = GameEngine.STAT_CUSTOM;

@@ -319,8 +319,7 @@ public class ColourPower extends MarathonModeBase {
             }
 
             // New acc
-            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !netIsNetPlay) {
-                playerProperties = new ProfileProperties(EventReceiver.COLOR_GREEN);
+            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !playerProperties.isLoggedIn() && !netIsNetPlay) {
                 engine.playSE("decide");
 
                 engine.stat = GameEngine.STAT_CUSTOM;

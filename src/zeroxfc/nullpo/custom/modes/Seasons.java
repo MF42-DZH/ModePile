@@ -1623,7 +1623,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 engine.quitflag = true;
             }
 
-            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !playerProperties.isLoggedIn()) {
+            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !playerProperties.isLoggedIn() && !playerProperties.isLoggedIn()) {
                 engine.playSE("decide");
 
                 engine.stat = GameEngine.STAT_CUSTOM;
