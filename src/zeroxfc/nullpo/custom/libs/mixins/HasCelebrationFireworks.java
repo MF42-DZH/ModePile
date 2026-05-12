@@ -7,7 +7,7 @@ import java.util.NavigableMap;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import mu.nu.nullpo.game.event.EventReceiver;
@@ -26,13 +26,13 @@ public interface HasCelebrationFireworks {
         STREAM_4,
         STREAM_5;
 
-        private static final AtomicInteger IDs = new AtomicInteger(0);
+        private static final AtomicLong IDs = new AtomicLong(0);
 
         public static void doToAllStreams(Consumer<? super Stream> action) {
             Arrays.stream(values()).forEach(action);
         }
 
-        private final NavigableMap<Pair<Integer, int[]>, Integer> queued = new TreeMap<>(Comparator.comparingInt(p -> p.valL));
+        private final NavigableMap<Pair<Long, int[]>, Integer> queued = new TreeMap<>(Comparator.comparingLong(p -> p.valL));
 
         public boolean hasQueuedFireworks() {
             return !queued.isEmpty();
@@ -144,10 +144,10 @@ public interface HasCelebrationFireworks {
         Stream.doToAllStreams(s -> {
             if (!s.hasQueuedFireworks()) return;
 
-            final Set<Map.Entry<Pair<Integer, int[]>, Integer>> entrySet = s.queued.entrySet();
+            final Set<Map.Entry<Pair<Long, int[]>, Integer>> entrySet = s.queued.entrySet();
             boolean exploded = false;
 
-            for (Map.Entry<Pair<Integer, int[]>, Integer> entry : entrySet) {
+            for (Map.Entry<Pair<Long, int[]>, Integer> entry : entrySet) {
                 entry.setValue(entry.getValue() + 1);
 
                 if (entry.getValue() >= fireworkDelay()) {
