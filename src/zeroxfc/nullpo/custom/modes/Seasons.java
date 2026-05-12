@@ -667,6 +667,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private MiragePiece miragePiece;
     private SweepingPassage sweepingPassage;
 
+    private boolean queuePassage3;
+
     private BlockVortex vortex;
     private Random bvr;
 
@@ -1044,6 +1046,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         miragePiece = null;
         sweepingPassage = null;
+        queuePassage3 = false;
 
         // Clear all gimmicks.
         clearBaseGameGimmicks();
@@ -2726,7 +2729,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (rollStarted) {
                 if (oldLevel < LEVELS_MAR && engine.statistics.level >= LEVELS_MAR) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_1, 30, 240, 30);
                 else if (oldLevel < LEVELS_MAY && engine.statistics.level >= LEVELS_MAY) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_2, 30, 240, 30);
-                else if (oldLevel < LEVELS_JUL && engine.statistics.level >= LEVELS_JUL) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_3, 30, 318, 30);
+                else if (oldLevel < LEVELS_JUL && engine.statistics.level >= LEVELS_JUL) queuePassage3 = true;
                 else if (oldLevel < LEVELS_SEP && engine.statistics.level >= LEVELS_SEP) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_4, 30, 360, 30);
                 else if (oldLevel < LEVELS_NOV && engine.statistics.level >= LEVELS_NOV) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_5, 15, 270, 15);
             }
@@ -3971,6 +3974,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (descriptionToDraw != null && descriptionToDraw.update()) {
             descriptionToDraw = null;
+            if (queuePassage3) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_3, 30, 318, 30);
         }
 
         if (badges != null) {
