@@ -3974,7 +3974,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (descriptionToDraw != null && descriptionToDraw.update()) {
             descriptionToDraw = null;
-            if (queuePassage3) sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_3, 30, 318, 30);
+
+            if (queuePassage3) {
+                sweepingPassage = new SweepingPassage(ENDING_MID_PASSAGE_3, 30, 318, 30);
+                queuePassage3 = false;
+            }
         }
 
         if (badges != null) {
