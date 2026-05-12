@@ -1293,6 +1293,22 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         ));
                     }
 
+
+                    if (engine.statistics.level <= LEVELS_APR) currentSeason = Season.SPRING;
+                    else if (engine.statistics.level <= LEVELS_JUL) currentSeason = Season.SUMMER;
+                    else if (engine.statistics.level <= LEVELS_OCT) currentSeason = Season.AUTUMN;
+
+                    if (!settings.perk.isActive()) {
+                        final double proportion = engine.statistics.level / (double) MAX_LEVEL;
+
+                        engine.meterValue = (int) Math.floor(receiver.getMeterMax(engine) * proportion);
+
+                        engine.meterColor = GameEngine.METER_COLOR_RED;
+                        if (proportion >= 0.75) engine.meterColor = GameEngine.METER_COLOR_GREEN;
+                        else if (proportion >= 0.5) engine.meterColor = GameEngine.METER_COLOR_YELLOW;
+                        else if (proportion >= 0.25) engine.meterColor = GameEngine.METER_COLOR_ORANGE;
+                    }
+
                     if (engine.statc[0] >= FINAL_REWIND_TIME) {
                         clearAddedSummerIPieces(engine);
 
@@ -2628,8 +2644,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             landingParticles.addNumber(receiver, engine, playerID, 32);
         }
 
-        animatedBackgrounds[getLastBackground()].updateDrop(engine, fall * 4);
-        animatedBackgrounds[getCurrentBackground()].updateDrop(engine, fall * 4);
+        animatedBackgrounds[getLastBackground()].updateDrop(engine, fall * 2);
+        animatedBackgrounds[getCurrentBackground()].updateDrop(engine, fall * 2);
     }
 
     private static final Map<IntPair, Block> wm3HardBlocksClearing = new HashMap<>(40);
@@ -4262,8 +4278,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 ObjectAlignment.TOP_LEFT
             );
 
-            if (playerProperties.isLoggedIn() || !settings.playerName.isEmpty()) {
-                final String name = playerProperties.isLoggedIn() ? playerProperties.getNameDisplay() : settings.playerName;
+            if (!settings.playerName.isEmpty() || (playerProperties != null && playerProperties.isLoggedIn())) {
+                final String name = (playerProperties != null && playerProperties.isLoggedIn()) ? playerProperties.getNameDisplay() : settings.playerName;
 
                 receiver.drawScoreFont(engine, playerID, 13, 11, "PLAYER", titlesColour);
                 GameTextUtilities.drawAlignedScoreText(

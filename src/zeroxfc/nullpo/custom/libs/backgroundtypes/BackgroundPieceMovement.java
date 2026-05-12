@@ -15,7 +15,6 @@ public class BackgroundPieceMovement extends AnimatedBackgroundHook {
     private int leftMove = 0;
     private int rightMove = 0;
     private int downMove = 0;
-    private int downQueue = 0;
 
     private int[] imageDims = null;
     private final ImageChunk chunk = new ImageChunk();
@@ -85,7 +84,6 @@ public class BackgroundPieceMovement extends AnimatedBackgroundHook {
         leftMove = 0;
         rightMove = 0;
         downMove = 0;
-        downQueue = 0;
     }
 
     public void setZoomFactor(float zoomFactor) {
@@ -117,13 +115,10 @@ public class BackgroundPieceMovement extends AnimatedBackgroundHook {
             gravity = engine.speed.gravity;
             if (gravity < 0 || engine.speed.denominator <= 0) gravity = engine.field.getHeight();
             else gravity /= engine.speed.denominator;
-            downQueue += height + gravity;
         }
 
-        final int half = (int) Math.round(downQueue / 2.0);
-        downQueue -= half;
-
-        downMove = Math.min(engine.field.getHeight() * 2, downMove + half);
+        gravity = Math.min(2, gravity);
+        downMove = Math.min(engine.field.getHeight() * 2, downMove + height + gravity);
 
         if (engine.stat == GameEngine.STAT_MOVE && gravity <= 0 && height == 0 && !engine.ctrl.isPress(Controller.BUTTON_DOWN)) {
             downMove = Math.max(0, downMove - 1);
@@ -157,7 +152,7 @@ public class BackgroundPieceMovement extends AnimatedBackgroundHook {
         final int leewayY = imageDims[1] - sh;
 
         final double leftRightBias = 0.5 - (0.5 * (leftMove / (double) engine.getDAS())) + (0.5 * (rightMove / (double) engine.getDAS()));
-        final double downBias = engine.field != null ? downMove / ((double) engine.field.getHeight() * 2.0) : 0.0;
+        final double downBias = engine.field != null ? downMove / ((double) engine.field.getHeight() * 2) : 0.0;
 
         chunk.setSourceLocation(
             (int) Interpolation.tanStep(0, leewayX, leftRightBias),
