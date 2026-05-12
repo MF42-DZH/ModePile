@@ -508,6 +508,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int rollElapsed;
     private int lastRank;
     private int lastRankPlayer;
+    private int secretGrade;
     private int timeSpentInSeason;
     private int activeTimeSpentInSeason;
     private boolean lineClearAfterPiece;
@@ -1029,6 +1030,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         rollLevelReached = -1;
         fieldPurifyQueued = false;
         descriptionToDraw = null;
+        secretGrade = -1;
         timeSpentInSeason = 0;
         activeTimeSpentInSeason = 0;
         lineClearAfterPiece = true;
@@ -2049,8 +2051,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         return false;
     }
 
-    private static final int GRADE_TIME_OFFSET = 300;
-    private static final int GRADE_BAR_TIME_MIN = 300;
+    private static final int GRADE_TIME_OFFSET = 360;
+    private static final int GRADE_BAR_TIME_MIN = 360;
     private static final int GRADE_BAR_TIME_MAX = 1200;
     private int selectedGradeBarTime;
     private boolean fireworksLaunched;
@@ -2179,6 +2181,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (engine.statc[0] == 0) {
             previousPoints = 0;
             currentPoints = 0;
+            secretGrade = engine.field.getSecretGrade();
 
             fireworksLaunched = false;
 
@@ -2256,7 +2259,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         int gradePointColour = EventReceiver.COLOR_WHITE;
         if (currentPoints >= Grading.MAX_GRADE_POINTS) gradePointColour = EventReceiver.COLOR_YELLOW;
-        else if (currentPoints >= Grading.MAX_GRADE_POINTS - 100 && totalGrades.allClearBonus == 0) gradePointColour = EventReceiver.COLOR_RED;
+        else if (currentPoints >= Grading.MAX_GRADE_POINTS - 100 && totalGrades.allClearBonus == 0)
+            gradePointColour = EventReceiver.COLOR_RED;
 
         GameTextUtilities.drawAlignedText(
             engine,
@@ -2380,21 +2384,40 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             ObjectAlignment.TOP_RIGHT
         );
 
-        if (engine.statc[9] < 360 || settings.perk != SeasonPerk.PERKLESS) return;
+        if (engine.statc[9] >= 360 && settings.perk == SeasonPerk.PERKLESS) {
+            GameTextUtilities.drawAlignedText(
+                engine,
+                baseX + 4,
+                baseY + 176,
+                GameTextUtilities.Text.of("P.LESS", EventReceiver.COLOR_ORANGE),
+                ObjectAlignment.TOP_LEFT
+            );
+
+            GameTextUtilities.drawAlignedText(
+                engine,
+                baseX + (engine.field.getWidth() * 16) - 4,
+                baseY + 180,
+                GameTextUtilities.Text.ofSmall("+" + totalGrades.perklessBonus, textColour),
+                ObjectAlignment.TOP_RIGHT
+            );
+        }
+
+        if (engine.statc[9] < (settings.perk == SeasonPerk.PERKLESS ? 420 : 360) || secretGrade < 5) return;
+        final int yIncrease = settings.perk == SeasonPerk.PERKLESS ? 16 : 0;
 
         GameTextUtilities.drawAlignedText(
             engine,
             baseX + 4,
-            baseY + 176,
-            GameTextUtilities.Text.of("P.LESS", EventReceiver.COLOR_ORANGE),
+            baseY + 176 + yIncrease,
+            GameTextUtilities.Text.of("SECRET", EventReceiver.COLOR_ORANGE),
             ObjectAlignment.TOP_LEFT
         );
 
         GameTextUtilities.drawAlignedText(
             engine,
             baseX + (engine.field.getWidth() * 16) - 4,
-            baseY + 180,
-            GameTextUtilities.Text.ofSmall("+" + totalGrades.perklessBonus, textColour),
+            baseY + 180 + yIncrease,
+            GameTextUtilities.Text.ofSmall(((int) (100.0 * ((secretGrade + 1) / (double) engine.field.getHeight()))) + "%", textColour),
             ObjectAlignment.TOP_RIGHT
         );
     }
