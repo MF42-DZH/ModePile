@@ -3859,6 +3859,21 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                             String.format("%10s", totalGrades.perklessBonus > 0 ? "+" + totalGrades.perklessBonus : "N/A")
                         );
                     }
+
+                    if (secretGrade >= 5) {
+                        final int y = settings.perk == SeasonPerk.PERKLESS ? 14 : 12;
+
+                        receiver.drawMenuFont(
+                            engine, playerID, 0, y,
+                            "SECRET",
+                            EventReceiver.COLOR_ORANGE
+                        );
+
+                        receiver.drawMenuFont(
+                            engine, playerID, 0, y + 1,
+                            String.format("%10s", ((int) (100.0 * ((secretGrade + 1) / (double) engine.field.getHeight()))) + "%")
+                        );
+                    }
                 }
                 break;
             }
