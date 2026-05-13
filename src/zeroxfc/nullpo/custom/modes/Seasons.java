@@ -11,6 +11,7 @@ import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.function.BooleanSupplier;
@@ -43,6 +44,7 @@ import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.MenuBuilder;
 import zeroxfc.nullpo.custom.libs.MiscUtils;
 import zeroxfc.nullpo.custom.libs.ModePileCredits;
+import zeroxfc.nullpo.custom.libs.PlayerAchievements;
 import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.RendererExtension;
@@ -511,6 +513,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int secretGrade;
     private int timeSpentInSeason;
     private int activeTimeSpentInSeason;
+    private int timeSpentInMonth;
     private boolean lineClearAfterPiece;
 
     private static final int INCREMENT_IN_ROLL = 2;
@@ -967,6 +970,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         gimmickRollWin = null;
     }
 
+    private SeasonsAchievements achievements;
+    private List<PlayerAchievements.Achievement<Integer>> titleAchievements;
+    private PlayerAchievements.AchievementMenu achievementMenu;
+    private Queue<PlayerAchievements.AchievementPopup> achievementPopups = new LinkedList<>();
+
     @Override
     public String getName() {
         return "SEASONS";
@@ -976,6 +984,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     public void playerInit(GameEngine engine, int playerID) {
         owner = engine.owner;
         receiver = engine.owner.receiver;
+
+        if (achievements != null) achievements.commitPlayerSettingAndRank();
 
         // Load all unique sound effects for this mode.
         SoundLoader.Sounds.Seasons.loadAllSounds();
@@ -1033,6 +1043,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         secretGrade = -1;
         timeSpentInSeason = 0;
         activeTimeSpentInSeason = 0;
+        timeSpentInMonth = 0;
         lineClearAfterPiece = true;
         waCurrentFreezeRow = 19;
 
@@ -1064,6 +1075,16 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (playerProperties == null) {
             playerProperties = new ProfileProperties(HEADER_COLOUR);
+            achievements = new SeasonsAchievements(playerProperties);
+
+            titleAchievements = new LinkedList<>();
+            titleAchievements.add(achievements.gotGreenGrade);
+            titleAchievements.add(achievements.gotYellowGrade);
+            titleAchievements.add(achievements.gotOrangeGrade);
+            titleAchievements.add(achievements.gotCyanGrade);
+            titleAchievements.add(achievements.gotMasterGrade);
+            titleAchievements.add(achievements.gotSeasonsGrandMaster);
+
             showPlayerStats = false;
         }
 
@@ -1086,6 +1107,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (playerProperties.isLoggedIn()) {
                 settings.loadSettingPlayer();
                 settings.loadRankingPlayer(engine.ruleopt.strRuleName);
+                achievements.loadAchievements();
             }
         } else {
             settings.loadSetting(owner.replayProp, true);
@@ -1356,7 +1378,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             engine.statc[0]++;
             return true;
-        } else {
+        } else if (achievementMenu == null) {
             showPlayerStats = false;
             engine.isInGame = true;
 
@@ -1364,11 +1386,17 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (playerProperties.isLoggedIn()) {
                 settings.loadRankingPlayer(engine.ruleopt.strRuleName);
                 settings.loadSettingPlayer();
+                achievements.loadAchievements();
             }
 
             if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
 
             return s;
+        } else {
+            achievementMenu.updateMenu(engine);
+
+            if (engine.stat == GameEngine.STAT_SETTING) achievementMenu = null;
+            return engine.stat != GameEngine.STAT_SETTING;
         }
     }
 
@@ -1644,8 +1672,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 engine.quitflag = true;
             }
 
-            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null && !playerProperties.isLoggedIn() && !playerProperties.isLoggedIn()) {
+            if (engine.ctrl.isPush(Controller.BUTTON_E) && engine.ai == null) {
                 engine.playSE("decide");
+
+                if (playerProperties.isLoggedIn()) {
+                    achievementMenu = achievements.getMenu();
+                }
 
                 engine.stat = GameEngine.STAT_CUSTOM;
                 engine.resetStatc();
@@ -2098,6 +2130,15 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         );
 
         if (currentPoints > previousPoints) {
+            for (final PlayerAchievements.Achievement<Integer> titleAch : titleAchievements) {
+                if (titleAch.modifyValue(p -> Math.min(titleAch.getTargetValue(), Math.max(p, currentPoints)))) {
+                    achievementPopups.add(new PlayerAchievements.AchievementPopup(titleAch, 300));
+                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+                }
+
+                titleAch.save();
+            }
+
             engine.playSE("change");
         }
 
@@ -2182,6 +2223,17 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             previousPoints = 0;
             currentPoints = 0;
             secretGrade = engine.field.getSecretGrade();
+
+            // Award SG achievement
+            if (secretGrade >= 19) {
+                if (achievements.secretGrade.setValue(true)) {
+                    achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.secretGrade, 300));
+                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+
+                    achievements.secretGrade.save();
+                    achievements.commitPlayerSettingAndRank();
+                }
+            }
 
             fireworksLaunched = false;
 
@@ -2676,9 +2728,42 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Map<IntPair, Block> wm3HardBlocksClearing = new HashMap<>(40);
 
+    private void checkLevelAchievement(GameEngine engine, int levelFloor, PlayerAchievements.Achievement<Boolean> achievement) {
+        if (engine.statistics.level >= levelFloor && achievement.setValue(true)) {
+            achievementPopups.add(new PlayerAchievements.AchievementPopup(achievement, 300));
+            engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+
+            achievement.save();
+            achievements.commitPlayerSettingAndRank();
+        }
+    }
+
     @Override
     public void calcScore(GameEngine engine, int playerID, int lines) {
         addEventText(engine, playerID, lines, engine.combo);
+
+        if (engine.tspin || engine.tspinmini || engine.tspinez) {
+            if (engine.nowPieceObject.id == Piece.PIECE_O) {
+                if (achievements.oSpin.setValue(true)) {
+                    achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.oSpin, 300));
+                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+
+                    achievements.oSpin.save();
+                    achievements.commitPlayerSettingAndRank();
+                }
+            }
+        }
+
+        if (lines >= 5) {
+            if (achievements.pentris.setValue(true)) {
+                achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.pentris, 300));
+                engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+
+                achievements.pentris.save();
+                achievements.commitPlayerSettingAndRank();
+            }
+        }
+
         final int oldLevel = engine.statistics.level;
 
         if (lines >= 1) {
@@ -2792,6 +2877,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 clearBaseGameGimmicks();
 
+                if (achievements.reachedRollStart.setValue(true)) {
+                    achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.reachedRollStart, 300));
+                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+
+                    achievements.reachedRollStart.save();
+                    achievements.commitPlayerSettingAndRank();
+                }
+
                 rollTime = (150 * 60) + badges.getBadges() + (badges.getBadges() >>> 2); // 2.5 minutes + 1 frame per 0.1 badges (and extra frame per 4 badges).
 
                 customState = CustomState.FINAL_REWIND;
@@ -2803,10 +2896,30 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 owner.bgmStatus.fadesw = false;
 
+                if (achievements.reachedRollEnd.setValue(true)) {
+                    achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.reachedRollEnd, 300));
+                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+
+                    achievements.reachedRollEnd.save();
+                    achievements.commitPlayerSettingAndRank();
+                }
+
+                if (achievements.perklessCompletion.modifyValue(b -> b || (settings.perk == SeasonPerk.PERKLESS))) {
+                    achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.perklessCompletion, 300));
+                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+
+                    achievements.perklessCompletion.save();
+                    achievements.commitPlayerSettingAndRank();
+                }
+
                 engine.ending = 1;
                 engine.gameEnded();
             } else if (engine.statistics.level >= nextSectionLevel && rollStarted) {
                 engine.playSE("levelup");
+
+                checkLevelAchievement(engine, LEVELS_APR, achievements.reachedRollSum);
+                checkLevelAchievement(engine, LEVELS_JUL, achievements.reachedRollAut);
+                checkLevelAchievement(engine, LEVELS_OCT, achievements.reachedRollWin);
 
                 final Season oldSeason = currentSeason;
                 currentSeason = SEASON_TABLE.apply(engine.statistics.level);
@@ -2857,6 +2970,28 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 setNewBackground(BACKGROUND_TABLE.apply(engine.statistics.level));
             } else if (engine.statistics.level >= nextSectionLevel) {
                 engine.playSE("levelup");
+
+                if (achievements.monthSpeedrun.modifyValue(b -> b || (timeSpentInMonth < 3600))) {
+                    achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.monthSpeedrun, 300));
+                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+
+                    achievements.monthSpeedrun.save();
+                    achievements.commitPlayerSettingAndRank();
+                }
+
+                timeSpentInMonth = 0;
+
+                checkLevelAchievement(engine, LEVELS_FEB, achievements.reachedMar);
+                checkLevelAchievement(engine, LEVELS_MAR, achievements.reachedApr);
+                checkLevelAchievement(engine, LEVELS_APR, achievements.reachedMay);
+                checkLevelAchievement(engine, LEVELS_MAY, achievements.reachedJun);
+                checkLevelAchievement(engine, LEVELS_JUN, achievements.reachedJul);
+                checkLevelAchievement(engine, LEVELS_JUL, achievements.reachedAug);
+                checkLevelAchievement(engine, LEVELS_AUG, achievements.reachedSep);
+                checkLevelAchievement(engine, LEVELS_SEP, achievements.reachedOct);
+                checkLevelAchievement(engine, LEVELS_OCT, achievements.reachedNov);
+                checkLevelAchievement(engine, LEVELS_NOV, achievements.reachedDec);
+                checkLevelAchievement(engine, LEVELS_DEC, achievements.reachedJan);
 
                 setNewBackground(BACKGROUND_TABLE.apply(engine.statistics.level));
 
@@ -3403,6 +3538,16 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             return true;
         }
 
+        if ((settings.perk == SeasonPerk.WINTER_ACTIVE || settings.perk == SeasonPerk.AUTUMN_ACTIVE) && !lineClearAfterPiece && gimmickRollWin != null) {
+            if (achievements.nice.setValue(true)) {
+                achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.nice, 300));
+                engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+
+                achievements.nice.save();
+                achievements.commitPlayerSettingAndRank();
+            }
+        }
+
         return olc;
     }
 
@@ -3666,6 +3811,22 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     }
 
     @Override
+    public void inRenderFirst(RendererExtension rendererExtension, EventReceiver receiver, GameEngine engine, int playerID) {
+        if (engine.stat == GameEngine.STAT_CUSTOM && achievementMenu != null) {
+            drawBackgroundElements(rendererExtension, receiver, engine, playerID);
+            drawing.drawRectangle(
+                receiver,
+                0, 0,
+                640, 480,
+                0, 0, 0, 128,
+                true
+            );
+        } else {
+            HasCustomFieldDrawing.super.inRenderFirst(rendererExtension, receiver, engine, playerID);
+        }
+    }
+
+    @Override
     public void renderFirst(GameEngine engine, int playerID) {
         inRenderFirst(rendererExtension, receiver, engine, playerID);
 
@@ -3882,7 +4043,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public boolean onResult(GameEngine engine, int playerID) {
-        if (engine.ctrl.isMenuRepeatKey( Controller.BUTTON_UP)) {
+        if (engine.statc[0] == 0) achievements.commitPlayerSettingAndRank();
+
+        if (engine.ctrl.isMenuRepeatKey(Controller.BUTTON_UP)) {
             engine.statc[1]--;
             if (engine.statc[1] < 0) engine.statc[1] = ResultScreenPage.values().length - 1;
             engine.playSE("change");
@@ -3937,6 +4100,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             updateFadeProgress();
         }
 
+        if (!achievementPopups.isEmpty()) {
+            if (achievementPopups.peek().update()) {
+                achievementPopups.poll();
+            }
+        }
+
         if (!engine.lagStop && engine.gameActive) {
             if (miragePiece != null) {
                 if (miragePiece.update()) {
@@ -3951,6 +4120,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
 
             ++timeSpentInSeason;
+            ++timeSpentInMonth;
             if (engine.timerActive) ++activeTimeSpentInSeason;
 
             if (settings.perk == SeasonPerk.WINTER_ACTIVE && !abilityIsActive(engine) && engine.field != null) {
@@ -3972,6 +4142,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (engine.quitflag) {
             ruleOptCopy = null;
             playerProperties = null;
+
+            achievements.commitPlayerSettingAndRank();
+            achievementPopups.clear();
         }
 
         if (engine.gameActive) {
@@ -4149,7 +4322,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         final float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
         final boolean smallGrid = receiver.getNextDisplayType() == 2;
 
-        receiver.drawScoreFont(engine, playerID, 0, 0, getName(), titlesColour);
+        if (!(engine.stat == GameEngine.STAT_CUSTOM && achievementMenu != null)) {
+            receiver.drawScoreFont(engine, playerID, 0, 0, getName(), titlesColour);
+        }
 
         if (engine.stat == GameEngine.STAT_SETTING || (engine.stat == GameEngine.STAT_RESULT && !owner.replayMode)) {
             final int topY = smallGrid ? 5 : 3;
@@ -4218,6 +4393,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 if (playerProperties != null) {
                     if (!playerProperties.isLoggedIn() || !showPlayerStats) {
                         receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 7, "LOCAL SCORES", EventReceiver.COLOR_BLUE);
+                        if (playerProperties.isLoggedIn() && engine.stat == GameEngine.STAT_SETTING) receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 8, "(E:VIEW ACHIEVEMENTS)");
                     } else {
                         receiver.drawScoreFont(engine, playerID, 0, topY + SeasonsSettings.RANKING_MAX + 7, "PLAYER SCORES", EventReceiver.COLOR_BLUE);
                     }
@@ -4247,7 +4423,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 ObjectAlignment.TOP_LEFT
             );
         } else if (engine.stat == GameEngine.STAT_CUSTOM && !engine.gameStarted) {
-            playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
+            if (achievementMenu == null) playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
+            else achievementMenu.drawMenu(rendererExtension, drawing, receiver, engine);
         } else {
             receiver.drawScoreFont(engine, playerID, 0, 2, "DATE", titlesColour);
             if (engine.stat == GameEngine.STAT_GAMEOVER && rollLevelReached >= 0) {
@@ -4437,6 +4614,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         rendererExtension.drawPostHoldOutline(receiver, engine, playerID);
         if (textEmitter != null) textEmitter.drawAll(engine);
+
+        if (!achievementPopups.isEmpty()) {
+            achievementPopups.peek().draw(rendererExtension, drawing, receiver, engine);
+        }
 
         drawFireworks(receiver);
     }

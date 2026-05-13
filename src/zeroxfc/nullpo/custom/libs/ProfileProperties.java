@@ -63,6 +63,9 @@ public class ProfileProperties { // TODO: Remove duplicate profile names.
      */
     private boolean loggedIn;
 
+    /** Header Colour */
+    public final int headerColour;
+
     /**
      * Create a new profile loader. Use this constructor in a mode.
      */
@@ -77,6 +80,7 @@ public class ProfileProperties { // TODO: Remove duplicate profile names.
      */
     public ProfileProperties(int colourHeading) {
         propProfile = new CustomProperties();
+        headerColour = colourHeading;
 
         try {
             FileInputStream in = new FileInputStream(PROFILE_CFG);

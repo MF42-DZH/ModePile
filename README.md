@@ -66,6 +66,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _Particle_ - Particles for the particle engine.
 * _ParticleEmitterBase_ - Particle emitter engine. Used for holding and drawing particles.
 * _PhysicsObject_ - Allows the use of basic frictionless rigid body physics with square objects.
+* _PlayerAchievements_ - A system for providing achievements for a game mode for logged in players.
 * _PrimitiveDrawingHook_ - For normal primitive drawing.
 * _ProfileProperties_ - Allows the use of TI-styled profiles.
 * _RendererExtension_ - Extra drawing methods.

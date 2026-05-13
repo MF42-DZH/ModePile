@@ -210,6 +210,30 @@ public class SoundLoader {
 
         }
 
+        public enum Achievements implements IsSounds {
+            ACHIEVEMENT("achievement");
+
+            private final String soundName;
+
+            Achievements(String soundName) {
+                this.soundName = soundName;
+            }
+
+            @Override
+            public String sfx() {
+                return soundName;
+            }
+
+            @Override
+            public String toString() {
+                return soundName;
+            }
+
+            public static void loadAllSounds() {
+                for (Achievements sound : values()) importSoundZXF(sound.sfx());
+            }
+        }
+
         private Sounds() {}
     }
 

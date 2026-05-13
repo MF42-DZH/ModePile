@@ -17,7 +17,7 @@ import zeroxfc.nullpo.custom.libs.types.Order;
 
 public class SeasonsSettings extends ModeSettings {
     public static final int RANKING_MAX = 5;
-    private static final String PROP_ROOT = "seasons";
+    public static final String PROP_ROOT = "seasons";
 
     private final int currentVersion;
     public int version;
