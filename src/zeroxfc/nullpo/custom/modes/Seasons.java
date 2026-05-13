@@ -1488,7 +1488,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         GameTextUtilities.Text.custom("NOW ", EventReceiver.COLOR_WHITE, (1.0f)),
         GameTextUtilities.Text.custom("BURN", EventReceiver.COLOR_ORANGE, (5f / 3f)),
         GameTextUtilities.Text.custom(" DOWN IN ", EventReceiver.COLOR_WHITE, (1.0f)),
-        GameTextUtilities.Text.custom("FLAMES!", EventReceiver.COLOR_ORANGE, (5f / 3f)),
+        GameTextUtilities.Text.custom("FLAMES", EventReceiver.COLOR_ORANGE, (5f / 3f)),
         GameTextUtilities.Text.custom("!", EventReceiver.COLOR_WHITE, (3f / 4f))
     );
 
