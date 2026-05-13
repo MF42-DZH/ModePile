@@ -1067,7 +1067,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         vortex = new BlockVortex();
 
-        if (ruleOptCopy == null) {
+        if (ruleOptCopy == null || (!Objects.equals(ruleOptCopy.strRuleName, engine.ruleopt.strRuleName))) {
             ruleOptCopy = new RuleOptions(engine.ruleopt);
         }
 
