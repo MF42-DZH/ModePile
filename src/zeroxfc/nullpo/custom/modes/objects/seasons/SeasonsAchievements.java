@@ -38,10 +38,12 @@ public class SeasonsAchievements extends PlayerAchievements {
     public final Achievement<Boolean> monthSpeedrun;
     public final Achievement<Boolean> perklessCompletion;
     public final Achievement<Boolean> nice;
+    public final Achievement<Integer> aQuickEnd;
 
     public SeasonsAchievements(ProfileProperties playerProperties) {
         super(SeasonsSettings.PROP_ROOT, playerProperties);
 
+        // region Progression
         reachedMar = registerSimple(
             "THE SPROUTS APPEAR",
             "mar",
@@ -343,7 +345,9 @@ public class SeasonsAchievements extends PlayerAchievements {
             (v, t) -> v >= t,
             v -> v / 12000.0
         );
+        // endregion
 
+        // region Bonus
         secretGrade = registerSimple(
             "GREATER THAN OBSCURE",
             "secretGrade",
@@ -421,6 +425,23 @@ public class SeasonsAchievements extends PlayerAchievements {
             ),
             true
         );
+
+        aQuickEnd = this.<Integer>registerAchievement(
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("A QUICK END", EventReceiver.COLOR_GREEN, 1f)
+            ),
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("25 MINUTES. TAKE IT OR LEAVE IT.", EventReceiver.COLOR_WHITE, 0.625f)
+            ),
+            true,
+            "aQuickEnd",
+            PropertyCodec.IntegerCodec.INSTANCE,
+            (25 * 60 * 60) + 1,
+            (25 * 60 * 60),
+            (v, t) -> v <= t,
+            v -> (v <= 25 * 60 * 60) ? 1.0 : 0.0
+        );
+        // endregion
     }
 
     private Achievement<Boolean> registerSimple(String name, String path, int color, GameTextUtilities.TextBlock desc, boolean nonCounting) {

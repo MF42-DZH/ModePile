@@ -2133,7 +2133,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             for (final PlayerAchievements.Achievement<Integer> titleAch : titleAchievements) {
                 if (titleAch.modifyValue(p -> Math.min(titleAch.getTargetValue(), Math.max(p, currentPoints)))) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(titleAch, 300));
-                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
                 }
 
                 titleAch.save();
@@ -2228,7 +2228,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (secretGrade >= 19) {
                 if (achievements.secretGrade.setValue(true)) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.secretGrade, 300));
-                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
                     achievements.secretGrade.save();
                     achievements.commitPlayerSettingAndRank();
@@ -2731,7 +2731,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private void checkLevelAchievement(GameEngine engine, int levelFloor, PlayerAchievements.Achievement<Boolean> achievement) {
         if (engine.statistics.level >= levelFloor && achievement.setValue(true)) {
             achievementPopups.add(new PlayerAchievements.AchievementPopup(achievement, 300));
-            engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+            SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
             achievement.save();
             achievements.commitPlayerSettingAndRank();
@@ -2746,7 +2746,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (engine.nowPieceObject.id == Piece.PIECE_O) {
                 if (achievements.oSpin.setValue(true)) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.oSpin, 300));
-                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
                     achievements.oSpin.save();
                     achievements.commitPlayerSettingAndRank();
@@ -2757,7 +2757,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (lines >= 5) {
             if (achievements.pentris.setValue(true)) {
                 achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.pentris, 300));
-                engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+                SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
                 achievements.pentris.save();
                 achievements.commitPlayerSettingAndRank();
@@ -2879,9 +2879,17 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (achievements.reachedRollStart.setValue(true)) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.reachedRollStart, 300));
-                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
                     achievements.reachedRollStart.save();
+                    achievements.commitPlayerSettingAndRank();
+                }
+
+                if (achievements.aQuickEnd.modifyValue(t -> Math.min(engine.statistics.time, t))) {
+                    achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.aQuickEnd, 300));
+                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
+
+                    achievements.aQuickEnd.save();
                     achievements.commitPlayerSettingAndRank();
                 }
 
@@ -2898,7 +2906,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (achievements.reachedRollEnd.setValue(true)) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.reachedRollEnd, 300));
-                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
                     achievements.reachedRollEnd.save();
                     achievements.commitPlayerSettingAndRank();
@@ -2906,7 +2914,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (achievements.perklessCompletion.modifyValue(b -> b || (settings.perk == SeasonPerk.PERKLESS))) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.perklessCompletion, 300));
-                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
                     achievements.perklessCompletion.save();
                     achievements.commitPlayerSettingAndRank();
@@ -2973,7 +2981,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 if (achievements.monthSpeedrun.modifyValue(b -> b || (timeSpentInMonth < 3600))) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.monthSpeedrun, 300));
-                    engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
                     achievements.monthSpeedrun.save();
                     achievements.commitPlayerSettingAndRank();
@@ -3541,7 +3549,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if ((settings.perk == SeasonPerk.WINTER_ACTIVE || settings.perk == SeasonPerk.AUTUMN_ACTIVE) && !lineClearAfterPiece && gimmickRollWin != null) {
             if (achievements.nice.setValue(true)) {
                 achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.nice, 300));
-                engine.playSE(SoundLoader.Sounds.Achievements.ACHIEVEMENT.sfx());
+                SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
                 achievements.nice.save();
                 achievements.commitPlayerSettingAndRank();

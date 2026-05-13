@@ -27,6 +27,10 @@ public class SoundLoader {
     public static class Sounds {
         public interface IsSounds {
             String sfx();
+
+            default void playOn(GameEngine engine) {
+                engine.playSE(sfx());
+            }
         }
 
         public enum Fireworks implements IsSounds {
