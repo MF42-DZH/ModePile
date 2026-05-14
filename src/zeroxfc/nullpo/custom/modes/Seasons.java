@@ -2934,6 +2934,23 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     achievements.commitPlayerSettingAndRank();
                 }
 
+                if (
+                    achievements.tripleThreat.modifyValue(
+                        pair -> {
+                            final int flag = 1 << settings.perk.ordinal();
+                            final int newFlags = pair.valR | flag;
+
+                            return IntPair.of(Integer.bitCount(newFlags), newFlags);
+                        }
+                    )
+                ) {
+                    achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.tripleThreat, 300));
+                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
+
+                    achievements.tripleThreat.save();
+                    achievements.commitPlayerSettingAndRank();
+                }
+
                 engine.ending = 1;
                 engine.gameEnded();
             } else if (engine.statistics.level >= nextSectionLevel && rollStarted) {
@@ -4306,6 +4323,16 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
             if (settings.perk == SeasonPerk.AUTUMN_ACTIVE) queuedFreefall = true;
             else if (settings.perk == SeasonPerk.SUMMER_ACTIVE) {
+                if (gimmickSumMo2 != null && gimmickSumMo2.aboutToReplace()) {
+                    if (achievements.theseAreReal.setValue(true)) {
+                        achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.theseAreReal, 300));
+                        SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
+
+                        achievements.theseAreReal.save();
+                        achievements.saveAchievements();
+                    }
+                }
+
                 HasCustomMove.insertIntoNexts(engine, engine.nextPieceCount, Piece.PIECE_I, Piece.PIECE_I, Piece.PIECE_I, Piece.PIECE_I);
                 for (int i = engine.nextPieceCount; i < engine.nextPieceCount + 4; ++i) {
                     for (Block blk : HasCustomMove.getNextObject(engine, i).block) blk.item = -1;

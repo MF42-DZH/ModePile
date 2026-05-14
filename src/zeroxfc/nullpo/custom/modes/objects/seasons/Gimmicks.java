@@ -455,6 +455,10 @@ public class Gimmicks {
             currentAllowance = 2 + (usedBadges / denominator);
         }
 
+        public boolean aboutToReplace() {
+            return counter == currentAllowance;
+        }
+
         // Call this right before a piece is spawned (but only if the piece did not come out of hold).
         public boolean replaceQueue(GameEngine engine) {
             // Only counts I-pieces if they're in the last position of the visible queue.
@@ -487,7 +491,7 @@ public class Gimmicks {
         public GameTextUtilities.TextBlock getSummary() {
             return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
-                counter == currentAllowance
+                aboutToReplace()
                     ? GameTextUtilities.Text.ofMixColor(getName(), EventReceiver.COLOR_YELLOW, 255, 180, 48, 255)
                     : GameTextUtilities.Text.of(getName(), EventReceiver.COLOR_YELLOW),
                 GameTextUtilities.Text.of(" (", EventReceiver.COLOR_RED),

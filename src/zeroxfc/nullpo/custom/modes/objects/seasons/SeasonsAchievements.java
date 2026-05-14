@@ -1,11 +1,13 @@
 package zeroxfc.nullpo.custom.modes.objects.seasons;
 
+import java.util.List;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.PlayerAchievements;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.PropertyCodec;
+import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 
 public class SeasonsAchievements extends PlayerAchievements {
     public final Achievement<Boolean> reachedMar;
@@ -33,6 +35,8 @@ public class SeasonsAchievements extends PlayerAchievements {
     public final Achievement<Integer> gotMasterGrade;
     public final Achievement<Integer> gotSeasonsGrandMaster;
 
+    public final Achievement<IntPair> tripleThreat;
+
     public final Achievement<Boolean> secretGrade;
     public final Achievement<Boolean> oSpin;
     public final Achievement<Boolean> pentris;
@@ -41,6 +45,7 @@ public class SeasonsAchievements extends PlayerAchievements {
     public final Achievement<Boolean> nice;
     public final Achievement<Integer> aQuickEnd;
     public final Achievement<Boolean> noHands;
+    public final Achievement<Boolean> theseAreReal;
 
     public SeasonsAchievements(ProfileProperties playerProperties) {
         super(SeasonsSettings.PROP_ROOT, playerProperties);
@@ -248,6 +253,26 @@ public class SeasonsAchievements extends PlayerAchievements {
             false
         );
 
+        tripleThreat = this.<IntPair>registerAchievement(
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("TRIPLE THREAT", EventReceiver.COLOR_PINK, 1f)
+            ),
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("COMPLETE SEASONS MODE WITH", EventReceiver.COLOR_WHITE, 0.625f),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("THREE", EventReceiver.COLOR_YELLOW, 0.625f),
+                GameTextUtilities.Text.custom(" DIFFERENT PERKS", EventReceiver.COLOR_WHITE, 0.625f)
+            ),
+            false,
+            "tripleThreat",
+            PropertyCodec.IntPairCodec.INSTANCE,
+            IntPair.of(0, 0),
+            IntPair.of(3, 0),
+            (v, t) -> v.valL >= t.valL,
+            v -> v.valL / 3.0,
+            (v, t) -> v.valL + "/" + t.valL
+        );
+
         gotGreenGrade = this.<Integer>registerAchievement(
             GameTextUtilities.TextBlock.of(
                 GameTextUtilities.Text.custom("A SIMPLE LIFE", EventReceiver.COLOR_GREEN, 1f)
@@ -423,7 +448,7 @@ public class SeasonsAchievements extends PlayerAchievements {
         nice = registerSimple(
             "NICE :)",
             "nice",
-            EventReceiver.COLOR_GREEN,
+            EventReceiver.COLOR_CYAN,
             GameTextUtilities.TextBlock.of(
                 GameTextUtilities.Text.custom("YOU FOUND CHEESE! EVERYONE", EventReceiver.COLOR_WHITE, 0.625f),
                 GameTextUtilities.Text.newLine(),
@@ -461,6 +486,18 @@ public class SeasonsAchievements extends PlayerAchievements {
                 GameTextUtilities.Text.custom("SOMEHOW WITHOUT PLACING A PIECE", EventReceiver.COLOR_WHITE, 0.625f),
                 GameTextUtilities.Text.newLine(),
                 GameTextUtilities.Text.custom("AS MY LAST MOVE? HOW?", EventReceiver.COLOR_WHITE, 0.625f)
+            ),
+            true
+        );
+
+        theseAreReal = registerSimple(
+            "THESE ARE REALa",
+            "theseAreReal",
+            EventReceiver.COLOR_YELLOW,
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("SCREW THESE ILLUSIONS", EventReceiver.COLOR_WHITE, 0.625f),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("I'M BRINGING MY OWN PIECES", EventReceiver.COLOR_WHITE, 0.625f)
             ),
             true
         );

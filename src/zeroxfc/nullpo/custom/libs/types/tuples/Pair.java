@@ -3,6 +3,7 @@ package zeroxfc.nullpo.custom.libs.types.tuples;
 import java.util.Objects;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToIntFunction;
+import zeroxfc.nullpo.custom.libs.PropertyCodec;
 import zeroxfc.nullpo.custom.libs.types.ToFloatFunction;
 
 /** Generic pair of objects. */

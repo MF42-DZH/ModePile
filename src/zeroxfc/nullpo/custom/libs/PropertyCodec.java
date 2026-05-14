@@ -2,6 +2,9 @@ package zeroxfc.nullpo.custom.libs;
 
 import java.util.function.Supplier;
 import mu.nu.nullpo.util.CustomProperties;
+import zeroxfc.nullpo.custom.libs.types.tuples.DoublePair;
+import zeroxfc.nullpo.custom.libs.types.tuples.FloatPair;
+import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 
 // Encodes a value that can be saved to properties.
 public interface PropertyCodec<V> {
@@ -372,6 +375,138 @@ public interface PropertyCodec<V> {
         @Override
         public Class<String> getValueClass() {
             return String.class;
+        }
+    }
+
+    final class IntPairCodec implements PropertyCodec<IntPair> {
+        public static final IntPairCodec INSTANCE = new IntPairCodec();
+
+        private IntPairCodec() { }
+
+        @Override
+        public void save(CustomProperties properties, String propPath, IntPair value) {
+            IntegerCodec.INSTANCE.save(properties, propPath + ".valL", value.valL);
+            IntegerCodec.INSTANCE.save(properties, propPath + ".valR", value.valR);
+        }
+
+        @Override
+        public void savePlayer(ProfileProperties properties, String propPath, IntPair value) {
+            IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".valL", value.valL);
+            IntegerCodec.INSTANCE.savePlayer(properties, propPath + ".valR", value.valR);
+        }
+
+        @Override
+        public IntPair load(CustomProperties properties, String propPath, IntPair defaultValue) {
+            return IntPair.of(
+                IntegerCodec.INSTANCE.load(properties, propPath + ".valL", defaultValue.valL),
+                IntegerCodec.INSTANCE.load(properties, propPath + ".valR", defaultValue.valR)
+            );
+        }
+
+        @Override
+        public IntPair loadPlayer(ProfileProperties properties, String propPath, IntPair defaultValue) {
+            return IntPair.of(
+                IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".valL", defaultValue.valL),
+                IntegerCodec.INSTANCE.loadPlayer(properties, propPath + ".valR", defaultValue.valR)
+            );
+        }
+
+        @Override
+        public IntPair defaultLoadValue() {
+            return IntPair.of(0, 0);
+        }
+
+        @Override
+        public Class<IntPair> getValueClass() {
+            return IntPair.class;
+        }
+    }
+
+    final class DoublePairCodec implements PropertyCodec<DoublePair> {
+        public static final DoublePairCodec INSTANCE = new DoublePairCodec();
+
+        private DoublePairCodec() { }
+
+        @Override
+        public void save(CustomProperties properties, String propPath, DoublePair value) {
+            DoubleCodec.INSTANCE.save(properties, propPath + ".valL", value.valL);
+            DoubleCodec.INSTANCE.save(properties, propPath + ".valR", value.valR);
+        }
+
+        @Override
+        public void savePlayer(ProfileProperties properties, String propPath, DoublePair value) {
+            DoubleCodec.INSTANCE.savePlayer(properties, propPath + ".valL", value.valL);
+            DoubleCodec.INSTANCE.savePlayer(properties, propPath + ".valR", value.valR);
+        }
+
+        @Override
+        public DoublePair load(CustomProperties properties, String propPath, DoublePair defaultValue) {
+            return DoublePair.of(
+                DoubleCodec.INSTANCE.load(properties, propPath + ".valL", defaultValue.valL),
+                DoubleCodec.INSTANCE.load(properties, propPath + ".valR", defaultValue.valR)
+            );
+        }
+
+        @Override
+        public DoublePair loadPlayer(ProfileProperties properties, String propPath, DoublePair defaultValue) {
+            return DoublePair.of(
+                DoubleCodec.INSTANCE.loadPlayer(properties, propPath + ".valL", defaultValue.valL),
+                DoubleCodec.INSTANCE.loadPlayer(properties, propPath + ".valR", defaultValue.valR)
+            );
+        }
+
+        @Override
+        public DoublePair defaultLoadValue() {
+            return DoublePair.of(0.0, 0.0);
+        }
+
+        @Override
+        public Class<DoublePair> getValueClass() {
+            return DoublePair.class;
+        }
+    }
+
+    final class FloatPairCodec implements PropertyCodec<FloatPair> {
+        public static final FloatPairCodec INSTANCE = new FloatPairCodec();
+
+        private FloatPairCodec() { }
+
+        @Override
+        public void save(CustomProperties properties, String propPath, FloatPair value) {
+            FloatCodec.INSTANCE.save(properties, propPath + ".valL", value.valL);
+            FloatCodec.INSTANCE.save(properties, propPath + ".valR", value.valR);
+        }
+
+        @Override
+        public void savePlayer(ProfileProperties properties, String propPath, FloatPair value) {
+            FloatCodec.INSTANCE.savePlayer(properties, propPath + ".valL", value.valL);
+            FloatCodec.INSTANCE.savePlayer(properties, propPath + ".valR", value.valR);
+        }
+
+        @Override
+        public FloatPair load(CustomProperties properties, String propPath, FloatPair defaultValue) {
+            return FloatPair.of(
+                FloatCodec.INSTANCE.load(properties, propPath + ".valL", defaultValue.valL),
+                FloatCodec.INSTANCE.load(properties, propPath + ".valR", defaultValue.valR)
+            );
+        }
+
+        @Override
+        public FloatPair loadPlayer(ProfileProperties properties, String propPath, FloatPair defaultValue) {
+            return FloatPair.of(
+                FloatCodec.INSTANCE.loadPlayer(properties, propPath + ".valL", defaultValue.valL),
+                FloatCodec.INSTANCE.loadPlayer(properties, propPath + ".valR", defaultValue.valR)
+            );
+        }
+
+        @Override
+        public FloatPair defaultLoadValue() {
+            return FloatPair.of(0.0f, 0.0f);
+        }
+
+        @Override
+        public Class<FloatPair> getValueClass() {
+            return FloatPair.class;
         }
     }
 }
