@@ -8,6 +8,7 @@ import zeroxfc.nullpo.custom.libs.PlayerAchievements;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.PropertyCodec;
 import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
+import zeroxfc.nullpo.custom.modes.Seasons;
 
 public class SeasonsAchievements extends PlayerAchievements {
     public final Achievement<Boolean> reachedMar;
@@ -36,6 +37,8 @@ public class SeasonsAchievements extends PlayerAchievements {
     public final Achievement<Integer> gotSeasonsGrandMaster;
 
     public final Achievement<IntPair> tripleThreat;
+    public final Achievement<Integer> bestRawPerformance;
+    public final Achievement<Integer> maxBadgePerformance;
 
     public final Achievement<Boolean> secretGrade;
     public final Achievement<Boolean> oSpin;
@@ -271,6 +274,46 @@ public class SeasonsAchievements extends PlayerAchievements {
             (v, t) -> v.valL >= t.valL,
             v -> v.valL / 3.0,
             (v, t) -> v.valL + "/" + t.valL
+        );
+
+        bestRawPerformance = this.<Integer>registerAchievement(
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("PERFORMER", EventReceiver.COLOR_PINK, 1f)
+            ),
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("REACH A " + Grading.MAX_PERFORMANCE_POINTS + " (MAX) ", EventReceiver.COLOR_WHITE, 0.625f),
+                GameTextUtilities.Text.custom("PERFORMANCE", EventReceiver.COLOR_YELLOW, 0.625f),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("EVALUATION FOR A PLAY", EventReceiver.COLOR_WHITE, 0.625f)
+            ),
+            false,
+            "bestRawPerformance",
+            PropertyCodec.IntegerCodec.INSTANCE,
+            0,
+            Grading.MAX_PERFORMANCE_POINTS,
+            (v, t) -> v >= t,
+            v -> v / (double) Grading.MAX_PERFORMANCE_POINTS,
+            null
+        );
+
+        maxBadgePerformance = this.<Integer>registerAchievement(
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("BADGES OF HONOUR", EventReceiver.COLOR_PINK, 1f)
+            ),
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("REACH A " + Grading.MAX_BADGE_POINTS + " (MAX) ", EventReceiver.COLOR_WHITE, 0.625f),
+                GameTextUtilities.Text.custom("BADGE", EventReceiver.COLOR_YELLOW, 0.625f),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("POINT RATING FOR A PLAY", EventReceiver.COLOR_WHITE, 0.625f)
+            ),
+            false,
+            "maxBadgePerformance",
+            PropertyCodec.IntegerCodec.INSTANCE,
+            0,
+            Grading.MAX_BADGE_POINTS,
+            (v, t) -> v >= t,
+            v -> v / (double) Grading.MAX_BADGE_POINTS,
+            null
         );
 
         gotGreenGrade = this.<Integer>registerAchievement(

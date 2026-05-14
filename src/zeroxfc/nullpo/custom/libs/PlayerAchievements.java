@@ -96,18 +96,16 @@ public abstract class PlayerAchievements extends ModeSettings {
 
         public boolean setValue(V value) {
             if (!playerProperties.isLoggedIn()) return false;
-            if (hasBeenObtained()) return false;
+            final boolean obtainedBefore = hasBeenObtained();
 
             this.value = value;
-            return hasBeenObtained();
+            save();
+
+            return hasBeenObtained() && !obtainedBefore;
         }
 
         public boolean modifyValue(UnaryOperator<V> modifier) {
-            if (!playerProperties.isLoggedIn()) return false;
-            if (hasBeenObtained()) return false;
-
-            this.value = modifier.apply(this.value);
-            return hasBeenObtained();
+            return setValue(modifier.apply(this.value));
         }
 
         public void save() {

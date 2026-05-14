@@ -262,7 +262,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         .addTerminalLineDelay(4)
         .buildSpeedTable();
 
-    private static final int MAX_LEVEL = LEVELS_JAN;
+    public static final int MAX_LEVEL = LEVELS_JAN;
 
     private static final IntFunction<Integer> NEXT_SECTION_LEVELS = LevelTableBuilder.<Integer>createNew()
         .addValue(LEVELS_FEB, LEVELS_FEB) // Spring
@@ -2073,7 +2073,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.noHands, 300));
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
-                    achievements.noHands.save();
                     achievements.commitPlayerSettingAndRank();
                 }
 
@@ -2145,12 +2144,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (currentPoints > previousPoints) {
             for (final PlayerAchievements.Achievement<Integer> titleAch : titleAchievements) {
-                if (titleAch.modifyValue(p -> Math.min(titleAch.getTargetValue(), Math.max(p, currentPoints)))) {
+                if (titleAch.modifyValue(p -> Math.max(p, currentPoints))) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(titleAch, 300));
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
                 }
-
-                titleAch.save();
             }
 
             engine.playSE("change");
@@ -2173,6 +2170,24 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 engine.playSE("combo2");
             } else {
                 engine.playSE("combo1");
+            }
+        }
+
+        if (engine.statc[9] >= 60) {
+            if (achievements.bestRawPerformance.modifyValue(p -> Math.max(p, totalGrades.totalPerformancePoints))) {
+                achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.bestRawPerformance, 300));
+                SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
+
+                achievements.commitPlayerSettingAndRank();
+            }
+        }
+
+        if (engine.statc[9] >= 120) {
+            if (achievements.maxBadgePerformance.modifyValue(p -> Math.max(p, totalGrades.totalBadgePoints))) {
+                achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.maxBadgePerformance, 300));
+                SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
+
+                achievements.commitPlayerSettingAndRank();
             }
         }
 
@@ -2239,14 +2254,11 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             secretGrade = engine.field.getSecretGrade();
 
             // Award SG achievement
-            if (secretGrade >= 19) {
-                if (achievements.secretGrade.setValue(true)) {
-                    achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.secretGrade, 300));
-                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
+            if (achievements.secretGrade.modifyValue(b -> b || secretGrade >= 19)) {
+                achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.secretGrade, 300));
+                SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
-                    achievements.secretGrade.save();
-                    achievements.commitPlayerSettingAndRank();
-                }
+                achievements.commitPlayerSettingAndRank();
             }
 
             fireworksLaunched = false;
@@ -2747,7 +2759,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             achievementPopups.add(new PlayerAchievements.AchievementPopup(achievement, 300));
             SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
-            achievement.save();
             achievements.commitPlayerSettingAndRank();
         }
     }
@@ -2762,7 +2773,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.oSpin, 300));
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
-                    achievements.oSpin.save();
                     achievements.commitPlayerSettingAndRank();
                 }
             }
@@ -2773,7 +2783,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.pentris, 300));
                 SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
-                achievements.pentris.save();
                 achievements.commitPlayerSettingAndRank();
             }
         }
@@ -2894,18 +2903,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 if (achievements.reachedRollStart.setValue(true)) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.reachedRollStart, 300));
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
-
-                    achievements.reachedRollStart.save();
-                    achievements.commitPlayerSettingAndRank();
                 }
 
                 if (achievements.aQuickEnd.modifyValue(t -> Math.min(engine.statistics.time, t))) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.aQuickEnd, 300));
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
-
-                    achievements.aQuickEnd.save();
-                    achievements.commitPlayerSettingAndRank();
                 }
+
+                achievements.commitPlayerSettingAndRank();
 
                 rollTime = (150 * 60) + badges.getBadges() + (badges.getBadges() >>> 2); // 2.5 minutes + 1 frame per 0.1 badges (and extra frame per 4 badges).
 
@@ -2922,16 +2927,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.reachedRollEnd, 300));
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
-                    achievements.reachedRollEnd.save();
                     achievements.commitPlayerSettingAndRank();
                 }
 
                 if (achievements.perklessCompletion.modifyValue(b -> b || (settings.perk == SeasonPerk.PERKLESS))) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.perklessCompletion, 300));
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
-
-                    achievements.perklessCompletion.save();
-                    achievements.commitPlayerSettingAndRank();
                 }
 
                 if (
@@ -2946,10 +2947,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 ) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.tripleThreat, 300));
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
-
-                    achievements.tripleThreat.save();
-                    achievements.commitPlayerSettingAndRank();
                 }
+
+                achievements.commitPlayerSettingAndRank();
 
                 engine.ending = 1;
                 engine.gameEnded();
@@ -3014,7 +3014,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.monthSpeedrun, 300));
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
-                    achievements.monthSpeedrun.save();
                     achievements.commitPlayerSettingAndRank();
                 }
 
@@ -3582,7 +3581,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.nice, 300));
                 SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
-                achievements.nice.save();
                 achievements.commitPlayerSettingAndRank();
             }
         }
@@ -3992,13 +3990,13 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 if (totalGrades != null) {
                     receiver.drawMenuFont(
                         engine, playerID, 0, 2,
-                        "PERFORMANCE",
+                        "PERF.",
                         EventReceiver.COLOR_YELLOW
                     );
 
                     receiver.drawMenuFont(
                         engine, playerID, 0, 2 + 1,
-                        String.format("%10s", totalGrades.totalPerformancePoints + " / " + Grading.MAX_PERFORMANCE_POINTS)
+                        String.format("%10s", totalGrades.totalPerformancePoints + "/" + Grading.MAX_PERFORMANCE_POINTS)
                     );
 
                     receiver.drawMenuFont(
@@ -4009,7 +4007,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                     receiver.drawMenuFont(
                         engine, playerID, 0, 4 + 1,
-                        String.format("%10s", totalGrades.totalBadgePoints + " / " + Grading.MAX_BADGE_POINTS)
+                        String.format("%10s", totalGrades.totalBadgePoints + "/" + Grading.MAX_BADGE_POINTS)
                     );
 
                     receiver.drawMenuFont(
@@ -4020,7 +4018,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                     receiver.drawMenuFont(
                         engine, playerID, 0, 6 + 1,
-                        String.format("%10s", totalGrades.totalLevelPoints + " / " + Grading.MAX_LEVEL_POINTS)
+                        String.format("%10s", totalGrades.totalLevelPoints + "/" + Grading.MAX_LEVEL_POINTS)
                     );
 
                     if (rollStarted) {
@@ -4032,7 +4030,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                         receiver.drawMenuFont(
                             engine, playerID, 0, 8 + 1,
-                            String.format("%10s", totalGrades.totalRollLevelPoints + " / " + Grading.MAX_ROLL_LEVEL_POINTS)
+                            String.format("%10s", totalGrades.totalRollLevelPoints + "/" + Grading.MAX_ROLL_LEVEL_POINTS)
                         );
 
                         receiver.drawMenuFont(
@@ -4328,7 +4326,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.theseAreReal, 300));
                         SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
 
-                        achievements.theseAreReal.save();
                         achievements.saveAchievements();
                     }
                 }
@@ -4707,253 +4704,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 settings.saveRankingPlayer(engine.ruleopt.strRuleName);
                 settings.commitPlayerSettingAndRank();
             }
-        }
-    }
-
-    private static class Grading {
-        public static final int MAX_GRADE_POINTS = 12000;
-        public static final int MAX_PERFORMANCE_POINTS = 2500;
-        public static final int MAX_BADGE_POINTS = 4000;
-        public static final int MAX_LEVEL_POINTS = 3000;
-        public static final int MAX_ROLL_LEVEL_POINTS = 2500;
-
-        private static final int BASE_PERF_DECAY = 45;
-        private static final double PERF_DECAY_POW = 343d / 400d;
-
-        private int performance; // 0->2500
-        private int performanceGainDebt;
-        private int performanceDecay;
-        private int currentPerformanceDecayRate;
-
-        public Grading() {
-            performance = 10;
-            performanceDecay = 0;
-            performanceGainDebt = 0;
-            currentPerformanceDecayRate = BASE_PERF_DECAY;
-        }
-
-        public void addPerformancePoints(int performancePoints) {
-            if (performanceGainDebt > 0) {
-                final int oldDebt = performanceGainDebt;
-
-                performanceGainDebt = Math.max(0, performanceGainDebt - performancePoints);
-                performancePoints -= oldDebt;
-            }
-
-            if (performancePoints <= 0) return;
-
-            performance = Math.min(2500, performance + performancePoints);
-            currentPerformanceDecayRate = (int) Math.ceil(BASE_PERF_DECAY * Math.pow(PERF_DECAY_POW, Math.floor(performance / 100d)));
-        }
-
-        public void resetDecayCounter() {
-            performanceDecay = 0;
-        }
-
-        public void updatePerformanceDecay() {
-            if (++performanceDecay >= currentPerformanceDecayRate) {
-                final int oldPerf = performance;
-                performance = Math.max(performance - 1, performance - (performance % 100));
-
-                if (oldPerf == performance && performanceGainDebt < 100) ++performanceGainDebt;
-
-                performanceDecay = 0;
-            }
-        }
-
-        public int getPerformance() {
-            return Math.min(MAX_PERFORMANCE_POINTS, performance);
-        }
-
-        // 0->4000 (Maximum at 640 badges (6400 internal badges))
-        public static int getBadgePerformance(Badges badges) {
-            return Math.min(MAX_BADGE_POINTS, Interpolation.lerp(0, 4000, badges.getBadges() / 6400d));
-        }
-
-        // 0->3000 (level)
-        public static int getLevelPerformance(int level) {
-            return (int) Math.floor((double) MAX_LEVEL_POINTS * level / (double) MAX_LEVEL);
-        }
-
-        // 0->3000 (roll level)
-        public static int getRollLevelPerformance(int level) {
-            return (int) Math.floor((double) MAX_ROLL_LEVEL_POINTS * level / (double) MAX_LEVEL);
-        }
-
-        public static final int ALL_CLEAR_BONUS = 500;
-
-        public static final int PERKLESS_BONUS = 500;
-
-        public TotalGrades freeze(int level, int rollLevel, Badges badges, SeasonPerk perk) {
-            return new TotalGrades(
-                getPerformance(),
-                getBadgePerformance(badges),
-                getLevelPerformance(level),
-                rollLevel < 0 ? 0 : getRollLevelPerformance(rollLevel),
-                (rollLevel >= level) && (level >= MAX_LEVEL) ? ALL_CLEAR_BONUS : 0,
-                perk == SeasonPerk.PERKLESS ? Interpolation.lerp(0, PERKLESS_BONUS, (level + Math.max(0, rollLevel)) / (MAX_LEVEL * 2d)) : 0
-            );
-        }
-    }
-
-    private static class TotalGrades {
-        public final int totalGradePoints;
-        public final int totalPerformancePoints;
-        public final int totalBadgePoints;
-        public final int totalLevelPoints;
-        public final int totalRollLevelPoints;
-        public final int allClearBonus;
-        public final int perklessBonus;
-
-        public TotalGrades(int totalPerformancePoints, int totalBadgePoints, int totalLevelPoints, int totalRollLevelPoints, int allClearBonus, int perklessBonus) {
-            this.totalPerformancePoints = totalPerformancePoints;
-            this.totalBadgePoints = totalBadgePoints;
-            this.totalLevelPoints = totalLevelPoints;
-            this.totalRollLevelPoints = totalRollLevelPoints;
-            this.allClearBonus = allClearBonus;
-            this.perklessBonus = perklessBonus;
-
-            this.totalGradePoints = Math.min(
-                Grading.MAX_GRADE_POINTS,
-                Math.min(
-                    Grading.MAX_GRADE_POINTS - 100,
-                    totalPerformancePoints + totalBadgePoints + totalLevelPoints + totalRollLevelPoints + perklessBonus
-                ) + allClearBonus
-            );
-        }
-
-        private static void addRanks(LevelTableBuilder<Pair<GameTextUtilities.TextBlock, IntPair>>.ModifiableLevelTable table, String name, int basePoints, int count, int titleColour) {
-            for (int i = 1; i <= count; ++i) {
-                // this assumes count <= 20
-                final int rank = count - (i - 1);
-
-                String suffix = "TH";
-                if (rank == 3) suffix = "RD";
-                else if (rank == 2) suffix = "ND";
-                else if (rank == 1) suffix = "ST";
-
-                int rankColour = EventReceiver.COLOR_BLUE;
-                if (rank == 3) rankColour = EventReceiver.COLOR_ORANGE;
-                else if (rank == 2) rankColour = EventReceiver.COLOR_WHITE;
-                else if (rank == 1) rankColour = EventReceiver.COLOR_YELLOW;
-
-                table.addValue(
-                    Pair.of(
-                        GameTextUtilities.TextBlock.of(
-                            GameTextUtilities.TextJustification.CENTRE,
-                            GameTextUtilities.Text.of(name, titleColour),
-                            GameTextUtilities.Text.newLine(),
-                            GameTextUtilities.Text.custom(rank + suffix + " RANK", rankColour, 0.75f)
-                        ),
-                        IntPair.of(
-                            basePoints + (i * 100),
-                            basePoints + (count * 100)
-                        )
-                    ),
-                    basePoints + (i * 100)
-                );
-            }
-        }
-
-        public static GameTextUtilities.TextBlock gradeForRank(int gradePoints) {
-            if (gradePoints < 100) {
-                return GameTextUtilities.TextBlock.of(
-                    GameTextUtilities.Text.of("SETTLER")
-                );
-            } else if (gradePoints >= Grading.MAX_GRADE_POINTS) {
-                return GameTextUtilities.TextBlock.of(
-                    GameTextUtilities.Text.ofSmall("SEASONS", EventReceiver.COLOR_ORANGE),
-                    GameTextUtilities.Text.newLine(),
-                    GameTextUtilities.Text.ofSmall("GRAND MASTER", EventReceiver.COLOR_YELLOW)
-                );
-            }
-
-            final Pair<GameTextUtilities.TextBlock, IntPair> info = GRADE_NAMES.apply(gradePoints);
-            return GameTextUtilities.TextBlock.of(
-                GameTextUtilities.Text.ofSmall(info.valL.get(0).getString(), info.valL.get(0).getColour()),
-                GameTextUtilities.Text.newLine(),
-                GameTextUtilities.Text.ofSmall(info.valL.get(2).getString(), info.valL.get(2).getColour())
-            );
-        }
-
-        // (Name, (Next Rank at Points, Next Title at Points))
-        public static final IntFunction<Pair<GameTextUtilities.TextBlock, IntPair>> GRADE_NAMES;
-        static {
-            final LevelTableBuilder<Pair<GameTextUtilities.TextBlock, IntPair>>.ModifiableLevelTable table = LevelTableBuilder.createNew();
-
-            // Settler
-            table.addValue(
-                Pair.of(
-                    GameTextUtilities.TextBlock.of(GameTextUtilities.Text.of("SETTLER", EventReceiver.COLOR_WHITE)),
-                    IntPair.of(100, 100)
-                ),
-                100
-            );
-
-            // Traveller
-            addRanks(table, "TRAVELLER", 100, 7, EventReceiver.COLOR_GREEN);
-
-            // Wanderer
-            addRanks(table, "WANDERER", 800, 7, EventReceiver.COLOR_GREEN);
-
-            // Pilgrim
-            addRanks(table, "PILGRIM", 1500, 7, EventReceiver.COLOR_GREEN);
-
-            // Nomad
-            addRanks(table, "NOMAD", 2200, 7, EventReceiver.COLOR_GREEN);
-
-            // Trainee
-            addRanks(table, "TRAINEE", 2900, 7, EventReceiver.COLOR_YELLOW);
-
-            // Warrior
-            addRanks(table, "WARRIOR", 3600, 7, EventReceiver.COLOR_YELLOW);
-
-            // Noble
-            addRanks(table, "NOBLE", 4300, 7, EventReceiver.COLOR_YELLOW);
-
-            // Hero
-            addRanks(table, "HERO", 5000, 7, EventReceiver.COLOR_YELLOW);
-
-            // Attuned
-            addRanks(table, "ATTUNED", 5700, 7, EventReceiver.COLOR_ORANGE);
-
-            // Symbiotic
-            addRanks(table, "SYMBIOTIC", 6400, 7, EventReceiver.COLOR_ORANGE);
-
-            // Elemental
-            addRanks(table, "ELEMENTAL", 7100, 7, EventReceiver.COLOR_ORANGE);
-
-            // Embodiment
-            addRanks(table, "EMBODIMENT", 7800, 7, EventReceiver.COLOR_ORANGE);
-
-            // Overseer
-            addRanks(table, "OVERSEER", 8500, 7, EventReceiver.COLOR_CYAN);
-
-            // Archon
-            addRanks(table, "ARCHON", 9200, 7, EventReceiver.COLOR_CYAN);
-
-            // High Ruler
-            addRanks(table, "HIGH RULER", 9900, 7, EventReceiver.COLOR_CYAN);
-
-            // Dominator
-            addRanks(table, "DOMINATOR", 10600, 7, EventReceiver.COLOR_CYAN);
-
-            // Master
-            addRanks(table, "MASTER", 11300, 7, EventReceiver.COLOR_PINK);
-
-            // SGM
-            GRADE_NAMES = table
-                .addTerminalValue(
-                    Pair.of(
-                        GameTextUtilities.TextBlock.of(
-                            GameTextUtilities.TextJustification.CENTRE,
-                            GameTextUtilities.Text.custom("SEASONS", EventReceiver.COLOR_ORANGE, 1.5f),
-                            GameTextUtilities.Text.newLine(),
-                            GameTextUtilities.Text.custom("GRAND MASTER", EventReceiver.COLOR_YELLOW, 0.75f)
-                        ),
-                        IntPair.of(Integer.MAX_VALUE, Integer.MAX_VALUE)
-                    )
-                ).buildLevelTable();
         }
     }
 }
