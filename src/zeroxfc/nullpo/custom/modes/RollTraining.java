@@ -401,14 +401,17 @@ public class RollTraining extends MarathonModeBase {
         engine.isInGame = true;
 
         boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
-        if (playerProperties.isLoggedIn()) {
-            loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
-            loadSettingPlayer(playerProperties);
 
-            engine.owner.backgroundStatus.bg = startlevel;
+        if (engine.stat == GameEngine.STAT_SETTING) {
+            if (playerProperties.isLoggedIn()) {
+                loadRankingPlayer(playerProperties, engine.ruleopt.strRuleName);
+                loadSettingPlayer(playerProperties);
+
+                engine.owner.backgroundStatus.bg = startlevel;
+            }
+
+            engine.isInGame = false;
         }
-
-        if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
 
         return s;
     }

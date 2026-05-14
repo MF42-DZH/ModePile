@@ -534,13 +534,16 @@ public class ExpressShipping extends PuzzleGameEngine {
 
             engine.isInGame = true;
 
-            boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
-            if (playerProperties.isLoggedIn()) {
-                loadRankingPlayer(playerProperties);
-                loadSettingPlayer(playerProperties);
-            }
+            playerProperties.loginScreen.updateScreen(engine, playerID);
 
-            if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+            if (engine.stat == GameEngine.STAT_SETTING) {
+                if (playerProperties.isLoggedIn()) {
+                    loadRankingPlayer(playerProperties);
+                    loadSettingPlayer(playerProperties);
+                }
+
+                engine.isInGame = false;
+            }
         }
 
         return true;

@@ -1389,13 +1389,16 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             engine.isInGame = true;
 
             final boolean s = playerProperties.loginScreen.updateScreen(engine, playerID);
-            if (playerProperties.isLoggedIn()) {
-                settings.loadRankingPlayer(engine.ruleopt.strRuleName);
-                settings.loadSettingPlayer();
-                achievements.loadAchievements();
-            }
 
-            if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+            if (engine.stat == GameEngine.STAT_SETTING) {
+                if (playerProperties.isLoggedIn()) {
+                    settings.loadRankingPlayer(engine.ruleopt.strRuleName);
+                    settings.loadSettingPlayer();
+                    achievements.loadAchievements();
+                }
+
+                engine.isInGame = false;
+            }
 
             return s;
         } else {

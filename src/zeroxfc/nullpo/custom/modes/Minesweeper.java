@@ -630,11 +630,14 @@ public class Minesweeper extends DummyMode {
             engine.isInGame = true;
 
             playerProperties.loginScreen.updateScreen(engine, playerID);
-            if (playerProperties.isLoggedIn()) {
-                loadSettingPlayer(playerProperties);
-            }
 
-            if (engine.stat == GameEngine.STAT_SETTING) engine.isInGame = false;
+            if (engine.stat == GameEngine.STAT_SETTING) {
+                if (playerProperties.isLoggedIn()) {
+                    loadSettingPlayer(playerProperties);
+                }
+
+                engine.isInGame = false;
+            }
         }
         return true;
     }
