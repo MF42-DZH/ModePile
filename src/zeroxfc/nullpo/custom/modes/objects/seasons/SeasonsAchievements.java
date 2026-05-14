@@ -1,6 +1,7 @@
 package zeroxfc.nullpo.custom.modes.objects.seasons;
 
 import mu.nu.nullpo.game.event.EventReceiver;
+import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.PlayerAchievements;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
@@ -39,6 +40,7 @@ public class SeasonsAchievements extends PlayerAchievements {
     public final Achievement<Boolean> perklessCompletion;
     public final Achievement<Boolean> nice;
     public final Achievement<Integer> aQuickEnd;
+    public final Achievement<Boolean> noHands;
 
     public SeasonsAchievements(ProfileProperties playerProperties) {
         super(SeasonsSettings.PROP_ROOT, playerProperties);
@@ -259,7 +261,8 @@ public class SeasonsAchievements extends PlayerAchievements {
             0,
             100,
             (v, t) -> v >= t,
-            v -> v / 100.0
+            v -> v / 100.0,
+            null
         );
 
         gotYellowGrade = this.<Integer>registerAchievement(
@@ -275,7 +278,8 @@ public class SeasonsAchievements extends PlayerAchievements {
             0,
             2900,
             (v, t) -> v >= t,
-            v -> v / 2900.0
+            v -> v / 2900.0,
+            null
         );
 
         gotOrangeGrade = this.<Integer>registerAchievement(
@@ -291,7 +295,8 @@ public class SeasonsAchievements extends PlayerAchievements {
             0,
             5700,
             (v, t) -> v >= t,
-            v -> v / 5700.0
+            v -> v / 5700.0,
+            null
         );
 
         gotCyanGrade = this.<Integer>registerAchievement(
@@ -307,7 +312,8 @@ public class SeasonsAchievements extends PlayerAchievements {
             0,
             8500,
             (v, t) -> v >= t,
-            v -> v / 8500.0
+            v -> v / 8500.0,
+            null
         );
 
         gotMasterGrade = this.<Integer>registerAchievement(
@@ -323,7 +329,8 @@ public class SeasonsAchievements extends PlayerAchievements {
             0,
             11300,
             (v, t) -> v >= t,
-            v -> v / 11300.0
+            v -> v / 11300.0,
+            null
         );
 
         gotSeasonsGrandMaster = this.<Integer>registerAchievement(
@@ -343,7 +350,8 @@ public class SeasonsAchievements extends PlayerAchievements {
             0,
             12000,
             (v, t) -> v >= t,
-            v -> v / 12000.0
+            v -> v / 12000.0,
+            null
         );
         // endregion
 
@@ -436,10 +444,25 @@ public class SeasonsAchievements extends PlayerAchievements {
             true,
             "aQuickEnd",
             PropertyCodec.IntegerCodec.INSTANCE,
-            (25 * 60 * 60) + 1,
+            (99 * 60 * 60) + (59 * 60) + 59,
             (25 * 60 * 60),
             (v, t) -> v <= t,
-            v -> (v <= 25 * 60 * 60) ? 1.0 : 0.0
+            v -> (v <= 25 * 60 * 60) ? 1.0 : 0.0,
+            (ct, _ignored) -> GeneralUtil.getTime(ct)
+        );
+
+        noHands = registerSimple(
+            "LOOK MUM! NO HANDS!",
+            "noHands",
+            EventReceiver.COLOR_GREEN,
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("SO I NEED TO CLEAR A LINE", EventReceiver.COLOR_WHITE, 0.625f),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("SOMEHOW WITHOUT PLACING A PIECE", EventReceiver.COLOR_WHITE, 0.625f),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("AS MY LAST MOVE? HOW?", EventReceiver.COLOR_WHITE, 0.625f)
+            ),
+            true
         );
         // endregion
     }
@@ -454,6 +477,7 @@ public class SeasonsAchievements extends PlayerAchievements {
             false,
             true,
             Boolean::equals,
+            null,
             null
         );
     }

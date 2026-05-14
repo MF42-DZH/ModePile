@@ -47,6 +47,7 @@ public abstract class PlayerAchievements extends ModeSettings {
         private final V targetValue;
         private final BiFunction<V, V, Boolean> satisfyingPredicate;
         private final Function<V, Double> progress;
+        private final BiFunction<V, V, String> stringifyProgress;
 
         public Achievement(
             GameTextUtilities.TextBlock name,
@@ -57,7 +58,8 @@ public abstract class PlayerAchievements extends ModeSettings {
             V defaultValue,
             V targetValue,
             BiFunction<V, V, Boolean> satisfyingPredicate,
-            Function<V, Double> progress
+            Function<V, Double> progress,
+            BiFunction<V, V, String> stringifyProgress
         ) {
             this.name = name;
             this.description = description;
@@ -71,6 +73,7 @@ public abstract class PlayerAchievements extends ModeSettings {
             this.targetValue = targetValue;
             this.satisfyingPredicate = satisfyingPredicate;
             this.progress = progress;
+            this.stringifyProgress = stringifyProgress;
         }
 
         public V getValue() {
@@ -212,7 +215,7 @@ public abstract class PlayerAchievements extends ModeSettings {
             );
 
             final GameTextUtilities.Text progressText = GameTextUtilities.Text.custom(
-                value + "/" + targetValue,
+                stringifyProgress != null ? stringifyProgress.apply(value, targetValue) : (value + "/" + targetValue),
                 EventReceiver.COLOR_WHITE,
                 PROGRESS_TEXT_SIZE
             );
@@ -269,13 +272,14 @@ public abstract class PlayerAchievements extends ModeSettings {
         V defaultValue,
         V targetValue,
         BiFunction<V, V, Boolean> satisfyingPredicate,
-        Function<V, Double> progress
+        Function<V, Double> progress,
+        BiFunction<V, V, String> stringifyProgres
     ) {
         final Achievement<V> achievement = new Achievement<>(
             name, description, isNonCounting,
             path, codec,
             defaultValue, targetValue,
-            satisfyingPredicate, progress
+            satisfyingPredicate, progress, stringifyProgres
         );
 
         achievements.add(achievement);

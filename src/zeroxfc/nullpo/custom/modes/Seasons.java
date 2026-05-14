@@ -973,11 +973,17 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private SeasonsAchievements achievements;
     private List<PlayerAchievements.Achievement<Integer>> titleAchievements;
     private PlayerAchievements.AchievementMenu achievementMenu;
-    private Queue<PlayerAchievements.AchievementPopup> achievementPopups = new LinkedList<>();
+    private final Queue<PlayerAchievements.AchievementPopup> achievementPopups = new LinkedList<>();
 
     @Override
     public String getName() {
         return "SEASONS";
+    }
+
+    @Override
+    public void modeInit(GameManager manager) {
+        ruleOptCopy = null;
+        playerProperties = null;
     }
 
     @Override
@@ -2062,6 +2068,14 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (getCompleteLinesWithoutFlagging(engine) > 0) {
                 engine.stat = GameEngine.STAT_LINECLEAR;
                 lineClearAfterPiece = false;
+
+                if (achievements.noHands.setValue(true)) {
+                    achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.noHands, 300));
+                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
+
+                    achievements.noHands.save();
+                    achievements.commitPlayerSettingAndRank();
+                }
 
                 engine.resetStatc();
                 return true;

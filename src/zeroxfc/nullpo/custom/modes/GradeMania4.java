@@ -527,6 +527,12 @@ public class GradeMania4 extends DummyMode implements HasCustomFieldDrawing {
     }
 
     @Override
+    public void modeInit(GameManager manager) {
+        engineBaseRules = null;
+        engineExtraRules = null;
+    }
+
+    @Override
     public void playerInit(GameEngine engine, int playerID) {
         owner = engine.owner;
         receiver = engine.owner.receiver;
