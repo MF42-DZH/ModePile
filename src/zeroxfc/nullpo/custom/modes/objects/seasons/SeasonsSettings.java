@@ -142,11 +142,11 @@ public class SeasonsSettings extends ModeSettings {
     private final String playerNameProp = propPath("playerName");
 
     @ModeSettings.Property(path = "hasCompletedGame")
-    @PropertyDefault(booleanValue = true)
+    @PropertyDefault(booleanValue = false)
     public boolean hasCompletedGame;
 
     @ModeSettings.Property(path = "hasSeenRollIntro")
-    @PropertyDefault(booleanValue = true)
+    @PropertyDefault(booleanValue = false)
     public boolean hasSeenRollIntro;
 
     public final ModeLeaderboard<Integer, LeaderboardEntry> leaderboards;
