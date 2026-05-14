@@ -1,6 +1,5 @@
 package zeroxfc.nullpo.custom.modes.objects.seasons;
 
-import java.util.List;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.util.GeneralUtil;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
@@ -8,7 +7,6 @@ import zeroxfc.nullpo.custom.libs.PlayerAchievements;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.PropertyCodec;
 import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
-import zeroxfc.nullpo.custom.modes.Seasons;
 
 public class SeasonsAchievements extends PlayerAchievements {
     public final Achievement<Boolean> reachedMar;
