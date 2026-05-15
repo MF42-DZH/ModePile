@@ -3729,7 +3729,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             }
         }
 
-        if (rollElapsed <= 120 * 60 && rollStarted && rollTime > 0) {
+        if (rollElapsed <= 120 * 60 && rollStarted && rollTime > 0 && engine.gameActive) {
             CREDITS.drawNoStop(receiver, engine, playerID, rollElapsed / (120d * 60d));
         }
     }

@@ -641,7 +641,7 @@ public class RollTraining extends MarathonModeBase {
                 rendererExtension.drawFrame(receiver, engine, offsetX, offsetY, -1);
             }
 
-            if (showRoll) {
+            if (showRoll && engine.gameActive) {
                 CREDITS.draw(receiver, engine, playerID, (double) (TIME_LIMITS[usedSpeed] - timer) / TIME_LIMITS[usedSpeed]);
             }
 
