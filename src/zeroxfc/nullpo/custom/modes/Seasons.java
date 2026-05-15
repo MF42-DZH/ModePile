@@ -4558,7 +4558,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 ObjectAlignment.TOP_LEFT
             );
 
-            if (!settings.playerName.isEmpty() || (playerProperties != null && playerProperties.isLoggedIn())) {
+            if (!owner.replayRerecord && (!settings.playerName.isEmpty() || (playerProperties != null && playerProperties.isLoggedIn()))) {
                 final String name = (playerProperties != null && playerProperties.isLoggedIn()) ? playerProperties.getNameDisplay() : settings.playerName;
 
                 receiver.drawScoreFont(engine, playerID, 13, 11, "PLAYER", titlesColour);
