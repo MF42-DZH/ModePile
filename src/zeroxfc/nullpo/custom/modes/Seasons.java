@@ -11,6 +11,7 @@ import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Random;
 import java.util.TreeMap;
@@ -63,6 +64,7 @@ import zeroxfc.nullpo.custom.libs.particles.SurfaceSparks;
 import zeroxfc.nullpo.custom.libs.particles.TextEmitter;
 import zeroxfc.nullpo.custom.libs.types.ColourMixer;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
+import zeroxfc.nullpo.custom.libs.types.Order;
 import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 import zeroxfc.nullpo.custom.libs.types.tuples.Pair;
 import zeroxfc.nullpo.custom.modes.objects.seasons.*;
@@ -998,11 +1000,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     public void playerInit(GameEngine engine, int playerID) {
         // Check if rule allows non-zero ARE. Warn user if not.
         final boolean allAllowARE = engine.ruleopt.maxARE < 0 && engine.ruleopt.maxARELine < 0 && engine.ruleopt.maxLineDelay < 0;
-        if (firstTimeWarning && !allAllowARE) {
+        if (firstTimeWarning && !allAllowARE && !owner.replayMode && !owner.replayRerecord) {
             firstTimeWarning = false;
             areWarning = 600;
-
-            log.info("Please use a rule with ARE, Line ARE and Line Delay enabled!");
         } else areWarning = 0;
 
         owner = engine.owner;
@@ -1142,6 +1142,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         fadeProgress = 300;
 
         engine.comboType = GameEngine.COMBO_TYPE_NORMAL;
+
+        if (firstTimeWarning && areWarning > 0) {
+            log.info("****************************************************************************************************");
+            log.info("* Please use a rule with ARE, Line ARE and Line Delay enabled! This mode was balanced around them. *");
+            log.info("****************************************************************************************************");
+        }
     }
 
     // 0 1 2 3 4 (4.5) 5 6 7 8 9
@@ -3758,6 +3764,30 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
     }
 
+    private static final class HazeBlock implements Comparable<HazeBlock> {
+        public final int x;
+        public final int y;
+        public final Block block;
+        public final float scale;
+
+        public HazeBlock(int x, int y, Block block, float scale) {
+            this.x = x;
+            this.y = y;
+            this.block = block;
+            this.scale = scale;
+        }
+
+        @Override
+        public int compareTo(HazeBlock o) {
+            return Order.fromCompare(Float.compare(scale, o.scale))
+                .fold(() -> Order.fromCompare(Integer.compare(x, o.x)))
+                .fold(() -> Order.fromCompare(Integer.compare(-y, -o.y)))
+                .compareValue;
+        }
+    }
+
+    private static final PriorityQueue<HazeBlock> hazeBlockQueue = new PriorityQueue<>(201);
+
     // Overlays for countdowns or hardness meters.
     private void drawBlockTextOverlays(GameEngine engine, int playerID) {
         if (engine.field == null) return;
@@ -3765,6 +3795,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         // Draw countdowns for Flourishing Bloom
         final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
         final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+
+        if (gimmickSumMo1 != null) hazeBlockQueue.clear();
 
         for (int y = 0; y < engine.field.getHeightWithoutHurryupFloor(); ++y) {
             for (int x = 0; x < engine.field.getWidth(); ++x) {
@@ -3786,6 +3818,19 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     }
                 }
 
+                // Dehydration
+                if (gimmickSumMo1 != null) {
+                    final Block blk = engine.field.getBlock(x, y);
+
+                    if (blk != null && !blk.isEmpty()) {
+                        final double multiplier = (x + y + (engine.statistics.time / 15.0)) / (engine.field.getWidth() * 1.5);
+                        final double sinv = Math.sin(multiplier * 2.0 * Math.PI);
+                        final float scale = 1f + (float) ((sinv + 1.0) * (3.0 / 16.0));
+
+                        if (scale >= 1.125f) hazeBlockQueue.offer(new HazeBlock(x, y, blk, scale));
+                    }
+                }
+
                 // Absolute Zero & Icicles
                 {
                     final Block blk = engine.field.getBlock(x, y);
@@ -3800,6 +3845,26 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         );
                     }
                 }
+            }
+        }
+
+        if (gimmickSumMo1 != null) {
+            while (!hazeBlockQueue.isEmpty()) {
+                final HazeBlock hb = hazeBlockQueue.poll();
+
+                rendererExtension.drawAlignedScaledBlock(
+                    receiver,
+                    baseX + (hb.x * 16) + 8,
+                    baseY + (hb.y * 16) + 8,
+                    ObjectAlignment.MIDDLE_MIDDLE,
+                    hb.block.color,
+                    hb.block.skin,
+                    hb.block.getAttribute(Block.BLOCK_ATTRIBUTE_BONE),
+                    hb.block.darkness,
+                    hb.block.alpha / 2f,
+                    hb.scale,
+                    hb.block.attribute
+                );
             }
         }
     }
