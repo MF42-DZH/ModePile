@@ -374,7 +374,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             ModePileCredits.creditText("AND", EventReceiver.COLOR_WHITE, 0.75f),
             ModePileCredits.creditText("AE-MASTER", EventReceiver.COLOR_RED, 1f),
             ModePileCredits.creditText("AND", EventReceiver.COLOR_WHITE, 0.75f),
-            ModePileCredits.creditTextNoSp("TOUHOUMINO", EventReceiver.COLOR_PURPLE, 1f)
+            ModePileCredits.creditText("TOUHOUMINO", EventReceiver.COLOR_PURPLE, 1f),
+            ModePileCredits.creditText("AND", EventReceiver.COLOR_WHITE, 0.75f),
+            ModePileCredits.creditTextNoSp("FALLING DOWN", EventReceiver.COLOR_GREEN, 12f / 10f)
         ),
         GameTextUtilities.textElems(
             ModePileCredits.creditTextNoSp("CREATED BY", EventReceiver.COLOR_YELLOW, 0.75f),
