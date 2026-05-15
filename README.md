@@ -33,7 +33,7 @@ Click the links that are available in the mode names to get a YouTube video demo
 * _Roll Training_ - Practice your credit roll plays here.
 * [_Scanline_](https://www.youtube.com/watch?v=ouooFDdWdf4) - Inspired by Scanner mode on [\*\*\*ris for the PSP Mini](https://harddrop.com/wiki/Tetris_(PSP_Mini)) and [\*\*\*ris Pop](https://harddrop.com/wiki/Tetris_Pop).
 * [_Score Trial_](https://www.youtube.com/watch?v=-hc6ggAOQf8) - An approximation of the SCORE ATTACK modes in DTET.
-* _Seasons_ - A very long original mode with a lot of gimmicks.
+* _Seasons_ - A very long original mode with a lot of gimmicks. Use a rule with ARE for this mode, as it was balanced around having it be non-zero.
 * [_Shadow Marahton_](https://www.youtube.com/watch?v=HxuRyM-g1TQ) - Build your own pieces in this extended Marathon.
 * _Single Death Marathon_ - Marathon, but the pieces queue up to become big.
 * _Subscriber Challenge_ - git gud, get subscriber!

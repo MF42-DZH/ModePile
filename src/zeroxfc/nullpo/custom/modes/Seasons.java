@@ -985,12 +985,26 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public void modeInit(GameManager manager) {
+        firstTimeWarning = true;
+
         ruleOptCopy = null;
         playerProperties = null;
     }
 
+    private boolean firstTimeWarning;
+    private int areWarning;
+
     @Override
     public void playerInit(GameEngine engine, int playerID) {
+        // Check if rule allows non-zero ARE. Warn user if not.
+        final boolean allAllowARE = engine.ruleopt.maxARE < 0 && engine.ruleopt.maxARELine < 0 && engine.ruleopt.maxLineDelay < 0;
+        if (firstTimeWarning && !allAllowARE) {
+            firstTimeWarning = false;
+            areWarning = 600;
+
+            log.info("Please use a rule with ARE, Line ARE and Line Delay enabled!");
+        } else areWarning = 0;
+
         owner = engine.owner;
         receiver = engine.owner.receiver;
 
@@ -1665,6 +1679,16 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     @Override
     public boolean onSetting(GameEngine engine, int playerID) {
         if (!engine.owner.replayMode) {
+            if (areWarning > 0) {
+                --areWarning;
+
+                if (engine.ctrl.isPush(Controller.BUTTON_B)) {
+                    areWarning = 0;
+                }
+
+                return true;
+            }
+
             // Configuration changes
             settingsMenu.updateSettings(engine, playerID);
 
@@ -4375,6 +4399,59 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public void renderLast(GameEngine engine, int playerID) {
+        if (areWarning > 0) {
+            drawing.drawRectangle(receiver, 0, 0, 640, 480, 0, 0, 0, 255, true);
+
+            GameTextUtilities.drawAlignedTextBlock(
+                engine,
+                320, 160,
+                false,
+                GameTextUtilities.TextBlock.of(
+                    GameTextUtilities.TextJustification.CENTRE,
+                    GameTextUtilities.Text.ofBig("PLEASE USE A RULE"),
+                    GameTextUtilities.Text.newLine(),
+                    GameTextUtilities.Text.ofBig("THAT DOESN'T REMOVE"),
+                    GameTextUtilities.Text.newLine(),
+                    GameTextUtilities.Text.custom("ARE", EventReceiver.COLOR_YELLOW, 2f),
+                    GameTextUtilities.Text.ofBig(", "),
+                    GameTextUtilities.Text.custom("LINE ARE", EventReceiver.COLOR_YELLOW, 2f),
+                    GameTextUtilities.Text.newLine(),
+                    GameTextUtilities.Text.ofBig("AND "),
+                    GameTextUtilities.Text.custom("LINE DELAY", EventReceiver.COLOR_YELLOW, 2f),
+                    GameTextUtilities.Text.newLine(),
+                    GameTextUtilities.Text.ofBig("AS THIS MODE IS"),
+                    GameTextUtilities.Text.newLine(),
+                    GameTextUtilities.Text.ofBig("BALANCED WITH"),
+                    GameTextUtilities.Text.newLine(),
+                    GameTextUtilities.Text.ofBig("THEM IN MIND.")
+                ),
+                ObjectAlignment.MIDDLE_MIDDLE
+            );
+
+            GameTextUtilities.drawAlignedText(
+                engine,
+                320, 376,
+                GameTextUtilities.Text.of("THIS MESSAGE WILL CLOSE IN"),
+                ObjectAlignment.MIDDLE_MIDDLE
+            );
+
+            GameTextUtilities.drawAlignedText(
+                engine,
+                320, 400,
+                GameTextUtilities.Text.custom(GeneralUtil.getTime(areWarning), EventReceiver.COLOR_YELLOW, 2f),
+                ObjectAlignment.MIDDLE_MIDDLE
+            );
+
+            GameTextUtilities.drawAlignedText(
+                engine,
+                320, 424,
+                GameTextUtilities.Text.of("OR PRESS CANCEL TO CLOSE"),
+                ObjectAlignment.MIDDLE_MIDDLE
+            );
+
+            return;
+        }
+
         final int titlesColour = settings.perk == SeasonPerk.PERKLESS ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_YELLOW;
         final float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
         final boolean smallGrid = receiver.getNextDisplayType() == 2;
