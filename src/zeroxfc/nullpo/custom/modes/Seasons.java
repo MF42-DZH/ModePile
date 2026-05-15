@@ -72,7 +72,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     private static final Random FIREWORK_LAUNCHER_RANDOM = new Random();
 
-    private static final int CURRENT_VERSION = 14;
+    private static final int CURRENT_VERSION = 15;
 
     private enum FireworkLauncher implements BooleanSupplier {
         ONE(15), TWO(30), THREE(60);
@@ -1379,6 +1379,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                         descriptionToDraw = new DescriptionDraw(gimmickRollSpr);
 
                         engine.resetStatc();
+                        engine.statc[0] = -1;
                     }
                 }
                     break;
