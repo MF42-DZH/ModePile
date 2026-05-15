@@ -37,6 +37,7 @@ public class SeasonsAchievements extends PlayerAchievements {
     public final Achievement<IntPair> tripleThreat;
     public final Achievement<Integer> bestRawPerformance;
     public final Achievement<Integer> maxBadgePerformance;
+    public final Achievement<Integer> aQuickEnd;
 
     public final Achievement<Boolean> secretGrade;
     public final Achievement<Boolean> oSpin;
@@ -44,7 +45,6 @@ public class SeasonsAchievements extends PlayerAchievements {
     public final Achievement<Boolean> monthSpeedrun;
     public final Achievement<Boolean> perklessCompletion;
     public final Achievement<Boolean> nice;
-    public final Achievement<Integer> aQuickEnd;
     public final Achievement<Boolean> noHands;
     public final Achievement<Boolean> theseAreReal;
 
@@ -314,6 +314,23 @@ public class SeasonsAchievements extends PlayerAchievements {
             null
         );
 
+        aQuickEnd = this.<Integer>registerAchievement(
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("A QUICK END", EventReceiver.COLOR_GREEN, 1f)
+            ),
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("25 MINUTES. TAKE IT OR LEAVE IT.", EventReceiver.COLOR_WHITE, 0.625f)
+            ),
+            false,
+            "aQuickEnd",
+            PropertyCodec.IntegerCodec.INSTANCE,
+            (99 * 60 * 60) + (59 * 60) + 59,
+            (25 * 60 * 60),
+            (v, t) -> v <= t,
+            v -> (v <= 25 * 60 * 60) ? 1.0 : 0.0,
+            (ct, _ignored) -> GeneralUtil.getTime(ct)
+        );
+
         gotGreenGrade = this.<Integer>registerAchievement(
             GameTextUtilities.TextBlock.of(
                 GameTextUtilities.Text.custom("A SIMPLE LIFE", EventReceiver.COLOR_GREEN, 1f)
@@ -498,23 +515,6 @@ public class SeasonsAchievements extends PlayerAchievements {
                 GameTextUtilities.Text.custom("A LITTLE COLD THOUGH, SORRY.", EventReceiver.COLOR_WHITE, 0.625f)
             ),
             true
-        );
-
-        aQuickEnd = this.<Integer>registerAchievement(
-            GameTextUtilities.TextBlock.of(
-                GameTextUtilities.Text.custom("A QUICK END", EventReceiver.COLOR_GREEN, 1f)
-            ),
-            GameTextUtilities.TextBlock.of(
-                GameTextUtilities.Text.custom("25 MINUTES. TAKE IT OR LEAVE IT.", EventReceiver.COLOR_WHITE, 0.625f)
-            ),
-            true,
-            "aQuickEnd",
-            PropertyCodec.IntegerCodec.INSTANCE,
-            (99 * 60 * 60) + (59 * 60) + 59,
-            (25 * 60 * 60),
-            (v, t) -> v <= t,
-            v -> (v <= 25 * 60 * 60) ? 1.0 : 0.0,
-            (ct, _ignored) -> GeneralUtil.getTime(ct)
         );
 
         noHands = registerSimple(

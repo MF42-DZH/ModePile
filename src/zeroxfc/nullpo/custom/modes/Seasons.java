@@ -515,6 +515,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private int activeTimeSpentInSeason;
     private int timeSpentInMonth;
     private boolean lineClearAfterPiece;
+    private int queueExtension;
 
     private static final int INCREMENT_IN_ROLL = 2;
     private int naturalLevelIncrement;
@@ -689,7 +690,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             (currentAbilityTimer > 0)
                 || (queuedFreefall || (engine.stat == GameEngine.STAT_CUSTOM && customState == CustomState.FREEFALL))
                 || (HasCustomMove.getNextObject(engine, engine.nextPieceCount).block[0].item == -1)
-                || (settings.perk == SeasonPerk.SUMMER_ACTIVE && engine.ruleopt.nextDisplay > ruleOptCopy.nextDisplay)
+                || (settings.perk == SeasonPerk.SUMMER_ACTIVE && queueExtension > 0)
                 || (engine.stat == GameEngine.STAT_MOVE && engine.nowPieceObject != null && engine.nowPieceObject.block[0].item == -1)
         );
     }
@@ -1052,6 +1053,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         timeSpentInMonth = 0;
         lineClearAfterPiece = true;
         waCurrentFreezeRow = 19;
+        queueExtension = 0;
 
         lastRank = -1;
         lastRankPlayer = -1;
@@ -1954,8 +1956,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 engine.ai.newPiece(engine, playerID);
 
             // Shrink next
-            if (engine.nextPieceCount != oldNextPos && settings.perk == SeasonPerk.SUMMER_ACTIVE) {
-                engine.ruleopt.nextDisplay = Math.max(ruleOptCopy.nextDisplay, engine.ruleopt.nextDisplay - 1);
+            if (queueExtension > 0) {
+                --queueExtension;
             }
         }
     }
@@ -3862,7 +3864,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 true
             );
         } else {
+            if (engine.gameActive && ruleOptCopy != null) engine.ruleopt.nextDisplay = ruleOptCopy.nextDisplay + queueExtension;
             HasCustomFieldDrawing.super.inRenderFirst(rendererExtension, receiver, engine, playerID);
+            if (engine.gameActive && ruleOptCopy != null) engine.ruleopt.nextDisplay = ruleOptCopy.nextDisplay;
         }
     }
 
@@ -4338,7 +4342,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     for (Block blk : HasCustomMove.getNextObject(engine, i).block) blk.item = -1;
                 }
 
-                engine.ruleopt.nextDisplay = engine.ruleopt.nextDisplay + 25;
+                // Visually extend queue by 25.
+                queueExtension = 25;
             }
 
             engine.playSE("medal");
