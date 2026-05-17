@@ -812,7 +812,7 @@ public class Gimmicks {
                     maxX, maxY,
                     false,
                     GameTextUtilities.TextBlock.of(
-                        GameTextUtilities.Text.ofMixColor(
+                        GameTextUtilities.Text.ofMixColorBig(
                             "BOO!",
                             EventReceiver.COLOR_WHITE,
                             255, 255, 255, 32
@@ -834,7 +834,7 @@ public class Gimmicks {
                         drawLeftX, maxY,
                         false,
                         GameTextUtilities.TextBlock.of(
-                            GameTextUtilities.Text.ofMixColor(
+                            GameTextUtilities.Text.ofMixColorBig(
                                 "BOO!",
                                 EventReceiver.COLOR_WHITE,
                                 255, 255, 255, 32
@@ -854,7 +854,7 @@ public class Gimmicks {
                         maxX, maxY,
                         false,
                         GameTextUtilities.TextBlock.of(
-                            GameTextUtilities.Text.ofMixColor(
+                            GameTextUtilities.Text.ofMixColorBig(
                                 "BOO!",
                                 EventReceiver.COLOR_WHITE,
                                 255, 255, 255, 32
