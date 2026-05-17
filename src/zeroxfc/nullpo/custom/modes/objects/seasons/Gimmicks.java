@@ -19,6 +19,7 @@ import zeroxfc.nullpo.custom.libs.PrimitiveDrawingHook;
 import zeroxfc.nullpo.custom.libs.SoundLoader;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.mixins.HasCustomMove;
+import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.libs.types.tuples.IntPair;
 
 public class Gimmicks {
@@ -795,7 +796,7 @@ public class Gimmicks {
             else currentBonusGap = Math.min(bonusGap, currentBonusGap + 4);
         }
 
-        public void renderFlashlight(EventReceiver receiver, GameEngine engine, int playerID, PrimitiveDrawingHook drawing) {
+        public void renderFlashlight(EventReceiver receiver, GameEngine engine, int playerID, PrimitiveDrawingHook drawing, boolean boo) {
             final int minX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             final int maxX = minX + (engine.field.getWidth() * 16);
             final int minY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
@@ -803,12 +804,65 @@ public class Gimmicks {
 
             if (engine.stat != GameEngine.STAT_MOVE || engine.statc[0] <= 1 || engine.nowPieceObject == null) {
                 drawing.drawRectangle(receiver, minX, minY, maxX - minX, maxY - minY, 0, 0, 0, 255, true);
+
+                if (boo) GameTextUtilities.drawAlignedBoundedTextBlock(
+                    engine,
+                    minX + (engine.field.getWidth() * 8), minY + (engine.field.getHeight() * 8),
+                    minX, minY,
+                    maxX, maxY,
+                    false,
+                    GameTextUtilities.TextBlock.of(
+                        GameTextUtilities.Text.ofMixColor(
+                            "BOO!",
+                            EventReceiver.COLOR_WHITE,
+                            255, 255, 255, 32
+                        )
+                    ),
+                    ObjectAlignment.MIDDLE_MIDDLE
+                );
             } else {
                 final int drawLeftX = minX + ((engine.nowPieceX + engine.nowPieceObject.getMinimumBlockX()) * 16) - currentBonusGap;
                 final int drawRightX = minX + ((engine.nowPieceX + engine.nowPieceObject.getMaximumBlockX()) * 16) + 16 + currentBonusGap;
 
-                if (drawLeftX > minX) drawing.drawRectangle(receiver, minX, minY, drawLeftX - minX, maxY - minY, 0, 0, 0, 255, true);
-                if (drawRightX < maxX) drawing.drawRectangle(receiver, drawRightX, minY, maxX - drawRightX, maxY - minY, 0, 0, 0, 255, true);
+                if (drawLeftX > minX) {
+                    drawing.drawRectangle(receiver, minX, minY, drawLeftX - minX, maxY - minY, 0, 0, 0, 255, true);
+
+                    if (boo) GameTextUtilities.drawAlignedBoundedTextBlock(
+                        engine,
+                        minX + (engine.field.getWidth() * 8), minY + (engine.field.getHeight() * 8),
+                        minX, minY,
+                        drawLeftX, maxY,
+                        false,
+                        GameTextUtilities.TextBlock.of(
+                            GameTextUtilities.Text.ofMixColor(
+                                "BOO!",
+                                EventReceiver.COLOR_WHITE,
+                                255, 255, 255, 32
+                            )
+                        ),
+                        ObjectAlignment.MIDDLE_MIDDLE
+                    );
+                }
+
+                if (drawRightX < maxX) {
+                    drawing.drawRectangle(receiver, drawRightX, minY, maxX - drawRightX, maxY - minY, 0, 0, 0, 255, true);
+
+                    if (boo) GameTextUtilities.drawAlignedBoundedTextBlock(
+                        engine,
+                        minX + (engine.field.getWidth() * 8), minY + (engine.field.getHeight() * 8),
+                        drawRightX, minY,
+                        maxX, maxY,
+                        false,
+                        GameTextUtilities.TextBlock.of(
+                            GameTextUtilities.Text.ofMixColor(
+                                "BOO!",
+                                EventReceiver.COLOR_WHITE,
+                                255, 255, 255, 32
+                            )
+                        ),
+                        ObjectAlignment.MIDDLE_MIDDLE
+                    );
+                }
             }
         }
 

@@ -548,6 +548,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     private Random lpRandomiser;
     private LandingParticles landingParticles;
 
+    private Random booRandomiser;
+    private boolean boo;
+
     // Winter active stuff.
     private int waCurrentFreezeRow;
     private int waFrozenRows;
@@ -1821,14 +1824,15 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         lpRandomiser = new Random(engine.randSeed * 3);
         landingParticles = new LandingParticles(customGraphics, lpRandomiser);
 
+        booRandomiser = new Random(engine.randSeed * 8001);
+        boo = false;
+
         setSpeed(engine);
         owner.bgmStatus.bgm = BGM_TABLE.apply(engine.statistics.level);
     }
 
     @Override
     public void inPieceSpawn(GameEngine engine, int playerID) {
-        final int oldNextPos = engine.nextPieceCount;
-
         // 出現時の処理
         if (engine.statc[0] == 0) {
             // Store current field state.
@@ -2004,6 +2008,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     public boolean inPostLockProcessing(GameEngine engine, int playerID, boolean instantlock) {
         if (pieceIsLocking(engine, instantlock)) {
             ++lockedPieces;
+
+            boo = gimmickAutMo3 != null && booRandomiser.nextInt(200) == 0;
 
             // Add a new I-piece into the next queue if using summer passive perk.
             if (lockedPieces % 50 == 0 && settings.perk == SeasonPerk.SUMMER_PASSIVE) {
@@ -2938,13 +2944,26 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 clearBaseGameGimmicks();
 
+                boolean playAchSound = false;
+
                 if (achievements.reachedRollStart.setValue(true)) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.reachedRollStart, 300));
-                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
+                    playAchSound = true;
+                }
+
+                if (settings.perk == SeasonPerk.PERKLESS) {
+                    if (achievements.perklessRollReached.setValue(true)) {
+                        achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.perklessRollReached, 300));
+                        playAchSound = true;
+                    }
                 }
 
                 if (achievements.aQuickEnd.modifyValue(t -> Math.min(engine.statistics.time, t))) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.aQuickEnd, 300));
+                    playAchSound = true;
+                }
+
+                if (playAchSound) {
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
                 }
 
@@ -2961,16 +2980,18 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
                 owner.bgmStatus.fadesw = false;
 
+                boolean playAchSound = false;
+
                 if (achievements.reachedRollEnd.setValue(true)) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.reachedRollEnd, 300));
-                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
+                    playAchSound = true;
 
                     achievements.commitPlayerSettingAndRank();
                 }
 
                 if (achievements.perklessCompletion.modifyValue(b -> b || (settings.perk == SeasonPerk.PERKLESS))) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.perklessCompletion, 300));
-                    SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
+                    playAchSound = true;
                 }
 
                 if (
@@ -2984,6 +3005,10 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     )
                 ) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(achievements.tripleThreat, 300));
+                    playAchSound = true;
+                }
+
+                if (playAchSound) {
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
                 }
 
@@ -3876,7 +3901,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         if (landingParticles != null) landingParticles.draw(receiver);
 
         if (gimmickAutMo3 != null && engine.stat != GameEngine.STAT_CUSTOM && engine.gameActive) {
-            gimmickAutMo3.renderFlashlight(receiver, engine, playerID, drawing);
+            gimmickAutMo3.renderFlashlight(receiver, engine, playerID, drawing, boo);
         }
 
         if (gimmickWinMo2 != null && engine.gameActive) {
@@ -4001,7 +4026,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         }
 
         if (gimmickAutMo3 != null && engine.stat != GameEngine.STAT_CUSTOM && engine.gameActive) {
-            gimmickAutMo3.renderFlashlight(receiver, engine, playerID, drawing);
+            gimmickAutMo3.renderFlashlight(receiver, engine, playerID, drawing, boo);
         }
     }
 

@@ -43,6 +43,7 @@ public class SeasonsAchievements extends PlayerAchievements {
     public final Achievement<Boolean> oSpin;
     public final Achievement<Boolean> pentris;
     public final Achievement<Boolean> monthSpeedrun;
+    public final Achievement<Boolean> perklessRollReached;
     public final Achievement<Boolean> perklessCompletion;
     public final Achievement<Boolean> nice;
     public final Achievement<Boolean> noHands;
@@ -491,10 +492,22 @@ public class SeasonsAchievements extends PlayerAchievements {
             true
         );
 
+        perklessRollReached = registerSimple(
+            "UNAIDED TRAVEL",
+            "perklessRollReached",
+            EventReceiver.COLOR_RED,
+            GameTextUtilities.TextBlock.of(
+                GameTextUtilities.Text.custom("I DON'T NEED YOUR HELP", EventReceiver.COLOR_WHITE, 0.625f),
+                GameTextUtilities.Text.newLine(),
+                GameTextUtilities.Text.custom("TO GO THE FULL YEAR", EventReceiver.COLOR_WHITE, 0.625f)
+            ),
+            true
+        );
+
         perklessCompletion = registerSimple(
-            "HELPLESS",
+            "HELPLESS SURVIVAL",
             "perklessCompletion",
-            EventReceiver.COLOR_PINK,
+            EventReceiver.COLOR_RED,
             GameTextUtilities.TextBlock.of(
                 GameTextUtilities.Text.custom("I DON'T NEED YOUR HELP", EventReceiver.COLOR_WHITE, 0.625f),
                 GameTextUtilities.Text.newLine(),
@@ -506,7 +519,7 @@ public class SeasonsAchievements extends PlayerAchievements {
         nice = registerSimple(
             "NICE :)",
             "nice",
-            EventReceiver.COLOR_CYAN,
+            EventReceiver.COLOR_GREEN,
             GameTextUtilities.TextBlock.of(
                 GameTextUtilities.Text.custom("YOU FOUND CHEESE! EVERYONE", EventReceiver.COLOR_WHITE, 0.625f),
                 GameTextUtilities.Text.newLine(),
