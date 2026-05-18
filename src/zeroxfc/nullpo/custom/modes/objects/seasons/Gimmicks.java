@@ -206,7 +206,7 @@ public class Gimmicks {
             return GameTextUtilities.TextBlock.of(
                 GameTextUtilities.TextJustification.LEFT,
                 GameTextUtilities.Text.of("FL. BLOOMS", EventReceiver.COLOR_GREEN),
-                currentCountdown >= 10 ? GameTextUtilities.Text.of("(IN ", EventReceiver.COLOR_RED) : GameTextUtilities.Text.of(" (BLOOM IN ", EventReceiver.COLOR_RED),
+                currentCountdown >= 10 ? GameTextUtilities.Text.of(" (IN ", EventReceiver.COLOR_RED) : GameTextUtilities.Text.of(" (BLOOM IN ", EventReceiver.COLOR_RED),
                 GameTextUtilities.Text.of(String.valueOf(currentCountdown), EventReceiver.COLOR_YELLOW),
                 GameTextUtilities.Text.of("P)", EventReceiver.COLOR_RED)
             );

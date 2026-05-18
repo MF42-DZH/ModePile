@@ -3848,7 +3848,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     final Block blk = engine.field.getBlock(x, y);
 
                     if (blk != null && !blk.isEmpty()) {
-                        final double multiplier = (x + y + (engine.statistics.time / 15.0)) / (engine.field.getWidth() * 1.5);
+                        final double multiplier = (x + y + (timeSpentInSeason / 15.0)) / (engine.field.getWidth() * 1.5);
                         final double sinv = Math.sin(multiplier * 2.0 * Math.PI);
                         final float scale = 1f + (float) ((sinv + 1.0) * (3.0 / 16.0));
 
