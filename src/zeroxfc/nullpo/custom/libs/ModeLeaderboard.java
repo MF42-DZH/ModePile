@@ -177,7 +177,7 @@ public class ModeLeaderboard<K, V> {
             if (!prop.isLoggedIn()) return;
 
             for (int i = 0; i < rankingMax; ++i) {
-                codec.savePlayer(prop, propPath(ruleName, i), getEntry(i));
+                codec.savePlayer(prop, propPath(ruleName, i), getPlayerEntry(i));
             }
         }
 
@@ -185,7 +185,7 @@ public class ModeLeaderboard<K, V> {
             if (!prop.isLoggedIn()) return;
 
             for (int i = 0; i < rankingMax; ++i) {
-                entries.set(i, codec.loadPlayer(prop, propPath(ruleName, i), codec.defaultLoadValue()));
+                playerEntries.set(i, codec.loadPlayer(prop, propPath(ruleName, i), codec.defaultLoadValue()));
             }
         }
 
