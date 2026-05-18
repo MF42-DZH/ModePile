@@ -698,7 +698,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 || (queuedFreefall || (engine.stat == GameEngine.STAT_CUSTOM && customState == CustomState.FREEFALL))
                 || (HasCustomMove.getNextObject(engine, engine.nextPieceCount).block[0].item == -1)
                 || (settings.perk == SeasonPerk.SUMMER_ACTIVE && queueExtension > 0)
-                || (engine.stat == GameEngine.STAT_MOVE && engine.nowPieceObject != null && engine.nowPieceObject.block[0].item == -1)
         );
     }
 
@@ -1091,8 +1090,6 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
         // Clear all gimmicks.
         clearBaseGameGimmicks();
         clearRollGimmicks();
-
-        vortex = new BlockVortex();
 
         if (ruleOptCopy == null || (!Objects.equals(ruleOptCopy.strRuleName, engine.ruleopt.strRuleName))) {
             ruleOptCopy = new RuleOptions(engine.ruleopt);
@@ -1790,6 +1787,9 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
     public void startGame(GameEngine engine, int playerID) {
         engine.statistics.level = 0;
 
+        if (settings.blockVortex) vortex = new BlockVortex();
+        else vortex = null;
+
         nextSectionLevel = NEXT_SECTION_LEVELS.apply(engine.statistics.level);
         setNewBackground(BACKGROUND_TABLE.apply(engine.statistics.level));
 
@@ -2188,7 +2188,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
         if (currentPoints > previousPoints) {
             for (final PlayerAchievements.Achievement<Integer> titleAch : titleAchievements) {
-                if (titleAch.modifyValue(p -> Math.max(p, currentPoints))) {
+                if (titleAch.modifyValue(p -> Math.min(titleAch.getTargetValue(), Math.max(p, currentPoints)))) {
                     achievementPopups.add(new PlayerAchievements.AchievementPopup(titleAch, 300));
                     SoundLoader.Sounds.Achievements.ACHIEVEMENT.playOn(engine);
                 }
@@ -2792,8 +2792,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             landingParticles.addNumber(receiver, engine, playerID, 32);
         }
 
-        animatedBackgrounds[getLastBackground()].updateDrop(engine, fall * 2);
-        animatedBackgrounds[getCurrentBackground()].updateDrop(engine, fall * 2);
+        animatedBackgrounds[getLastBackground()].updateDrop(engine, fall * 3);
+        animatedBackgrounds[getCurrentBackground()].updateDrop(engine, fall * 3);
     }
 
     private static final Map<IntPair, Block> wm3HardBlocksClearing = new HashMap<>(40);
@@ -3843,8 +3843,8 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                     }
                 }
 
-                // Dehydration
-                if (gimmickSumMo1 != null) {
+                // Dehydration and Conflagration
+                if ((engine.gameActive && engine.stat != GameEngine.STAT_CUSTOM) && (gimmickSumMo1 != null || gimmickRollSum != null)) {
                     final Block blk = engine.field.getBlock(x, y);
 
                     if (blk != null && !blk.isEmpty()) {
@@ -3980,10 +3980,12 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
                 0, 0, 0, 128,
                 true
             );
-        } else {
+        } else if (settings.perk == SeasonPerk.SUMMER_ACTIVE) {
             if (engine.gameActive && ruleOptCopy != null) engine.ruleopt.nextDisplay = ruleOptCopy.nextDisplay + queueExtension;
             HasCustomFieldDrawing.super.inRenderFirst(rendererExtension, receiver, engine, playerID);
             if (engine.gameActive && ruleOptCopy != null) engine.ruleopt.nextDisplay = ruleOptCopy.nextDisplay;
+        } else {
+            HasCustomFieldDrawing.super.inRenderFirst(rendererExtension, receiver, engine, playerID);
         }
     }
 
@@ -4361,7 +4363,7 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
             if (textEmitter != null) textEmitter.updateAll();
             if (rewindBlocks != null) rewindBlocks.removeIf(RewindBlock::update);
 
-            if (engine.stat == GameEngine.STAT_CUSTOM && engine.gameStarted && fadeProgress < 240) {
+            if (engine.stat == GameEngine.STAT_CUSTOM && engine.gameStarted && fadeProgress < 240 && vortex != null) {
                 vortex.add(bvr, bvr.nextInt(7) + 2, engine.getSkin());
                 vortex.add(bvr, bvr.nextInt(7) + 2, engine.getSkin());
                 vortex.add(bvr, bvr.nextInt(7) + 2, engine.getSkin());

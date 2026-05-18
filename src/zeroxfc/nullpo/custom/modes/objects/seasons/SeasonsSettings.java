@@ -138,6 +138,21 @@ public class SeasonsSettings extends ModeSettings {
         return GeneralUtil.getONorOFF(wobble);
     }
 
+    @ModeSettings.Property(path = "blockVortex")
+    @PropertyDefault(booleanValue = true)
+    @MenuBuilder.SettingItem(id = 6, header = "VORTEX", headerColour = EventReceiver.COLOR_PINK)
+    public boolean blockVortex;
+
+    @MenuBuilder.SettingChanger(id = 6)
+    public void changeBlockVortex(int ignored) {
+        blockVortex = !blockVortex;
+    }
+
+    @MenuBuilder.SettingPrinter(id = 6)
+    public String printBlockVortex() {
+        return GeneralUtil.getONorOFF(blockVortex);
+    }
+
     public String playerName;
     private final String playerNameProp = propPath("playerName");
 

@@ -15,6 +15,7 @@ public class BackgroundPieceMovement extends AnimatedBackgroundHook {
     private int leftMove = 0;
     private int rightMove = 0;
     private int downMove = 0;
+    private int downQueue = 0;
 
     private int[] imageDims = null;
     private final ImageChunk chunk = new ImageChunk();
@@ -84,6 +85,7 @@ public class BackgroundPieceMovement extends AnimatedBackgroundHook {
         leftMove = 0;
         rightMove = 0;
         downMove = 0;
+        downQueue = 0;
     }
 
     public void setZoomFactor(float zoomFactor) {
@@ -118,7 +120,12 @@ public class BackgroundPieceMovement extends AnimatedBackgroundHook {
         }
 
         gravity = Math.min(2, gravity);
-        downMove = Math.min(engine.field.getHeight() * 2, downMove + height + gravity);
+
+        downQueue += height + gravity;
+        final int half = downQueue >>> 1;
+
+        downMove = Math.min(engine.field.getHeight() * 2, downMove + (downQueue - half));
+        downQueue = Math.max(0, downQueue - Math.max(half, 1));
 
         if (engine.stat == GameEngine.STAT_MOVE && gravity <= 0 && height == 0 && !engine.ctrl.isPress(Controller.BUTTON_DOWN)) {
             downMove = Math.max(0, downMove - 1);
