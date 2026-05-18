@@ -2251,12 +2251,16 @@ public class Seasons extends DummyMode implements HasCustomMove, HasCustomFieldD
 
     @Override
     public boolean inGameOver(GameEngine engine, int playerID) {
+        final RuleOptions currentRule = engine.ruleopt;
+        engine.ruleopt = ruleOptCopy;
+
         if (engine.lives <= 0) {
             inCustomAllLivesLost(engine, playerID);
         } else {
             inLifeLostAnimation(engine);
         }
 
+        engine.ruleopt = currentRule;
         return true;
     }
 
