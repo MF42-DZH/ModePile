@@ -40,6 +40,7 @@ PONG - As basic and to-the-point as it gets. Keyboard-controlled.
 ROLL TRAINING - Practice your credit roll plays here.
 SCANLINE - Wait for the scanner to clear lines out!
 SCORE TRIAL - DTET-inspired timed score mode.
+SEASONS - A gauntlet of gimmicks. Use a rule with ARE for this mode.
 SHADOW MARATHON - Marathon, but your pieces are DIY.
 SINGLE DEATH MARATHON - Yo, I heard you like big pieces!
 MARATHON II - "If Marathon was so good..." (WARNING: Has quick flashing colours.)
@@ -147,6 +148,10 @@ Use the "F" button bind to switch queues without pushing the piece back into its
 
 Multinext Marathon forces top nexts due to how it presents its next queues.
 
+Seasons:
+
+Use "F" to activate activated abilities.
+
 -- END NOTES --
 
 To add the gamemodes to your NullpoMino installation, add the following to 'mode.lst', located in '[NullpoMino Directory]/config/list/':
@@ -175,6 +180,7 @@ zeroxfc.nullpo.custom.modes.RollTraining
 zeroxfc.nullpo.custom.modes.Deltatris
 zeroxfc.nullpo.custom.modes.GradeMania4
 zeroxfc.nullpo.custom.modes.MultiNextMarathon
+zeroxfc.nullpo.custom.modes.Seasons
 
 Do not add MarathonModeBase or PuzzleGameEngine, that is simply a base mode that some of these modes are deriving from.
 
@@ -202,6 +208,7 @@ PONG
 ROLL TRAINING
 SCANLINE
 SCORE TRIAL
+SEASONS
 SHADOW MARATHON
 SINGLE DEATH MARATHON
 
@@ -345,6 +352,12 @@ config/rule/Classic2.rul
 config/rule/Classic3.rul
 config/rule/SRSRS.rul
 
+:SEASONS
+config/rule/StandardTiV2.rul
+config/rule/ClassicTi.rul
+config/rule/StandardHardAE.rul
+config/rule/Classic4.rul
+
 Lastly add the following lines to 'modedesc_default.properties' which is in '[NullpoMino Directory]/config/lang/':
 
 IDIOT%_MODE=Spin TGM?
@@ -372,12 +385,13 @@ ROLL_TRAINING=Practice your credit roll plays here.
 DELTATRIS=How fast can you stack?
 GRADE_MANIA_4=If you beat GRADE MANIA 2, but GRADE MANIA 3 is too hard, try this.
 MULTINEXT_MARATHON=Can you handle the juggle?
+SEASONS=A gauntlet of gimmicks. Use a rule with ARE for this mode.
 Folder_NIGHTSHADE'S_MODES=Nightshade's custom modes. WIP.
 Folder_AZULLIA'S_MODES=Azullia's custom modes. WIP.
 Folder_MANDL27'S_MODES=MandL27's custom modes. WIP.
 
 Also in 'modedesc_JP.properties' in the same folder:
-*** NOTE: Deltatris, Grade Mania 4 and Multinext Marathon is missing from this list. At the moment, you'd have to provide your own translations if you're using the Japanese language setting. ***
+*** NOTE: Deltatris, Grade Mania 4, Multinext Marathon and Seasons is missing from this list. At the moment, you'd have to provide your own translations if you're using the Japanese language setting. ***
 
 2048=\u30bf\u30a4\u30eb\u6570\u5024\u306e\u6307\u6570\u95a2\u6570\u7684\u6210\u9577\u306e\u6709\u540d\u306a\u30b2\u30fc\u30e0\u3067\u3059\u3002
 ACCELERATOR=\u30de\u30e9\u30bd\u30f3\u3001\u3059\u3070\u3084\u304f\u904a\u3070\u306a\u3044\u3068\u3044\u3051\u306a\u3044\uff01
@@ -406,8 +420,9 @@ Folder_MANDL27'S_MODES=\u004d\u0061\u006e\u0064\u004c\u0032\u0037\u306e\u30e2\u3
 
 ----------
 
-7 Wallkick Systems:
+8 Wallkick Systems:
 
+AKARI - A slight tweaking of ARS.
 FALLING-DOWN - Falling Down's classic-style procedural wallkicks.
 TETRIS-EX - Tetris-EX's movement-dependent wallkick.
 TEXMASTER WORLD - Texmaster2009's world rule kicks (presumably)
@@ -425,6 +440,7 @@ zeroxfc.nullpo.custom.wallkick.ClassicLenientWallkick
 zeroxfc.nullpo.custom.wallkick.SomeRandomShittyRotationSystemWallkick
 zeroxfc.nullpo.custom.wallkick.TetrisEXWallkick
 zeroxfc.nullpo.custom.wallkick.FallingDownWallkick
+zeroxfc.nullpo.custom.wallkick.AkariWallkick
 
 ----------
 
@@ -440,41 +456,7 @@ zeroxfc.nullpo.custom.random.TerrorInstinctRandomizer
 
 ----------
 
-32 Libraries:
-
-AnimatedBackgroundHook - Allows the simple animation of backgrounds, DTET/TI style.
-ArrayRandomiser - Generates a permutation of an array.
-BlockParticle - Animated block particle for line clear effects.
-BlockParticleCollection - Collection class for easy generation, update and drawing of block particles.
-Box - A simple mutable box.
-BufferedPrimitiveDrawingHook - For fast primitive drawing.
-CustomResourceHolder - Allows the use of custom images and BGM in a mode.
-ColourMixer - Utility for mixing colour formats.
-DoubleVector - 2D vector type that uses doubles for more precision.
-ExamSpinner - TI-style spinner like the one used during Promotion Exam results.
-FieldManipulation - Adds and fixes methods for dealing with the game's Field type.
-FieldScatter - A 2D implementation of Sega ***ris '99's block explosion.
-FlyInOutText - Adds text objects that can fly into the screen from the outside, linger, then return to their starting positions before disappearing.
-GameTextUtilities - Adds methods for coloured text and other random text / text obfuscation methods.
-Interpolation - Linear interpolation functions.
-LevelTableBuilder - Generic table builder for level-based progression.
-MathHelper - A few extra mathematical functions such as LCM or GCD.
-Mirror - Helper class for Java reflection.
-MouseParser - Allows the use of mouse inside a mode.
-Particle - Particles for the particle engine.
-ParticleEmitterBase - Particle emitter engine. Used for holding and drawing particles.
-PhysicsObject - Allows the use of basic frictionless rigid body physics with square objects.
-PrimitiveDrawingHook - For normal primitive drawing.
-ProfileProperties - Allows the use of TI-styled profiles.
-RendererExtension - Extra drawing methods.
-ScrollingMarqueeText - Horizontal scrolling text.
-ShakingText - Text that vibrates around a fixed point.
-SideWaveText - Super Collapse II-styled text popups.
-SoundLoader - Allows the use of custom SFX.
-StaticFlyInText - Similar to FlyInOutText, but the text does not fly back out.
-WeightedRandomiser - A weighted pseudorandom number generator.
-SpeedTableBuilder - A fluent interface for building speed tables for gamemodes.
-
+A lot of libraries for developers.
 These do not have to be tampered with (i.e. leave them alone after merging the bin folder), as they only provide some of the functionalities for the modes.
 
 Have fun!
