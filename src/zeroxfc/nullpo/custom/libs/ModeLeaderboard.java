@@ -106,9 +106,10 @@ public class ModeLeaderboard<K, V> {
 
     public int updateLeaderboard(K key) {
         final Leaderboard leaderboard = leaderboards.get(key);
+        final V newEntry = newEntrySupplier.get();
 
         for (int i = 0; i < rankingMax; ++i) {
-            final Order order = leaderboard.queryNewEntryAt(i);
+            final Order order = leaderboard.queryNewEntryAt(i, newEntry);
             if (order == Order.GT) {
                 leaderboard.insertNewEntryInto(i);
                 return i;
@@ -120,9 +121,10 @@ public class ModeLeaderboard<K, V> {
 
     public int updatePlayerLeaderboard(K key) {
         final Leaderboard leaderboard = leaderboards.get(key);
+        final V newEntry = newEntrySupplier.get();
 
         for (int i = 0; i < rankingMax; ++i) {
-            final Order order = leaderboard.queryNewPlayerEntryAt(i);
+            final Order order = leaderboard.queryNewPlayerEntryAt(i, newEntry);
             if (order == Order.GT) {
                 leaderboard.insertNewPlayerEntryInto(i);
                 return i;
@@ -171,12 +173,12 @@ public class ModeLeaderboard<K, V> {
             for (int i = 0; i < rankingMax; ++i) playerEntries.add(codec.defaultLoadValue());
         }
 
-        public Order queryNewEntryAt(int position) {
-            return orderFunction.apply(newEntrySupplier.get(), getEntry(position));
+        public Order queryNewEntryAt(int position, V entry) {
+            return orderFunction.apply(entry, getEntry(position));
         }
 
-        public Order queryNewPlayerEntryAt(int position) {
-            return orderFunction.apply(newEntrySupplier.get(), getPlayerEntry(position));
+        public Order queryNewPlayerEntryAt(int position, V entry) {
+            return orderFunction.apply(entry, getPlayerEntry(position));
         }
 
         public void insertNewEntryInto(int position) {

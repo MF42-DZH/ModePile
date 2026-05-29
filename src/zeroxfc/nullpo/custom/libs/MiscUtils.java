@@ -1,6 +1,8 @@
 package zeroxfc.nullpo.custom.libs;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.UnaryOperator;
@@ -93,6 +95,17 @@ public final class MiscUtils {
 
             CountingSystem(boolean useLongSystemAffix) {
                 this.useLongSystemAffix = useLongSystemAffix;
+            }
+        }
+
+        // Decimal separator for non-integral numbers.
+        public enum DecimalSeparator {
+            POINT('.'), COMMA(',');
+
+            public final char separator;
+
+            DecimalSeparator(char separator) {
+                this.separator = separator;
             }
         }
 
@@ -333,7 +346,7 @@ public final class MiscUtils {
          */
         public static String nameOfNumber(BigInteger num, BelowZeroPrefix ifBelowZero, CountingSystem system, boolean hyphen, boolean and) {
             if (numIs(num, 0)) return "ZERO";
-            else if (num.compareTo(BigInteger.ZERO) < 0) return ifBelowZero.name() + nameOfNumber(num.abs(), ifBelowZero, system, hyphen, and);
+            else if (num.compareTo(BigInteger.ZERO) < 0) return ifBelowZero.name() + " " + nameOfNumber(num.abs(), ifBelowZero, system, hyphen, and);
             else return baseNumName(num, system, hyphen, and);
         }
 
@@ -345,6 +358,62 @@ public final class MiscUtils {
          */
         public static String nameOfNumber(BigInteger num) {
             return nameOfNumber(num, BelowZeroPrefix.MINUS, CountingSystem.SHORT, true, false);
+        }
+
+        private static String soundOutDigits(BigInteger num) {
+            final StringBuilder sb = new StringBuilder();
+
+            while (num.compareTo(BigInteger.ZERO) > 0) {
+                final BigInteger lastDigit = num.mod(BigInteger.TEN);
+
+                String name = nameTo9(lastDigit);
+                if (name.isEmpty()) name = "ZERO";
+
+                if (sb.length() > 0) sb.insert(0, name + " ");
+                else sb.insert(0, name);
+
+                num = num.divide(BigInteger.TEN);
+            }
+
+            return sb.toString();
+        }
+
+        /**
+         * Get the name of a number.
+         *
+         * @param num         Number to get the name of
+         * @param ifBelowZero "MINUS" or "NEGATIVE" for numbers below zero
+         * @param system      Long (Million -> Thousand Million -> Billion -> ...) or Short (Million -> Billion -> Trillion -> ...)
+         * @param separator   Decimal separator for non-whole numbers.
+         * @param hyphen      Insert "-" between tens and units components (e.g. "SIXTY-FOUR")
+         * @param and         Insert "AND" between hundreds and 0-99 components (e.g. "ONE HUNDRED AND ONE")
+         * @return Name of number given those parameters.
+         */
+        public static String nameOfNumber(BigDecimal num, BelowZeroPrefix ifBelowZero, CountingSystem system, DecimalSeparator separator, boolean hyphen, boolean and) {
+            if (num.compareTo(BigDecimal.ZERO) < 0) return ifBelowZero.name() + " " + nameOfNumber(num.abs(), ifBelowZero, system, separator, hyphen, and);
+
+            final BigDecimal stripped = num.stripTrailingZeros();
+            final BigDecimal intComponent = stripped.setScale(0, RoundingMode.FLOOR);
+            final BigDecimal decComponent = stripped.subtract(intComponent).movePointRight(stripped.scale());
+
+            if (decComponent.equals(BigDecimal.ZERO)) {
+                return nameOfNumber(intComponent.toBigInteger(), ifBelowZero, system, hyphen, and);
+            } else {
+                final String intString = nameOfNumber(intComponent.toBigInteger(), ifBelowZero, system, hyphen, and);
+                final String decString = soundOutDigits(decComponent.toBigInteger());
+
+                return intString + " " + separator.name() + " " + decString;
+            }
+        }
+
+        /**
+         * Overload of {@link Numerics#nameOfNumber(BigDecimal, BelowZeroPrefix, CountingSystem, DecimalSeparator, boolean, boolean)} that uses the default of
+         * "MINUS" for negative numbers and the Short system for large numbers, not showing "AND" between each of the
+         * hundreds and 0-99 components (i.e. "SIX HUNDRED THIRTY"), and showing hyphens between the tens and
+         * units components (i.e. "TWENTY-FIVE"), and a dot as the decimal separator (i,e. "FIVE POINT SEVEN").
+         */
+        public static String nameOfNumber(BigDecimal num) {
+            return nameOfNumber(num, BelowZeroPrefix.MINUS, CountingSystem.SHORT, DecimalSeparator.POINT, true, false);
         }
 
         private enum UnitMultAffixes implements Affix {

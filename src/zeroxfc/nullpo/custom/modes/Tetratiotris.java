@@ -3,6 +3,8 @@ package zeroxfc.nullpo.custom.modes;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -24,6 +26,7 @@ import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.MenuBuilder;
+import zeroxfc.nullpo.custom.libs.MiscUtils;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
@@ -101,11 +104,11 @@ public class Tetratiotris extends DummyMode {
     private ExecutorService threadService;
     private AtomicReference<BigDecimal> realScore;
     private BigDecimal displayScore;
-    private String lastTetration;
-    private int timeSinceLastScore;
 
     private int lastRank;
     private int lastRankPlayer;
+
+    private GameTextUtilities.TextBlock scoreName;
 
     @Override
     public String getName() {
@@ -141,20 +144,14 @@ public class Tetratiotris extends DummyMode {
         lastRank = -1;
         lastRankPlayer = -1;
 
+        scoreName = null;
+
         if (playerProperties == null) {
             playerProperties = new ProfileProperties(HEADER_COLOUR);
             showPlayerStats = false;
         }
 
         settings = new TetratiotrisSettings(CURRENT_VERSION, playerProperties, () -> {
-            threadService.shutdown();
-            try {
-                threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-            } catch (InterruptedException e) {
-                log.error(e);
-                throw new RuntimeException(e);
-            }
-
             return new TetratiotrisSettings.LeaderboardEntry(
                 realScore.get(), engine.statistics.lines, engine.statistics.time
             );
@@ -326,7 +323,7 @@ public class Tetratiotris extends DummyMode {
             }
         } else if (engine.stat == GameEngine.STAT_CUSTOM) {
             playerProperties.loginScreen.renderScreen(receiver, engine, playerID);
-        } else {
+        } else if (engine.stat != GameEngine.STAT_RESULT || engine.statc[1] == 0) {
             receiver.drawScoreFont(engine, playerID, 0, 3, "SCORE", HEADER_COLOUR);
             GameTextUtilities.drawAlignedScoreTextBlock(
                 receiver, engine,playerID,
@@ -451,21 +448,93 @@ public class Tetratiotris extends DummyMode {
     }
 
     @Override
-    public void renderResult(GameEngine engine, int playerID) {
-        receiver.drawMenuFont(engine, playerID, 0, 0, "SCORE", EventReceiver.COLOR_BLUE);
-        GameTextUtilities.drawAlignedMenuTextBlock(
-            receiver, engine, playerID,
-            false,
-            0, 1,
-            false,
-            getStandardForm(realScore.get(), EventReceiver.COLOR_WHITE, 1f),
-            ObjectAlignment.TOP_LEFT
-        );
+    public boolean onResult(GameEngine engine, int playerID) {
+        if (scoreName == null) {
+            if (engine.ctrl.isMenuRepeatKey(Controller.BUTTON_UP) || engine.ctrl.isMenuRepeatKey(Controller.BUTTON_DOWN)) {
+                engine.playSE("change");
 
-        drawResultStats(
-            engine, playerID, receiver, 2, EventReceiver.COLOR_BLUE,
-            STAT_LINES, STAT_LEVEL, STAT_TIME, STAT_LPM
-        );
+                final String name = MiscUtils.Numerics.nameOfNumber(realScore.get());
+                final List<GameTextUtilities.Text> textParts = new LinkedList<>();
+
+                int lineBudget = 0;
+
+                for (final String part : name.split(" ")) {
+                    textParts.add(GameTextUtilities.Text.ofSmall(part));
+                    lineBudget += part.length() + 1;
+
+                    if (lineBudget >= engine.field.getWidth() * 2) {
+                        textParts.add(GameTextUtilities.Text.newLine());
+                        lineBudget = 0;
+                    } else {
+                        textParts.add(GameTextUtilities.Text.ofSmall(" "));
+                    }
+                }
+
+                textParts.remove(textParts.size() - 1);
+
+                scoreName = GameTextUtilities.TextBlock.of(
+                    GameTextUtilities.TextJustification.LEFT,
+                    textParts
+                );
+            }
+        } else {
+            final int pages = 1 + (int) Math.ceil(scoreName.getHeight() / (engine.field.getHeight() * 16.0 - 80.0));
+
+            if (engine.ctrl.isMenuRepeatKey(Controller.BUTTON_UP)) {
+                engine.statc[1]--;
+                if (engine.statc[1] < 0) engine.statc[1] = pages - 1;
+                engine.playSE("change");
+            }
+
+            if (engine.ctrl.isMenuRepeatKey(Controller.BUTTON_DOWN)) {
+                engine.statc[1]++;
+                if (engine.statc[1] >= pages) engine.statc[1] = 0;
+                engine.playSE("change");
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public void renderResult(GameEngine engine, int playerID) {
+        final int resultTopY = (scoreName == null) ? 0 : 2;
+
+        if (scoreName != null) {
+            final int pages = 1 + (int) Math.ceil(scoreName.getHeight() / (engine.field.getHeight() * 16.0 - 80.0));
+            receiver.drawMenuFont(engine, playerID, 0, 0, "kn PAGE" + (engine.statc[1] + 1) + "/" + pages, EventReceiver.COLOR_RED);
+        }
+
+        if (engine.statc[1] == 0) {
+            receiver.drawMenuFont(engine, playerID, 0, resultTopY, "SCORE", EventReceiver.COLOR_BLUE);
+            GameTextUtilities.drawAlignedMenuTextBlock(
+                receiver, engine, playerID,
+                false,
+                0, resultTopY + 1,
+                false,
+                getStandardForm(realScore.get(), EventReceiver.COLOR_WHITE, 1f),
+                ObjectAlignment.TOP_LEFT
+            );
+
+            drawResultStats(
+                engine, playerID, receiver, resultTopY + 2, EventReceiver.COLOR_BLUE,
+                STAT_LINES, STAT_LEVEL, STAT_TIME, STAT_LPM
+            );
+        } else {
+            final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+            final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
+            final int yOffset = (engine.statc[1] - 1) * (engine.field.getHeight() - 5) * 16;
+
+            GameTextUtilities.drawAlignedBoundedTextBlock(
+                engine,
+                baseX, baseY + 32 - yOffset,
+                0, baseY + 32,
+                640, baseY + ((engine.field.getHeight() - 3) * 16),
+                false,
+                scoreName,
+                ObjectAlignment.TOP_LEFT
+            );
+        }
     }
 
     @Override
@@ -473,6 +542,16 @@ public class Tetratiotris extends DummyMode {
         settings.saveSetting(prop, true);
 
         if (!owner.replayMode && !settings.big && engine.ai == null) {
+            threadService.shutdown();
+            try {
+                threadService.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+            } catch (InterruptedException e) {
+                log.error(e);
+                throw new RuntimeException(e);
+            }
+
+            threadService = null;
+
             lastRank = settings.leaderboards.updateLeaderboard(TetratiotrisSettings.TABLE_GAME_CLEAR_LINES[settings.goalType]);
             lastRankPlayer = settings.leaderboards.updatePlayerLeaderboard(TetratiotrisSettings.TABLE_GAME_CLEAR_LINES[settings.goalType]);
 
@@ -492,23 +571,32 @@ public class Tetratiotris extends DummyMode {
         }
     }
 
-    private static final DecimalFormat SCI_FORM_FORMATTER = new DecimalFormat("0.00E0");
+    // Have to manually do this to make sure locale shenanigans don't break anything.
+    private static final DecimalFormat SCI_FORM_FORMATTER;
+    static {
+        SCI_FORM_FORMATTER = new DecimalFormat("0.00E0");
+        SCI_FORM_FORMATTER
+            .getDecimalFormatSymbols()
+            .setDecimalSeparator('.');
+    }
 
     private static GameTextUtilities.TextBlock getStandardForm(BigDecimal num, int colour, float scale) {
         final String rawFormat = SCI_FORM_FORMATTER.format(num);
-        final String[] parts = rawFormat.split("E");
+        final String[] formatParts = rawFormat.split("E");
+        final String[] mantissaParts = formatParts[0].split("\\.");
 
         return GameTextUtilities.TextBlock.of(
             GameTextUtilities.TextJustification.LEFT,
-            GameTextUtilities.Text.custom(parts[0], colour, scale),
+            GameTextUtilities.Text.custom(mantissaParts[0], colour, scale),
+            GameTextUtilities.Text.custom(".", colour, scale / 2f),
+            GameTextUtilities.Text.custom(mantissaParts[1], colour, scale * (3f / 4f)),
             GameTextUtilities.Text.custom("E", colour, scale / 2f),
-            GameTextUtilities.Text.custom(parts[1], colour, scale)
+            GameTextUtilities.Text.custom(formatParts[1], colour, scale * (3f / 4f))
         );
     }
 
     private void powRealScore(final BigDecimal exp) {
         final AtomicReference<BigDecimal> scoreRef = realScore;
-//        scoreRef.updateAndGet(s -> pow(s, exp));
 
         threadService.submit(() -> {
             scoreRef.updateAndGet(s -> pow(s, exp));
@@ -516,7 +604,7 @@ public class Tetratiotris extends DummyMode {
     }
 
     private static BigDecimal pow(BigDecimal base, BigDecimal exp) {
-        // Tweak latter two params as appropriate.
+        // Tweak later two params as appropriate.
         return roundToAppropriate(
             MathHelper.bigPow(
                 base, exp,
