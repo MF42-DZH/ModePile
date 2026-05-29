@@ -398,16 +398,21 @@ public class MathHelper {
                 .divide(new BigDecimal(expFrac.valR), precision, RoundingMode.UP)
                 .setScale(0, RoundingMode.UP)
                 .toBigInteger()
-                .intValue() // I can't believe we have to do this l m a o
-        );
-        BigDecimal lower = BigDecimal.TEN.pow(
-            BigDecimal
-                .valueOf(log10_approx_lower(base))
-                .divide(new BigDecimal(expFrac.valR), precision, RoundingMode.DOWN)
-                .setScale(0, RoundingMode.DOWN)
-                .toBigInteger()
                 .intValue()
         );
+        if (upper.equals(BigDecimal.ZERO)) upper = BigDecimal.ONE;
+
+        BigDecimal lower = (base.compareTo(BigDecimal.ONE) > 0)
+            ? BigDecimal.TEN.pow(
+                BigDecimal
+                    .valueOf(log10_approx_lower(base))
+                    .divide(new BigDecimal(expFrac.valR), precision, RoundingMode.DOWN)
+                    .setScale(0, RoundingMode.DOWN)
+                    .toBigInteger()
+                    .intValue()
+            )
+            : BigDecimal.ZERO;
+
         BigDecimal result = upper.add(lower).divide(BigDecimal.valueOf(2), precision, RoundingMode.HALF_UP);
 
         for (int i = 0; i < maxIterations && !upper.equals(lower); ++i) {
