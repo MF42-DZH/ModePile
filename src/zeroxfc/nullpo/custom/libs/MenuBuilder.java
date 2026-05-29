@@ -201,6 +201,9 @@ public final class MenuBuilder {
             final Optional<Method> changer = Optional.ofNullable(settingChangers.get(settingField.getKey()));
             final Optional<Method> printer = Optional.ofNullable(settingPrinters.get(settingField.getKey()));
 
+            if (!changer.isPresent()) log.error("Field with id " + settingField.getKey() + " is missing a changer.");
+            if (!printer.isPresent()) log.error("Field with id " + settingField.getKey() + " is missing a printer.");
+
             changer.ifPresent(c ->
                 printer.ifPresent(p -> {
                     final Consumer<Integer> settingChanger = change -> {

@@ -44,4 +44,9 @@ public final class Pair<L, R> {
     public int hashCode() {
         return Objects.hash(valL, valR);
     }
+
+    @Override
+    public String toString() {
+        return "(" + valL + ", " + valR + ")";
+    }
 }

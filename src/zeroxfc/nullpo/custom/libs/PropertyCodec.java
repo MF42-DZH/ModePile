@@ -1,5 +1,7 @@
 package zeroxfc.nullpo.custom.libs;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.function.Supplier;
 import mu.nu.nullpo.util.CustomProperties;
 import zeroxfc.nullpo.custom.libs.types.tuples.DoublePair;
@@ -507,6 +509,86 @@ public interface PropertyCodec<V> {
         @Override
         public Class<FloatPair> getValueClass() {
             return FloatPair.class;
+        }
+    }
+
+    final class BigIntegerCodec implements PropertyCodec<BigInteger> {
+        public static final BigIntegerCodec INSTANCE = new BigIntegerCodec();
+
+        private BigIntegerCodec() { }
+
+        @Override
+        public void save(CustomProperties properties, String propPath, BigInteger value) {
+            StringCodec.INSTANCE.save(properties, propPath, value.toString());
+        }
+
+        @Override
+        public void savePlayer(ProfileProperties properties, String propPath, BigInteger value) {
+            StringCodec.INSTANCE.savePlayer(properties, propPath, value.toString());
+        }
+
+        @Override
+        public BigInteger load(CustomProperties properties, String propPath, BigInteger defaultValue) {
+            return new BigInteger(
+                StringCodec.INSTANCE.load(properties, propPath, defaultValue.toString())
+            );
+        }
+
+        @Override
+        public BigInteger loadPlayer(ProfileProperties properties, String propPath, BigInteger defaultValue) {
+            return new BigInteger(
+                StringCodec.INSTANCE.loadPlayer(properties, propPath, defaultValue.toString())
+            );
+        }
+
+        @Override
+        public Class<BigInteger> getValueClass() {
+            return BigInteger.class;
+        }
+
+        @Override
+        public BigInteger defaultLoadValue() {
+            return BigInteger.ZERO;
+        }
+    }
+
+    final class BigDecimalCodec implements PropertyCodec<BigDecimal> {
+        public static final BigDecimalCodec INSTANCE = new BigDecimalCodec();
+
+        private BigDecimalCodec() { }
+
+        @Override
+        public void save(CustomProperties properties, String propPath, BigDecimal value) {
+            StringCodec.INSTANCE.save(properties, propPath, value.toString());
+        }
+
+        @Override
+        public void savePlayer(ProfileProperties properties, String propPath, BigDecimal value) {
+            StringCodec.INSTANCE.savePlayer(properties, propPath, value.toString());
+        }
+
+        @Override
+        public BigDecimal load(CustomProperties properties, String propPath, BigDecimal defaultValue) {
+            return new BigDecimal(
+                StringCodec.INSTANCE.load(properties, propPath, defaultValue.toString())
+            );
+        }
+
+        @Override
+        public BigDecimal loadPlayer(ProfileProperties properties, String propPath, BigDecimal defaultValue) {
+            return new BigDecimal(
+                StringCodec.INSTANCE.loadPlayer(properties, propPath, defaultValue.toString())
+            );
+        }
+
+        @Override
+        public Class<BigDecimal> getValueClass() {
+            return BigDecimal.class;
+        }
+
+        @Override
+        public BigDecimal defaultLoadValue() {
+            return BigDecimal.ZERO;
         }
     }
 }

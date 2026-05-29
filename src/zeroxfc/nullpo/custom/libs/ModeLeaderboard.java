@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import mu.nu.nullpo.game.play.GameManager;
 import zeroxfc.nullpo.custom.libs.types.Order;
@@ -24,6 +27,8 @@ import zeroxfc.nullpo.custom.libs.types.Order;
 //     }
 // }
 //
+// Or to just use the keyStringifier constructor parameter.
+//
 // V must have an associated PropertyCodec.
 public class ModeLeaderboard<K, V> {
     private final ModeSettings settings;
@@ -33,9 +38,11 @@ public class ModeLeaderboard<K, V> {
     private final int rankingMax;
 
     private final Map<K, Leaderboard> leaderboards;
+    private final NavigableMap<Integer, Integer> versionCompatibility;
     private final PropertyCodec<V> codec;
     private final Supplier<V> newEntrySupplier;
     private final BiFunction<V, V, Order> orderFunction;
+    private final Function<K, String> keyStringifier;
 
     public ModeLeaderboard(ModeSettings settings, PropertyCodec<V> codec, Supplier<V> defaultValue, Supplier<V> newEntrySupplier, BiFunction<V, V, Order> orderFunction, int currentVersion, int rankingMax, boolean ruleDependent) {
         this(settings, codec.deriveWithNewDefault(defaultValue), newEntrySupplier, orderFunction, currentVersion, rankingMax, ruleDependent);
@@ -49,8 +56,24 @@ public class ModeLeaderboard<K, V> {
         this.codec = codec;
         this.newEntrySupplier = newEntrySupplier;
         this.orderFunction = orderFunction;
+        this.keyStringifier = null;
 
         leaderboards = new LinkedHashMap<>();
+        versionCompatibility = new TreeMap<>();
+    }
+
+    public ModeLeaderboard(ModeSettings settings, PropertyCodec<V> codec, Supplier<V> newEntrySupplier, BiFunction<V, V, Order> orderFunction, int currentVersion, int rankingMax, boolean ruleDependent, Function<K, String> keyStringifier) {
+        this.currentVersion = currentVersion;
+        this.rankingMax = rankingMax;
+        this.ruleDependent = ruleDependent;
+        this.settings = settings;
+        this.codec = codec;
+        this.newEntrySupplier = newEntrySupplier;
+        this.orderFunction = orderFunction;
+        this.keyStringifier = keyStringifier;
+
+        leaderboards = new LinkedHashMap<>();
+        versionCompatibility = new TreeMap<>();
     }
 
     public Leaderboard registerLeaderboard(K key) {
@@ -58,6 +81,19 @@ public class ModeLeaderboard<K, V> {
         leaderboards.put(key, leaderboard);
 
         return leaderboard;
+    }
+
+    /**
+     * Registers version compatibilities with an old version, if a mode's new version has leaderboards compatible
+     * with an old version's leaderboards.
+     *
+     * @param oldVersion  Old version of the mode with existing leaderboards.
+     * @param newVersions New versions of the mode about to register leaderboards.
+     */
+    public void registerVersionCompatibilities(int oldVersion, int... newVersions) {
+        for (int version : newVersions) {
+            versionCompatibility.put(version, oldVersion);
+        }
     }
 
     public V readLeaderboard(K key, int position) {
@@ -190,8 +226,11 @@ public class ModeLeaderboard<K, V> {
         }
 
         private String propPath(String ruleName, int position) {
-            if (ruleDependent) return settings.propPath("ranking", currentVersion, ruleName, key, position);
-            else return settings.propPath("ranking", currentVersion, key, position);
+            final Function<K, String> stringifier = keyStringifier == null ? Object::toString : keyStringifier;
+            final int version = versionCompatibility.getOrDefault(currentVersion, currentVersion);
+
+            if (ruleDependent) return settings.propPath("ranking", version, ruleName, stringifier.apply(key), position);
+            else return settings.propPath("ranking", version, stringifier.apply(key), position);
         }
     }
 }
