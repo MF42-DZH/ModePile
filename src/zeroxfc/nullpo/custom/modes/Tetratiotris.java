@@ -1,8 +1,12 @@
 package zeroxfc.nullpo.custom.modes;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import mu.nu.nullpo.game.component.BGMStatus;
 import mu.nu.nullpo.game.component.Controller;
+import mu.nu.nullpo.game.component.Piece;
 import mu.nu.nullpo.game.component.SpeedParam;
 import mu.nu.nullpo.game.event.EventReceiver;
 import mu.nu.nullpo.game.play.GameEngine;
@@ -23,11 +28,13 @@ import mu.nu.nullpo.game.subsystem.mode.DummyMode;
 import mu.nu.nullpo.util.CustomProperties;
 import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
+import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
 import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.MenuBuilder;
 import zeroxfc.nullpo.custom.libs.MiscUtils;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
+import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.modes.objects.marathonlike.TetratiotrisSettings;
@@ -94,6 +101,112 @@ public class Tetratiotris extends DummyMode {
         BGM_INFO_TABLE.put(200, BGMStatus.BGM_NORMAL5);
     }
 
+    private static class EventText {
+        private final GameTextUtilities.TextBlock eventTextBlock;
+        private double x;
+        private double y;
+        private final DoubleVector velocity;
+
+        private static final int LIFETIME = 150;
+        private int life;
+        private static final int FADE_PERIOD = 60;
+
+        public EventText(GameTextUtilities.TextBlock eventTextBlock, double x, double y, DoubleVector velocity) {
+            this.eventTextBlock = eventTextBlock;
+            this.x = x;
+            this.y = y;
+            this.velocity = velocity;
+
+            life = 0;
+        }
+
+        public boolean update() {
+            x += velocity.getX();
+            y += velocity.getY();
+
+            velocity.setMagnitude(velocity.getMagnitude() * (14.0 / 15.0));
+
+            return ++life > LIFETIME;
+        }
+
+        public void draw(GameEngine engine) {
+            GameTextUtilities.TextBlock block = eventTextBlock;
+
+            if (LIFETIME - life < FADE_PERIOD) {
+                final float scaleMult = (LIFETIME - life) / (float) FADE_PERIOD;
+                final GameTextUtilities.Text[] newTexts = new GameTextUtilities.Text[eventTextBlock.length()];
+
+                for (int i = 0; i < eventTextBlock.length(); ++i) {
+                    newTexts[i] = GameTextUtilities.Text.customMixColor(
+                        eventTextBlock.get(i).getString(),
+                        eventTextBlock.get(i).getColour(),
+                        255, 255, 255, (int) (scaleMult * 255),
+                        eventTextBlock.get(i).getScale() * scaleMult
+                    );
+                }
+
+                block = GameTextUtilities.TextBlock.of(block.getJustification(), newTexts);
+            }
+
+            GameTextUtilities.drawAlignedTextBlock(
+                engine,
+                (int) x, (int) y,
+                false,
+                block,
+                ObjectAlignment.MIDDLE_MIDDLE
+            );
+        }
+    }
+
+    private static final Deque<EventText> EVENT_TEXTS = new LinkedList<>();
+
+    private void addEventText(GameEngine engine, int playerID, boolean drawAtPieceX, double yOffset, Collection<GameTextUtilities.Text> eventTexts, BigDecimal pow) {
+        final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
+        final int baseY = receiver.getFieldDisplayPositionX(engine, playerID) + 52;
+
+        final DoubleVector basePosition;
+
+        if (drawAtPieceX) {
+            final int pieceX = (16 * engine.nowPieceX) + baseX;
+            final int pieceY = (16 * engine.nowPieceY) + baseY;
+
+            int pieceXs = 0;
+            int pieceYs = 0;
+
+            for (int i = 0; i < engine.nowPieceObject.getMaxBlock(); ++i) {
+                pieceXs += pieceX + (engine.nowPieceObject.dataX[engine.nowPieceObject.direction][i] * 16) + 8;
+                pieceYs += pieceY + (engine.nowPieceObject.dataY[engine.nowPieceObject.direction][i] * 16) + 8;
+            }
+
+            pieceXs /= engine.nowPieceObject.getMaxBlock();
+            pieceYs /= engine.nowPieceObject.getMaxBlock();
+
+            basePosition = new DoubleVector(pieceXs, pieceYs, false);
+        } else {
+            basePosition = new DoubleVector(
+                baseX + (engine.field.getWidth() * 8),
+                baseY + (engine.field.getHeight() * 16) + 16.0,
+                false
+            );
+        }
+        final DoubleVector baseVelocity = new DoubleVector(0.0, -6, false);
+
+        final List<GameTextUtilities.Text> texts = new LinkedList<>(eventTexts);
+        texts.add(GameTextUtilities.Text.newLine());
+        texts.add(GameTextUtilities.Text.custom("^" + pow.stripTrailingZeros(), EventReceiver.COLOR_WHITE, (3f / 4f)));
+
+        EVENT_TEXTS.add(
+            new EventText(
+                GameTextUtilities.TextBlock.of(
+                    GameTextUtilities.TextJustification.CENTRE,
+                    texts
+                ),
+                basePosition.getX(), basePosition.getY() + yOffset,
+                baseVelocity
+            )
+        );
+    }
+
     private GameManager owner;
     private EventReceiver receiver;
     private TetratiotrisSettings settings;
@@ -140,6 +253,7 @@ public class Tetratiotris extends DummyMode {
         threadService = Executors.newSingleThreadExecutor();
         realScore = new AtomicReference<>(DEFAULT_SCORE);
         displayScore = DEFAULT_SCORE;
+        EVENT_TEXTS.clear();
 
         lastRank = -1;
         lastRankPlayer = -1;
@@ -344,6 +458,13 @@ public class Tetratiotris extends DummyMode {
             receiver.drawScoreFont(engine, playerID, 0, 12, "TIME", HEADER_COLOUR);
             receiver.drawScoreFont(engine, playerID, 0, 13, GeneralUtil.getTime(engine.statistics.time));
         }
+
+        EVENT_TEXTS.forEach(t -> t.draw(engine));
+    }
+
+    @Override
+    public void onFirst(GameEngine engine, int playerID) {
+        EVENT_TEXTS.removeIf(EventText::update);
     }
 
     @Override
@@ -365,28 +486,70 @@ public class Tetratiotris extends DummyMode {
         BigDecimal chosenPow = BigDecimal.ZERO;
         final BigDecimal multiplier = BigDecimal.ONE.add(new BigDecimal("0.5").multiply(BigDecimal.valueOf(engine.statistics.level)));
 
+        final List<GameTextUtilities.Text> texts = new LinkedList<>();
+        final String pieceName = (engine.nowPieceObject != null) ? Piece.getPieceName(engine.nowPieceObject.id) : "";
+        final int b2bClearColour = engine.b2b ? EventReceiver.COLOR_ORANGE : EventReceiver.COLOR_YELLOW;
+
+        if (engine.b2b && lines > 0) {
+            texts.add(GameTextUtilities.Text.of("B2B", EventReceiver.COLOR_RED));
+            texts.add(GameTextUtilities.Text.newLine());
+        }
+
         if (lines == 0) {
-            if (engine.tspin && engine.tspinmini) chosenPow = POWER_SPIN_ZERO_MINI;
-            else if (engine.tspin) chosenPow = POWER_SPIN_ZERO;
+            if (engine.tspin && engine.tspinez) {
+                texts.add(GameTextUtilities.Text.of("EZ-" + pieceName, EventReceiver.COLOR_GREEN));
+                addEventText(engine, playerID, true, 0.0, texts, BigDecimal.ONE);
+            } else if (engine.tspin && engine.tspinmini) {
+                chosenPow = POWER_SPIN_ZERO_MINI;
+                texts.add(GameTextUtilities.Text.of(pieceName + "-MINI", EventReceiver.COLOR_GREEN));
+            } else if (engine.tspin) {
+                chosenPow = POWER_SPIN_ZERO;
+                texts.add(GameTextUtilities.Text.of(pieceName + "-SPIN", EventReceiver.COLOR_GREEN));
+            }
         } else if (lines == 1) {
-            if (engine.tspin && engine.tspinez) chosenPow = POWER_SPIN_SINGLE_EZ;
-            else if (engine.tspin && engine.tspinmini) chosenPow = POWER_SPIN_SINGLE_MINI;
-            else if (engine.tspin) chosenPow = POWER_SPIN_SINGLE;
-            else chosenPow = POWER_SINGLE;
+            if (engine.tspin && engine.tspinez) {
+                chosenPow = POWER_SPIN_SINGLE_EZ;
+                texts.add(GameTextUtilities.Text.of("EZ-" + pieceName, b2bClearColour));
+            } else if (engine.tspin && engine.tspinmini) {
+                chosenPow = POWER_SPIN_SINGLE_MINI;
+                texts.add(GameTextUtilities.Text.of(pieceName + "-MINI-S", b2bClearColour));
+            } else if (engine.tspin) {
+                chosenPow = POWER_SPIN_SINGLE;
+                texts.add(GameTextUtilities.Text.of(pieceName + "-SINGLE", b2bClearColour));
+            } else {
+                chosenPow = POWER_SINGLE;
+                texts.add(GameTextUtilities.Text.of("SINGLE", EventReceiver.COLOR_WHITE));
+            }
         } else if (lines == 2) {
-            if (engine.tspin && engine.tspinmini && engine.useAllSpinBonus) chosenPow = POWER_SPIN_DOUBLE_MINI;
-            else if (engine.tspin) chosenPow = POWER_SPIN_DOUBLE;
-            else chosenPow = POWER_DOUBLE;
+            if (engine.tspin && engine.tspinmini && engine.useAllSpinBonus) {
+                chosenPow = POWER_SPIN_DOUBLE_MINI;
+                texts.add(GameTextUtilities.Text.of(pieceName + "-MINI-D", b2bClearColour));
+            } else if (engine.tspin) {
+                chosenPow = POWER_SPIN_DOUBLE;
+                texts.add(GameTextUtilities.Text.of(pieceName + "-DOUBLE", b2bClearColour));
+            } else {
+                chosenPow = POWER_DOUBLE;
+                texts.add(GameTextUtilities.Text.of("DOUBLE", EventReceiver.COLOR_WHITE));
+            }
         } else if (lines == 3) {
-            if (engine.tspin) chosenPow = POWER_SPIN_TRIPLE;
-            else chosenPow = POWER_TRIPLE;
+            if (engine.tspin) {
+                chosenPow = POWER_SPIN_TRIPLE;
+                texts.add(GameTextUtilities.Text.of(pieceName + "-TRIPLE", b2bClearColour));
+            } else {
+                chosenPow = POWER_TRIPLE;
+                texts.add(GameTextUtilities.Text.of("TRIPLE", EventReceiver.COLOR_WHITE));
+            }
         } else if (lines >= 4) {
             if (engine.tspin) {
                 chosenPow = POWER_SPIN_TRIPLE;
                 engine.playSE("tspin3");
+
+                texts.add(GameTextUtilities.Text.of(pieceName + "-" + MiscUtils.Numerics.nameOfNumber(BigInteger.valueOf(lines)), b2bClearColour));
             } else {
                 chosenPow = POWER_FOUR;
                 if (lines > 4) engine.playSE("erase4");
+
+                texts.add(GameTextUtilities.Text.of(MiscUtils.Numerics.nameOfNumber(BigInteger.valueOf(lines)), b2bClearColour));
             }
         }
 
@@ -396,17 +559,34 @@ public class Tetratiotris extends DummyMode {
 
         if (chosenPow.compareTo(BigDecimal.ONE) > 0) {
             powRealScore(chosenPow);
+
+            final double yOffset = engine.b2b ? -40.0 : -32.0;
+            addEventText(engine, playerID, true, (engine.combo >= 2 && lines >= 1) ? yOffset : 0.0, texts, chosenPow);
         }
 
         // Ren
         if (settings.combo && engine.combo >= 2 && lines >= 1) {
-            powRealScore(POWER_COMBO.multiply(new BigDecimal(engine.combo - 1)).multiply(multiplier).add(BigDecimal.ONE));
+            final BigDecimal comboPow = POWER_COMBO.multiply(new BigDecimal(engine.combo - 1)).multiply(multiplier).add(BigDecimal.ONE);
+            powRealScore(comboPow);
+
+            final List<GameTextUtilities.Text> comboText = new ArrayList<>(1);
+            comboText.add(GameTextUtilities.Text.of("COMBO ", EventReceiver.COLOR_CYAN));
+            comboText.add(GameTextUtilities.Text.of(Integer.toString(engine.combo - 1)));
+
+            addEventText(engine, playerID, true, 0.0, comboText, comboPow);
         }
 
         // Bravo
         if (lines > 0 && engine.field.isEmpty()) {
             engine.playSE("bravo");
-            powRealScore(POWER_BRAVO.multiply(multiplier).add(BigDecimal.ONE));
+
+            final BigDecimal bravoPow = POWER_BRAVO.multiply(multiplier).add(BigDecimal.ONE);
+            powRealScore(bravoPow);
+
+            final List<GameTextUtilities.Text> bravoText = new ArrayList<>(1);
+            bravoText.add(GameTextUtilities.Text.custom("BRAVO!", EventReceiver.COLOR_YELLOW, 1f));
+
+            addEventText(engine, playerID, false, 20.0, bravoText, bravoPow);
         }
 
         // BGM
@@ -500,7 +680,22 @@ public class Tetratiotris extends DummyMode {
 
         if (scoreName != null) {
             final int pages = 1 + (int) Math.ceil(scoreName.getHeight() / (engine.field.getHeight() * 16.0 - 80.0));
-            receiver.drawMenuFont(engine, playerID, 0, 0, "kn PAGE" + (engine.statc[1] + 1) + "/" + pages, EventReceiver.COLOR_RED);
+
+            receiver.drawMenuFont(engine, playerID, 0, 0, "kn PAGE", EventReceiver.COLOR_RED);
+            GameTextUtilities.drawAlignedMenuTextBlock(
+                receiver, engine, playerID,
+                false,
+                7, 0,
+                false,
+                GameTextUtilities.TextBlock.of(
+                    GameTextUtilities.TextJustification.LEFT,
+                    GameTextUtilities.Text.ofSmall(Integer.toString(engine.statc[1] + 1), EventReceiver.COLOR_RED),
+                    GameTextUtilities.Text.newLine(),
+                    GameTextUtilities.Text.ofSmall("/", EventReceiver.COLOR_RED),
+                    GameTextUtilities.Text.ofSmall(Integer.toString(pages), EventReceiver.COLOR_RED)
+                ),
+                ObjectAlignment.TOP_LEFT
+            );
         }
 
         if (engine.statc[1] == 0) {
@@ -641,7 +836,7 @@ public class Tetratiotris extends DummyMode {
         if (currentDisplay.compareTo(targetScore) >= 0) return targetScore;
 
         final BigDecimal difference = targetScore.subtract(currentDisplay);
-        final BigDecimal add = difference.movePointLeft(2).multiply(BigDecimal.valueOf(2));
+        final BigDecimal add = difference.movePointLeft(2).multiply(BigDecimal.valueOf(3));
         final BigDecimal newScore = currentDisplay.add(add);
 
         if (newScore.compareTo(targetScore) >= 0) return targetScore;

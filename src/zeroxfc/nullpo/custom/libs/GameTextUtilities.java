@@ -321,6 +321,10 @@ public class GameTextUtilities {
             return texts[i];
         }
 
+        public TextJustification getJustification() {
+            return justification;
+        }
+
         @Override
         public Collection<Text> toInsert() {
             // You will lose justification information if embedding a text block inside another.
