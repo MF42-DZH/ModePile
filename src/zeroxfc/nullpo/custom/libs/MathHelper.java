@@ -268,7 +268,8 @@ public class MathHelper {
         return Math.max(0, num.stripTrailingZeros().scale());
     }
 
-    private static int nonDecimalDigits(BigDecimal num) {
+    /** Gets the number of digits before the decimal point of a {@link BigDecimal} */
+    public static int nonDecimalDigits(BigDecimal num) {
         final BigDecimal stripped = num.stripTrailingZeros();
         return stripped.precision() - stripped.scale();
     }

@@ -151,11 +151,9 @@ public class Tetratiotris extends DummyMode {
             showPlayerStats = false;
         }
 
-        settings = new TetratiotrisSettings(CURRENT_VERSION, playerProperties, () -> {
-            return new TetratiotrisSettings.LeaderboardEntry(
-                realScore.get(), engine.statistics.lines, engine.statistics.time
-            );
-        });
+        settings = new TetratiotrisSettings(CURRENT_VERSION, playerProperties, () -> new TetratiotrisSettings.LeaderboardEntry(
+            new TetratiotrisSettings.BigDecimalImpreciseInfo(realScore.get()), engine.statistics.lines, engine.statistics.time
+        ));
         settingsMenu = MenuBuilder.generateMenu(this, settings);
 
         if (!owner.replayMode) {
@@ -283,7 +281,7 @@ public class Tetratiotris extends DummyMode {
         }
 
         if ((engine.stat == GameEngine.STAT_SETTING || engine.stat == GameEngine.STAT_RESULT) && !owner.replayMode) {
-            if (!settings.big && engine.ai == null) {
+            if (!settings.big && engine.ai == null && (engine.stat != GameEngine.STAT_RESULT || engine.statc[1] == 0)) {
                 final float scale = (receiver.getNextDisplayType() == 2) ? 0.5f : 1.0f;
                 final int topY = (receiver.getNextDisplayType() == 2) ? 6 : 4;
                 receiver.drawScoreFont(engine, playerID, 3, topY-1, "SCORE   LINE TIME", HEADER_COLOUR, scale);
@@ -506,7 +504,7 @@ public class Tetratiotris extends DummyMode {
         }
 
         if (engine.statc[1] == 0) {
-            receiver.drawMenuFont(engine, playerID, 0, resultTopY, "SCORE", EventReceiver.COLOR_BLUE);
+            receiver.drawMenuFont(engine, playerID, 0, resultTopY, "SCORE", EventReceiver.COLOR_PINK);
             GameTextUtilities.drawAlignedMenuTextBlock(
                 receiver, engine, playerID,
                 false,
@@ -517,9 +515,16 @@ public class Tetratiotris extends DummyMode {
             );
 
             drawResultStats(
-                engine, playerID, receiver, resultTopY + 2, EventReceiver.COLOR_BLUE,
+                engine, playerID, receiver, resultTopY + 2, EventReceiver.COLOR_PINK,
                 STAT_LINES, STAT_LEVEL, STAT_TIME, STAT_LPM
             );
+
+            if (scoreName == null) {
+                receiver.drawMenuFont(engine, playerID, 0, resultTopY + 12, "HIT k OR n");
+                receiver.drawMenuFont(engine, playerID, 0, resultTopY + 13, "TO SEE THE");
+                receiver.drawMenuFont(engine, playerID, 0, resultTopY + 14, " SCORE IN ");
+                receiver.drawMenuFont(engine, playerID, 0, resultTopY + 15, "  WORDS!  ");
+            }
         } else {
             final int baseX = receiver.getFieldDisplayPositionX(engine, playerID) + 4;
             final int baseY = receiver.getFieldDisplayPositionY(engine, playerID) + 52;
@@ -595,6 +600,19 @@ public class Tetratiotris extends DummyMode {
         );
     }
 
+    private static GameTextUtilities.TextBlock getStandardForm(TetratiotrisSettings.BigDecimalImpreciseInfo num, int colour, float scale) {
+        final String mantissa = Integer.toString(num.mantissaNoSep);
+
+        return GameTextUtilities.TextBlock.of(
+            GameTextUtilities.TextJustification.LEFT,
+            GameTextUtilities.Text.custom(mantissa.substring(0, 1), colour, scale),
+            GameTextUtilities.Text.custom(".", colour, scale / 2f),
+            GameTextUtilities.Text.custom(mantissa.substring(1, 3), colour, scale * (3f / 4f)),
+            GameTextUtilities.Text.custom("E", colour, scale / 2f),
+            GameTextUtilities.Text.custom(Integer.toString(num.exponent), colour, scale * (3f / 4f))
+        );
+    }
+
     private void powRealScore(final BigDecimal exp) {
         final AtomicReference<BigDecimal> scoreRef = realScore;
 
@@ -624,7 +642,6 @@ public class Tetratiotris extends DummyMode {
 
         final BigDecimal difference = targetScore.subtract(currentDisplay);
         final BigDecimal add = difference.movePointLeft(2).multiply(BigDecimal.valueOf(2));
-
         final BigDecimal newScore = currentDisplay.add(add);
 
         if (newScore.compareTo(targetScore) >= 0) return targetScore;

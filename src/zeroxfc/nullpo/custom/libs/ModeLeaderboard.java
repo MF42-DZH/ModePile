@@ -10,6 +10,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import mu.nu.nullpo.game.play.GameManager;
+import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.types.Order;
 
 // The parameter is a discriminator key.

@@ -33,7 +33,7 @@ public class TetratiotrisSettings extends ModeSettings {
 
     @ModeSettings.Property(path = "startLevel")
     @PropertyDefault(intValue = 0)
-    @MenuBuilder.SettingItem(id = 0, header = "LEVEL", headerColour = EventReceiver.COLOR_BLUE)
+    @MenuBuilder.SettingItem(id = 0, header = "LEVEL", headerColour = EventReceiver.COLOR_PINK)
     public int startLevel;
 
     @MenuBuilder.SettingChanger(id = 0)
@@ -56,7 +56,7 @@ public class TetratiotrisSettings extends ModeSettings {
 
     @ModeSettings.Property(path = "spinBonus")
     @PropertyDefault(intValue = 1)
-    @MenuBuilder.SettingItem(id = 1, header = "SPIN BONUS", headerColour = EventReceiver.COLOR_BLUE)
+    @MenuBuilder.SettingItem(id = 1, header = "SPIN BONUS", headerColour = EventReceiver.COLOR_PINK)
     public int spinBonus;
 
     @MenuBuilder.SettingChanger(id = 1)
@@ -78,7 +78,7 @@ public class TetratiotrisSettings extends ModeSettings {
 
     @ModeSettings.Property(path = "kickSpin")
     @PropertyDefault(booleanValue = true)
-    @MenuBuilder.SettingItem(id = 2, header = "KICK SPIN", headerColour = EventReceiver.COLOR_BLUE)
+    @MenuBuilder.SettingItem(id = 2, header = "KICK SPIN", headerColour = EventReceiver.COLOR_PINK)
     public boolean kickSpin;
 
     @MenuBuilder.SettingChanger(id = 2)
@@ -93,7 +93,7 @@ public class TetratiotrisSettings extends ModeSettings {
 
     @ModeSettings.Property(path = "spinCheck")
     @PropertyDefault(intValue = GameEngine.SPINTYPE_4POINT)
-    @MenuBuilder.SettingItem(id = 3, header = "SPIN CHECK", headerColour = EventReceiver.COLOR_BLUE)
+    @MenuBuilder.SettingItem(id = 3, header = "SPIN CHECK", headerColour = EventReceiver.COLOR_PINK)
     public int spinCheck;
 
     @MenuBuilder.SettingChanger(id = 3)
@@ -114,7 +114,7 @@ public class TetratiotrisSettings extends ModeSettings {
 
     @ModeSettings.Property(path = "ezSpin")
     @PropertyDefault(booleanValue = false)
-    @MenuBuilder.SettingItem(id = 4, header = "EZ-IMM.", headerColour = EventReceiver.COLOR_BLUE)
+    @MenuBuilder.SettingItem(id = 4, header = "EZ-IMM.", headerColour = EventReceiver.COLOR_PINK)
     public boolean ezSpin;
 
     @MenuBuilder.SettingChanger(id = 4)
@@ -129,7 +129,7 @@ public class TetratiotrisSettings extends ModeSettings {
 
     @ModeSettings.Property(path = "b2b")
     @PropertyDefault(booleanValue = true)
-    @MenuBuilder.SettingItem(id = 5, header = "B2B", headerColour = EventReceiver.COLOR_BLUE)
+    @MenuBuilder.SettingItem(id = 5, header = "B2B", headerColour = EventReceiver.COLOR_PINK)
     public boolean b2b;
 
     @MenuBuilder.SettingChanger(id = 5)
@@ -144,7 +144,7 @@ public class TetratiotrisSettings extends ModeSettings {
 
     @ModeSettings.Property(path = "combo")
     @PropertyDefault(booleanValue = true)
-    @MenuBuilder.SettingItem(id = 6, header = "COMBO", headerColour = EventReceiver.COLOR_BLUE)
+    @MenuBuilder.SettingItem(id = 6, header = "COMBO", headerColour = EventReceiver.COLOR_PINK)
     public boolean combo;
 
     @MenuBuilder.SettingChanger(id = 6)
@@ -159,7 +159,7 @@ public class TetratiotrisSettings extends ModeSettings {
 
     @ModeSettings.Property(path = "goalType")
     @PropertyDefault(intValue = 0)
-    @MenuBuilder.SettingItem(id = 7, header = "GOAL", headerColour = EventReceiver.COLOR_BLUE)
+    @MenuBuilder.SettingItem(id = 7, header = "GOAL", headerColour = EventReceiver.COLOR_PINK)
     public int goalType;
 
     @MenuBuilder.SettingChanger(id = 7)
@@ -182,7 +182,7 @@ public class TetratiotrisSettings extends ModeSettings {
 
     @ModeSettings.Property(path = "big")
     @PropertyDefault(booleanValue = false)
-    @MenuBuilder.SettingItem(id = 8, header = "BIG", headerColour = EventReceiver.COLOR_BLUE)
+    @MenuBuilder.SettingItem(id = 8, header = "BIG", headerColour = EventReceiver.COLOR_PINK)
     public boolean big;
 
     @MenuBuilder.SettingChanger(id = 8)
@@ -197,7 +197,7 @@ public class TetratiotrisSettings extends ModeSettings {
 
     private final SettingsHandler simpleSettingsHandler;
 
-    private static final class BigDecimalImpreciseInfo {
+    public static final class BigDecimalImpreciseInfo {
         private static final int DECIMAL_PRECISION = 6;
 
         public final int mantissaNoSep;
@@ -219,71 +219,57 @@ public class TetratiotrisSettings extends ModeSettings {
             this.mantissaNoSep = mantissaNoSep;
             this.exponent = exponent;
         }
-
-        public BigDecimal getBigDecimal() {
-            BigDecimal value = BigDecimal.valueOf(mantissaNoSep);
-            value = value.movePointLeft(DECIMAL_PRECISION - 1);
-            return value.multiply(BigDecimal.TEN.pow(exponent)).stripTrailingZeros();
-        }
     }
 
-    private static final PropertyCodec<BigDecimal> IMPRECISE_BD_CODEC = new PropertyCodec<BigDecimal>() {
+    private static final PropertyCodec<BigDecimalImpreciseInfo> IMPRECISE_BD_CODEC = new PropertyCodec<BigDecimalImpreciseInfo>() {
         private static final String SUFFIX_MANTISSA = "mantissaInexact";
         private static final String SUFFIX_EXPONENT = "exponent";
 
         @Override
-        public void save(CustomProperties properties, String propPath, BigDecimal value) {
-            final BigDecimalImpreciseInfo info = new BigDecimalImpreciseInfo(value);
-
-            IntegerCodec.INSTANCE.save(properties, joinPropPath(propPath, SUFFIX_MANTISSA), info.mantissaNoSep);
-            IntegerCodec.INSTANCE.save(properties, joinPropPath(propPath, SUFFIX_EXPONENT), info.exponent);
+        public void save(CustomProperties properties, String propPath, BigDecimalImpreciseInfo value) {
+            IntegerCodec.INSTANCE.save(properties, joinPropPath(propPath, SUFFIX_MANTISSA), value.mantissaNoSep);
+            IntegerCodec.INSTANCE.save(properties, joinPropPath(propPath, SUFFIX_EXPONENT), value.exponent);
         }
 
         @Override
-        public void savePlayer(ProfileProperties properties, String propPath, BigDecimal value) {
-            final BigDecimalImpreciseInfo info = new BigDecimalImpreciseInfo(value);
-
-            IntegerCodec.INSTANCE.savePlayer(properties, joinPropPath(propPath, SUFFIX_MANTISSA), info.mantissaNoSep);
-            IntegerCodec.INSTANCE.savePlayer(properties, joinPropPath(propPath, SUFFIX_EXPONENT), info.exponent);
+        public void savePlayer(ProfileProperties properties, String propPath, BigDecimalImpreciseInfo value) {
+            IntegerCodec.INSTANCE.savePlayer(properties, joinPropPath(propPath, SUFFIX_MANTISSA), value.mantissaNoSep);
+            IntegerCodec.INSTANCE.savePlayer(properties, joinPropPath(propPath, SUFFIX_EXPONENT), value.exponent);
         }
 
         @Override
-        public BigDecimal load(CustomProperties properties, String propPath, BigDecimal defaultValue) {
-            final BigDecimalImpreciseInfo defaultInfo = new BigDecimalImpreciseInfo(defaultValue);
+        public BigDecimalImpreciseInfo load(CustomProperties properties, String propPath, BigDecimalImpreciseInfo defaultValue) {
+            final int mantissa = IntegerCodec.INSTANCE.load(properties, joinPropPath(propPath, SUFFIX_MANTISSA), defaultValue.mantissaNoSep);
+            final int exponent = IntegerCodec.INSTANCE.load(properties, joinPropPath(propPath, SUFFIX_EXPONENT), defaultValue.exponent);
 
-            final int mantissa = IntegerCodec.INSTANCE.load(properties, joinPropPath(propPath, SUFFIX_MANTISSA), defaultInfo.mantissaNoSep);
-            final int exponent = IntegerCodec.INSTANCE.load(properties, joinPropPath(propPath, SUFFIX_EXPONENT), defaultInfo.exponent);
-
-            return new BigDecimalImpreciseInfo(mantissa, exponent).getBigDecimal();
+            return new BigDecimalImpreciseInfo(mantissa, exponent);
         }
 
         @Override
-        public BigDecimal loadPlayer(ProfileProperties properties, String propPath, BigDecimal defaultValue) {
-            final BigDecimalImpreciseInfo defaultInfo = new BigDecimalImpreciseInfo(defaultValue);
+        public BigDecimalImpreciseInfo loadPlayer(ProfileProperties properties, String propPath, BigDecimalImpreciseInfo defaultValue) {
+            final int mantissa = IntegerCodec.INSTANCE.loadPlayer(properties, joinPropPath(propPath, SUFFIX_MANTISSA), defaultValue.mantissaNoSep);
+            final int exponent = IntegerCodec.INSTANCE.loadPlayer(properties, joinPropPath(propPath, SUFFIX_EXPONENT), defaultValue.exponent);
 
-            final int mantissa = IntegerCodec.INSTANCE.loadPlayer(properties, joinPropPath(propPath, SUFFIX_MANTISSA), defaultInfo.mantissaNoSep);
-            final int exponent = IntegerCodec.INSTANCE.loadPlayer(properties, joinPropPath(propPath, SUFFIX_EXPONENT), defaultInfo.exponent);
-
-            return new BigDecimalImpreciseInfo(mantissa, exponent).getBigDecimal();
+            return new BigDecimalImpreciseInfo(mantissa, exponent);
         }
 
         @Override
-        public Class<BigDecimal> getValueClass() {
-            return BigDecimal.class;
+        public Class<BigDecimalImpreciseInfo> getValueClass() {
+            return BigDecimalImpreciseInfo.class;
         }
 
         @Override
-        public BigDecimal defaultLoadValue() {
-            return BigDecimal.ZERO;
+        public BigDecimalImpreciseInfo defaultLoadValue() {
+            return new BigDecimalImpreciseInfo(BigDecimal.ZERO);
         }
     };
 
     public static final class LeaderboardEntry {
-        public final BigDecimal score;
+        public final BigDecimalImpreciseInfo score;
         public final int lines;
         public final int time;
 
-        public LeaderboardEntry(BigDecimal score, int lines, int time) {
+        public LeaderboardEntry(BigDecimalImpreciseInfo score, int lines, int time) {
             this.score = score;
             this.lines = lines;
             this.time = time;
@@ -345,12 +331,13 @@ public class TetratiotrisSettings extends ModeSettings {
 
             @Override
             public LeaderboardEntry defaultLoadValue() {
-                return new LeaderboardEntry(new BigDecimal(100), 0, 0);
+                return new LeaderboardEntry(new BigDecimalImpreciseInfo(BigDecimal.valueOf(100)), 0, 0);
             }
         };
 
         public static final BiFunction<LeaderboardEntry, LeaderboardEntry, Order> ORDER = (newEntry, existing) -> Order
-            .fromCompare(newEntry.score.compareTo(existing.score))
+            .fromCompare(Integer.compare(newEntry.score.exponent, existing.score.exponent))
+            .fold(() -> Order.fromCompare(Integer.compare(newEntry.score.mantissaNoSep, existing.score.mantissaNoSep)))
             .fold(() -> Order.fromCompare(Integer.compare(newEntry.lines, existing.lines)))
             .fold(() -> Order.fromCompare(Integer.compare(existing.time, newEntry.time)));
     }
