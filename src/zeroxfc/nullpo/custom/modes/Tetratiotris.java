@@ -30,11 +30,11 @@ import mu.nu.nullpo.util.GeneralUtil;
 import org.apache.log4j.Logger;
 import zeroxfc.nullpo.custom.libs.DoubleVector;
 import zeroxfc.nullpo.custom.libs.GameTextUtilities;
+import zeroxfc.nullpo.custom.libs.Interpolation;
 import zeroxfc.nullpo.custom.libs.MathHelper;
 import zeroxfc.nullpo.custom.libs.MenuBuilder;
 import zeroxfc.nullpo.custom.libs.MiscUtils;
 import zeroxfc.nullpo.custom.libs.ProfileProperties;
-import zeroxfc.nullpo.custom.libs.RendererExtension;
 import zeroxfc.nullpo.custom.libs.SpeedTableBuilder;
 import zeroxfc.nullpo.custom.libs.types.ObjectAlignment;
 import zeroxfc.nullpo.custom.modes.objects.marathonlike.TetratiotrisSettings;
@@ -109,7 +109,8 @@ public class Tetratiotris extends DummyMode {
 
         private static final int LIFETIME = 150;
         private int life;
-        private static final int FADE_PERIOD = 60;
+        private static final int FADE_IN_PERIOD = 15;
+        private static final int FADE_OUT_PERIOD = 60;
 
         public EventText(GameTextUtilities.TextBlock eventTextBlock, double x, double y, DoubleVector velocity) {
             this.eventTextBlock = eventTextBlock;
@@ -131,9 +132,17 @@ public class Tetratiotris extends DummyMode {
 
         public void draw(GameEngine engine) {
             GameTextUtilities.TextBlock block = eventTextBlock;
+            final float scaleMult;
 
-            if (LIFETIME - life < FADE_PERIOD) {
-                final float scaleMult = (LIFETIME - life) / (float) FADE_PERIOD;
+            if (life < FADE_IN_PERIOD) {
+                scaleMult = life / (float) FADE_IN_PERIOD;
+            } else if (LIFETIME - life < FADE_OUT_PERIOD) {
+                scaleMult = (LIFETIME - life) / (float) FADE_OUT_PERIOD;
+            } else {
+                scaleMult = -1f;
+            }
+
+            if (scaleMult != -1f) {
                 final GameTextUtilities.Text[] newTexts = new GameTextUtilities.Text[eventTextBlock.length()];
 
                 for (int i = 0; i < eventTextBlock.length(); ++i) {
@@ -217,6 +226,7 @@ public class Tetratiotris extends DummyMode {
     private ExecutorService threadService;
     private AtomicReference<BigDecimal> realScore;
     private BigDecimal displayScore;
+    private int timeSinceLastScore;
 
     private int lastRank;
     private int lastRankPlayer;
@@ -254,6 +264,8 @@ public class Tetratiotris extends DummyMode {
         realScore = new AtomicReference<>(DEFAULT_SCORE);
         displayScore = DEFAULT_SCORE;
         EVENT_TEXTS.clear();
+
+        timeSinceLastScore = Integer.MAX_VALUE;
 
         lastRank = -1;
         lastRankPlayer = -1;
@@ -442,7 +454,7 @@ public class Tetratiotris extends DummyMode {
                 false,
                 0, 4,
                 false,
-                getStandardForm(displayScore, EventReceiver.COLOR_WHITE, 1f),
+                getStandardForm(displayScore, timeSinceLastScore < 6 ? EventReceiver.COLOR_GREEN : EventReceiver.COLOR_WHITE, 1f),
                 ObjectAlignment.TOP_LEFT
             );
 
@@ -470,6 +482,7 @@ public class Tetratiotris extends DummyMode {
     @Override
     public void onLast(GameEngine engine, int playerID) {
         displayScore = getDisplayScore(displayScore, realScore.get());
+        if (timeSinceLastScore < 6) ++timeSinceLastScore;
 
         if ((engine.stat == GameEngine.STAT_SETTING) || ((engine.stat == GameEngine.STAT_RESULT) && (!owner.replayMode) && (engine.ai == null))) {
             // Show rank
@@ -562,6 +575,8 @@ public class Tetratiotris extends DummyMode {
 
             final double yOffset = engine.b2b ? -40.0 : -32.0;
             addEventText(engine, playerID, true, (engine.combo >= 2 && lines >= 1) ? yOffset : 0.0, texts, chosenPow);
+
+            timeSinceLastScore = 0;
         }
 
         // Ren
