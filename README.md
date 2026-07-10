@@ -7,6 +7,10 @@ Requires the above to compile and run. The "res" directory in the "required file
 
 [![ModePile Pack CI](https://github.com/MF42-DZH/ModePile/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/MF42-DZH/ModePile/actions/workflows/main.yml)
 
+# NOTICE
+
+Development on this modpack will be temporarily halted as its modes and features will be grandfathered into [nullpomino-ce](https://github.com/AZL-Reworks/nullpomino-ce). Thank you for your patience and understanding.
+
 ## Modes Available:
 
 Click the links that are available in the mode names to get a YouTube video demonstration.
